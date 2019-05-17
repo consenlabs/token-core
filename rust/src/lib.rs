@@ -21,7 +21,7 @@ use log::Level;
 use android_logger::{Config,FilterBuilder};
 
 #[no_mangle]
-pub unsafe extern fn Java_com_consenlabs_android_tokencore_TokenCoreWallet_initLog(env: JNIEnv, _: JClass)  {
+pub unsafe extern fn Java_com_consenlabs_android_tokencoreexample_MainActivity_initLog(env: JNIEnv, _: JClass)  {
     // android_logger::init_once(
     //     Config::default()
     //         .with_min_level(Level::Trace) // limit log level
@@ -38,7 +38,7 @@ pub unsafe extern fn Java_com_consenlabs_android_tokencore_TokenCoreWallet_initL
 
 
 #[no_mangle]
-pub unsafe extern fn Java_com_consenlabs_android_tokencore_TokenCoreWallet_generateMnemonic(env: JNIEnv, _: JObject, strength: jint) -> jstring {
+pub unsafe extern fn Java_com_consenlabs_android_tokencoreexample_MainActivity_generateMnemonic(env: JNIEnv, _: JClass, strength: jint) -> jstring {
     debug!("calling hello");
     let strength = strength as i32;
     // let mut dst: Vec<u8> = Vec::with_capacity(240);

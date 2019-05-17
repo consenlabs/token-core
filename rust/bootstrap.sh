@@ -1,5 +1,5 @@
 #!/bin/sh
-JNI_LIBS=../android/tokencore/src/main/jniLibs
+JNI_LIBS=../android/app/src/main/jniLibs
 TREZOR_CRYPTO_LIBS=../android/tokencore/build/intermediates/cmake/release/obj
 
 cargo build --target aarch64-linux-android --release
