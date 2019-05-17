@@ -1,7 +1,13 @@
-#!/bin/sh
-JNI_LIBS=../android/app/src/main/jniLibs
-TREZOR_CRYPTO_LIBS=../android/tokencore/build/intermediates/cmake/release/obj
+#!/bin/bash
 
+JNI_LIBS=../../android/app/src/main/jniLibs
+TREZOR_CRYPTO_LIBS=../../android/tokencore/build/intermediates/cmake/release/obj
+
+pushd ../android
+./gradlew assembleRelease
+popd
+
+pushd ../rust/jni
 cargo build --target aarch64-linux-android --release
 cargo build --target armv7-linux-androideabi --release
 cargo build --target i686-linux-android --release
@@ -29,3 +35,5 @@ cp target/i686-linux-android/release/librust.so $JNI_LIBS/x86
 cp $TREZOR_CRYPTO_LIBS/x86/libTrezorCrypto.so $JNI_LIBS/x86
 cp target/x86_64-linux-android/release/librust.so $JNI_LIBS/x86_64
 cp $TREZOR_CRYPTO_LIBS/x86_64/libTrezorCrypto.so $JNI_LIBS/x86_64
+
+popd

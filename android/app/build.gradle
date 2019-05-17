@@ -1,6 +1,17 @@
 apply plugin: 'com.android.application'
 
 android {
+    packagingOptions {
+        pickFirst 'lib/arm64-v8a/libTrezorCrypto.so'
+        pickFirst 'lib/arm64-v8a/librust.so'
+        pickFirst 'lib/armeabi-v7a/libTrezorCrypto.so'
+        pickFirst 'lib/armeabi-v7a/librust.so'
+        pickFirst 'lib/x86/libTrezorCrypto.so'
+        pickFirst 'lib/x86/librust.so'
+        pickFirst 'lib/x86_64/TrezorCrypto.so'
+        pickFirst 'lib/x86_64/librust.so'
+
+    }
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.consenlabs.android.tokencoreexample"
@@ -9,7 +20,10 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
     }
+
+
     buildTypes {
         release {
             minifyEnabled false

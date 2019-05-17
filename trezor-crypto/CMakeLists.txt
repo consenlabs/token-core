@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 add_library(TrezorCrypto
-    STATIC
+    SHARED
     src/bignum.c src/ecdsa.c src/curves.c src/secp256k1.c src/rand.c src/hmac.c src/bip32.c src/bip39.c src/pbkdf2.c src/base58.c src/base32.c
     src/address.c
     src/script.c
