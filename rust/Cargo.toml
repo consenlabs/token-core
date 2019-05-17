@@ -1,0 +1,23 @@
+[package]
+name = "rust"
+version = "0.1.0"
+authors = ["Neal Xu <imxuneal@gmail.com>"]
+edition = "2018"
+
+
+[dependencies]
+jni = { version = "0.10.2", default-features = false }
+libc = "0.2.0"
+log = "0.4.6"
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.8"
+
+[profile.release]
+lto = true
+
+[lib]
+name = "rust"
+crate-type = ["cdylib"]
+link = "TrezorCrypto"
+build = "build.rs"
