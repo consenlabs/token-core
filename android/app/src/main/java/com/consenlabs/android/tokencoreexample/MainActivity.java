@@ -8,6 +8,16 @@ import android.widget.TextView;
 
 import com.consenlabs.android.tokencore.TokenCoreWallet;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class MainActivity extends AppCompatActivity {
 
 
@@ -20,8 +30,10 @@ public class MainActivity extends AppCompatActivity {
 
   public static native String generateMnemonic(int strength);
 
+  public static native String readFile(String filePath);
+
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(final Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 //    TokenCoreWallet.initLog();
@@ -31,11 +43,28 @@ public class MainActivity extends AppCompatActivity {
     findViewById(R.id.btn_generateMnemonic).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-//        Log.d("MainActivity", tokenCoreWallet.generateMnemonicWrapper(128));
         textView.setText(generateMnemonic(128));
-//        tokenCoreWallet.generateMnemonicWrapper(128);
       }
     });
+
+    findViewById(R.id.btn_readFile).setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        try {
+          File file = new File(MainActivity.this.getFilesDir(), "rust.txt");
+          BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+          writer.write("This text is write by Java");
+          writer.close();
+          textView.setText(readFile(file.getAbsolutePath()));
+        } catch (FileNotFoundException e) {
+          e.printStackTrace();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    });
+
+
   }
 
 }
