@@ -70,3 +70,17 @@ pub extern fn Java_com_consenlabs_android_tokencoreexample_MainActivity_readFile
     std::mem::forget(output);
     output.into_inner()
 }
+
+
+#[no_mangle]
+pub unsafe extern fn generateMnemonic(strength: c_int) -> *mut c_char {
+    debug!("calling generateMnemonic");
+    let c_string = CString::new("").expect("CString::new failed");
+    let ptr = c_string.into_raw();
+    mnemonic_generate(strength, ptr);
+    let s = CString::from_raw(ptr).to_string_lossy().into_owned();
+    debug!("result: {}", s);
+    
+    // let output = env.new_string(format!("{}", s)).expect("Couldn't create java string!");
+    CString::new(format!("{}", s)).unwrap().into_raw()
+}

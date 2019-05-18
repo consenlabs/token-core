@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.consenlabs.android.tokencore.TokenCoreWallet;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -43,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     findViewById(R.id.btn_generateMnemonic).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        textView.setText(generateMnemonic(128));
+        textView.setText(TokenCore.INSTANCE.generateMnemonic(128));
       }
     });
 
@@ -65,6 +67,11 @@ public class MainActivity extends AppCompatActivity {
     });
 
 
+  }
+
+  interface TokenCore extends Library {
+    TokenCore INSTANCE = (TokenCore) Native.loadLibrary("rust", TokenCore.class);
+    public String generateMnemonic(int strength);
   }
 
 }
