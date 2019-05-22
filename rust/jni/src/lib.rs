@@ -3,7 +3,7 @@
 
 extern crate libc;
 #[macro_use] extern crate log;
-extern crate android_logger;
+// extern crate android_logger;
 
 use std::ffi::{CString, CStr};
 use jni::JNIEnv;
@@ -12,7 +12,7 @@ use jni::sys::{jstring, jint};
 use libc::{size_t, c_int};
 use std::os::raw::c_char;
 use log::Level;
-use android_logger::{Config,FilterBuilder};
+// use android_logger::{Config,FilterBuilder};
 use std::fs::File;
 use std::io::Read;
 
@@ -88,13 +88,13 @@ use std::io::Read;
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub extern fn readFile(file_path: *const c_char) -> *c_char {
+pub extern fn readFile(file_path: *const c_char) -> *const c_char {
     let c_str = unsafe { CStr::from_ptr(file_path) };
-    let file_path = match c_str.to_str().unwrap();
+    let file_path = c_str.to_str().unwrap();
     // let filePath: String = env.get_string(filePath).expect("Couldn't get java string!").into();
     let mut file = File::open(file_path).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents);
     
-    CString::new(contents).unwrap().into_raw();
+    CString::new(contents).unwrap().into_raw()
 }
