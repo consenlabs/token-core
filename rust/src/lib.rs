@@ -2,7 +2,7 @@
 #![allow(non_snake_case)]
 
 extern crate libc;
-#[macro_use] extern crate log;
+extern crate log;
 // extern crate android_logger;
 
 use std::ffi::{CString, CStr};
@@ -85,6 +85,18 @@ use std::io::Read;
 //     CString::new(format!("{}", s)).unwrap().into_raw()
 // }
 
+#[macro_use]
+extern crate rand;
+extern crate secp256k1;
+extern crate bitcoin;
+extern crate bitcoin_hashes;
+
+
+pub mod foundation;
+//mod tests;
+
+
+pub use foundation::crypto;
 
 #[no_mangle]
 #[allow(non_snake_case)]

@@ -1,5 +1,5 @@
 [package]
-name = "rust"
+name = "token_core_x"
 version = "0.1.0"
 authors = ["Neal Xu <imxuneal@gmail.com>"]
 edition = "2018"
@@ -9,6 +9,15 @@ edition = "2018"
 jni = { version = "0.10.2", default-features = false }
 libc = "0.2.0"
 log = "0.4.6"
+bitcoin = '0.18.0'
+secp256k1 = '0.12.2'
+rand = "0.6"
+bip39 = "0.6.0-beta.1"
+ring = "0.14.6"
+bitcoin_hashes = "0.3.2"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+rust-crypto = "^0.2"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.8"
@@ -17,7 +26,7 @@ android_logger = "0.8"
 lto = true
 
 [lib]
-name = "rust"
+name = "token_core_x"
 crate-type = ["staticlib", "cdylib"]
 #link = "TrezorCrypto"
 build = "build.rs"
