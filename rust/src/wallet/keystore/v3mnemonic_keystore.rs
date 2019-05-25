@@ -1,25 +1,17 @@
-use std::option;
-
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
 use secp256k1::Secp256k1;
 use bitcoin::PrivateKey;
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
-//use bitcoin::util::
 use bip39::{Mnemonic, Language};
 use std::str::FromStr;
 use bitcoin_hashes::hex::{ToHex, FromHex};
-use serde_json::Value;
-use serde::{Deserialize, Serialize};
-use ring::{digest, pbkdf2};
-use std::num::NonZeroU32;
-use crypto::sha3::Sha3;
-use crypto::digest::Digest;
-use crate::foundation::utils;
+
+
 use crate::foundation::crypto::encpair::EncPair;
 use crate::foundation::crypto::crypto::{Crypto, Pbkdf2Params};
 use crate::foundation::utils::token_error::TokenError;
-use std::fmt::Error;
+
 use uuid::Uuid;
 
 
@@ -57,7 +49,7 @@ impl V3MnemonicKeystore {
              let seed = bip39::Seed::new(&mnemonic, &"");
              println!("hex: {}", seed.to_hex());
              let s = Secp256k1::new();
-             let mut sk = ExtendedPrivKey::new_master(Network::Bitcoin, mnemonic.entropy()).unwrap();
+             let sk = ExtendedPrivKey::new_master(Network::Bitcoin, mnemonic.entropy()).unwrap();
 
              let path = DerivationPath::from_str(path).unwrap();
              let main_address_pk = sk.derive_priv(&s, &path).unwrap();
@@ -72,7 +64,6 @@ impl V3MnemonicKeystore {
         let pub_key = pk.public_key(&s);
         // Generate pay-to-pubkey-hash address
         let address = Address::p2pkh(&pub_key, Network::Bitcoin);
-        println!("{}", address.to_string());
         return address.to_string();
     }
 }
@@ -86,4 +77,26 @@ fn generate_address_from_wif() {
     println!("{}", address.to_string());
 }
 
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    static PASSWORD: &'static str = "Insecure Pa55w0rd";
+    static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+    static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
+
+
+
+    #[test]
+    pub fn new_v3_mnemonic_keystore() {
+        let keystore = V3MnemonicKeystore::new(&PASSWORD, &MNEMONIC, &ETHEREUM_PATH);
+        assert!(keystore.is_ok());
+
+        let keystore = keystore.unwrap();
+        assert_eq!("1E1uiULERcpH92FZxonhpGuzaT777yh6ee", keystore.address);
+
+    }
+}
 

@@ -1,6 +1,5 @@
 pub mod ctr {
     use crypto::buffer::{RefReadBuffer, RefWriteBuffer};
-    use bitcoin_hashes::hex::ToHex;
     use crypto::{aes, aes::KeySize, symmetriccipher::{Decryptor, Encryptor}};
 
     pub fn encrypt_nopadding(data: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {

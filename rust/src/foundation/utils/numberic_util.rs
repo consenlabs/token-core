@@ -1,4 +1,4 @@
-use rand::{thread_rng, Rng, RngCore};
+use rand::{thread_rng, RngCore};
 use std::vec;
 
 pub fn random_iv(len: usize) -> Vec<u8>  {
