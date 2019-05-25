@@ -6,9 +6,6 @@ extern crate log;
 // extern crate android_logger;
 
 use std::ffi::{CString, CStr};
-use jni::JNIEnv;
-use jni::objects::{JObject, JString, JClass};
-use jni::sys::{jstring, jint};
 use libc::{size_t, c_int};
 use std::os::raw::c_char;
 use log::Level;
@@ -85,18 +82,19 @@ use std::io::Read;
 //     CString::new(format!("{}", s)).unwrap().into_raw()
 // }
 
-#[macro_use]
 extern crate rand;
 extern crate secp256k1;
 extern crate bitcoin;
 extern crate bitcoin_hashes;
+extern crate uuid;
 
 
 pub mod foundation;
-//mod tests;
-
+pub mod wallet;
 
 pub use foundation::crypto;
+pub use wallet::keystore;
+
 
 #[no_mangle]
 #[allow(non_snake_case)]

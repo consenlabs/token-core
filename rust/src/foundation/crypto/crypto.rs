@@ -1,8 +1,5 @@
-use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
-use secp256k1::Secp256k1;
 use bitcoin::PrivateKey;
-use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
 use bip39::{Mnemonic, Language};
 use std::str::FromStr;
 use bitcoin_hashes::hex::{ToHex, FromHex};
@@ -16,14 +13,11 @@ use crypto::{symmetriccipher, buffer, aes, blockmodes};
 use crypto::buffer::{ReadBuffer, WriteBuffer, BufferResult, RefReadBuffer, RefWriteBuffer};
 use crypto::aes::KeySize;
 use crypto::symmetriccipher::Decryptor;
-use super::super::utils::numberic_util;
 
-fn generate_mac(derived_key: &[u8], ciphertext: &[u8], out: &mut [u8; 32]) {
-    let result = [&derived_key[16..32], ciphertext].concat();
-    let mut keccak256 = Sha3::keccak256();
-    keccak256.input(&result);
-    keccak256.result(out);
-}
+use super::super::utils::numberic_util;
+use super::encpair::EncPair;
+use crate::foundation::utils::token_error::TokenError;
+
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
@@ -31,20 +25,15 @@ struct CipherParams {
     iv: String
 }
 
-trait KdfParams {
+pub trait KdfParams {
     fn validate();
     fn generate_derived_key(&self, password: &[u8], out: &mut [u8]);
 }
 
-#[derive(Serialize, Deserialize)]
-struct CommonParams {
-    dklen: u32,
-    salt: String,
-}
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-struct Pbkdf2Params {
+pub struct Pbkdf2Params {
     c: u32,
     prf: &'static str,
     dklen: u32,
@@ -84,7 +73,7 @@ impl KdfParams for Pbkdf2Params {
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-struct Crypto<T: KdfParams> {
+pub struct Crypto<T: KdfParams> {
     cipher: &'static str,
     cipherparams: CipherParams,
     ciphertext: String,
@@ -96,7 +85,8 @@ struct Crypto<T: KdfParams> {
 impl Crypto<Pbkdf2Params> {
     pub fn new(password: &str, origin: &[u8]) -> Crypto<Pbkdf2Params> {
         let mut param = Pbkdf2Params::default();
-        let iv = numberic_util::random_iv();
+        param.salt = numberic_util::random_iv(32).to_hex();
+        let iv = numberic_util::random_iv(16);
 
 
         let mut crypto = Crypto {
@@ -111,36 +101,77 @@ impl Crypto<Pbkdf2Params> {
         let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
         crypto.kdfparams.generate_derived_key(password.as_bytes(), &mut derived_key);
 
-        let ciphertext = crypto.encrypt(password, &derived_key[0..16]);
+        let ciphertext = crypto.encrypt(password, origin);
         crypto.ciphertext = ciphertext.to_hex();
         let mut mac = [0u8; 32];
-        generate_mac(&derived_key, &ciphertext, &mut mac);
+        Self::generate_mac(&derived_key, &ciphertext, &mut mac);
         crypto.mac = mac.to_hex();
         return crypto;
     }
 
-    fn decrypt(&self, password: &str) -> Vec<u8> {
-        let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
-        self.kdfparams.generate_derived_key(password.as_bytes(), &mut derived_key);
-        let mut mac = [0u8; 32];
-        let ciphertext_bytes: Vec<u8> = FromHex::from_hex(&self.ciphertext).unwrap();
-        generate_mac(&derived_key, &ciphertext_bytes, &mut mac);
-        println!("mac: {}", mac.to_hex());
-        let key = &derived_key[0..16];
+    pub fn decrypt(&self, password: &str) -> Result<Vec<u8>, TokenError> {
+        let encrypted: Vec<u8> = FromHex::from_hex(&self.ciphertext).unwrap();
         let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).unwrap();
-        let ret = super::aes::ctr::decrypt_nopadding(&ciphertext_bytes, key, &iv);
-        println!("decrypted result: {:?}", ret);
-        return ret;
+        return self.decrypt_data(password, &encrypted, &iv);
     }
 
 
-    pub fn encrypt(&self, password: &str, origin: &[u8]) -> Vec<u8> {
+    fn encrypt(&self, password: &str, origin: &[u8]) -> Vec<u8> {
         let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
         self.kdfparams.generate_derived_key(password.as_bytes(), &mut derived_key);
         let key = &derived_key[0..16];
         let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).unwrap();
         return super::aes::ctr::encrypt_nopadding(origin, key, &iv);
 
+    }
+
+    pub fn derive_enc_pair(&self, password: &str, origin: &[u8]) -> EncPair {
+        let iv = numberic_util::random_iv(16);
+        let encrypted_data = self.encrypt_data(password, origin, &iv);
+        return EncPair {
+            enc_str: encrypted_data.to_hex(),
+            nonce: iv.to_hex()
+        }
+    }
+
+    pub fn decrypt_enc_pair(&self, password: &str, enc_pair: &EncPair) -> Result<Vec<u8>, TokenError> {
+        let encrypted : Vec<u8>= FromHex::from_hex(&enc_pair.enc_str).unwrap();
+        let iv: Vec<u8> = FromHex::from_hex(&enc_pair.nonce).unwrap();
+        return self.decrypt_data(password, &encrypted, &iv);
+    }
+
+    fn encrypt_data(&self, password: &str, origin: &[u8], iv: &[u8]) -> Vec<u8> {
+        let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
+        self.kdfparams.generate_derived_key(password.as_bytes(), &mut derived_key);
+        let key = &derived_key[0..16];
+//        let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).unwrap();
+        return super::aes::ctr::encrypt_nopadding(origin, key, &iv);
+    }
+
+    fn decrypt_data(&self, password: &str, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>, TokenError> {
+        let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
+        self.kdfparams.generate_derived_key(password.as_bytes(), &mut derived_key);
+
+        let mut mac = [0u8; 32];
+        Self::generate_mac(&derived_key, encrypted, &mut mac);
+        println!("mac: {}", mac.to_hex());
+        // todo return error when mac not match
+//        if (self.mac != mac.to_hex()) {
+//            return Error::fmt("Invalid Password");
+//        }
+
+        let key = &derived_key[0..16];
+        let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).unwrap();
+        let ret = super::aes::ctr::decrypt_nopadding(encrypted, key, &iv);
+        println!("decrypted result: {:?}", ret);
+        return Ok(ret);
+    }
+
+    fn generate_mac(derived_key: &[u8], ciphertext: &[u8], out: &mut [u8; 32]) {
+        let result = [&derived_key[16..32], ciphertext].concat();
+        let mut keccak256 = Sha3::keccak256();
+        keccak256.input(&result);
+        keccak256.result(out);
     }
 }
 

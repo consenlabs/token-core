@@ -1,7 +1,8 @@
 use rand::{thread_rng, Rng, RngCore};
+use std::vec;
 
-pub fn random_iv() -> [u8; 16]  {
-    let mut v = [0u8; 16];
+pub fn random_iv(len: usize) -> Vec<u8>  {
+    let mut v = vec![0u8; len];
     thread_rng().fill_bytes(&mut v);
     return v
 }
