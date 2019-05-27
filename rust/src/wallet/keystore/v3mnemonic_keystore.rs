@@ -14,9 +14,6 @@ use crate::foundation::utils::token_error::TokenError;
 
 use uuid::Uuid;
 
-
-
-
 pub struct V3MnemonicKeystore {
     id: String,
     version: i32,
@@ -27,7 +24,7 @@ pub struct V3MnemonicKeystore {
 }
 
 impl V3MnemonicKeystore {
-    fn new(password: &str, mnemonic: &str, path: &str) -> Result<V3MnemonicKeystore, TokenError> {
+    pub fn new(password: &str, mnemonic: &str, path: &str) -> Result<V3MnemonicKeystore, TokenError> {
         let prv_key = Self::generate_prv_key_from_mnemonic(mnemonic, path)?;
         let crypto : Crypto<Pbkdf2Params> = Crypto::new(password, &prv_key.to_bytes());
         let enc_mnemonic = crypto.derive_enc_pair(password, mnemonic.as_bytes());
@@ -36,9 +33,9 @@ impl V3MnemonicKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 3,
             address: Self::address_from_private_key(&prv_key),
-            crypto: crypto,
+            crypto,
             mnemonic_path: String::from(path),
-            enc_mnemonic: enc_mnemonic
+            enc_mnemonic
         };
         return Ok(keystore);
 
@@ -66,6 +63,12 @@ impl V3MnemonicKeystore {
         let address = Address::p2pkh(&pub_key, Network::Bitcoin);
         return address.to_string();
     }
+
+    pub fn export_private_key(&self, password: &str) -> Result<String, TokenError> {
+        let pk_bytes = self.crypto.decrypt(password)?;
+        let pk = pk_bytes.to_hex();
+        return Ok(pk);
+    }
 }
 
 fn generate_address_from_wif() {
@@ -92,11 +95,13 @@ mod tests {
     #[test]
     pub fn new_v3_mnemonic_keystore() {
         let keystore = V3MnemonicKeystore::new(&PASSWORD, &MNEMONIC, &ETHEREUM_PATH);
+
         assert!(keystore.is_ok());
 
         let keystore = keystore.unwrap();
         assert_eq!("1E1uiULERcpH92FZxonhpGuzaT777yh6ee", keystore.address);
 
     }
+    
 }
 
