@@ -3,22 +3,35 @@ name = "token_core_x"
 version = "0.1.0"
 authors = ["Neal Xu <imxuneal@gmail.com>"]
 edition = "2018"
-
+autobenches = false
 
 [dependencies]
-jni = { version = "0.10.2", default-features = false }
 libc = "0.2.0"
 log = "0.4.6"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+uuid = { version = "0.7", features = ["serde", "v4"] }
 bitcoin = '0.18.0'
 secp256k1 = '0.12.2'
 rand = "0.6"
 tiny-bip39 = "0.6.0"
-ring = "0.14.6"
+tiny-keccak = "1.4"
+scrypt = { version = "0.2", default-features = false }
+ripemd160 = "0.8.0"
+sha2 = "0.8.0"
+digest = "0.8"
+hmac = "0.7"
+aes = "0.3.2"
+aes-ctr = "0.3.0"
+block-modes = "0.3.3"
+pbkdf2 = "0.3.0"
+memzero = "0.1"
 bitcoin_hashes = "0.3.2"
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-rust-crypto = "^0.2"
-uuid = { version = "0.7", features = ["serde", "v4"] }
+crypto-mac = "0.7.0"
+
+[dev-dependencies]
+criterion = "0.2"
+hex-literal = "0.2"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.8"
