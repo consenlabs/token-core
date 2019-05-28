@@ -33,7 +33,7 @@ mod tests {
 //        btc_hash_singer()
         let sign_result = btc_hash_singer(&message, PASSWORD, &w);
         assert!(sign_result.is_ok());
-        assert_eq!("3045022100c2289b6343e703743f82bbb1971436a555a2ae46e2d19262e9e779e1a67afa3c022010cb3b1e35888d0bf226cb4f31a82beffa18a41ffe5d02ea85e12ff462d5161100", sign_result.unwrap());
+        assert_eq!("304402203577b176ec64e702e4ee61bd69e9a01c3a526d46665e75bad2830966855fa854022001b982bb738a46d8bc426a5319ea264e16f33893864de50c338a11fc5f1e9b3b0000", sign_result.unwrap());
 
     }
 }

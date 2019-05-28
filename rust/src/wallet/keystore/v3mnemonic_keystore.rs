@@ -46,7 +46,7 @@ impl V3MnemonicKeystore {
              let seed = bip39::Seed::new(&mnemonic, &"");
              println!("hex: {}", seed.to_hex());
              let s = Secp256k1::new();
-             let sk = ExtendedPrivKey::new_master(Network::Bitcoin, mnemonic.entropy()).unwrap();
+             let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes()).unwrap();
 
              let path = DerivationPath::from_str(path).unwrap();
              let main_address_pk = sk.derive_priv(&s, &path).unwrap();
@@ -99,9 +99,9 @@ mod tests {
         assert!(keystore.is_ok());
 
         let keystore = keystore.unwrap();
-        assert_eq!("1E1uiULERcpH92FZxonhpGuzaT777yh6ee", keystore.address);
+        assert_eq!("16Hp1Ga779iaTe1TxUFDEBqNCGvfh3EHDZ", keystore.address);
 
     }
-    
+
 }
 
