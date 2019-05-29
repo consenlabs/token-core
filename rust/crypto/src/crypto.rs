@@ -1,15 +1,24 @@
 use bitcoin_hashes::hex::{ToHex, FromHex};
 use serde::{Deserialize, Serialize};
 
-use super::super::utils::numberic_util;
-use super::encpair::EncPair;
-use crate::foundation::utils::token_error::TokenError;
+//use
+//use super::super::utils::numberic_util;
+//use super::encpair::EncPair;
+//use crate::foundation::utils::token_error::TokenError;
+use crate::aes;
+use crate::numberic_util;
+use crate::token_error::TokenError;
 
 const CREDENTIAL_LEN: usize = 64usize;
 
 //
 pub type Credential = [u8; CREDENTIAL_LEN];
 
+
+pub struct EncPair {
+    pub enc_str: String,
+    pub nonce: String
+}
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]

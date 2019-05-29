@@ -7,7 +7,22 @@
       <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/chain/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/chain/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/chain/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/chain/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/tcx-lib/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tcx-lib/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tcx-lib/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/tcx-lib/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crypto/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/chain/target" />
+      <excludeFolder url="file://$MODULE_DIR$/crypto/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
+      <excludeFolder url="file://$MODULE_DIR$/tcx-lib/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
