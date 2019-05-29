@@ -1,5 +1,5 @@
-use crate::wallet::keystore::v3mnemonic_keystore::V3MnemonicKeystore;
-use crate::foundation::utils::token_error::TokenError;
+use crate::v3mnemonic_keystore::V3MnemonicKeystore;
+use tcx_crypto::TokenError;
 use bitcoin::PrivateKey;
 use secp256k1::{Secp256k1, SecretKey, Message};
 use std::str::FromStr;
@@ -16,8 +16,8 @@ pub fn btc_hash_singer(hash: &[u8], password: &str, wallet: &V3MnemonicKeystore)
 }
 
 mod tests {
-    use crate::wallet::keystore::v3mnemonic_keystore::V3MnemonicKeystore;
-    use crate::wallet::transaction::signer::btc_hash_singer;
+    use crate::v3mnemonic_keystore::V3MnemonicKeystore;
+    use crate::signer::btc_hash_singer;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";

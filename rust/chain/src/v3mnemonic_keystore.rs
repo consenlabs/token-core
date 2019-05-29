@@ -8,10 +8,6 @@ use std::str::FromStr;
 use bitcoin_hashes::hex::{ToHex, FromHex};
 
 use tcx_crypto::{Crypto, Pbkdf2Params, EncPair, TokenError};
-//use crate::foundation::crypto::encpair::EncPair;
-//use crate::foundation::crypto::crypto::{Crypto, Pbkdf2Params};
-//use crate::foundation::utils::token_error::TokenError;
-
 use uuid::Uuid;
 
 pub struct V3MnemonicKeystore {
