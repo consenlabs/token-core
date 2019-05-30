@@ -14,7 +14,7 @@
 		709A61FF2294ED38007F11E6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 709A61FD2294ED38007F11E6 /* LaunchScreen.storyboard */; };
 		709A620A2294ED38007F11E6 /* TokenCoreXExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709A62092294ED38007F11E6 /* TokenCoreXExampleTests.swift */; };
 		709A62152294ED38007F11E6 /* TokenCoreXExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709A62142294ED38007F11E6 /* TokenCoreXExampleUITests.swift */; };
-		709A62262294EDAA007F11E6 /* librust.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 709A62252294EDAA007F11E6 /* librust.a */; };
+		70AFBB61229FC1E900A32248 /* libtcx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 70AFBB60229FC1E900A32248 /* libtcx.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +49,7 @@
 		709A62142294ED38007F11E6 /* TokenCoreXExampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenCoreXExampleUITests.swift; sourceTree = "<group>"; };
 		709A62162294ED38007F11E6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		709A62252294EDAA007F11E6 /* librust.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librust.a; path = TokenCoreX/Libs/librust.a; sourceTree = "<group>"; };
+		70AFBB60229FC1E900A32248 /* libtcx.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libtcx.a; path = TokenCoreX/Libs/libtcx.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,7 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				709A62262294EDAA007F11E6 /* librust.a in Frameworks */,
+				70AFBB61229FC1E900A32248 /* libtcx.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -132,6 +133,7 @@
 		709A62242294EDAA007F11E6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				70AFBB60229FC1E900A32248 /* libtcx.a */,
 				709A62252294EDAA007F11E6 /* librust.a */,
 			);
 			name = Frameworks;
@@ -458,7 +460,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = im.token.examples.TokenCoreXExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/TokenCoreX/Include/rust.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/TokenCoreX/Include/tcx.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -482,7 +484,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = im.token.examples.TokenCoreXExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/TokenCoreX/Include/rust.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/TokenCoreX/Include/tcx.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

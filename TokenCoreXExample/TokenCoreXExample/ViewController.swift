@@ -18,8 +18,12 @@ class ViewController: UIViewController {
       let fileURL = dir.appendingPathComponent("rust_file.txt")
       try! "This text is write by swift".write(to: fileURL, atomically: true, encoding: .utf8)
       let fullFilePath = fileURL.absoluteString.substring(from: String.Index(encodedOffset: "file://".count))
-      let cPtr = (try! readFile(fullFilePath))!
-      print(String(cString: cPtr))
+//      let cPtr = (try! read_file(fullFilePath))!
+//      defer {
+//        try! free_const_string(cPtr)
+//      }
+//      print(String(cString: cPtr))
+      print(readFileByRust(filePath: fullFilePath))
     }
   }
   
@@ -29,6 +33,13 @@ class ViewController: UIViewController {
 //    return str
 //  }
 
+  func readFileByRust(filePath path: String) -> String {
+    let cPtr = (try! read_file(path))!
+    defer {
+      try! free_const_string(cPtr)
+    }
+    return String(cString: cPtr)
+  }
 
 }
 

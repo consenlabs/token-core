@@ -7,12 +7,12 @@
 # cmake --build . --config Release
 
 
-pushd ../rust/jni
-cbindgen src/lib.rs -l c > rust.h
+pushd ../rust/tcx-lib
+cbindgen src/lib.rs -l c > tcx.h
 cargo lipo --release
 
 mkdir -p ../../TokenCoreXExample/TokenCoreX/Include
 mkdir -p ../../TokenCoreXExample/TokenCoreX/Libs
-cp rust.h ../../TokenCoreXExample/TokenCoreX/Include
-cp target/universal/release/librust.a ../../TokenCoreXExample/TokenCoreX/Libs
+cp tcx.h ../../TokenCoreXExample/TokenCoreX/Include
+cp ../target/universal/release/libtcx.a ../../TokenCoreXExample/TokenCoreX/Libs
 popd
