@@ -8,7 +8,7 @@
 
 
 pushd ../rust/tcx-lib
-cbindgen src/lib.rs -l c > tcx.h
+RUST_BACKTRACE=1 cbindgen src/lib.rs -l c > tcx.h
 cargo lipo --release
 
 mkdir -p ../../TokenCoreXExample/TokenCoreX/Include

@@ -5,6 +5,10 @@ use log::Level;
 use std::fs::File;
 use std::io::Read;
 use utils::Error;
+use utils::Result;
+use utils::LAST_BACKTRACE;
+use utils::LAST_ERROR;
+use failure::Fail;
 
 // #[link(name = "TrezorCrypto")]
 // extern {
@@ -45,13 +49,41 @@ pub extern fn free_const_string(s: *const c_char) {
     };
 }
 
-
-ffi_fn! {
-    /// Creates a symcache from bytes
-    unsafe fn read_file_error(bytes: *const u8, len: usize) -> Result<*const c_char> {
-        Err(Error::Msg { msg: String::from("read file error")})
-    }
+#[no_mangle]
+pub unsafe extern "C" fn read_file_error() -> *const c_char {
+    crate::utils::landingpad(||
+        {
+            Err(Error::Msg{msg:
+            String::from("read file error"),})
+        })
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn get_last_err_message() -> *const c_char{
+    use std::fmt::Write;
+    use std::error::Error;
+    LAST_ERROR.with(|e| {
+        if let Some(ref err) = *e.borrow() {
+            let mut msg = err.to_string();
+            let mut cause = err.cause();
+            while let Some(the_cause) = cause {
+                write!(&mut msg, "\n  caused by: {}", the_cause).ok();
+                cause = the_cause.cause();
+            }
+            return CString::new(msg).unwrap().into_raw();
+        } else {
+//            Default::default()
+            return CString::new("no error").unwrap().into_raw();
+        }
+    })
+}
+//
+//ffi_fn! {
+//    /// Creates a symcache from bytes
+//    unsafe fn read_file_error() -> Result<*const c_char> {
+//        Err(Error::Msg { msg: String::from("read file error")})
+//    }
+//}
 
 
 #[cfg(test)]

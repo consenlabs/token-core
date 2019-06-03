@@ -23,7 +23,7 @@ class ViewController: UIViewController {
 //        try! free_const_string(cPtr)
 //      }
 //      print(String(cString: cPtr))
-      print(readFileByRust(filePath: fullFilePath))
+      print(readFileByRustThrow(filePath: fullFilePath))
     }
   }
   
@@ -39,6 +39,27 @@ class ViewController: UIViewController {
       try! free_const_string(cPtr)
     }
     return String(cString: cPtr)
+  }
+  
+  func readFileByRustThrow(filePath path: String) -> String {
+    do {
+      if let cPtr = (try read_file_error()) {
+        defer {
+          try! free_const_string(cPtr)
+        }
+        return String(cString: cPtr)
+      } else {
+        let cErrPtr = (try get_last_err_message())!
+        defer {
+          try! free_const_string(cErrPtr)
+        }
+        return String(cString: cErrPtr)
+      }
+    } catch {
+      return "error"
+    }
+    return "not value return"
+    
   }
 
 }
