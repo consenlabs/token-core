@@ -19,6 +19,11 @@
       <sourceFolder url="file://$MODULE_DIR$/crypto/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crypto/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/crypto/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/bitcoin-cash/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/bitcoin-cash/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/bitcoin-cash/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/bitcoin-cash/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/bitcoin-cash/target" />
       <excludeFolder url="file://$MODULE_DIR$/chain/target" />
       <excludeFolder url="file://$MODULE_DIR$/crypto/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />

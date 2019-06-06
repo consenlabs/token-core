@@ -14,13 +14,14 @@ const CREDENTIAL_LEN: usize = 64usize;
 //
 pub type Credential = [u8; CREDENTIAL_LEN];
 
-
+#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct EncPair {
     pub enc_str: String,
     pub nonce: String
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
 struct CipherParams {
     iv: String
@@ -32,11 +33,11 @@ pub trait KdfParams {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
 pub struct Pbkdf2Params {
     c: u32,
-    prf: &'static str,
+    prf: String,
     dklen: u32,
     salt: String,
 }
@@ -45,7 +46,7 @@ impl Pbkdf2Params {
     pub fn default() -> Pbkdf2Params {
         return Pbkdf2Params {
             c: 10240,
-            prf: "hmac-sha256",
+            prf: "hmac-sha256".to_owned(),
             dklen: 32,
             salt: String::from(""),
         };
@@ -65,13 +66,13 @@ impl KdfParams for Pbkdf2Params {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
 pub struct Crypto<T: KdfParams> {
-    cipher: &'static str,
+    cipher: String,
     cipherparams: CipherParams,
     ciphertext: String,
-    kdf: &'static str,
+    kdf: String,
     kdfparams: T,
     mac: String,
 }
@@ -84,10 +85,10 @@ impl Crypto<Pbkdf2Params> {
 
 
         let mut crypto = Crypto {
-            cipher: "aes-128-ctr",
+            cipher: "aes-128-ctr".to_owned(),
             cipherparams: CipherParams { iv: iv.to_hex() },
             ciphertext: String::from(""),
-            kdf: "pbkdf2",
+            kdf: "pbkdf2".to_owned(),
             kdfparams: param,
             mac: String::from(""),
         };

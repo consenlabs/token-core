@@ -67,13 +67,15 @@ impl V3MnemonicKeystore {
     }
 }
 
-fn generate_address_from_wif() {
+fn generate_address_from_wif(wif : &str) -> String {
     let s = Secp256k1::new();
-    let prv_key = PrivateKey::from_wif("cT4fTJyLd5RmSZFHnkGmVCzXDKuJLbyTt7cy77ghTTCagzNdPH1j").unwrap();
+    let prv_key = PrivateKey::from_wif(wif).unwrap();
     let pub_key = prv_key.public_key(&s);
     // Generate pay-to-pubkey-hash address
-    let address = Address::p2pkh(&pub_key, Network::Testnet);
+    let address = Address::p2pkh(&pub_key, Network::Bitcoin);
+
     println!("{}", address.to_string());
+    return address.to_string();
 }
 
 
@@ -96,6 +98,14 @@ mod tests {
 
         let keystore = keystore.unwrap();
         assert_eq!("16Hp1Ga779iaTe1TxUFDEBqNCGvfh3EHDZ", keystore.address);
+
+
+    }
+
+    #[test]
+    pub fn bch_address() {
+        let address = generate_address_from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy");
+        assert_eq!("17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV", address);
 
     }
 

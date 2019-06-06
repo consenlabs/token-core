@@ -16,6 +16,7 @@ tcx-lib = { path = "tcx-lib" }
 members = [
     "crypto",
     "chain",
+    "bitcoin-cash",
     "tcx-lib",
 ]
 
