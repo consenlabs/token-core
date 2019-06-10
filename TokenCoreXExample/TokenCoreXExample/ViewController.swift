@@ -23,7 +23,8 @@ class ViewController: UIViewController {
 //        try! free_const_string(cPtr)
 //      }
 //      print(String(cString: cPtr))
-      print(readFileByRustThrow(filePath: fullFilePath))
+//      print(readFileByRustThrow(filePath: fullFilePath))
+      print(importBchWalletFromMnemonic("inject kidney empty canal shadow pact comfort wife crush horse wife sketch", encryptedBy: "imToken1"))
     }
   }
   
@@ -40,6 +41,15 @@ class ViewController: UIViewController {
     }
     return String(cString: cPtr)
   }
+  
+  func importBchWalletFromMnemonic(_ mnemonic: String, encryptedBy password: String) -> String {
+    let cPtr = (try! import_bch_wallet_from_mnemonic(mnemonic, password))!
+    defer {
+      try! free_const_string(cPtr)
+    }
+    return String(cString: cPtr)
+  }
+  
   
   func readFileByRustThrow(filePath path: String) -> String {
     do {

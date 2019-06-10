@@ -10,6 +10,8 @@ use utils::LAST_BACKTRACE;
 use utils::LAST_ERROR;
 use failure::Fail;
 
+use tcx_bch::hd_mnemonic_keystore::{HdMnemonicKeystore, Metadata};
+
 // #[link(name = "TrezorCrypto")]
 // extern {
 //     fn mnemonic_generate(strength: c_int, mnemonic: *mut c_char) -> c_int;
@@ -56,6 +58,18 @@ pub unsafe extern "C" fn read_file_error() -> *const c_char {
             Err(Error::Msg{msg:
             String::from("read file error"),})
         })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn import_bch_wallet_from_mnemonic(mnemonic: *const c_char, password: *const c_char) -> *const c_char {
+    let mnemonic_c_str = unsafe { CStr::from_ptr(mnemonic) };
+    let mnemonic = mnemonic_c_str.to_str().unwrap();
+    let password_c_str = unsafe { CStr::from_ptr(password)};
+    let password = password_c_str.to_str().unwrap();
+    let meta = Metadata::default();
+    let keystore = HdMnemonicKeystore::new(meta, password, mnemonic, "m/44'/0'/0'").unwrap();
+    let json = keystore.export_json();
+    CString::new(json).unwrap().into_raw()
 }
 
 #[no_mangle]

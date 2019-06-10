@@ -16,6 +16,7 @@ pub type Credential = [u8; CREDENTIAL_LEN];
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EncPair {
     pub enc_str: String,
     pub nonce: String
@@ -23,6 +24,7 @@ pub struct EncPair {
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct CipherParams {
     iv: String
 }
@@ -35,6 +37,7 @@ pub trait KdfParams {
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Pbkdf2Params {
     c: u32,
     prf: String,
@@ -68,6 +71,7 @@ impl KdfParams for Pbkdf2Params {
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Crypto<T: KdfParams> {
     cipher: String,
     cipherparams: CipherParams,

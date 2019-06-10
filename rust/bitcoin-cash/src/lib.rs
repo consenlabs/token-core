@@ -2,6 +2,7 @@
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
 use secp256k1::{Secp256k1, Message};
+
 use bitcoin::{PrivateKey, TxIn, OutPoint, Script, PublicKey, TxOut, Transaction, SigHashType};
 use bitcoin_hashes::sha256d::Hash as Hash256;
 use bitcoin::blockdata::script::Builder;
@@ -16,10 +17,12 @@ use bitcoin::consensus::encode::serialize_hex;
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
 use bip39::{Mnemonic, Language};
 
-mod bip143_with_forkid;
-mod hd_mnemonic_keystore;
+pub mod errors;
+pub mod bip143_with_forkid;
+pub mod hd_mnemonic_keystore;
 use bip143_with_forkid::SighashComponentsWithForkId;
 use core::result;
+//use secp256k1::Secp256k1;
 
 #[macro_use] extern crate failure;
 
@@ -27,11 +30,9 @@ use core::result;
 #[macro_use]
 extern crate hex_literal;
 
-mod errors;
-
 
 fn generate_address_from_wif(wif : &str) -> String {
-    let s = Secp256k1::new();
+    let s: Secp256k1<_> = Secp256k1::new();
     let prv_key = PrivateKey::from_wif(wif).unwrap();
     let pub_key = prv_key.public_key(&s);
     // Generate pay-to-pubkey-hash address

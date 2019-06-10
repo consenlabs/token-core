@@ -1,5 +1,5 @@
 [package]
-name = "bitcoin-cash"
+name = "tcx-bch"
 version = "0.1.0"
 authors = ["Neal Xu <imxuneal@gmail.com>"]
 edition = "2018"
@@ -9,7 +9,7 @@ tcx-crypto = { path = "../crypto" }
 bch_addr = "0.1.0"
 hex-literal = "0.1.4"
 bitcoin = { path = "../../../rust-bitcoin"}
-secp256k1 = '0.12.2'
+secp256k1 = { path = "../../../rust-secp256k1"}
 tiny-bip39 = "0.6.0"
 bitcoin_hashes = "0.3.2"
 serde = { version = "1.0", features = ["derive"] }

@@ -15,7 +15,8 @@ use crate::errors::{Error, Result};
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
-struct Metadata {
+#[serde(rename_all = "camelCase")]
+pub struct Metadata {
     name: String,
     password_hint: String,
     chain_type: String,
@@ -46,7 +47,8 @@ impl Default for Metadata {
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
-struct HdMnemonicKeystore {
+#[serde(rename_all = "camelCase")]
+pub struct HdMnemonicKeystore {
     version: i32,
     id: String,
     address: String,
