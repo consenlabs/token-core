@@ -1,8 +1,10 @@
 pub mod signer;
-pub mod v3mnemonic_keystore;
+pub mod keystore;
 
-pub use v3mnemonic_keystore::V3MnemonicKeystore;
+pub use keystore::V3MnemonicKeystore;
 
+pub use signer::{TxSignResult, TransactionSinger};
+pub use keystore::{Metadata, Keystore, Source};
 
 #[cfg(test)]
 mod tests {

@@ -1,8 +1,9 @@
-use crate::v3mnemonic_keystore::V3MnemonicKeystore;
+use crate::keystore::V3MnemonicKeystore;
 use tcx_crypto::TokenError;
 use bitcoin::PrivateKey;
 use secp256k1::{Secp256k1, SecretKey, Message};
 use std::str::FromStr;
+use crate::keystore::Keystore;
 
 pub fn btc_hash_singer(hash: &[u8], password: &str, wallet: &V3MnemonicKeystore) -> Result<String, TokenError> {
     let pk_str = wallet.export_private_key(password)?;
@@ -16,7 +17,7 @@ pub fn btc_hash_singer(hash: &[u8], password: &str, wallet: &V3MnemonicKeystore)
 }
 
 mod tests {
-    use crate::v3mnemonic_keystore::V3MnemonicKeystore;
+    use crate::keystore::V3MnemonicKeystore;
     use crate::signer::btc_hash_singer;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
@@ -36,4 +37,17 @@ mod tests {
         assert_eq!("304402203577b176ec64e702e4ee61bd69e9a01c3a526d46665e75bad2830966855fa854022001b982bb738a46d8bc426a5319ea264e16f33893864de50c338a11fc5f1e9b3b0000", sign_result.unwrap());
 
     }
+
+}
+
+
+pub struct TxSignResult {
+    pub signature: String,
+    pub tx_hash: String,
+    pub wtx_id: String
+}
+
+
+pub trait TransactionSinger {
+    fn sign_transaction(&self, chain_id: &str, password: &str, wallet: &Keystore) -> TxSignResult;
 }

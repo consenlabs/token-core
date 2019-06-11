@@ -6,9 +6,60 @@ use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
 use bip39::{Mnemonic, Language};
 use std::str::FromStr;
 use bitcoin_hashes::hex::{ToHex, FromHex};
-
+use serde::{Deserialize, Serialize};
 use tcx_crypto::{Crypto, Pbkdf2Params, EncPair, TokenError};
 use uuid::Uuid;
+
+#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Source {
+    Wif,
+    Private,
+    Keystore,
+    Mnemonic,
+    NewIdentity,
+    RecoveredIdentity
+}
+
+#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Metadata {
+    pub name: String,
+    pub password_hint: String,
+    pub chain_type: String,
+    pub timestamp: i64,
+    pub network: String,
+    pub source: Source,
+    pub mode: String,
+    pub wallet_type: String,
+    pub seg_wit: String,
+}
+
+impl Default for Metadata {
+    fn default() -> Self {
+        Metadata {
+            name: String::from("BCH"),
+            password_hint: String::new(),
+            chain_type: String::from("BCH"),
+            timestamp: 0,
+            network: String::from("MAINNET"),
+            source: Source::Mnemonic,
+            mode: String::from("NORMAL"),
+            wallet_type: String::from("HD"),
+            seg_wit: String::from("NONE"),
+        }
+    }
+}
+
+
+
+pub trait Keystore {
+    fn get_metadata(&self) -> Metadata;
+    fn get_address(&self) -> String;
+    fn decrypt_cipher_text(&self, password: &str) -> String;
+}
 
 pub struct V3MnemonicKeystore {
     id: String,
@@ -99,7 +150,7 @@ mod tests {
         let keystore = keystore.unwrap();
         assert_eq!("16Hp1Ga779iaTe1TxUFDEBqNCGvfh3EHDZ", keystore.address);
 
-
+//        println!(se)
     }
 
     #[test]
@@ -108,6 +159,7 @@ mod tests {
         assert_eq!("17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV", address);
 
     }
+
 
 }
 

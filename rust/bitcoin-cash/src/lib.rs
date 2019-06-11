@@ -3,23 +3,21 @@ use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
 use secp256k1::{Secp256k1, Message};
 
-use bitcoin::{PrivateKey, TxIn, OutPoint, Script, PublicKey, TxOut, Transaction, SigHashType};
+use bitcoin::{PrivateKey, TxIn, OutPoint, Script, PublicKey, TxOut, Transaction};
 use bitcoin_hashes::sha256d::Hash as Hash256;
 use bitcoin::blockdata::script::Builder;
-use bch_addr::Converter;
 use bitcoin::consensus::serialize;
 use bitcoin_hashes::hex::ToHex;
 use bitcoin_hashes::hex::FromHex;
 use std::str::FromStr;
 use bitcoin_hashes::Hash;
-use bitcoin::util::bip143::SighashComponents;
-use bitcoin::consensus::encode::serialize_hex;
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
 use bip39::{Mnemonic, Language};
 
 pub mod errors;
 pub mod bip143_with_forkid;
 pub mod hd_mnemonic_keystore;
+pub mod bitcoin_transaction_signer;
 use bip143_with_forkid::SighashComponentsWithForkId;
 use core::result;
 //use secp256k1::Secp256k1;
@@ -59,7 +57,7 @@ fn generate_transaction() -> String {
 //    let pub_key_script_manual = Builder::new().push_key(&pub_key).into_script();
 //    assert_eq!(pub_key_script, pub_key_script_manual);
 
-    let mut tx_in = TxIn {
+    let tx_in = TxIn {
         previous_output: OutPoint {
             txid: Hash256::from_hex("115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986").unwrap(),
             vout: 0,

@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 tcx-crypto = { path = "../crypto" }
+tcx-chain = { path = "../chain" }
 bch_addr = "0.1.0"
 hex-literal = "0.1.4"
 bitcoin = { path = "../../../rust-bitcoin"}

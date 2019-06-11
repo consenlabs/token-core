@@ -10,39 +10,8 @@ use bitcoin::network::constants::Network;
 use bitcoin::Address;
 use std::str::FromStr;
 use crate::errors::{Error, Result};
+use tcx_chain::Metadata;
 
-
-
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Metadata {
-    name: String,
-    password_hint: String,
-    chain_type: String,
-    timestamp: i64,
-    network: String,
-    source: String,
-    mode: String,
-    wallet_type: String,
-    seg_wit: String,
-}
-
-impl Default for Metadata {
-    fn default() -> Self {
-        Metadata {
-            name: String::from("BCH"),
-            password_hint: String::new(),
-            chain_type: String::from("BCH"),
-            timestamp: 0,
-            network: String::from("MAINNET"),
-            source: String::from("MNEMONIC"),
-            mode: String::from("NORMAL"),
-            wallet_type: String::from("HD"),
-            seg_wit: String::from("NONE"),
-        }
-    }
-}
 
 
 #[derive(Debug, Clone)]
@@ -97,7 +66,6 @@ impl HdMnemonicKeystore {
 
     fn gen_extend(mnemonic: &Mnemonic, network: Network) -> Result<ExtendedPrivKey> {
         let seed = bip39::Seed::new(mnemonic, &"");
-        let s = Secp256k1::new();
         Ok(ExtendedPrivKey::new_master(network, seed.as_bytes())?)
 
     }
