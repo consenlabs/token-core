@@ -58,7 +58,45 @@ impl Default for Metadata {
 pub trait Keystore {
     fn get_metadata(&self) -> Metadata;
     fn get_address(&self) -> String;
-    fn decrypt_cipher_text(&self, password: &str) -> String;
+    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>, TokenError> ;
+}
+
+pub struct V3Keystore {
+    pub id: String,
+    pub version: i32,
+    pub address: String,
+    pub crypto: Crypto<Pbkdf2Params>,
+    pub metadata: Metadata
+}
+
+impl V3Keystore {
+    pub fn new(password: &str, prv_key: &str) -> Result<V3Keystore, TokenError> {
+        let crypto : Crypto<Pbkdf2Params> = Crypto::new(password, prv_key.to_owned().as_bytes());
+        let mut metadata = Metadata::default();
+        metadata.source = Source::Wif;
+        let keystore = V3Keystore {
+            id: Uuid::new_v4().to_hyphenated().to_string(),
+            version: 3,
+            address: generate_address_from_wif(prv_key),
+            crypto,
+            metadata
+        };
+        Ok(keystore)
+    }
+}
+
+impl Keystore for V3Keystore {
+    fn get_metadata(&self) -> Metadata {
+        self.metadata.clone()
+    }
+
+    fn get_address(&self) -> String {
+        self.address.clone()
+    }
+
+    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>, TokenError> {
+        self.crypto.decrypt(password)
+    }
 }
 
 pub struct V3MnemonicKeystore {

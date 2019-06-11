@@ -24,20 +24,16 @@ struct Utxo {
     sequence: i64
 }
 
-struct BitcoinTransaction  {
+struct BitcoinCashTransaction {
     pub to: String,
     pub amount: i64,
     pub unspents: Vec<Utxo>,
     pub memo: String,
     pub fee: i64,
     pub change_idx: u32,
-
-    change_address: Address,
-    network: Network,
-    prv_keys: Vec<String>
 }
 
-impl BitcoinTransaction {
+impl BitcoinCashTransaction {
 
     fn collect_prv_keys_and_address(&self, password: &str, wallet: &Keystore) -> (Address, Vec<PrivateKey>) {
         let metadata = wallet.get_metadata();
@@ -49,13 +45,13 @@ impl BitcoinTransaction {
         match metadata.source {
             Source::Wif => {
                 let change_addr = Address::from_str(&wallet.get_address()).unwrap();
-                let wif = wallet.decrypt_cipher_text(password);
+                let wif = String::from_utf8(wallet.decrypt_cipher_text(password).unwrap()).unwrap();
                 let prv_key = PrivateKey::from_wif(&wif).unwrap();
                 (change_addr, vec![prv_key])
 
             },
             _ => {
-                let xprv = wallet.decrypt_cipher_text(password);
+                let xprv = String::from_utf8(wallet.decrypt_cipher_text(password).unwrap()).unwrap();
                 let xprv_key = ExtendedPrivKey::from_str(&xprv).unwrap();
                 let s = Secp256k1::new();
                 let change_key = xprv_key.ckd_priv(&s, ChildNumber::from(0)).unwrap();
@@ -93,14 +89,14 @@ impl BitcoinTransaction {
     }
 }
 
-impl TransactionSinger for BitcoinTransaction {
+impl TransactionSinger for BitcoinCashTransaction {
     fn sign_transaction(&self, chain_id: &str, password: &str, wallet: &Keystore) -> TxSignResult {
         let mut total_amount = 0;
 
         for unspent in &self.unspents {
             total_amount += unspent.amount;
         }
-        if total_amount < self.amount {
+        if total_amount < (self.amount + self.fee){
             // todo: throw error;
         }
 
@@ -108,12 +104,13 @@ impl TransactionSinger for BitcoinTransaction {
         let (change_addr, prv_keys) = self.collect_prv_keys_and_address(password, wallet);
 
         let mut tx_outs: Vec<TxOut> = vec![];
+        let receiver_addr = Address::from_str(&self.to).unwrap();
         let receiver_tx_out = TxOut {
             value: self.amount as u64,
-            script_pubkey: change_addr.script_pubkey()
+            script_pubkey: receiver_addr.script_pubkey()
         };
         tx_outs.push(receiver_tx_out);
-        let change_amount = (total_amount - self.amount);
+        let change_amount = (total_amount - self.amount - self.fee);
         if change_amount > DUST as i64 {
             let change_tx_out = TxOut {
                 value: change_amount as u64,
@@ -150,8 +147,9 @@ impl TransactionSinger for BitcoinTransaction {
         for i in 0..tx.input.len() {
             let tx_in = &tx.input[i];
             let unspent = &self.unspents[i];
-            let script_bytes = unspent.script_pub_key.as_bytes().to_vec();
+            let script_bytes: Vec<u8> = FromHex::from_hex(&unspent.script_pub_key).unwrap();
             let script = Builder::from(script_bytes).into_script();
+            println!("pub key script {:?}", script.to_hex());
             let shc_hash = sig_hash_components.sighash_all(tx_in, &script, unspent.amount as u64, 0x01|0x40);
             let prv_key = prv_keys[i];
             script_sigs.push(self.sign_hash(&prv_key, &shc_hash.into_inner()));
@@ -182,19 +180,43 @@ mod tests {
     use super::*;
     use bip39::Language;
     use crate::hd_mnemonic_keystore::HdMnemonicKeystore;
+    use tcx_chain::V3Keystore;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static BCH_MAIN_PATH: &'static str = "m/44'/145'/0'";
+    static WIF: &'static str = "L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy";
+    
 
 
     #[test]
     pub fn bch_signer() {
         let meta = Metadata::default();
 
-        let keystore = HdMnemonicKeystore::new(meta, &PASSWORD, &MNEMONIC, &BCH_MAIN_PATH).unwrap();
+//        let keystore = HdMnemonicKeystore::new(meta, &PASSWORD, &MNEMONIC, &BCH_MAIN_PATH).unwrap();
+        let keystore = V3Keystore::new(PASSWORD, WIF).unwrap();
+        let unspents = vec![Utxo {
+            tx_hash: "115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986".to_string(),
+            vout: 0,
+            amount: 50000,
+            address: "17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV".to_string(),
+            script_pub_key: "76a91447862fe165e6121af80d5dde1ecb478ed170565b88ac".to_string(),
+            derived_path: "".to_string(),
+            sequence: 0
+        }];
+        let tran = BitcoinCashTransaction {
+            to: "1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK".to_string(),
+            amount: 15000,
+            unspents,
+            memo: "".to_string(),
+            fee: 35000,
+            change_idx: 0
+        };
 
-        println!("{:?}", keystore.unwrap().export_json());
+        let ret = tran.sign_transaction("", PASSWORD, &keystore);
+        assert_eq!("01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100bc4295d369443e2cc4e20b50a6fd8e7e16c08aabdbb42bdf167dec9d41afc3d402207a8e0ccb91438785e51203e7d2f85c4698ff81245936ebb71935e3d052876dcd4121029f50f51d63b345039a290c94bffd3180c99ed659ff6ea6b1242bca47eb93b59fffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000".to_owned(), ret.signature);
+
+//        println!("{:?}", keystore.export_json());
 //        assert!((&keystore.is_ok()))
 //        assert!(keystore.is_ok());
 //

@@ -35,7 +35,7 @@ fn generate_address_from_wif(wif : &str) -> String {
     let pub_key = prv_key.public_key(&s);
     // Generate pay-to-pubkey-hash address
     let address = Address::p2pkh(&pub_key, Network::Bitcoin);
-
+    println!("Script Pub Key {:?}", address.script_pubkey().to_hex());
     println!("{}", address.to_string());
     return address.to_string();
 }
@@ -53,7 +53,7 @@ fn generate_transaction() -> String {
     let pub_key = pri_key.public_key(&s);
     println!("Address {:?}", Address::p2pkh(&pub_key, Network::Bitcoin).to_string());
     let pub_key_script = Address::p2pkh(&pub_key, Network::Bitcoin).script_pubkey();
-
+    println!("pub key script {:?}", pub_key_script.to_hex());
 //    let pub_key_script_manual = Builder::new().push_key(&pub_key).into_script();
 //    assert_eq!(pub_key_script, pub_key_script_manual);
 
@@ -164,6 +164,7 @@ mod tests {
 ////        let addr = addr_encode(&pub_key_hash, AddressType::P2PKH, Network::Mainnet);
 //        assert_eq!("bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkvrmn5zj3l", address);
         let address = generate_address_from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy");
+        println!("{:?}", address);
         let converter = Converter::new();
         let cash_addr = converter.to_cash_addr("1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK").unwrap();
                 assert_eq!("bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkvrmn5zj3l", cash_addr);

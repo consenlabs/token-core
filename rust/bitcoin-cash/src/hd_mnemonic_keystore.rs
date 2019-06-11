@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tcx_crypto::{EncPair, Crypto, Pbkdf2Params, aes};
+use tcx_crypto::{EncPair, Crypto, Pbkdf2Params, aes, TokenError};
 use bip39::{Mnemonic, Language};
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
 use uuid::Uuid;
@@ -10,8 +10,8 @@ use bitcoin::network::constants::Network;
 use bitcoin::Address;
 use std::str::FromStr;
 use crate::errors::{Error, Result};
-use tcx_chain::Metadata;
-
+use tcx_chain::{Metadata, Keystore};
+use core::result;
 
 
 #[derive(Debug, Clone)]
@@ -81,6 +81,19 @@ impl HdMnemonicKeystore {
     }
 }
 
+impl Keystore for HdMnemonicKeystore {
+    fn get_metadata(&self) -> Metadata {
+        self.metadata.clone()
+    }
+
+    fn get_address(&self) -> String {
+        self.address.clone()
+    }
+
+    fn decrypt_cipher_text(&self, password: &str) -> result::Result<Vec<u8>, TokenError>  {
+        self.crypto.decrypt(password)
+    }
+}
 
 #[cfg(test)]
 mod tests {

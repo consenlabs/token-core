@@ -4,7 +4,7 @@ pub mod keystore;
 pub use keystore::V3MnemonicKeystore;
 
 pub use signer::{TxSignResult, TransactionSinger};
-pub use keystore::{Metadata, Keystore, Source};
+pub use keystore::{Metadata, Keystore, Source, V3Keystore};
 
 #[cfg(test)]
 mod tests {

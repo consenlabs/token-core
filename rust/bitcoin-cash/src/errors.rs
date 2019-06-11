@@ -8,6 +8,8 @@ pub enum Error {
     InvalidMnemonic,
     #[fail(display = "bip32_error")]
     Bip32Error,
+    #[fail(display = "crypto_error")]
+    CryptoError,
     #[fail(display = "{}", msg)]
     Msg {
         msg: String
@@ -24,6 +26,12 @@ impl From<failure::Error> for Error {
 impl From<bitcoin::util::bip32::Error> for Error {
     fn from(err: bitcoin::util::bip32::Error) -> Self {
         Error::Bip32Error
+    }
+}
+
+impl From<tcx_crypto::TokenError> for Error {
+    fn from(err: tcx_crypto::TokenError) -> Self {
+        Error::CryptoError
     }
 }
 
