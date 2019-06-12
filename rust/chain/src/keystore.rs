@@ -55,12 +55,15 @@ impl Default for Metadata {
 
 
 
-pub trait Keystore {
+pub trait Keystore: Send + Sync {
     fn get_metadata(&self) -> Metadata;
     fn get_address(&self) -> String;
     fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>, TokenError> ;
 }
 
+#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct V3Keystore {
     pub id: String,
     pub version: i32,

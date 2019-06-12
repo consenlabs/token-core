@@ -11,20 +11,25 @@ use bitcoin::blockdata::script::Builder;
 use bitcoin::consensus::serialize;
 use bitcoin_hashes::hex::ToHex;
 use std::str::FromStr;
+use crate::errors::{Error, Result};
+use serde::{Deserialize, Serialize};
 
 const DUST: u64 = 546;
 
-struct Utxo {
-    tx_hash: String,
-    vout: i32,
-    amount: i64,
-    address: String,
-    script_pub_key: String,
-    derived_path: String,
-    sequence: i64
+#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize)]
+pub struct Utxo {
+    pub tx_hash: String,
+    pub vout: i32,
+    pub amount: i64,
+    pub address: String,
+    pub script_pub_key: String,
+    pub derived_path: String,
+    pub sequence: i64
 }
 
-struct BitcoinCashTransaction {
+
+pub struct BitcoinCashTransaction {
     pub to: String,
     pub amount: i64,
     pub unspents: Vec<Utxo>,
@@ -35,19 +40,21 @@ struct BitcoinCashTransaction {
 
 impl BitcoinCashTransaction {
 
-    fn collect_prv_keys_and_address(&self, password: &str, wallet: &Keystore) -> (Address, Vec<PrivateKey>) {
+    fn collect_prv_keys_and_address(&self, password: &str, wallet: &Keystore) -> Result<(Address, Vec<PrivateKey>)> {
         let metadata = wallet.get_metadata();
-//        let network = match metadata.network.to_uppercase().as_str() {
-//            "MAINNET" => Network::Bitcoin,
-//            _ => Network::Testnet
-//        };
+        let network = match metadata.network.to_uppercase().as_str() {
+            "MAINNET" => Network::Bitcoin,
+            _ => Network::Testnet
+        };
 
         match metadata.source {
             Source::Wif => {
-                let change_addr = Address::from_str(&wallet.get_address()).unwrap();
-                let wif = String::from_utf8(wallet.decrypt_cipher_text(password).unwrap()).unwrap();
-                let prv_key = PrivateKey::from_wif(&wif).unwrap();
-                (change_addr, vec![prv_key])
+                let change_addr = Address::from_str(&wallet.get_address())?;
+                let wif_bytes = wallet.decrypt_cipher_text(password)?;
+                // todo map error
+                let wif = String::from_utf8(wif_bytes).map_err(|err|Error::CryptoError)?;
+                let prv_key = PrivateKey::from_wif(&wif)?;
+                Ok((change_addr, vec![prv_key]))
 
             },
             _ => {
@@ -57,7 +64,7 @@ impl BitcoinCashTransaction {
                 let change_key = xprv_key.ckd_priv(&s, ChildNumber::from(0)).unwrap();
                 let index_key = change_key.ckd_priv(&s, ChildNumber::from(self.change_idx)).unwrap();
                 let index_pub_key = index_key.private_key.public_key(&s);
-                let change_addr = Address::p2pkh(&index_pub_key, Network::Bitcoin);
+                let change_addr = Address::p2pkh(&index_pub_key, network);
 
                 let mut prv_keys :Vec<PrivateKey> = vec![];
                 for unspent in &self.unspents {
@@ -71,7 +78,7 @@ impl BitcoinCashTransaction {
                     let unspent_index_key = account_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[1]).unwrap()).unwrap();
                     prv_keys.push(unspent_index_key.private_key);
                 }
-                (change_addr, prv_keys)
+                Ok((change_addr, prv_keys))
             }
 
         }
@@ -101,7 +108,7 @@ impl TransactionSinger for BitcoinCashTransaction {
         }
 
 
-        let (change_addr, prv_keys) = self.collect_prv_keys_and_address(password, wallet);
+        let (change_addr, prv_keys) = self.collect_prv_keys_and_address(password, wallet).unwrap();
 
         let mut tx_outs: Vec<TxOut> = vec![];
         let receiver_addr = Address::from_str(&self.to).unwrap();

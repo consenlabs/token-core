@@ -17,10 +17,9 @@ use bip39::{Mnemonic, Language};
 pub mod errors;
 pub mod bip143_with_forkid;
 pub mod hd_mnemonic_keystore;
-pub mod bitcoin_transaction_signer;
+pub mod bitcoin_cash_transaction_signer;
 use bip143_with_forkid::SighashComponentsWithForkId;
 use core::result;
-//use secp256k1::Secp256k1;
 
 #[macro_use] extern crate failure;
 

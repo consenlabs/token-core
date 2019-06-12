@@ -19,8 +19,8 @@ use core::result;
 #[serde(rename_all = "camelCase")]
 pub struct HdMnemonicKeystore {
     version: i32,
-    id: String,
-    address: String,
+    pub id: String,
+    pub address: String,
     mnemonic_path: String,
     enc_mnemonic: EncPair,
     xpub: String,

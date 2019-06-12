@@ -4,6 +4,7 @@ use bitcoin::PrivateKey;
 use secp256k1::{Secp256k1, SecretKey, Message};
 use std::str::FromStr;
 use crate::keystore::Keystore;
+use serde::{Deserialize, Serialize};
 
 pub fn btc_hash_singer(hash: &[u8], password: &str, wallet: &V3MnemonicKeystore) -> Result<String, TokenError> {
     let pk_str = wallet.export_private_key(password)?;
@@ -40,7 +41,9 @@ mod tests {
 
 }
 
-
+#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TxSignResult {
     pub signature: String,
     pub tx_hash: String,
