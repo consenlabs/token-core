@@ -54,7 +54,7 @@ impl HdMnemonicKeystore {
         let xpub = Self::generate_enc_xpub(&xpub.to_string());
         Ok(HdMnemonicKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
-            version: 3,
+            version: 44,
             address: main_addr.to_string(),
             crypto: crypto,
             mnemonic_path: String::from(path),
@@ -92,6 +92,10 @@ impl Keystore for HdMnemonicKeystore {
 
     fn decrypt_cipher_text(&self, password: &str) -> result::Result<Vec<u8>, TokenError>  {
         self.crypto.decrypt(password)
+    }
+
+    fn export_json(&self) -> String {
+        serde_json::to_string(&self).unwrap()
     }
 }
 

@@ -18,6 +18,7 @@ const DUST: u64 = 546;
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Utxo {
     pub tx_hash: String,
     pub vout: i32,

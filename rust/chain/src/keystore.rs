@@ -29,12 +29,30 @@ pub struct Metadata {
     pub name: String,
     pub password_hint: String,
     pub chain_type: String,
+    #[serde(default = "metadata_default_time")]
     pub timestamp: i64,
+    #[serde(default = "metadata_empty_str")]
     pub network: String,
+    #[serde(default = "metadata_default_source")]
     pub source: Source,
+    #[serde(default = "metadata_empty_str")]
     pub mode: String,
+    #[serde(default = "metadata_empty_str")]
     pub wallet_type: String,
+    #[serde(default = "metadata_empty_str")]
     pub seg_wit: String,
+}
+
+fn metadata_empty_str() -> String {
+    "".to_owned()
+}
+
+fn metadata_default_time() -> i64 {
+    0
+}
+
+fn metadata_default_source() -> Source {
+    Source::Mnemonic
 }
 
 impl Default for Metadata {
@@ -59,6 +77,8 @@ pub trait Keystore: Send + Sync {
     fn get_metadata(&self) -> Metadata;
     fn get_address(&self) -> String;
     fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>, TokenError> ;
+    fn export_json(&self) -> String;
+
 }
 
 #[derive(Debug, Clone)]
@@ -73,9 +93,10 @@ pub struct V3Keystore {
 }
 
 impl V3Keystore {
-    pub fn new(password: &str, prv_key: &str) -> Result<V3Keystore, TokenError> {
+    pub fn new(metadata: Metadata, password: &str, prv_key: &str) -> Result<V3Keystore, TokenError> {
         let crypto : Crypto<Pbkdf2Params> = Crypto::new(password, prv_key.to_owned().as_bytes());
-        let mut metadata = Metadata::default();
+//        let mut metadata = Metadata::default();
+        let mut metadata = metadata.clone();
         metadata.source = Source::Wif;
         let keystore = V3Keystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
@@ -99,6 +120,10 @@ impl Keystore for V3Keystore {
 
     fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>, TokenError> {
         self.crypto.decrypt(password)
+    }
+
+    fn export_json(&self) -> String {
+        serde_json::to_string(&self).unwrap()
     }
 }
 
@@ -184,6 +209,7 @@ mod tests {
 
     #[test]
     pub fn new_v3_mnemonic_keystore() {
+//        let meta = Metadata::default();
         let keystore = V3MnemonicKeystore::new(&PASSWORD, &MNEMONIC, &ETHEREUM_PATH);
 
         assert!(keystore.is_ok());

@@ -13,6 +13,8 @@ const char *import_bch_wallet_from_mnemonic(const char *mnemonic, const char *pa
 
 const char *import_wallet_from_mnemonic(const char *json_str);
 
+const char *import_wallet_from_private_key(const char *json_str);
+
 const char *read_file(const char *file_path);
 
 const char *read_file_error(void);
