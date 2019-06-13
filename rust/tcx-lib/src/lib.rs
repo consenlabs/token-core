@@ -117,6 +117,14 @@ pub unsafe extern "C" fn import_bch_wallet_from_mnemonic(mnemonic: *const c_char
     CString::new(json).unwrap().into_raw()
 }
 
+fn parse_arguments(json_str: *const c_char) -> Value {
+    let json_c_str = unsafe { CStr::from_ptr(json_str) };
+    let json_str = json_c_str.to_str().unwrap();
+    serde_json::from_str(json_str).unwrap()
+}
+
+fn to_json_str()
+
 #[no_mangle]
 pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
@@ -158,7 +166,7 @@ pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) ->
     let json_str = json_c_str.to_str().unwrap();
     let v: Value = serde_json::from_str(json_str).unwrap();
 
-    let mut meta: Metadata = serde_json::from_str(json_str).unwrap();
+    let mut meta: Metadata = serde_json::from_value(v.clone()).unwrap();
     let password = v["password"].as_str().unwrap();
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let path = v["path"].as_str().unwrap();
@@ -209,16 +217,10 @@ pub unsafe extern "C" fn import_wallet_from_private_key(json_str: *const c_char)
 pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
-    println!("json_str {:?}", json_str);
+
     let v: Value = serde_json::from_str(json_str).unwrap();
-
     let w_id = v["id"].as_str().unwrap();
-
-//    let unspent_str = v["outputs"].as_array();
-
-
     let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).unwrap();
-    println!("parse unspents right");
     let internal_used = v["internalUsed"].as_i64().unwrap();
     let change_idx = internal_used + 1;
     let to = v["to"].as_str().unwrap();
@@ -264,13 +266,6 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
         }
     })
 }
-//
-//ffi_fn! {
-//    /// Creates a symcache from bytes
-//    unsafe fn read_file_error() -> Result<*const c_char> {
-//        Err(Error::Msg { msg: String::from("read file error")})
-//    }
-//}
 
 
 #[cfg(test)]
