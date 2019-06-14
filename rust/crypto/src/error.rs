@@ -2,13 +2,21 @@ use failure::Error;
 use std::fmt;
 use std::result;
 
-#[derive(Fail, Debug)]
-pub enum CryptoError {
-    #[fail(display = "invalid_password")]
-    InvalidPassword,
-}
+//#[derive(Fail, Debug)]
+//pub enum CryptoError {
+//    #[fail(display = "invalid_password")]
+//    InvalidPassword,
+//}
 
-pub type Result<T> = result::Result<T, Error>;
+pub const ERR_INVALID_PASSWORD: &'static str = "invalid_password";
+
+pub type Result<T> = result::Result<T, failure::Error>;
+
+//impl From<CryptoError> for Error {
+//    fn from(err: CryptoError) -> Self {
+//        err.as_fail()
+//    }
+//}
 
 //#[derive(Debug)]
 //pub struct TokenError {

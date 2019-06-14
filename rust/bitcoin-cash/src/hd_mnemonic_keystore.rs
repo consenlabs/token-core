@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tcx_crypto::{EncPair, Crypto, Pbkdf2Params, aes, TokenError};
+use tcx_crypto::{EncPair, Crypto, Pbkdf2Params, aes};
 use bip39::{Mnemonic, Language};
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
 use uuid::Uuid;
@@ -9,7 +9,8 @@ use bitcoin_hashes::hex::FromHex;
 use bitcoin::network::constants::Network;
 use bitcoin::Address;
 use std::str::FromStr;
-use crate::errors::{Error, Result};
+//use crate::errors::{Error, Result};
+use crate::Result;
 use tcx_chain::{Metadata, Keystore};
 use core::result;
 
@@ -36,7 +37,7 @@ impl HdMnemonicKeystore {
             _ => Network::Bitcoin
         };
         let s = Secp256k1::new();
-        let mn = Mnemonic::from_phrase(mnemonic, Language::English)?;
+        let mn = Mnemonic::from_phrase(mnemonic, Language::English).map_err(| _ | format_err!("invalid_mnemonic"))?;
         let p = DerivationPath::from_str(path)?;
 
         let root_xprv = Self::gen_extend(&mn, network)?;
@@ -56,10 +57,10 @@ impl HdMnemonicKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 44,
             address: main_addr.to_string(),
-            crypto: crypto,
+            crypto,
             mnemonic_path: String::from(path),
             enc_mnemonic,
-            metadata: metadata,
+            metadata,
             xpub,
         })
     }
@@ -90,7 +91,7 @@ impl Keystore for HdMnemonicKeystore {
         self.address.clone()
     }
 
-    fn decrypt_cipher_text(&self, password: &str) -> result::Result<Vec<u8>, TokenError>  {
+    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>>  {
         self.crypto.decrypt(password)
     }
 

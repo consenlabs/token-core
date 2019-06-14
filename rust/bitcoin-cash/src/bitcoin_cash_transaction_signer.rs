@@ -11,7 +11,7 @@ use bitcoin::blockdata::script::Builder;
 use bitcoin::consensus::serialize;
 use bitcoin_hashes::hex::ToHex;
 use std::str::FromStr;
-use crate::errors::{Error, Result};
+use crate::Result;
 use serde::{Deserialize, Serialize};
 
 const DUST: u64 = 546;
@@ -52,18 +52,19 @@ impl BitcoinCashTransaction {
             Source::Wif => {
                 let change_addr = Address::from_str(&wallet.get_address())?;
                 let wif_bytes = wallet.decrypt_cipher_text(password)?;
-                // todo map error
-                let wif = String::from_utf8(wif_bytes).map_err(|err|Error::CryptoError)?;
+
+                let wif = String::from_utf8(wif_bytes)?;
                 let prv_key = PrivateKey::from_wif(&wif)?;
                 Ok((change_addr, vec![prv_key]))
 
             },
             _ => {
-                let xprv = String::from_utf8(wallet.decrypt_cipher_text(password).unwrap()).unwrap();
-                let xprv_key = ExtendedPrivKey::from_str(&xprv).unwrap();
+                let xprv_bytes = wallet.decrypt_cipher_text(password)?;
+                let xprv = String::from_utf8(xprv_bytes)?;
+                let xprv_key = ExtendedPrivKey::from_str(&xprv)?;
                 let s = Secp256k1::new();
-                let change_key = xprv_key.ckd_priv(&s, ChildNumber::from(0)).unwrap();
-                let index_key = change_key.ckd_priv(&s, ChildNumber::from(self.change_idx)).unwrap();
+                let change_key = xprv_key.ckd_priv(&s, ChildNumber::from(0))?;
+                let index_key = change_key.ckd_priv(&s, ChildNumber::from(self.change_idx))?;
                 let index_pub_key = index_key.private_key.public_key(&s);
                 let change_addr = Address::p2pkh(&index_pub_key, network);
 
@@ -71,12 +72,12 @@ impl BitcoinCashTransaction {
                 for unspent in &self.unspents {
                     let derived_path = unspent.derived_path.trim();
                     let path_with_space = derived_path.replace("/", " ");
-                    let path_idxs: Vec<&str> = path_with_space.split(" ").collect();
-//                    let account_idx = path_idxs[0].parse::<u32>().unwrap();
-//                    let index_idx = path_idxs[1].parse::<u32>().unwrap();
 
-                    let account_key = xprv_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[0]).unwrap()).unwrap();
-                    let unspent_index_key = account_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[1]).unwrap()).unwrap();
+                    let path_idxs: Vec<&str> = path_with_space.split(" ").collect();
+                    ensure!(path_idxs.len() == 2, "derived path must be x/x");
+
+                    let account_key = xprv_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[0]).unwrap())?;
+                    let unspent_index_key = account_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[1]).unwrap())?;
                     prv_keys.push(unspent_index_key.private_key);
                 }
                 Ok((change_addr, prv_keys))
@@ -85,34 +86,32 @@ impl BitcoinCashTransaction {
         }
     }
 
-    fn sign_hash(&self, pri_key: &PrivateKey, hash: &[u8]) -> Script {
+    fn sign_hash(&self, pri_key: &PrivateKey, hash: &[u8]) -> Result<Script> {
         let s = Secp256k1::new();
-        let msg = Message::from_slice(hash).unwrap();
+        let msg = Message::from_slice(hash)?;
         let signature = s.sign(&msg, &pri_key.key);
         let signature_bytes = signature.serialize_der();
         let raw_bytes: Vec<u8> = vec![0x41];
         let sig_bytes: Vec<u8> = [signature_bytes, raw_bytes.to_vec()].concat();
         let pub_key_bytes = pri_key.public_key(&s).to_bytes();
-        Builder::new().push_slice(&sig_bytes).push_slice(&pub_key_bytes).into_script()
+        Ok(Builder::new().push_slice(&sig_bytes).push_slice(&pub_key_bytes).into_script())
     }
 }
 
 impl TransactionSinger for BitcoinCashTransaction {
-    fn sign_transaction(&self, chain_id: &str, password: &str, wallet: &Keystore) -> TxSignResult {
+    fn sign_transaction(&self, chain_id: &str, password: &str, wallet: &Keystore) -> Result<TxSignResult> {
         let mut total_amount = 0;
 
         for unspent in &self.unspents {
             total_amount += unspent.amount;
         }
-        if total_amount < (self.amount + self.fee){
-            // todo: throw error;
-        }
 
+        ensure!(total_amount < (self.amount + self.fee), "total amount must ge amount + fee");
 
-        let (change_addr, prv_keys) = self.collect_prv_keys_and_address(password, wallet).unwrap();
+        let (change_addr, prv_keys) = self.collect_prv_keys_and_address(password, wallet)?;
 
         let mut tx_outs: Vec<TxOut> = vec![];
-        let receiver_addr = Address::from_str(&self.to).unwrap();
+        let receiver_addr = Address::from_str(&self.to)?;
         let receiver_tx_out = TxOut {
             value: self.amount as u64,
             script_pubkey: receiver_addr.script_pubkey()
@@ -160,7 +159,7 @@ impl TransactionSinger for BitcoinCashTransaction {
             println!("pub key script {:?}", script.to_hex());
             let shc_hash = sig_hash_components.sighash_all(tx_in, &script, unspent.amount as u64, 0x01|0x40);
             let prv_key = prv_keys[i];
-            script_sigs.push(self.sign_hash(&prv_key, &shc_hash.into_inner()));
+            script_sigs.push(self.sign_hash(&prv_key, &shc_hash.into_inner())?);
         }
 
         let signed_tx = Transaction {
@@ -173,11 +172,11 @@ impl TransactionSinger for BitcoinCashTransaction {
 
         let tx_bytes = serialize(&signed_tx);
 
-        TxSignResult {
+        Ok(TxSignResult {
             signature: tx_bytes.to_hex(),
             tx_hash: signed_tx.txid().into_inner().to_hex(),
             wtx_id: "".to_string()
-        }
+        })
     }
 
 }
@@ -199,7 +198,7 @@ mod tests {
     pub fn bch_signer() {
         let meta = Metadata::default();
 
-        let keystore = V3Keystore::new(PASSWORD, WIF).unwrap();
+        let keystore = V3Keystore::new(meta,PASSWORD, WIF).unwrap();
         let unspents = vec![Utxo {
             tx_hash: "115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986".to_string(),
             vout: 0,
@@ -218,7 +217,7 @@ mod tests {
             change_idx: 0
         };
 
-        let ret = tran.sign_transaction("", PASSWORD, &keystore);
+        let ret = tran.sign_transaction("", PASSWORD, &keystore).unwrap();
         assert_eq!("01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100bc4295d369443e2cc4e20b50a6fd8e7e16c08aabdbb42bdf167dec9d41afc3d402207a8e0ccb91438785e51203e7d2f85c4698ff81245936ebb71935e3d052876dcd4121029f50f51d63b345039a290c94bffd3180c99ed659ff6ea6b1242bca47eb93b59fffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000".to_owned(), ret.signature);
 
     }

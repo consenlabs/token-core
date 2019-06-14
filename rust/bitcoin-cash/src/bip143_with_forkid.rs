@@ -92,13 +92,9 @@ impl SighashComponentsWithForkId {
         self.hash_outputs.consensus_encode(&mut encoder).unwrap();
         self.tx_locktime.consensus_encode(&mut enc).unwrap();
         self.tx_locktime.consensus_encode(&mut encoder).unwrap();
-//        let new_sign_hash_type = SighashComponentsWithForkId::sign_hash_type_with_fork_id(0x01 | 0x40);
         fork_id.consensus_encode(&mut enc).unwrap();// hashtype
         fork_id.consensus_encode(&mut encoder).unwrap();// hashtype
-//        println!("encoder: {:#?}", encoder.into_inner().to_hex());
-//        println!("hash by encoder : {:#?}", sha256d::Hash::hash(&encoder.into_inner()).to_hex());
         sha256d::Hash::hash(&encoder.into_inner())
-//        sha256d::Hash::from_engine(enc)
     }
 
     pub fn sign_hash_type_with_fork_id(sign_hash_type: u32) -> u32 {

@@ -1,8 +1,10 @@
 use bitcoin_hashes::hex::{ToHex, FromHex};
 use serde::{Deserialize, Serialize};
 use crate::aes;
-use crate::error::{Result, CryptoError};
+use crate::error::{Result};
+use crate::error;
 use crate::numberic_util;
+
 
 
 const CREDENTIAL_LEN: usize = 64usize;
@@ -25,7 +27,7 @@ struct CipherParams {
 }
 
 pub trait KdfParams {
-    fn validate();
+    fn validate(&self) -> Result<()>;
     fn generate_derived_key(&self, password: &[u8], out: &mut [u8]);
 }
 
@@ -53,9 +55,12 @@ impl Pbkdf2Params {
 
 
 impl KdfParams for Pbkdf2Params {
-    fn validate() {
-        // todo: validation pbkdf2
-        unimplemented!()
+    fn validate(&self) -> Result<()> {
+        if self.dklen == 0 || self.c == 0 || self.salt.len() <= 0 || self.prf.len()  <= 0 {
+            Err(format_err!("kdf_params_invalid"))
+        } else {
+            Ok(())
+        }
     }
 
     fn generate_derived_key(&self, password: &[u8], out: &mut [u8]) {
@@ -145,9 +150,8 @@ impl Crypto<Pbkdf2Params> {
         self.kdfparams.generate_derived_key(password.as_bytes(), &mut derived_key);
 
         let mac = Self::generate_mac(&derived_key, encrypted);
-        // todo return error when mac not match
         if self.mac != mac.to_hex() {
-            return Err(format_err!("invalid_password"));
+            return Err(format_err!("{}", error::ERR_INVALID_PASSWORD));
         }
 
         let key = &derived_key[0..16];
@@ -186,7 +190,9 @@ mod tests {
   }"#;
 
         let crypto: Crypto<Pbkdf2Params> = serde_json::from_str(data).unwrap();
-        crypto.decrypt("password");
+        let result = crypto.decrypt("aaa");
+        assert!(result.is_err());
+        println!("{:?}", result.err());
         assert_eq!(crypto.mac, "4906577f075ad714f328e7b33829fdccfa8cd22eab2c0a8bc4f577824188ed16");
         assert_eq!(crypto.ciphertext, "17ff4858e697455f4966c6072473f3501534bc20deb339b58aeb8db0bd9fe91777148d0a909f679fb6e3a7a64609034afeb72a");
     }

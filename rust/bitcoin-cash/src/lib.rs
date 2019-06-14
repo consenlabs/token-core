@@ -22,11 +22,9 @@ use bip143_with_forkid::SighashComponentsWithForkId;
 use core::result;
 
 #[macro_use] extern crate failure;
+#[macro_use] extern crate hex_literal;
 
-
-#[macro_use]
-extern crate hex_literal;
-
+pub type Result<T> = result::Result<T, failure::Error>;
 
 fn generate_address_from_wif(wif : &str) -> String {
     let s: Secp256k1<_> = Secp256k1::new();
@@ -145,25 +143,11 @@ mod tests {
     use crate::{generate_address_from_wif, generate_transaction, generate_xpub};
     use bch_addr::Converter;
 
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
 
     #[test]
     fn bch_address() {
-//        let prv_key = PrivateKey::from_wif("cT4fTJyLd5RmSZFHnkGmVCzXDKuJLbyTt7cy77ghTTCagzNdPH1j").unwrap();
-//        let s = Secp256k1::new();
-//        let pub_key = prv_key.public_key(&s);
-//        let pub_key_bytes = pub_key.to_bytes();
-//        let pub_key_hash = bitcoin_hashes::hash160::Hash::hash(&pub_key_bytes).into_inner();
-//        let prefix = "bitcoincash";
-//        let addr_type = AddressType::P2PKH;
-//        let address = encode(prefix, addr_type, &pub_key_hash).unwrap();
-////        let addr = addr_encode(&pub_key_hash, AddressType::P2PKH, Network::Mainnet);
-//        assert_eq!("bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkvrmn5zj3l", address);
+
         let address = generate_address_from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy");
-        println!("{:?}", address);
         let converter = Converter::new();
         let cash_addr = converter.to_cash_addr("1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK").unwrap();
                 assert_eq!("bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkvrmn5zj3l", cash_addr);
@@ -176,9 +160,5 @@ mod tests {
         assert_eq!("01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100bc4295d369443e2cc4e20b50a6fd8e7e16c08aabdbb42bdf167dec9d41afc3d402207a8e0ccb91438785e51203e7d2f85c4698ff81245936ebb71935e3d052876dcd4121029f50f51d63b345039a290c94bffd3180c99ed659ff6ea6b1242bca47eb93b59fffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000", tx_hex);
     }
 
-    #[test]
-    fn xpub() {
-        let xpub = generate_xpub(&"inject kidney empty canal shadow pact comfort wife crush horse wife sketch", &"m/44'/0'/0'");
-        assert_eq!("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8", xpub);
-    }
+
 }

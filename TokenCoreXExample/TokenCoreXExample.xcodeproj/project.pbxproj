@@ -14,8 +14,8 @@
 		709A61FF2294ED38007F11E6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 709A61FD2294ED38007F11E6 /* LaunchScreen.storyboard */; };
 		709A620A2294ED38007F11E6 /* TokenCoreXExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709A62092294ED38007F11E6 /* TokenCoreXExampleTests.swift */; };
 		709A62152294ED38007F11E6 /* TokenCoreXExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709A62142294ED38007F11E6 /* TokenCoreXExampleUITests.swift */; };
-		70AF1D0422ADF8D70021D319 /* libsecp256k1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 70AF1D0322ADF8D70021D319 /* libsecp256k1.a */; };
 		70AFBB61229FC1E900A32248 /* libtcx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 70AFBB60229FC1E900A32248 /* libtcx.a */; };
+		70B3E3F722B3401700A34465 /* libsecp256k1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 70B3E3F622B3401600A34465 /* libsecp256k1.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +52,8 @@
 		709A62252294EDAA007F11E6 /* librust.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librust.a; path = TokenCoreX/Libs/librust.a; sourceTree = "<group>"; };
 		70AF1D0322ADF8D70021D319 /* libsecp256k1.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsecp256k1.a; path = "../../rust-secp256k1/target/rls/debug/build/secp256k1-2633fd81c73ba443/out/libsecp256k1.a"; sourceTree = "<group>"; };
 		70AFBB60229FC1E900A32248 /* libtcx.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libtcx.a; path = TokenCoreX/Libs/libtcx.a; sourceTree = "<group>"; };
+		70B3E3F422B33FCF00A34465 /* libsecp256k1.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsecp256k1.a; path = "../../rust-secp256k1/target/universal/release/libsecp256k1.a"; sourceTree = "<group>"; };
+		70B3E3F622B3401600A34465 /* libsecp256k1.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsecp256k1.a; path = TokenCoreX/Libs/libsecp256k1.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,7 +61,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				70AF1D0422ADF8D70021D319 /* libsecp256k1.a in Frameworks */,
+				70B3E3F722B3401700A34465 /* libsecp256k1.a in Frameworks */,
 				70AFBB61229FC1E900A32248 /* libtcx.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -137,6 +139,8 @@
 			isa = PBXGroup;
 			children = (
 				70AF1D0322ADF8D70021D319 /* libsecp256k1.a */,
+				70B3E3F422B33FCF00A34465 /* libsecp256k1.a */,
+				70B3E3F622B3401600A34465 /* libsecp256k1.a */,
 				70AFBB60229FC1E900A32248 /* libtcx.a */,
 				709A62252294EDAA007F11E6 /* librust.a */,
 			);
@@ -452,6 +456,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 8Z7NF6BL8X;
+				ENABLE_BITCODE = NO;
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/TokenCoreX/Include";
 				INFOPLIST_FILE = TokenCoreXExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -476,6 +481,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 8Z7NF6BL8X;
+				ENABLE_BITCODE = NO;
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/TokenCoreX/Include";
 				INFOPLIST_FILE = TokenCoreXExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

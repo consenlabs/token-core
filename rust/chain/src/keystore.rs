@@ -7,8 +7,11 @@ use bip39::{Mnemonic, Language};
 use std::str::FromStr;
 use bitcoin_hashes::hex::{ToHex, FromHex};
 use serde::{Deserialize, Serialize};
-use tcx_crypto::{Crypto, Pbkdf2Params, EncPair, TokenError};
+use tcx_crypto::{Crypto, Pbkdf2Params, EncPair};
 use uuid::Uuid;
+use std::time::{SystemTime, UNIX_EPOCH};
+use failure::Error;
+use crate::Result;
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
@@ -19,7 +22,7 @@ pub enum Source {
     Keystore,
     Mnemonic,
     NewIdentity,
-    RecoveredIdentity
+    RecoveredIdentity,
 }
 
 #[derive(Debug, Clone)]
@@ -48,7 +51,10 @@ fn metadata_empty_str() -> String {
 }
 
 fn metadata_default_time() -> i64 {
-    0
+    let start = SystemTime::now();
+    let since_the_epoch = start.duration_since(UNIX_EPOCH)
+        .expect("get timestamp");
+    since_the_epoch.as_secs() as i64
 }
 
 fn metadata_default_source() -> Source {
@@ -61,7 +67,7 @@ impl Default for Metadata {
             name: String::from("BCH"),
             password_hint: String::new(),
             chain_type: String::from("BCH"),
-            timestamp: 0,
+            timestamp: metadata_default_time(),
             network: String::from("MAINNET"),
             source: Source::Mnemonic,
             mode: String::from("NORMAL"),
@@ -72,13 +78,12 @@ impl Default for Metadata {
 }
 
 
-
+// Send + Sync used fo lazy_static
 pub trait Keystore: Send + Sync {
     fn get_metadata(&self) -> Metadata;
     fn get_address(&self) -> String;
-    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>, TokenError> ;
+    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>>;
     fn export_json(&self) -> String;
-
 }
 
 #[derive(Debug, Clone)]
@@ -89,21 +94,20 @@ pub struct V3Keystore {
     pub version: i32,
     pub address: String,
     pub crypto: Crypto<Pbkdf2Params>,
-    pub metadata: Metadata
+    pub metadata: Metadata,
 }
 
 impl V3Keystore {
-    pub fn new(metadata: Metadata, password: &str, prv_key: &str) -> Result<V3Keystore, TokenError> {
-        let crypto : Crypto<Pbkdf2Params> = Crypto::new(password, prv_key.to_owned().as_bytes());
-//        let mut metadata = Metadata::default();
+    pub fn new(metadata: Metadata, password: &str, prv_key: &str) -> Result<V3Keystore> {
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, prv_key.to_owned().as_bytes());
         let mut metadata = metadata.clone();
         metadata.source = Source::Wif;
         let keystore = V3Keystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 3,
-            address: generate_address_from_wif(prv_key),
+            address: generate_address_from_wif(prv_key)?,
             crypto,
-            metadata
+            metadata,
         };
         Ok(keystore)
     }
@@ -118,7 +122,7 @@ impl Keystore for V3Keystore {
         self.address.clone()
     }
 
-    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>, TokenError> {
+    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>> {
         self.crypto.decrypt(password)
     }
 
@@ -137,9 +141,9 @@ pub struct V3MnemonicKeystore {
 }
 
 impl V3MnemonicKeystore {
-    pub fn new(password: &str, mnemonic: &str, path: &str) -> Result<V3MnemonicKeystore, TokenError> {
+    pub fn new(password: &str, mnemonic: &str, path: &str) -> Result<V3MnemonicKeystore> {
         let prv_key = Self::generate_prv_key_from_mnemonic(mnemonic, path)?;
-        let crypto : Crypto<Pbkdf2Params> = Crypto::new(password, &prv_key.to_bytes());
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, &prv_key.to_bytes());
         let enc_mnemonic = crypto.derive_enc_pair(password, mnemonic.as_bytes());
 
         let keystore = V3MnemonicKeystore {
@@ -148,25 +152,20 @@ impl V3MnemonicKeystore {
             address: Self::address_from_private_key(&prv_key),
             crypto,
             mnemonic_path: String::from(path),
-            enc_mnemonic
+            enc_mnemonic,
         };
-        return Ok(keystore);
-
+        Ok(keystore)
     }
 
-    fn generate_prv_key_from_mnemonic(mnemonic_str: &str, path: &str) -> Result<PrivateKey, TokenError> {
-         if let Ok(mnemonic) = Mnemonic::from_phrase(mnemonic_str, Language::English) {
-             let seed = bip39::Seed::new(&mnemonic, &"");
-             println!("hex: {}", seed.to_hex());
-             let s = Secp256k1::new();
-             let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes()).unwrap();
+    fn generate_prv_key_from_mnemonic(mnemonic_str: &str, path: &str) -> Result<PrivateKey> {
+        let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English).map_err(| _ | format_err!("invalid_mnemonic"))?;
+        let seed = bip39::Seed::new(&mnemonic, &"");
+        let s = Secp256k1::new();
+        let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
 
-             let path = DerivationPath::from_str(path).unwrap();
-             let main_address_pk = sk.derive_priv(&s, &path).unwrap();
-             return Ok(main_address_pk.private_key);
-         } else {
-             return Err(TokenError::from("invalid_mnemonic"));
-         }
+        let path = DerivationPath::from_str(path)?;
+        let main_address_pk = sk.derive_priv(&s, &path)?;
+        Ok(main_address_pk.private_key)
     }
 
     fn address_from_private_key(pk: &PrivateKey) -> String {
@@ -174,27 +173,24 @@ impl V3MnemonicKeystore {
         let pub_key = pk.public_key(&s);
         // Generate pay-to-pubkey-hash address
         let address = Address::p2pkh(&pub_key, Network::Bitcoin);
-        return address.to_string();
+        address.to_string()
     }
 
-    pub fn export_private_key(&self, password: &str) -> Result<String, TokenError> {
+    pub fn export_private_key(&self, password: &str) -> Result<String> {
         let pk_bytes = self.crypto.decrypt(password)?;
         let pk = pk_bytes.to_hex();
-        return Ok(pk);
+        Ok(pk)
     }
 }
 
-fn generate_address_from_wif(wif : &str) -> String {
+fn generate_address_from_wif(wif: &str) -> Result<String> {
     let s = Secp256k1::new();
-    let prv_key = PrivateKey::from_wif(wif).unwrap();
+    let prv_key = PrivateKey::from_wif(wif).map_err(| _ | format_err!("invalid_wif"))?;
     let pub_key = prv_key.public_key(&s);
     // Generate pay-to-pubkey-hash address
     let address = Address::p2pkh(&pub_key, Network::Bitcoin);
-
-    println!("{}", address.to_string());
-    return address.to_string();
+    Ok(address.to_string())
 }
-
 
 
 #[cfg(test)]
@@ -204,7 +200,6 @@ mod tests {
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
-
 
 
     #[test]
@@ -224,9 +219,6 @@ mod tests {
     pub fn bch_address() {
         let address = generate_address_from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy");
         assert_eq!("17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV", address);
-
     }
-
-
 }
 

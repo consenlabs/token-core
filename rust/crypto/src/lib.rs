@@ -8,7 +8,6 @@ pub use crypto::{Crypto, Pbkdf2Params, EncPair};
 
 #[macro_use] extern crate failure;
 
-//pub use token_error::TokenError;
 
 #[cfg(test)]
 mod tests {

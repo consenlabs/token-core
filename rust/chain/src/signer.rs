@@ -1,21 +1,37 @@
 use crate::keystore::V3MnemonicKeystore;
-use tcx_crypto::TokenError;
 use bitcoin::PrivateKey;
 use secp256k1::{Secp256k1, SecretKey, Message};
 use std::str::FromStr;
 use crate::keystore::Keystore;
 use serde::{Deserialize, Serialize};
+use crate::Result;
 
-pub fn btc_hash_singer(hash: &[u8], password: &str, wallet: &V3MnemonicKeystore) -> Result<String, TokenError> {
+#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TxSignResult {
+    pub signature: String,
+    pub tx_hash: String,
+    pub wtx_id: String
+}
+
+
+pub trait TransactionSinger {
+    fn sign_transaction(&self, chain_id: &str, password: &str, wallet: &Keystore) -> Result<TxSignResult>;
+}
+
+
+
+pub fn btc_hash_singer(hash: &[u8], password: &str, wallet: &V3MnemonicKeystore) -> Result<String> {
     let pk_str = wallet.export_private_key(password)?;
 //    let prv_key = PrivateKey::from_str(pk)?;
     let s = Secp256k1::new();
     let sk = SecretKey::from_str(pk_str.as_str())?;
     let msg = Message::from_slice(hash)?;
     let signature = s.sign(&msg, &sk);
-    return Ok(signature.to_string());
-//    Secp256k1::sign
+    Ok(signature.to_string())
 }
+
 
 mod tests {
     use crate::keystore::V3MnemonicKeystore;
@@ -41,16 +57,3 @@ mod tests {
 
 }
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TxSignResult {
-    pub signature: String,
-    pub tx_hash: String,
-    pub wtx_id: String
-}
-
-
-pub trait TransactionSinger {
-    fn sign_transaction(&self, chain_id: &str, password: &str, wallet: &Keystore) -> TxSignResult;
-}
