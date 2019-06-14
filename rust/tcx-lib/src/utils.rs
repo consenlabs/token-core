@@ -4,28 +4,29 @@ use std::thread;
 use std::cell::RefCell;
 use core::result;
 use failure::Fail;
+use failure::Error;
 use failure::Backtrace;
 use core::borrow::BorrowMut;
 //use std::error::Error;
 
 // ref: https://github.com/getsentry/symbolic/blob/10d3f31057/cabi/src/utils.rs
-
-#[derive(Debug, Fail)]
-pub enum Error {
-    #[fail(display = "invalid toolchain name: {}", name)]
-    InvalidToolchainName {
-        name: String,
-    },
-    #[fail(display = "unknown toolchain version: {}", version)]
-    UnknownToolchainVersion {
-        version: String,
-    },
-    #[fail(display = "{}", msg)]
-    Msg {
-        msg: String
-    }
-
-}
+//
+//#[derive(Debug, Fail)]
+//pub enum Error {
+//    #[fail(display = "invalid toolchain name: {}", name)]
+//    InvalidToolchainName {
+//        name: String,
+//    },
+//    #[fail(display = "unknown toolchain version: {}", version)]
+//    UnknownToolchainVersion {
+//        version: String,
+//    },
+//    #[fail(display = "{}", msg)]
+//    Msg {
+//        msg: String
+//    }
+//
+//}
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -36,7 +37,7 @@ thread_local! {
 
 
 fn notify_err(err: Error) {
-    if let Some(backtrace) = err.backtrace() {
+    if let backtrace = err.backtrace() {
         LAST_BACKTRACE.with(|e| {
             *e.borrow_mut() = Some((None, Backtrace::new()));
         });
@@ -96,7 +97,7 @@ pub unsafe fn landingpad<F: FnOnce() -> Result<T> + panic::UnwindSafe, T>(
                     }
                 }
             };
-            notify_err(Error::Msg { msg: msg.to_string()});
+            notify_err(format_err!("{}", msg));
             mem::zeroed()
         }
     }

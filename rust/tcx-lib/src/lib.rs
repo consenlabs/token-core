@@ -6,7 +6,7 @@ use log::{info, trace, warn};
 
 use std::fs::File;
 use std::io::{Read, Write};
-use utils::Error;
+//use utils::Error;
 use utils::Result;
 use utils::LAST_BACKTRACE;
 use utils::LAST_ERROR;
@@ -26,6 +26,7 @@ use std::cell::RefCell;
 use core::borrow::BorrowMut;
 use serde_json::map::Keys;
 use std::sync::Mutex;
+use crate::utils::set_panic_hook;
 
 // #[link(name = "TrezorCrypto")]
 // extern {
@@ -64,7 +65,6 @@ lazy_static! {
 }
 
 
-//static mut keystores: HashMap<String, Box<Keystore>> = HashMap::new();
 
 #[no_mangle]
 pub extern fn read_file(file_path: *const c_char) -> *const c_char {
@@ -98,10 +98,7 @@ pub extern fn free_const_string(s: *const c_char) {
 pub unsafe extern "C" fn read_file_error() -> *const c_char {
     crate::utils::landingpad(||
         {
-            Err(Error::Msg {
-                msg:
-                String::from("read file error"),
-            })
+            Err(format_err!("{}", "read file error"))
         })
 }
 
@@ -123,7 +120,7 @@ fn parse_arguments(json_str: *const c_char) -> Value {
     serde_json::from_str(json_str).unwrap()
 }
 
-fn to_json_str()
+
 
 #[no_mangle]
 pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
@@ -131,6 +128,7 @@ pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
     let json_str = json_c_str.to_str().unwrap();
     let v: Value = serde_json::from_str(json_str).unwrap();
 
+    set_panic_hook();
     let file_dir = v["fileDir"].as_str().unwrap();
     info!("scan file {}", file_dir);
     let p = Path::new(file_dir);
@@ -218,6 +216,11 @@ pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_c
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
 
+    let json = crate::utils::landingpad(||_sign_transaction(json_str));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _sign_transaction(json_str: &str) -> Result<String> {
     let v: Value = serde_json::from_str(json_str).unwrap();
     let w_id = v["id"].as_str().unwrap();
     let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).unwrap();
@@ -231,21 +234,29 @@ pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_c
 
     let bch_tran = BitcoinCashTransaction {
         to: to.to_owned(),
-        amount: amount,
-        unspents: unspents,
+        amount,
+        unspents,
         memo: "".to_string(),
-        fee: fee,
+        fee,
         change_idx: change_idx as u32,
     };
 
     let map = KYESTORE_MAP.lock().unwrap();
     let keystore = map.get(w_id).unwrap();
 
-    let ret = bch_tran.sign_transaction(chain_id, password, keystore.as_ref());
-    let json = serde_json::to_string(&ret).unwrap();
-    CString::new(json).unwrap().into_raw()
+    let ret = bch_tran.sign_transaction(chain_id, password, keystore.as_ref())?;
+    Ok(serde_json::to_string(&ret)?)
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn clear_err() {
+    LAST_ERROR.with(|e| {
+        *e.borrow_mut() = None;
+    });
+    LAST_BACKTRACE.with(|e| {
+        *e.borrow_mut() = None;
+    });
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
@@ -254,15 +265,16 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
     LAST_ERROR.with(|e| {
         if let Some(ref err) = *e.borrow() {
             let mut msg = err.to_string();
-            let mut cause = err.cause();
-            while let Some(the_cause) = cause {
-                write!(&mut msg, "\n  caused by: {}", the_cause).ok();
-                cause = the_cause.cause();
-            }
-            return CString::new(msg).unwrap().into_raw();
+            // todo: follow cause
+//            let mut cause = err.cause();
+//            while let Some(the_cause) = cause {
+//                write!(&mut msg, "\n  caused by: {}", the_cause).ok();
+//                cause = &the_cause.cause();
+//            }
+            CString::new(msg).unwrap().into_raw()
         } else {
-//            Default::default()
-            return CString::new("no error").unwrap().into_raw();
+
+            CString::new("").unwrap().into_raw()
         }
     })
 }

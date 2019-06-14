@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+void clear_err(void);
+
 void free_const_string(const char *s);
 
 void free_string(char *s);

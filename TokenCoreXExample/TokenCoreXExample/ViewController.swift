@@ -119,11 +119,25 @@ class ViewController: UIViewController {
     ];
     let data = try! JSONSerialization.data(withJSONObject: map, options: [])
     let mapStr = String(data: data, encoding: .utf8)!
-    let cPtr = (try! sign_transaction(mapStr))!
+    
+    clear_err()
+    let cPtr = sign_transaction(mapStr)!
     defer {
-      try! free_const_string(cPtr)
+      free_const_string(cPtr)
     }
-    return String(cString: cPtr)
+    let cErrPtr = get_last_err_message()!
+    defer {
+      free_const_string(cErrPtr)
+    }
+    
+    let errStr = String(cString: cErrPtr)
+    if errStr.count > 0 {
+      return errStr
+    } else {
+      return String(cString: cPtr)
+    }
+    
+    
   }
   
   func scanWallets() {

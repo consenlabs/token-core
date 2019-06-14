@@ -106,7 +106,7 @@ impl TransactionSinger for BitcoinCashTransaction {
             total_amount += unspent.amount;
         }
 
-        ensure!(total_amount < (self.amount + self.fee), "total amount must ge amount + fee");
+        ensure!(total_amount >= (self.amount + self.fee), "total amount must ge amount + fee");
 
         let (change_addr, prv_keys) = self.collect_prv_keys_and_address(password, wallet)?;
 
