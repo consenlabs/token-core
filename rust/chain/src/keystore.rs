@@ -78,12 +78,14 @@ impl Default for Metadata {
 }
 
 
-// Send + Sync used fo lazy_static
-pub trait Keystore: Send + Sync {
+// Send  used fo lazy_static
+pub trait Keystore: Send {
     fn get_metadata(&self) -> Metadata;
     fn get_address(&self) -> String;
     fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>>;
     fn export_json(&self) -> String;
+    fn get_id(&self) -> String;
+    fn clone_box(&self) -> Box<Keystore>;
 }
 
 #[derive(Debug, Clone)]
@@ -128,6 +130,14 @@ impl Keystore for V3Keystore {
 
     fn export_json(&self) -> String {
         serde_json::to_string(&self).unwrap()
+    }
+
+    fn get_id(&self) -> String {
+        self.id.to_owned()
+    }
+
+    fn clone_box(&self) -> Box<Keystore> {
+        Box::new(self.clone()) as Box<Keystore>
     }
 }
 

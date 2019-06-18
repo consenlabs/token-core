@@ -98,6 +98,14 @@ impl Keystore for HdMnemonicKeystore {
     fn export_json(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }
+
+    fn get_id(&self) -> String {
+        self.id.to_owned()
+    }
+
+    fn clone_box(&self) -> Box<Keystore> {
+        Box::new(self.clone()) as Box<Keystore>
+    }
 }
 
 #[cfg(test)]

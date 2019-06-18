@@ -6,7 +6,6 @@ use log::{info, trace, warn};
 
 use std::fs::File;
 use std::io::{Read, Write};
-//use utils::Error;
 use utils::Result;
 use utils::LAST_BACKTRACE;
 use utils::LAST_ERROR;
@@ -23,7 +22,7 @@ use std::fs::{self, DirEntry};
 
 use std::rc::Rc;
 use std::cell::RefCell;
-use core::borrow::BorrowMut;
+use core::borrow::{BorrowMut, Borrow};
 use serde_json::map::Keys;
 use std::sync::Mutex;
 use crate::utils::set_panic_hook;
@@ -47,13 +46,9 @@ static PASSWORD: &'static str = "Insecure Pa55w0rd";
 static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 
-//static KYESTORE_MAP: Rc<RefCell<HashMap<String, Box<Keystore>>>> = Rc::new(RefCell::new(HashMap::new()));
-//lazy_static! {
-//    static ref KEYSTORE_MAP: Mutex<HashMap<String, Box<Keystore>>> = Mutex::new(HashMap::new());
-//}
 
 lazy_static! {
-    static ref KYESTORE_MAP: Mutex<HashMap<String, Box<dyn Keystore>>> = {
+    static ref KEYSTORE_MAP: Mutex<HashMap<String, Box<dyn Keystore>>> = {
         let mut m = Mutex::new(HashMap::new());
 
         let meta = Metadata::default();
@@ -62,9 +57,20 @@ lazy_static! {
         m.lock().unwrap().insert("aaa".to_owned(), Box::new(keystore) as Box<Keystore>);
         m
     };
+
 }
 
+fn cache_keystore(keystore: Box<dyn Keystore>) {
+    KEYSTORE_MAP.lock().unwrap().insert(keystore.get_id().to_owned(), keystore);
+}
 
+fn find_keystore(id: &str) -> Result<Box<dyn Keystore>> {
+    let map = KEYSTORE_MAP.lock().unwrap();
+    match map.get(&id.to_owned()) {
+        Some(keystore) => Ok(keystore.clone_box()),
+        _ => Err(format_err!("{}", "wallet_id_not_found"))
+    }
+}
 
 #[no_mangle]
 pub extern fn read_file(file_path: *const c_char) -> *const c_char {
@@ -121,21 +127,23 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 }
 
 
-
 #[no_mangle]
 pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
     let v: Value = serde_json::from_str(json_str).unwrap();
-
     set_panic_hook();
+    _scan_wallets(v);
+        ()
+}
+
+fn _scan_wallets(v: Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().unwrap();
     info!("scan file {}", file_dir);
     let p = Path::new(file_dir);
     let walk_dir = std::fs::read_dir(p).unwrap();
     info!("walk dir {:?}", walk_dir);
     for entry in walk_dir {
-
         let entry = entry.unwrap();
         let fp = entry.path();
         let mut f = File::open(fp).unwrap();
@@ -147,15 +155,22 @@ pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
         if v["metadata"]["chainType"].as_str().unwrap().to_uppercase() != "BCH" {
             continue;
         }
-
-        if version == 44 {
-            let keystore: HdMnemonicKeystore = serde_json::from_str(&contents).unwrap();
-            KYESTORE_MAP.lock().unwrap().insert(keystore.id.to_owned(), Box::new(keystore) as Box<Keystore>);
-        } else if version == 3 {
-            let keystore: V3Keystore = serde_json::from_str(&contents).unwrap();
-            KYESTORE_MAP.lock().unwrap().insert(keystore.id.to_owned(), Box::new(keystore) as Box<Keystore>);
-        }
+        let keystore: Result<Box<dyn Keystore>> = match version {
+            44 => {
+                let keystore: HdMnemonicKeystore = serde_json::from_str(&contents).unwrap();
+                Ok(Box::new(keystore) as Box<dyn Keystore>)
+            }
+            3 => {
+                let keystore: V3Keystore = serde_json::from_str(&contents).unwrap();
+                Ok(Box::new(keystore) as Box<dyn Keystore>)
+            }
+            _ => {
+                Err(format_err!("{}", "unknown_version"))
+            }
+        };
+        cache_keystore(keystore?);
     }
+    Ok(())
 }
 
 #[no_mangle]
@@ -181,7 +196,8 @@ pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) ->
     }
     let mut file = File::create(path).unwrap();
     file.write_all(&json.as_bytes());
-    KYESTORE_MAP.lock().unwrap().insert(keystore.id.to_owned(), Box::new(keystore) as Box<Keystore>);
+    let keystore_box :Box<dyn Keystore> = Box::new(keystore);
+    cache_keystore(keystore_box);
     CString::new(json).unwrap().into_raw()
 }
 
@@ -207,7 +223,9 @@ pub unsafe extern "C" fn import_wallet_from_private_key(json_str: *const c_char)
     }
     let mut file = File::create(path).unwrap();
     file.write_all(&json.as_bytes());
-    KYESTORE_MAP.lock().unwrap().insert(keystore.id.to_owned(), Box::new(keystore) as Box<Keystore>);
+    let keystore_box: Box<dyn Keystore> = Box::new(keystore);
+    cache_keystore(keystore_box);
+
     CString::new(json).unwrap().into_raw()
 }
 
@@ -216,7 +234,7 @@ pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_c
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
 
-    let json = crate::utils::landingpad(||_sign_transaction(json_str));
+    let json = crate::utils::landingpad(|| _sign_transaction(json_str));
     CString::new(json).unwrap().into_raw()
 }
 
@@ -241,12 +259,24 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
         change_idx: change_idx as u32,
     };
 
-    let map = KYESTORE_MAP.lock().unwrap();
-    let keystore = map.get(w_id).unwrap();
-
+    let keystore = find_keystore(w_id)?;
     let ret = bch_tran.sign_transaction(chain_id, password, keystore.as_ref())?;
     Ok(serde_json::to_string(&ret)?)
 }
+
+//fn _find_wallet_by_mnemonic(json_str: &str) -> Result<String> {
+//    let v: Value = serde_json::from_str(json_str)?;
+//    let mnemonic = v["mnemonic"].as_str()?;
+//    let path = v["path"].as_str()?;
+//    let network = v["network"].as_str()?;
+//    let chain_type = v["chainType"].as_str()?;
+//
+//
+//
+//
+//
+//}
+
 
 #[no_mangle]
 pub unsafe extern "C" fn clear_err() {
@@ -273,7 +303,6 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 //            }
             CString::new(msg).unwrap().into_raw()
         } else {
-
             CString::new("").unwrap().into_raw()
         }
     })
