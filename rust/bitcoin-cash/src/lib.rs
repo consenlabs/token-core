@@ -18,11 +18,15 @@ pub mod errors;
 pub mod bip143_with_forkid;
 pub mod hd_mnemonic_keystore;
 pub mod bitcoin_cash_transaction_signer;
+pub mod hard_wallet_keystore;
 use bip143_with_forkid::SighashComponentsWithForkId;
 use core::result;
 
 #[macro_use] extern crate failure;
 #[macro_use] extern crate hex_literal;
+extern crate num_bigint;
+extern crate num_traits;
+extern crate num_integer;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 

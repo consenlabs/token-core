@@ -72,6 +72,17 @@ fn find_keystore(id: &str) -> Result<Box<dyn Keystore>> {
     }
 }
 
+fn find_keystore_by_address(address: &str) -> Option<Box<dyn Keystore>> {
+    let map = KEYSTORE_MAP.lock().unwrap();
+    let mut keystores: Vec<Box<dyn Keystore>> = map.iter()
+        .filter(|(id, keystore)| keystore.get_address() == address)
+        .map(|(id, keystore) | keystore.clone_box())
+        .collect();
+
+    keystores.reverse();
+    keystores.pop()
+}
+
 #[no_mangle]
 pub extern fn read_file(file_path: *const c_char) -> *const c_char {
     let c_str = unsafe { CStr::from_ptr(file_path) };
@@ -173,31 +184,70 @@ fn _scan_wallets(v: Value) -> Result<()> {
     Ok(())
 }
 
+fn _find_wallet_by_mnemonic(json_str: &str) -> Result<String> {
+    let v: Value = serde_json::from_str(json_str).unwrap();
+    let mnemonic = v["mnemonic"].as_str().unwrap();
+    let path = v["path"].as_str().unwrap();
+    let network = v["network"].as_str().unwrap();
+    // todo: provider support
+
+    let address = HdMnemonicKeystore::address_from_mnemonic(mnemonic, path, network)?;
+    let keystore = find_keystore_by_address(&address);
+    if let Some(ks) = keystore {
+        Ok(ks.export_json())
+    } else {
+        Ok("{}".to_owned())
+    }
+}
+
 #[no_mangle]
-pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
+pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
+
+    let json = crate::utils::landingpad(|| _find_wallet_by_mnemonic(json_str));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _import_wallet_from_mnemonic(json_str: &str) -> Result<String> {
     let v: Value = serde_json::from_str(json_str).unwrap();
 
-    let mut meta: Metadata = serde_json::from_value(v.clone()).unwrap();
+    let mut meta: Metadata = serde_json::from_value(v.clone())?;
     let password = v["password"].as_str().unwrap();
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let path = v["path"].as_str().unwrap();
     let overwrite = v["overwrite"].as_bool().unwrap();
     let file_dir = v["fileDir"].as_str().unwrap();
 
-    let keystore = HdMnemonicKeystore::new(meta, password, mnemonic, path).unwrap();
+    let mut keystore = HdMnemonicKeystore::new(meta, password, mnemonic, path)?;
+
+    let exist_ks_opt = find_keystore_by_address(&keystore.address);
+    if exist_ks_opt.is_some() {
+        if !overwrite {
+            return Err(format_err!("{}", "wallet_exists"))
+        } else {
+            keystore.id = exist_ks_opt.unwrap().get_id();
+        }
+    }
+
     let json = keystore.export_json();
 
     let ks_path = format!("{}{}.json", file_dir, keystore.id);
     let path = Path::new(&ks_path);
-    if path.exists() && !overwrite {
-        // throw error
-    }
     let mut file = File::create(path).unwrap();
     file.write_all(&json.as_bytes());
+
     let keystore_box :Box<dyn Keystore> = Box::new(keystore);
     cache_keystore(keystore_box);
+    Ok(json)
+}
+
+
+#[no_mangle]
+pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
+    let json_c_str = unsafe { CStr::from_ptr(json_str) };
+    let json_str = json_c_str.to_str().unwrap();
+    let json = crate::utils::landingpad(|| _import_wallet_from_mnemonic(json_str));
     CString::new(json).unwrap().into_raw()
 }
 

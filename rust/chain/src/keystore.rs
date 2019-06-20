@@ -86,6 +86,7 @@ pub trait Keystore: Send {
     fn export_json(&self) -> String;
     fn get_id(&self) -> String;
     fn clone_box(&self) -> Box<Keystore>;
+    fn set_id(&mut self, id: String);
 }
 
 #[derive(Debug, Clone)]
@@ -138,6 +139,10 @@ impl Keystore for V3Keystore {
 
     fn clone_box(&self) -> Box<Keystore> {
         Box::new(self.clone()) as Box<Keystore>
+    }
+
+    fn set_id(&mut self, id: String) {
+        self.id = id;
     }
 }
 

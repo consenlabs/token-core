@@ -80,6 +80,28 @@ impl HdMnemonicKeystore {
     pub fn export_json(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }
+
+    pub fn address_from_mnemonic(mnemonic: &str, path: &str, network: &str) -> Result<String> {
+        let network = match network.to_lowercase().as_ref() {
+            "testnet" => Network::Testnet,
+            _ => Network::Bitcoin
+        };
+        let mn = Mnemonic::from_phrase(mnemonic, Language::English).map_err(| _ | format_err!("invalid_mnemonic"))?;
+        let p = DerivationPath::from_str(path)?;
+
+        let s = Secp256k1::new();
+        let root_xprv = Self::gen_extend(&mn, network)?;
+        let xprv = root_xprv.derive_priv(&s, &p)?;
+        let xpub= ExtendedPubKey::from_private(&s, &xprv);
+
+
+        let main_address_path = DerivationPath::from_str(&(path.to_owned() + "/0/0"))?;
+        let main_addr_prv = root_xprv.derive_priv(&s, &main_address_path)?;
+        let main_addr_pub = ExtendedPubKey::from_private(&s, &main_addr_prv);
+
+        let main_addr = Address::p2pkh(&main_addr_pub.public_key, Network::Bitcoin);
+        Ok(main_addr.to_string())
+    }
 }
 
 impl Keystore for HdMnemonicKeystore {
@@ -105,6 +127,10 @@ impl Keystore for HdMnemonicKeystore {
 
     fn clone_box(&self) -> Box<Keystore> {
         Box::new(self.clone()) as Box<Keystore>
+    }
+
+    fn set_id(&mut self, id: String) {
+        self.id = id;
     }
 }
 
