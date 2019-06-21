@@ -28,11 +28,17 @@ public class MainActivity extends AppCompatActivity {
     System.loadLibrary("rust");
     initLog();
   }
-  public static native void initLog();
+//  public static native void initLog();
+//
+//  public static native String generateMnemonic(int strength);
+//
+//  public static native String readFile(String filePath);
 
-  public static native String generateMnemonic(int strength);
+  public native String getXPub(String apdu);
 
-  public static native String readFile(String filePath);
+  public String sendApdu(String apdu) {
+    // mock send Apdu
+  }
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
@@ -42,10 +48,17 @@ public class MainActivity extends AppCompatActivity {
 //    final TokenCoreWallet tokenCoreWallet =  new TokenCoreWallet();
     final TextView textView = findViewById(R.id.tv_mnemonic);
 
+//    findViewById(R.id.btn_generateMnemonic).setOnClickListener(new View.OnClickListener() {
+//      @Override
+//      public void onClick(View v) {
+//        textView.setText(TokenCore.INSTANCE.generateMnemonic(128));
+//      }
+//    });
+
     findViewById(R.id.btn_generateMnemonic).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        textView.setText(TokenCore.INSTANCE.generateMnemonic(128));
+        textView.setText(getXPub());
       }
     });
 
@@ -68,10 +81,10 @@ public class MainActivity extends AppCompatActivity {
 
 
   }
-
-  interface TokenCore extends Library {
-    TokenCore INSTANCE = (TokenCore) Native.loadLibrary("rust", TokenCore.class);
-    public String generateMnemonic(int strength);
-  }
+//
+//  interface TokenCore extends Library {
+//    TokenCore INSTANCE = (TokenCore) Native.loadLibrary("rust", TokenCore.class);
+//    public String generateMnemonic(int strength);
+//  }
 
 }

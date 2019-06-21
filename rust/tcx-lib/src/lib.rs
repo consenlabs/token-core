@@ -27,6 +27,65 @@ use serde_json::map::Keys;
 use std::sync::Mutex;
 use crate::utils::set_panic_hook;
 
+// This is the interface to the JVM that we'll call the majority of our
+// methods on.
+use jni::JNIEnv;
+
+// These objects are what you should use as arguments to your native
+// function. They carry extra lifetime information to prevent them escaping
+// this context and getting used after being GC'd.
+use jni::objects::{JClass, JString, JMethodID, JObject, JValue};
+
+// This is just a pointer. We'll be returning it from our function. We
+// can't return one of the objects with lifetime information because the
+// lifetime checker won't let us.
+use jni::sys::jstring;
+use jni::signature::JavaType;
+use tcx_bch::hard_wallet_keystore::HardWalletKeystore;
+
+
+extern crate jni;
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "system" fn Java_MainActivity_getXPub(env: JNIEnv,
+                                             object: JObject,
+                                             )
+                                             -> jstring {
+    // https://stackoverflow.com/questions/38079081/l-z-and-v-in-java-method-signature/38079146
+    let send_apdu_mid = get_method_id(&env, "com/consenlabs/android/tokencoreexample/MainActivity", "sendApdu", "(Ljava/lang/String;)Ljava/lang/String;").unwrap();
+//    env.new_string()
+    let apdus =  HardWalletKeystore::xpub_apdu("m/44'/0'/0'", true);
+    let apdu_res:Vec<String> = apdus.iter().map(|apdu| -> String {
+        let rsp = env.call_method_unchecked(
+            object,
+            send_apdu_mid,
+            JavaType::Object("java/lang/String".into()),
+            &[JValue::Object(JObject::from(env.new_string(apdu).unwrap()))]
+        ).unwrap();
+        env.get_string(JString::from(rsp.l().unwrap())).expect("Couldn't get java string!").into()
+
+    }).collect();
+    let apdu_res:Vec<&str> = apdu_res.iter().map(AsRef::as_ref).collect();
+    let xpub = HardWalletKeystore::apdu_to_xpub(apdu_res.as_slice(), "m/44'/0'/0'", "MAINNET").unwrap();
+
+    // Then we have to create a new Java string to return. Again, more info
+    // in the `strings` module.
+    let output = env.new_string(format!("{}", xpub))
+        .expect("Couldn't create java string!");
+
+    // Finally, extract the raw pointer to return.
+    output.into_inner()
+}
+
+/// Produces `JMethodID` for a particular class dealing with its lifetime.
+fn get_method_id(env: &JNIEnv, class: &str, name: &str, sig: &str) -> Option<JMethodID<'static>> {
+    env.get_method_id(class, name, sig)
+        // we need this line to erase lifetime in order to save underlying raw pointer in static
+        .map(|mid| mid.into_inner().into())
+        .ok()
+}
+
 // #[link(name = "TrezorCrypto")]
 // extern {
 //     fn mnemonic_generate(strength: c_int, mnemonic: *mut c_char) -> c_int;
