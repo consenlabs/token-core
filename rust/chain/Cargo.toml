@@ -6,11 +6,14 @@ edition = "2018"
 
 [dependencies]
 tcx-crypto = { path = "../crypto" }
-bitcoin = { path = "../../../rust-bitcoin"}
-secp256k1 = { path = "../../../rust-secp256k1"}
+bitcoin = "0.18"
+secp256k1 = "0.12"
 tiny-bip39 = "0.6.0"
 bitcoin_hashes = "0.3.2"
 uuid = { version = "0.7", features = ["serde", "v4"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.39"
 failure = "0.1.5"
+
+[replace]
+"secp256k1:0.12.3" = { git = 'https://github.com/rust-bitcoin/rust-secp256k1.git' }
