@@ -232,8 +232,10 @@ mod tests {
 
     #[test]
     pub fn bch_address() {
-        let address = generate_address_from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy");
-        assert_eq!("17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV", address);
+        match generate_address_from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy") {
+            Ok(address) => assert_eq!("17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV", address),
+            Err(_) => panic!("could not get address"),
+        };
     }
 }
 
