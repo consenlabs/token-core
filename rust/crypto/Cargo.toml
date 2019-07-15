@@ -23,5 +23,7 @@ pbkdf2 = "0.3.0"
 memzero = "0.1"
 bitcoin_hashes = "0.3.2"
 crypto-mac = "0.7.0"
-secp256k1 = { path = "../../../rust-secp256k1"}
+#bitcoin = "0.18.0"
+secp256k1 = "0.12"
+#secp256k1 = { path = "../../../rust-secp256k1"}
 failure = "0.1.5"

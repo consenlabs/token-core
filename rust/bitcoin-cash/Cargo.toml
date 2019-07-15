@@ -9,8 +9,10 @@ tcx-crypto = { path = "../crypto" }
 tcx-chain = { path = "../chain" }
 bch_addr = "0.1.0"
 hex-literal = "0.1.4"
-bitcoin = { path = "../../../rust-bitcoin"}
-secp256k1 = { path = "../../../rust-secp256k1"}
+#bitcoin = { path = "../../../rust-bitcoin"}
+#secp256k1 = { path = "../../../rust-secp256k1"}
+bitcoin = "0.18.0"
+secp256k1 = "0.12"
 tiny-bip39 = "0.6.0"
 bitcoin_hashes = "0.3.2"
 serde = { version = "1.0", features = ["derive"] }
