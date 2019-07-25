@@ -392,6 +392,9 @@ mod tests {
     fn path() {
         let file_dir = "/Users/xyz/Library/Developer/CoreSimulator/Devices/1C6326AE-C550-43D5-A1A7-CF791B4A04CA/data/Containers/Data/Application/BC076852-DF07-42EA-82B1-2FA8C5CEE9EE/Documents/wallets/";
         let id = "ec9298f7-7f2b-4483-90af-cc440a411d82";
+
+        let a_str = String::from("aaa");
+
         let ks_path = format!("{}{}.json", file_dir, id);
         assert_eq!("", ks_path);
     }

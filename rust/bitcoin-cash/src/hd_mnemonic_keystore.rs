@@ -32,10 +32,12 @@ pub struct HdMnemonicKeystore {
 
 impl HdMnemonicKeystore {
     pub fn new(metadata: Metadata, password: &str, mnemonic: &str, path: &str) -> Result<HdMnemonicKeystore>{
-        let network = match metadata.network.to_lowercase().as_ref() {
-            "testnet" => Network::Testnet,
-            _ => Network::Bitcoin
-        };
+        // let network = match metadata.network.to_lowercase().as_ref() {
+        //     "testnet" => Network::Testnet,
+        //     _ => Network::Bitcoin
+        // };
+        // todo: network
+        let network = Network::Bitcoin;
         let s = Secp256k1::new();
         let mn = Mnemonic::from_phrase(mnemonic, Language::English).map_err(| _ | format_err!("invalid_mnemonic"))?;
         let p = DerivationPath::from_str(path)?;

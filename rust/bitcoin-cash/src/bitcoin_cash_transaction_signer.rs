@@ -43,11 +43,12 @@ impl BitcoinCashTransaction {
 
     fn collect_prv_keys_and_address(&self, password: &str, wallet: &Keystore) -> Result<(Address, Vec<PrivateKey>)> {
         let metadata = wallet.get_metadata();
-        let network = match metadata.network.to_uppercase().as_str() {
-            "MAINNET" => Network::Bitcoin,
-            _ => Network::Testnet
-        };
+        // let network = match metadata.network.to_uppercase().as_str() {
+        //     "MAINNET" => Network::Bitcoin,
+        //     _ => Network::Testnet
+        // };
 
+        let network = Network::Bitcoin;
         match metadata.source {
             Source::Wif => {
                 let change_addr = Address::from_str(&wallet.get_address())?;
