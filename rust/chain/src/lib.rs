@@ -1,6 +1,7 @@
 pub mod signer;
 pub mod keystore;
 pub mod bips;
+pub mod coin;
 
 pub use keystore::V3MnemonicKeystore;
 pub use signer::{TxSignResult, TransactionSinger};

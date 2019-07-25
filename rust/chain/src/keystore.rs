@@ -1,5 +1,5 @@
 use bitcoin::network::constants::Network;
-use bitcoin::util::address::Address;
+use bitcoin::util::address::Address as BtcAddress;
 use secp256k1::Secp256k1;
 use bitcoin::PrivateKey;
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
@@ -175,7 +175,7 @@ impl V3MnemonicKeystore {
         let s = Secp256k1::new();
         let pub_key = pk.public_key(&s);
         // Generate pay-to-pubkey-hash address
-        let address = Address::p2pkh(&pub_key, Network::Bitcoin);
+        let address = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
         address.to_string()
     }
 
@@ -191,8 +191,16 @@ fn generate_address_from_wif(wif: &str) -> Result<String> {
     let prv_key = PrivateKey::from_wif(wif).map_err(|_| format_err!("invalid_wif"))?;
     let pub_key = prv_key.public_key(&s);
     // Generate pay-to-pubkey-hash address
-    let address = Address::p2pkh(&pub_key, Network::Bitcoin);
+    let address = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
     Ok(address.to_string())
+}
+
+
+pub trait Address {
+    // fn is_valid(address: &str) -> bool;
+    // fn new(address: &str) -> Box<dyn Address>;
+    // fn from_public_key(public_key: &str) -> Box<dyn Address>;
+    // fn from_data(data: &[u8]) -> Box<dyn Address>;
 }
 
 // todo: process the extra field
