@@ -13,6 +13,7 @@ use bitcoin_hashes::hex::ToHex;
 use std::str::FromStr;
 use crate::Result;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 const DUST: u64 = 546;
 
@@ -166,7 +167,14 @@ impl BitcoinCashTransaction {
     }
 
 }
-
+//
+//pub struct BitcoinCashTransactionSinger {}
+//
+//impl TransactionSinger for BitcoinCashTransactionSinger {
+//    fn sign_transaction(json_str: &str) -> Result<String> {
+//
+//    }
+//}
 
 #[cfg(test)]
 mod tests {

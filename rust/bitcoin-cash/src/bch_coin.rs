@@ -2,48 +2,49 @@ use tcx_chain::curve::{Curve, Secp256k1Curve};
 use tcx_chain::{Coin, HdKeystore, Account};
 use crate::errors::Result;
 use bitcoin::network::constants::Network;
-use bitcoin::{Address, PublicKey, PrivateKey};
-use tcx_chain::keystore::KeyType;
+use bitcoin::{Address as BtcAddress, PublicKey, PrivateKey};
+use tcx_chain::keystore::{KeyType, Address};
 use secp256k1::{SecretKey, Secp256k1};
 use bitcoin_hashes::hex::ToHex;
 use serde_json::Value;
 use crate::bch_transaction::{Utxo, BitcoinCashTransaction};
 use std::str::FromStr;
+use std::marker::PhantomData;
 
-pub struct BchCoin<'a> {
-    curve: Secp256k1Curve,
+const SYMBOL:&'static str = "BCH";
+
+pub struct BchCoin<'a, C: Curve, A: Address> {
     derivation_path: String,
     keystore: &'a HdKeystore,
+    curve_type: PhantomData<C>,
+    address_type: PhantomData<A>
 }
 
-impl<'a> BchCoin<'a> {
-    const SYMBOL: &'static str = "BCH";
-    fn load(keystore: &HdKeystore) -> BchCoin {
+impl<'a, C, A> BchCoin<'a, C, A> where C: Curve, A: Address {
+    // can't use associate when use PhantomData
+//    const SYMBOL: &'static str = "BCH";
+    fn load(keystore: &'a HdKeystore) -> BchCoin<'a, C, A> {
         BchCoin {
-            curve: Secp256k1Curve::new(),
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             keystore,
+            curve_type: PhantomData,
+            address_type: PhantomData
         }
     }
 }
 
 
-impl<'a> BchCoin<'a> {
+impl<'a, C, A> BchCoin<'a, C, A> where C: Curve, A: Address {
     fn append_account(&self, password: &str) -> Result<Account> {
         let seed = self.keystore.seed(password)?;
-        let main_key = self.curve.key_at_path(&self.derivation_path, &seed)?;
+        let main_key = C::key_at_path(&self.derivation_path, &seed)?;
         let address = self.derive_address(&main_key)?;
-        let xpub = self.curve.extended_pub_key(&self.derivation_path, &seed)?;
-//        pub address: String,
-//        pub derivation_path: String,
-//        pub extended_public_key: String,
-//        pub coin: String,
-//        #[serde(skip_deserializing)]
-//        pub extra: String,
+        let xpub = C::extended_pub_key(&self.derivation_path, &seed)?;
+
         Ok(Account {
             derivation_path: self.derivation_path.clone(),
             extended_public_key: xpub,
-            coin: BchCoin::SYMBOL.to_string(),
+            coin: SYMBOL.to_string(),
             address,
             extra: "".to_string(),
         })
@@ -51,28 +52,23 @@ impl<'a> BchCoin<'a> {
 
     fn key(&self, password: &str) -> Result<Vec<u8>> {
         let seed = self.keystore.seed(password)?;
-        Ok(self.curve.key_at_path(&self.derivation_path, &seed)?)
+        Ok(C::key_at_path(&self.derivation_path, &seed)?)
     }
 
     fn derive_address(&self, prv_key: &[u8]) -> Result<String> {
-        let secp = Secp256k1::new();
-        let secret_key = SecretKey::from_slice(prv_key)?;
-        let pub_key = PublicKey {
-            compressed: true,
-            key: secp256k1::PublicKey::from_secret_key(&secp, &secret_key)
-        };
+        let pub_key = C::pubilc_key(prv_key)?;
         // todo network
-        Ok(Address::p2wpkh(&pub_key, Network::Bitcoin).to_string())
+        Ok(A::from_public_key(&pub_key)?)
     }
 
     fn extended_private_key(&self, password: &str) -> Result<String>{
         let seed = self.keystore.seed(password)?;
-        Ok(self.curve.extended_prv_key(&self.derivation_path, &seed)?)
+        Ok(C::extended_prv_key(&self.derivation_path, &seed)?)
     }
 
     fn extended_public_key(&self) -> String {
         let mut iter = self.keystore.active_accounts.iter();
-        match iter.find(|a| a.coin == BchCoin::SYMBOL && a.derivation_path == self.derivation_path) {
+        match iter.find(|a| a.coin == SYMBOL && a.derivation_path == self.derivation_path) {
             Some(acc) => acc.extended_public_key.to_owned(),
             _ => "".to_string()
         }
@@ -107,14 +103,14 @@ struct BchAddress {
 
 }
 
-impl BchAddress {
+impl Address for BchAddress  {
     fn is_valid(addr: &str) -> bool {
-        Address::from_str(addr).is_ok()
+        BtcAddress::from_str(addr).is_ok()
     }
 
     fn from_public_key(pub_key: &[u8]) -> Result<String> {
         let pub_key = PublicKey::from_slice(pub_key)?;
-        Ok(Address::p2wpkh(&pub_key, Network::Bitcoin).to_string())
+        Ok(BtcAddress::p2wpkh(&pub_key, Network::Bitcoin).to_string())
     }
 
 }

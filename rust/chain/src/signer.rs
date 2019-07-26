@@ -17,7 +17,7 @@ pub struct TxSignResult {
 
 
 pub trait TransactionSinger {
-    fn sign_transaction(&self, chain_id: &str, password: &str, wallet: &Keystore) -> Result<TxSignResult>;
+    fn sign_transaction(json_str: &str) -> Result<String>;
 }
 
 
