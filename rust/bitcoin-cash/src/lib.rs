@@ -17,8 +17,10 @@ use bip39::{Mnemonic, Language};
 pub mod errors;
 pub mod bip143_with_forkid;
 pub mod hd_mnemonic_keystore;
-pub mod bitcoin_cash_transaction_signer;
+//pub mod bitcoin_cash_transaction_signer_old_keystore;
 pub mod hard_wallet_keystore;
+pub mod bch_coin;
+pub mod bch_transaction;
 use bip143_with_forkid::SighashComponentsWithForkId;
 use core::result;
 

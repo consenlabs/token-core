@@ -3,7 +3,7 @@ use bitcoin::util::address::Address as BtcAddress;
 use secp256k1::Secp256k1;
 use bitcoin::PrivateKey;
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
-use bip39::{Mnemonic, Language};
+use bip39::{Mnemonic, Language, Seed};
 use std::str::FromStr;
 use bitcoin_hashes::hex::{ToHex, FromHex};
 use serde::{Deserialize, Serialize};
@@ -216,13 +216,21 @@ pub struct Account {
     pub extra: String,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum KeyType {
+    PrivateKey,
+    Mnemonic
+}
+
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HdKeystore {
     pub id: String,
     pub version: i32,
-    pub key_type: String,
+    pub key_type: KeyType,
     pub crypto: Crypto<Pbkdf2Params>,
     pub active_accounts: Vec<Account>,
     #[serde(alias = "imTokenMeta")]
@@ -237,7 +245,7 @@ impl HdKeystore {
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 11000,
-            key_type: "MNEMONIC".to_string(),
+            key_type: KeyType::Mnemonic,
             crypto,
             active_accounts: vec![],
             meta,
@@ -250,7 +258,7 @@ impl HdKeystore {
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 11000,
-            key_type: "MNEMONIC".to_string(),
+            key_type: KeyType::Mnemonic,
             crypto,
             active_accounts: vec![],
             meta,
@@ -263,11 +271,38 @@ impl HdKeystore {
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 11000,
-            key_type: "PRIVATE_KEY".to_string(),
+            key_type: KeyType::PrivateKey,
             crypto,
             active_accounts: vec![account],
             meta,
         }
+    }
+
+    pub fn mnemonic(&self, password: &str) -> Result<String> {
+        if self.key_type != KeyType::Mnemonic {
+            return Err(format_err!("{}", "invalid_key_type"));
+        }
+        let mnemonic_bytes = self.crypto.decrypt(password)?;
+        let mnemonic = String::from_utf8(mnemonic_bytes)?;
+        Ok(mnemonic)
+    }
+
+    pub fn seed(&self, password: &str) -> Result<Seed> {
+        let mnemonic_str = self.mnemonic(password)?;
+        let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
+        Ok(bip39::Seed::new(&mnemonic, &""))
+    }
+
+    fn key_at_path(&self, path: &str, password: &str) -> Result<Vec<u8>> {
+        let mnemonic_str = self.mnemonic(password)?;
+        let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
+        let seed = bip39::Seed::new(&mnemonic, &"");
+        let s = Secp256k1::new();
+        let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
+
+        let path = DerivationPath::from_str(path)?;
+        let main_address_pk = sk.derive_priv(&s, &path)?;
+        Ok(main_address_pk.private_key.to_bytes())
     }
 
     pub fn append_account(&mut self, account: Account) {

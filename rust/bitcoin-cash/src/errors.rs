@@ -1,8 +1,13 @@
 use bitcoin::util::bip32::Error as BtcError;
 //use crate::errors::Error::Bip32Error;
+use failure::Error;
 use core::result;
-
 use bitcoin::consensus::encode::Error as BtcEncodeErr;
+
+
+
+pub type Result<T> = result::Result<T, Error>;
+
 //
 //#[derive(Debug, Fail)]
 //pub enum Error {

@@ -12,7 +12,7 @@ use utils::LAST_ERROR;
 use failure::Fail;
 
 use tcx_bch::hd_mnemonic_keystore::HdMnemonicKeystore;
-use tcx_bch::bitcoin_cash_transaction_signer::{BitcoinCashTransaction, Utxo};
+use tcx_bch::bitcoin_cash_transaction_signer_old_keystore::{BitcoinCashTransaction, Utxo};
 use serde_json::Value;
 use tcx_chain::{Metadata, Keystore, V3Keystore};
 use std::path::Path;
