@@ -3,5 +3,5 @@ members = [
     "tcx-crypto",
     "tcx-chain",
     "tcx-bch",
-    "tcx",
+#    "tcx",
 ]

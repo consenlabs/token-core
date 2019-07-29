@@ -11,10 +11,11 @@ use utils::LAST_BACKTRACE;
 use utils::LAST_ERROR;
 use failure::Fail;
 
-use tcx_bch::hd_mnemonic_keystore::HdMnemonicKeystore;
-use tcx_bch::bitcoin_cash_transaction_signer_old_keystore::{BitcoinCashTransaction, Utxo};
+
+
 use serde_json::Value;
-use tcx_chain::{Metadata, Keystore, V3Keystore};
+use tcx_chain::{Metadata, Keystore, V3Keystore, HdKeystore};
+
 use std::path::Path;
 use std::collections::HashMap;
 use tcx_chain::signer::TransactionSinger;
@@ -47,14 +48,27 @@ static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort w
 static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 
 
+//lazy_static! {
+//    static ref KEYSTORE_MAP: Mutex<HashMap<String, Box<dyn Keystore>>> = {
+//        let mut m = Mutex::new(HashMap::new());
+//
+//        let meta = Metadata::default();
+//
+//        let keystore = HdMnemonicKeystore::new(meta, &PASSWORD, &MNEMONIC, &ETHEREUM_PATH).unwrap();
+//        m.lock().unwrap().insert("aaa".to_owned(), Box::new(keystore) as Box<Keystore>);
+//        m
+//    };
+//
+//}
+
 lazy_static! {
-    static ref KEYSTORE_MAP: Mutex<HashMap<String, Box<dyn Keystore>>> = {
+    static ref KEYSTORE_MAP: Mutex<HashMap<String, HdKeystore>> = {
         let mut m = Mutex::new(HashMap::new());
 
-        let meta = Metadata::default();
-
-        let keystore = HdMnemonicKeystore::new(meta, &PASSWORD, &MNEMONIC, &ETHEREUM_PATH).unwrap();
-        m.lock().unwrap().insert("aaa".to_owned(), Box::new(keystore) as Box<Keystore>);
+//        let meta = Metadata::default();
+//
+//        let keystore = HdMnemonicKeystore::new(meta, &PASSWORD, &MNEMONIC, &ETHEREUM_PATH).unwrap();
+//        m.lock().unwrap().insert("aaa".to_owned(), Box::new(keystore) as Box<Keystore>);
         m
     };
 
@@ -183,22 +197,22 @@ fn _scan_wallets(v: Value) -> Result<()> {
     }
     Ok(())
 }
-
-fn _find_wallet_by_mnemonic(json_str: &str) -> Result<String> {
-    let v: Value = serde_json::from_str(json_str).unwrap();
-    let mnemonic = v["mnemonic"].as_str().unwrap();
-    let path = v["path"].as_str().unwrap();
-    let network = v["network"].as_str().unwrap();
-    // todo: provider support
-
-    let address = HdMnemonicKeystore::address_from_mnemonic(mnemonic, path, network)?;
-    let keystore = find_keystore_by_address(&address);
-    if let Some(ks) = keystore {
-        Ok(ks.export_json())
-    } else {
-        Ok("{}".to_owned())
-    }
-}
+// todo: fix build error
+//fn _find_wallet_by_mnemonic(json_str: &str) -> Result<String> {
+//    let v: Value = serde_json::from_str(json_str).unwrap();
+//    let mnemonic = v["mnemonic"].as_str().unwrap();
+//    let path = v["path"].as_str().unwrap();
+//    let network = v["network"].as_str().unwrap();
+//    // todo: provider support
+//
+//    let address = HdMnemonicKeystore::address_from_mnemonic(mnemonic, path, network)?;
+//    let keystore = find_keystore_by_address(&address);
+//    if let Some(ks) = keystore {
+//        Ok(ks.export_json())
+//    } else {
+//        Ok("{}".to_owned())
+//    }
+//}
 
 #[no_mangle]
 pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
