@@ -1,0 +1,9 @@
+[package]
+name = "tcx-common"
+version = "0.1.0"
+authors = ["tyrone <2125081@qq.com>"]
+edition = "2018"
+
+[dependencies]
+primitive-types="0.4.0"
+keccak-hash = "0.2.0"
