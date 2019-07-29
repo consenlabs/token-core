@@ -1,6 +1,6 @@
 use tcx_chain::curve::{Curve, Secp256k1Curve};
 use tcx_chain::{Coin, HdKeystore, Account};
-use crate::errors::Result;
+use crate::Result;
 use bitcoin::network::constants::Network;
 use bitcoin::{Address as BtcAddress, PublicKey, PrivateKey};
 use tcx_chain::keystore::{KeyType, Address};
@@ -34,7 +34,7 @@ impl<'a, C, A> BchCoin<'a, C, A> where C: Curve, A: Address {
 }
 
 
-impl<'a, C, A> BchCoin<'a, C, A> where C: Curve, A: Address {
+impl<'a, C, A> Coin for BchCoin<'a, C, A> where C: Curve, A: Address {
     fn append_account(&self, password: &str) -> Result<Account> {
         let seed = self.keystore.seed(password)?;
         let main_key = C::key_at_path(&self.derivation_path, &seed)?;
@@ -56,7 +56,7 @@ impl<'a, C, A> BchCoin<'a, C, A> where C: Curve, A: Address {
     }
 
     fn derive_address(&self, prv_key: &[u8]) -> Result<String> {
-        let pub_key = C::pubilc_key(prv_key)?;
+        let pub_key = C::public_key(prv_key)?;
         // todo network
         Ok(A::from_public_key(&pub_key)?)
     }

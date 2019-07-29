@@ -1,12 +1,12 @@
 use secp256k1::{Secp256k1, Message, SecretKey};
 use bitcoin::network::constants::Network;
-use bitcoin::util::address::Address as BtcAddress;
 use bitcoin::PrivateKey;
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
 use bip39::{Mnemonic, Language, Seed};
 use std::str::FromStr;
 use crate::Result;
 
+// todo: try to move Curve to crypto
 pub trait Curve {
 
     fn sign(pk: &[u8], bytes: &[u8]) -> Result<Vec<u8>> {
@@ -29,7 +29,7 @@ pub trait Curve {
     }
 
     fn key_at_path(path: &str, seed: &Seed) -> Result<Vec<u8>>;
-    fn pubilc_key(prv_key: &[u8]) -> Result<Vec<u8>> {
+    fn public_key(prv_key: &[u8]) -> Result<Vec<u8>> {
         unimplemented!();
     }
     fn compressed_public_key(prv_key: &[u8]) -> String {
@@ -89,7 +89,7 @@ impl Curve for Secp256k1Curve {
         Ok(xpub.to_string())
     }
 
-    fn pubilc_key(prv_key: &[u8]) -> Result<Vec<u8>> {
+    fn public_key(prv_key: &[u8]) -> Result<Vec<u8>> {
         let secp = Secp256k1::new();
         let secret_key = SecretKey::from_slice(prv_key)?;
         let pub_key = secp256k1::PublicKey::from_secret_key(&secp, &secret_key);

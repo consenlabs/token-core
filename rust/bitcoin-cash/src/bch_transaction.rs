@@ -167,52 +167,45 @@ impl BitcoinCashTransaction {
     }
 
 }
-//
-//pub struct BitcoinCashTransactionSinger {}
-//
-//impl TransactionSinger for BitcoinCashTransactionSinger {
-//    fn sign_transaction(json_str: &str) -> Result<String> {
-//
-//    }
-//}
+
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use bip39::Language;
-    use crate::hd_mnemonic_keystore::HdMnemonicKeystore;
-    use tcx_chain::V3Keystore;
-
-    static PASSWORD: &'static str = "Insecure Pa55w0rd";
-    static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
-    static BCH_MAIN_PATH: &'static str = "m/44'/145'/0'";
-    static WIF: &'static str = "L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy";
-
-    #[test]
-    pub fn bch_signer() {
-        let meta = Metadata::default();
-
-        let keystore = V3Keystore::new(meta,PASSWORD, WIF).unwrap();
-        let unspents = vec![Utxo {
-            tx_hash: "115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986".to_string(),
-            vout: 0,
-            amount: 50000,
-            address: "17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV".to_string(),
-            script_pub_key: "76a91447862fe165e6121af80d5dde1ecb478ed170565b88ac".to_string(),
-            derived_path: "".to_string(),
-            sequence: 0
-        }];
-        let tran = BitcoinCashTransaction {
-            to: "1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK".to_string(),
-            amount: 15000,
-            unspents,
-            memo: "".to_string(),
-            fee: 35000,
-            change_idx: 0
-        };
-
-//        let ret = tran.sign_transaction("", PASSWORD, &keystore).unwrap();
-//        assert_eq!("01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100bc4295d369443e2cc4e20b50a6fd8e7e16c08aabdbb42bdf167dec9d41afc3d402207a8e0ccb91438785e51203e7d2f85c4698ff81245936ebb71935e3d052876dcd4121029f50f51d63b345039a290c94bffd3180c99ed659ff6ea6b1242bca47eb93b59fffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000".to_owned(), ret.signature);
-
-    }
+//    use super::*;
+//    use bip39::Language;
+////    use crate::hd_mnemonic_keystore::HdMnemonicKeystore;
+//    use tcx_chain::V3Keystore;
+//
+//    static PASSWORD: &'static str = "Insecure Pa55w0rd";
+//    static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+//    static BCH_MAIN_PATH: &'static str = "m/44'/145'/0'";
+//    static WIF: &'static str = "L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy";
+//
+//    #[test]
+//    pub fn bch_signer() {
+//        let meta = Metadata::default();
+//
+//        let keystore = V3Keystore::new(meta,PASSWORD, WIF).unwrap();
+//        let unspents = vec![Utxo {
+//            tx_hash: "115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986".to_string(),
+//            vout: 0,
+//            amount: 50000,
+//            address: "17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV".to_string(),
+//            script_pub_key: "76a91447862fe165e6121af80d5dde1ecb478ed170565b88ac".to_string(),
+//            derived_path: "".to_string(),
+//            sequence: 0
+//        }];
+//        let tran = BitcoinCashTransaction {
+//            to: "1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK".to_string(),
+//            amount: 15000,
+//            unspents,
+//            memo: "".to_string(),
+//            fee: 35000,
+//            change_idx: 0
+//        };
+//
+////        let ret = tran.sign_transaction("", PASSWORD, &keystore).unwrap();
+////        assert_eq!("01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100bc4295d369443e2cc4e20b50a6fd8e7e16c08aabdbb42bdf167dec9d41afc3d402207a8e0ccb91438785e51203e7d2f85c4698ff81245936ebb71935e3d052876dcd4121029f50f51d63b345039a290c94bffd3180c99ed659ff6ea6b1242bca47eb93b59fffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000".to_owned(), ret.signature);
+//
+//    }
 }

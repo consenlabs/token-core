@@ -14,13 +14,11 @@ use bitcoin_hashes::Hash;
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
 use bip39::{Mnemonic, Language};
 
-pub mod errors;
 pub mod bip143_with_forkid;
-pub mod hd_mnemonic_keystore;
-//pub mod bitcoin_cash_transaction_signer_old_keystore;
 pub mod hard_wallet_keystore;
 pub mod bch_coin;
 pub mod bch_transaction;
+
 use bip143_with_forkid::SighashComponentsWithForkId;
 use core::result;
 
@@ -32,6 +30,7 @@ extern crate num_integer;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
+// todo: move wif and bch address to coin
 fn generate_address_from_wif(wif : &str) -> String {
     let s: Secp256k1<_> = Secp256k1::new();
     let prv_key = PrivateKey::from_wif(wif).unwrap();
@@ -124,29 +123,14 @@ fn generate_transaction() -> String {
     return tx_bytes.to_hex();
 }
 
-fn generate_xpub(mnemonic_str: &str, path: &str) -> String {
-    if let Ok(mnemonic) = Mnemonic::from_phrase(mnemonic_str, Language::English) {
-        let seed = bip39::Seed::new(&mnemonic, &"");
-        println!("hex: {}", seed.to_hex());
-        let s = Secp256k1::new();
 
-        let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes()).unwrap();
-        let path = DerivationPath::from_str(path).unwrap();
-
-        let btc_derived= sk.derive_priv(&s, &path).unwrap();
-        let extended_pub_key = ExtendedPubKey::from_private(&s, &btc_derived);
-        return extended_pub_key.to_string();
-    }  else {
-        return String::new();
-    }
-}
 #[cfg(test)]
 mod tests {
 
     use bitcoin::PrivateKey;
     use secp256k1::Secp256k1;
 //    use cash_addr::{encode, decode, AddressType};
-    use crate::{generate_address_from_wif, generate_transaction, generate_xpub};
+    use crate::{generate_address_from_wif, generate_transaction};
     use bch_addr::Converter;
 
 
