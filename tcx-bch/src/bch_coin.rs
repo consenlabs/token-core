@@ -10,39 +10,35 @@ use serde_json::Value;
 use crate::bch_transaction::{Utxo, BitcoinCashTransaction};
 use std::str::FromStr;
 use std::marker::PhantomData;
+use bip39::{Mnemonic, Language};
 
-const SYMBOL:&'static str = "BCH";
+const SYMBOL: &'static str = "BCH";
+const PATH: &'static str = "m/44'/145'/0'/0/0";
 
-pub struct BchCoin<'a, C: Curve, A: Address> {
-    derivation_path: String,
-    keystore: &'a HdKeystore,
+pub struct BchCoin<'z, C: Curve, A: Address> {
+    //    derivation_path: String,
+    keystore: &'z HdKeystore,
     curve_type: PhantomData<C>,
-    address_type: PhantomData<A>
+    address_type: PhantomData<A>,
 }
 
-impl<'a, C, A> BchCoin<'a, C, A> where C: Curve, A: Address {
+impl<'z, C, A> BchCoin<'z, C, A> where C: Curve, A: Address {
     // can't use associate when use PhantomData
 //    const SYMBOL: &'static str = "BCH";
-    fn load(keystore: &'a HdKeystore) -> BchCoin<'a, C, A> {
-        BchCoin {
-            derivation_path: "m/44'/145'/0'/0/0".to_string(),
-            keystore,
-            curve_type: PhantomData,
-            address_type: PhantomData
-        }
-    }
+
 }
 
 
-impl<'a, C, A> Coin for BchCoin<'a, C, A> where C: Curve, A: Address {
-    fn append_account(&self, password: &str) -> Result<Account> {
-        let seed = self.keystore.seed(password)?;
-        let main_key = C::key_at_path(&self.derivation_path, &seed)?;
-        let address = self.derive_address(&main_key)?;
-        let xpub = C::extended_pub_key(&self.derivation_path, &seed)?;
+impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
+    fn mnemonic_to_account(mnemonic: &str, path: &str) -> Result<Account> {
+        let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
+        let seed = bip39::Seed::new(&mnemonic, &"");
+        let main_key = C::key_at_path(path, &seed)?;
+        let address = Self::derive_address(&main_key)?;
+        let xpub = C::extended_pub_key(path, &seed)?;
 
         Ok(Account {
-            derivation_path: self.derivation_path.clone(),
+            derivation_path: path.clone().to_string(),
             extended_public_key: xpub,
             coin: SYMBOL.to_string(),
             address,
@@ -50,28 +46,82 @@ impl<'a, C, A> Coin for BchCoin<'a, C, A> where C: Curve, A: Address {
         })
     }
 
-    fn key(&self, password: &str) -> Result<Vec<u8>> {
-        let seed = self.keystore.seed(password)?;
-        Ok(C::key_at_path(&self.derivation_path, &seed)?)
+    fn account(&self) -> &Account {
+        self.keystore.account(SYMBOL).unwrap()
     }
 
-    fn derive_address(&self, prv_key: &[u8]) -> Result<String> {
+    fn derive_address(prv_key: &[u8]) -> Result<String> {
         let pub_key = C::public_key(prv_key)?;
         // todo network
         Ok(A::from_public_key(&pub_key)?)
     }
 
-    fn extended_private_key(&self, password: &str) -> Result<String>{
+    fn load(keystore: &'z HdKeystore) -> Result<BchCoin<'z, C, A>> {
+        let mut iter = keystore.active_accounts.iter();
+        let acc = match iter.find(|a| a.coin == SYMBOL) {
+            Some(acc) => Ok(acc),
+            _ => Err(format_err!("{}", "keystore_not_contains_account"))
+        }?;
+        Ok(BchCoin {
+            keystore,
+            curve_type: PhantomData,
+            address_type: PhantomData,
+        })
+    }
+
+//    fn load(keystore: &HdKeystore) -> Result<BchCoin<'z, C, A>> {
+//        let mut iter = keystore.active_accounts.iter();
+//        let acc = match iter.find(|a| a.coin == SYMBOL) {
+//            Some(acc) => Ok(acc),
+//            _ => Err(format_err!("{}", "keystore_not_contains_account"))
+//        }?;
+//        Ok(BchCoin{
+//            account: acc,
+//            keystore,
+//            curve_type: PhantomData,
+//            address_type: PhantomData
+//        })
+//    }
+//
+
+    fn append_account(keystore: &'z mut HdKeystore, password: &str, path: &str) -> Result<BchCoin<'z, C, A>> {
+        let seed = keystore.seed(password)?;
+
+        let main_key = C::key_at_path(path, &seed)?;
+        let address = Self::derive_address(&main_key)?;
+        let xpub = C::extended_pub_key(path, &seed)?;
+        let account = Account {
+            derivation_path: path.clone().to_string(),
+            extended_public_key: xpub,
+            coin: SYMBOL.to_string(),
+            address,
+            extra: "".to_string(),
+        };
+
+        let acc = keystore.append_account(account);
+        let coin = BchCoin {
+            keystore: keystore,
+            curve_type: PhantomData,
+            address_type: PhantomData,
+        };
+        Ok(coin)
+    }
+
+    fn key(&self, password: &str) -> Result<Vec<u8>> {
         let seed = self.keystore.seed(password)?;
-        Ok(C::extended_prv_key(&self.derivation_path, &seed)?)
+//        Ok(C::key_at_path(&self.account.derivation_path, &seed)?)
+        Ok(C::key_at_path("", &seed)?)
+    }
+
+    fn extended_private_key(&self, password: &str) -> Result<String> {
+        let seed = self.keystore.seed(password)?;
+        Ok(C::extended_prv_key(&self.account().derivation_path, &seed)?)
+//        Ok(C::extended_prv_key("", &seed)?)
     }
 
     fn extended_public_key(&self) -> String {
-        let mut iter = self.keystore.active_accounts.iter();
-        match iter.find(|a| a.coin == SYMBOL && a.derivation_path == self.derivation_path) {
-            Some(acc) => acc.extended_public_key.to_owned(),
-            _ => "".to_string()
-        }
+        self.account().extended_public_key.clone().to_string()
+//        "".to_string()
     }
 
     fn sign_transaction(&self, json: &str) -> Result<String> {
@@ -99,11 +149,9 @@ impl<'a, C, A> Coin for BchCoin<'a, C, A> where C: Curve, A: Address {
     }
 }
 
-struct BchAddress {
+pub struct BchAddress {}
 
-}
-
-impl Address for BchAddress  {
+impl Address for BchAddress {
     fn is_valid(addr: &str) -> bool {
         BtcAddress::from_str(addr).is_ok()
     }
@@ -112,7 +160,6 @@ impl Address for BchAddress  {
         let pub_key = PublicKey::from_slice(pub_key)?;
         Ok(BtcAddress::p2wpkh(&pub_key, Network::Bitcoin).to_string())
     }
-
 }
 
 
