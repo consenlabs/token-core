@@ -11,6 +11,7 @@ use crate::bch_transaction::{Utxo, BitcoinCashTransaction};
 use std::str::FromStr;
 use std::marker::PhantomData;
 use bip39::{Mnemonic, Language};
+use bch_addr::Converter;
 
 const SYMBOL: &'static str = "BCH";
 const PATH: &'static str = "m/44'/145'/0'/0/0";
@@ -52,7 +53,6 @@ impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
 
     fn derive_address(prv_key: &[u8]) -> Result<String> {
         let pub_key = C::public_key(prv_key)?;
-        // todo network
         Ok(A::from_public_key(&pub_key)?)
     }
 
@@ -68,21 +68,6 @@ impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
             address_type: PhantomData,
         })
     }
-
-//    fn load(keystore: &HdKeystore) -> Result<BchCoin<'z, C, A>> {
-//        let mut iter = keystore.active_accounts.iter();
-//        let acc = match iter.find(|a| a.coin == SYMBOL) {
-//            Some(acc) => Ok(acc),
-//            _ => Err(format_err!("{}", "keystore_not_contains_account"))
-//        }?;
-//        Ok(BchCoin{
-//            account: acc,
-//            keystore,
-//            curve_type: PhantomData,
-//            address_type: PhantomData
-//        })
-//    }
-//
 
     fn append_account(keystore: &'z mut HdKeystore, password: &str, path: &str) -> Result<BchCoin<'z, C, A>> {
         let seed = keystore.seed(password)?;
@@ -100,7 +85,7 @@ impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
 
         let acc = keystore.append_account(account);
         let coin = BchCoin {
-            keystore: keystore,
+            keystore,
             curve_type: PhantomData,
             address_type: PhantomData,
         };
@@ -116,7 +101,6 @@ impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
     fn extended_private_key(&self, password: &str) -> Result<String> {
         let seed = self.keystore.seed(password)?;
         Ok(C::extended_prv_key(&self.account().derivation_path, &seed)?)
-//        Ok(C::extended_prv_key("", &seed)?)
     }
 
     fn extended_public_key(&self) -> String {
@@ -153,15 +137,33 @@ pub struct BchAddress {}
 
 impl Address for BchAddress {
     fn is_valid(addr: &str) -> bool {
-        BtcAddress::from_str(addr).is_ok()
+        let convert = Converter::new();
+        convert.is_cash_addr(addr)
     }
 
     fn from_public_key(pub_key: &[u8]) -> Result<String> {
         let pub_key = PublicKey::from_slice(pub_key)?;
-        Ok(BtcAddress::p2wpkh(&pub_key, Network::Bitcoin).to_string())
+        let legacy = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
+        let convert = Converter::new();
+        convert.to_cash_addr(&legacy.to_string()).map_err(|err| format_err!("{}", "generate_address_failed"))
     }
 }
 
+pub struct BchTestNetAddress {}
+
+impl Address for BchTestNetAddress {
+    fn is_valid(address: &str) -> bool {
+        let convert = Converter::new();
+        convert.is_cash_addr(address)
+    }
+
+    fn from_public_key(public_key: &[u8]) -> Result<String> {
+        let pub_key = PublicKey::from_slice(public_key)?;
+        let legacy = BtcAddress::p2pkh(&pub_key, Network::Testnet);
+        let convert = Converter::new();
+        convert.to_cash_addr(&legacy.to_string()).map_err(|err| format_err!("{}", "generate_address_failed"))
+    }
+}
 
 
 
