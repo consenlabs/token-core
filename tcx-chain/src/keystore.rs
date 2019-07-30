@@ -238,6 +238,7 @@ pub struct HdKeystore {
 }
 
 impl HdKeystore {
+    pub const VERSION: i32 = 11000i32;
     pub fn new(password: &str) -> HdKeystore {
         let mnemonic = bips::generate_mnemonic();
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
