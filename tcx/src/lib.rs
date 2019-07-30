@@ -116,6 +116,14 @@ pub unsafe extern "C" fn read_file_error() -> *const c_char {
         })
 }
 
+
+fn parse_arguments(json_str: *const c_char) -> Value {
+    let json_c_str = unsafe { CStr::from_ptr(json_str) };
+    let json_str = json_c_str.to_str().unwrap();
+    serde_json::from_str(json_str).unwrap()
+}
+
+
 pub unsafe extern "C" fn create_wallet(password: *const c_char) -> *const c_char {
     let password_c_str = CStr::from_ptr(password);
     let password = password_c_str.to_str().unwrap();
@@ -129,31 +137,6 @@ fn _create_wallet(password: &str) -> Result<String> {
     cache_keystore(keystore);
     Ok(json)
 }
-
-
-//fn _import_wallet_from_mnemonic(v: Value) -> Result<String> {
-//    let mnemonic = v["mnemonic"].as_str().unwrap();
-//    let password = v["password"].as_str().unwrap();
-//    let chain_type = v["chainType"].as_str().unwrap();
-//
-//    let ks = HdKeystore::from_mnemonic(mnemonic, password);
-//    let account = match chain_type {
-//        "BCH" => {
-//            let coin = BchCoin::<Secp256k1Curve, BchAddress>::load(&ks);
-//            coin.append_account(password)
-//        },
-//        _ => Err(format_err!("{}", "chain_type_not_support"))
-//    }?;
-//
-//    Ok(serde_json::to_string(account))
-//}
-
-fn parse_arguments(json_str: *const c_char) -> Value {
-    let json_c_str = unsafe { CStr::from_ptr(json_str) };
-    let json_str = json_c_str.to_str().unwrap();
-    serde_json::from_str(json_str).unwrap()
-}
-
 
 #[no_mangle]
 pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
@@ -187,7 +170,15 @@ fn _scan_wallets(v: Value) -> Result<()> {
     Ok(())
 }
 
-// todo: fix build error
+
+#[no_mangle]
+pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = crate::utils::landingpad(|| _find_wallet_by_mnemonic(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+
 fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let path = v["path"].as_str().unwrap();
@@ -212,13 +203,13 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
-//    let json_c_str = unsafe { CStr::from_ptr(json_str) };
-//    let json_str = json_c_str.to_str().unwrap();
-    let v = parse_arguments(json_str);
-    let json = crate::utils::landingpad(|| _find_wallet_by_mnemonic(&v));
+pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
+    let json_c_str = unsafe { CStr::from_ptr(json_str) };
+    let json_str = json_c_str.to_str().unwrap();
+    let json = crate::utils::landingpad(|| _import_wallet_from_mnemonic(json_str));
     CString::new(json).unwrap().into_raw()
 }
+
 
 fn _import_wallet_from_mnemonic(json_str: &str) -> Result<String> {
     let v: Value = serde_json::from_str(json_str).unwrap();
@@ -265,42 +256,6 @@ fn _import_wallet_from_mnemonic(json_str: &str) -> Result<String> {
 
 
 #[no_mangle]
-pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
-    let json_c_str = unsafe { CStr::from_ptr(json_str) };
-    let json_str = json_c_str.to_str().unwrap();
-    let json = crate::utils::landingpad(|| _import_wallet_from_mnemonic(json_str));
-    CString::new(json).unwrap().into_raw()
-}
-//
-//#[no_mangle]
-//pub unsafe extern "C" fn import_wallet_from_private_key(json_str: *const c_char) -> *const c_char {
-//    let json_c_str = unsafe { CStr::from_ptr(json_str) };
-//    let json_str = json_c_str.to_str().unwrap();
-//    let v: Value = serde_json::from_str(json_str).unwrap();
-//
-//    let mut meta: Metadata = serde_json::from_str(json_str).unwrap();
-//    let password = v["password"].as_str().unwrap();
-//    let private_key = v["privateKey"].as_str().unwrap();
-//    let overwrite = v["overwrite"].as_bool().unwrap();
-//    let file_dir = v["fileDir"].as_str().unwrap();
-//
-//    let keystore = V3Keystore::new(meta, password, private_key).unwrap();
-//    let json = keystore.export_json();
-//
-//    let ks_path = format!("{}{}.json", file_dir, keystore.id);
-//    let path = Path::new(&ks_path);
-//    if path.exists() && !overwrite {
-//        // throw error
-//    }
-//    let mut file = File::create(path).unwrap();
-//    file.write_all(&json.as_bytes());
-//
-//    cache_keystore(ks);
-//
-//    CString::new(json).unwrap().into_raw()
-//}
-
-#[no_mangle]
 pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
@@ -312,18 +267,9 @@ pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_c
 fn _sign_transaction(json_str: &str) -> Result<String> {
     let v: Value = serde_json::from_str(json_str).unwrap();
     let w_id = v["id"].as_str().unwrap();
-    let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).unwrap();
-    let internal_used = v["internalUsed"].as_i64().unwrap();
-    let change_idx = internal_used + 1;
-    let to = v["to"].as_str().unwrap();
-    let amount = v["amount"].as_str().unwrap().parse::<i64>().unwrap();
-    let fee = v["fee"].as_str().unwrap().parse::<i64>().unwrap();
-    let password = v["password"].as_str().unwrap();
-    let chain_id = v["chainId"].as_str().unwrap();
     let chain_type = v["chainType"].as_str().unwrap();
 
     let mut map = KEYSTORE_MAP.lock().unwrap();
-//
     let keystore = match map.get_mut(&w_id.to_owned()) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_id_not_found"))
@@ -337,19 +283,6 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
         _ => Err(format_err!("{}", "chain_type_not_support"))
     }
 }
-
-//fn _find_wallet_by_mnemonic(json_str: &str) -> Result<String> {
-//    let v: Value = serde_json::from_str(json_str)?;
-//    let mnemonic = v["mnemonic"].as_str()?;
-//    let path = v["path"].as_str()?;
-//    let network = v["network"].as_str()?;
-//    let chain_type = v["chainType"].as_str()?;
-//
-//
-//
-//
-//
-//}
 
 
 #[no_mangle]
