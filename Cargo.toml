@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "tcx-common",
     "tcx-crypto",
     "tcx-chain",
     "tcx-bch",

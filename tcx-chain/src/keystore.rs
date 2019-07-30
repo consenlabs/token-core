@@ -195,12 +195,10 @@ fn generate_address_from_wif(wif: &str) -> Result<String> {
     Ok(address.to_string())
 }
 
+pub trait Address : PartialEq {
+    fn from_public_key(public_key: PublicKey) -> Result<Self>;
 
-pub trait Address {
-     fn is_valid(address: &str) -> bool;
-//     fn new(address: &str) -> String;
-     fn from_public_key(public_key: &[u8]) -> Result<String>;
-    // fn from_data(data: &[u8]) -> Box<dyn Address>;
+    fn as_string(&self) -> &str;
 }
 
 // todo: process the extra field
