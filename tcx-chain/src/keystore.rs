@@ -13,6 +13,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use failure::Error;
 use crate::Result;
 use crate::bips;
+use crate::bips::DerivationInfo;
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
@@ -201,6 +202,23 @@ pub trait Address {
 //     fn new(address: &str) -> String;
      fn from_public_key(public_key: &[u8]) -> Result<String>;
     // fn from_data(data: &[u8]) -> Box<dyn Address>;
+
+    fn extended_public_key_version() -> [u8;4] {
+        // default use btc mainnet
+        [0x04, 0x88, 0xb2, 0x1e]
+    }
+    fn extended_private_key_version() -> [u8;4] {
+        // default use btc mainnet
+        [0x04, 0x88, 0xad, 0xe4]
+    }
+
+    fn extended_public_key(derivation_info: &DerivationInfo) -> String {
+        derivation_info.encode_with_network(Self::extended_public_key_version())
+    }
+
+    fn extended_private_key(derivation_info: &DerivationInfo) -> String {
+        derivation_info.encode_with_network(Self::extended_private_key_version())
+    }
 }
 
 // todo: process the extra field

@@ -5,6 +5,7 @@ use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
 use bip39::{Mnemonic, Language, Seed};
 use std::str::FromStr;
 use crate::Result;
+use crate::bips::DerivationInfo;
 
 // todo: try to move Curve to crypto
 pub trait Curve {
@@ -35,8 +36,8 @@ pub trait Curve {
     fn compressed_public_key(prv_key: &[u8]) -> String {
         unimplemented!();
     }
-    fn extended_prv_key(path: &str, seed: &Seed) -> Result<String>;
-    fn extended_pub_key(path: &str, seed: &Seed) -> Result<String>;
+    fn extended_prv_key(path: &str, seed: &Seed) -> Result<DerivationInfo>;
+    fn extended_pub_key(path: &str, seed: &Seed) -> Result<DerivationInfo>;
 
 }
 
@@ -77,16 +78,17 @@ impl Curve for Secp256k1Curve {
         Ok(key_at_path.private_key.to_bytes())
     }
 
-    fn extended_prv_key(path: &str, seed: &Seed) -> Result<String> {
+    fn extended_prv_key(path: &str, seed: &Seed) -> Result<DerivationInfo> {
         let xprv = Self::_extended_pri_key(path, seed)?;
-        Ok(xprv.to_string())
+
+        Ok(DerivationInfo::from(xprv))
     }
 
-    fn extended_pub_key(path: &str, seed: &Seed) -> Result<String> {
+    fn extended_pub_key(path: &str, seed: &Seed) -> Result<DerivationInfo> {
         let s = Secp256k1::new();
         let xprv = Self::_extended_pri_key(path, seed)?;
         let xpub = ExtendedPubKey::from_private(&s, &xprv);
-        Ok(xpub.to_string())
+        Ok(DerivationInfo::from(xpub))
     }
 
     fn public_key(prv_key: &[u8]) -> Result<Vec<u8>> {

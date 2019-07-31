@@ -12,6 +12,7 @@ use std::str::FromStr;
 use std::marker::PhantomData;
 use bip39::{Mnemonic, Language};
 use bch_addr::Converter;
+use tcx_chain::bips::DerivationInfo;
 
 const SYMBOL: &'static str = "BCH";
 const PATH: &'static str = "m/44'/145'/0'/0/0";
@@ -26,7 +27,6 @@ pub struct BchCoin<'z, C: Curve, A: Address> {
 impl<'z, C, A> BchCoin<'z, C, A> where C: Curve, A: Address {
     // can't use associate when use PhantomData
 //    const SYMBOL: &'static str = "BCH";
-
 }
 
 
@@ -36,8 +36,8 @@ impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
         let seed = bip39::Seed::new(&mnemonic, &"");
         let main_key = C::key_at_path(path, &seed)?;
         let address = Self::derive_address(&main_key)?;
-        let xpub = C::extended_pub_key(path, &seed)?;
-
+        let derivation_info = C::extended_pub_key(path, &seed)?;
+        let xpub = A::extended_public_key(&derivation_info);
         Ok(Account {
             derivation_path: path.clone().to_string(),
             extended_public_key: xpub,
@@ -74,7 +74,8 @@ impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
 
         let main_key = C::key_at_path(path, &seed)?;
         let address = Self::derive_address(&main_key)?;
-        let xpub = C::extended_pub_key(path, &seed)?;
+        let derivation_info = C::extended_pub_key(path, &seed)?;
+        let xpub = A::extended_public_key(&derivation_info);
         let account = Account {
             derivation_path: path.clone().to_string(),
             extended_public_key: xpub,
@@ -94,13 +95,14 @@ impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
 
     fn key(&self, password: &str) -> Result<Vec<u8>> {
         let seed = self.keystore.seed(password)?;
-//        Ok(C::key_at_path(&self.account.derivation_path, &seed)?)
-        Ok(C::key_at_path("", &seed)?)
+        Ok(C::key_at_path(&self.account().derivation_path, &seed)?)
+//        Ok(C::key_at_path("", &seed)?)
     }
 
     fn extended_private_key(&self, password: &str) -> Result<String> {
         let seed = self.keystore.seed(password)?;
-        Ok(C::extended_prv_key(&self.account().derivation_path, &seed)?)
+        let derivation_info = C::extended_prv_key(&self.account().derivation_path, &seed)?;
+        Ok(A::extended_private_key(&derivation_info))
     }
 
     fn extended_public_key(&self) -> String {
@@ -135,6 +137,11 @@ impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
 
 pub struct BchAddress {}
 
+impl BchAddress {
+    const XPUB_VERSION: [u8;4] = [0x04, 0x88, 0xb2, 0x1e];
+    const XPRV_VERSION: [u8;4] = [0x04, 0x88, 0xad, 0xe4];
+}
+
 impl Address for BchAddress {
     fn is_valid(addr: &str) -> bool {
         let convert = Converter::new();
@@ -151,6 +158,11 @@ impl Address for BchAddress {
 
 pub struct BchTestNetAddress {}
 
+impl BchTestNetAddress {
+    const XPUB_VERSION: [u8;4] = [0x04, 0x35, 0x87, 0xCF];
+    const XPRV_VERSION: [u8;4] = [0x04, 0x35, 0x83, 0x94];
+}
+
 impl Address for BchTestNetAddress {
     fn is_valid(address: &str) -> bool {
         let convert = Converter::new();
@@ -163,6 +175,14 @@ impl Address for BchTestNetAddress {
         let convert = Converter::new();
         convert.to_cash_addr(&legacy.to_string()).map_err(|err| format_err!("{}", "generate_address_failed"))
     }
+
+    fn extended_public_key_version() -> [u8;4] {
+        BchTestNetAddress::XPUB_VERSION
+    }
+    fn extended_private_key_version() -> [u8;4] {
+        BchTestNetAddress::XPRV_VERSION
+    }
+
 }
 
 
