@@ -77,7 +77,6 @@ fn find_keystore_id_by_address(address: &str) -> Option<String> {
         }
     }
     k_id
-
 }
 
 #[no_mangle]
@@ -124,15 +123,18 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 }
 
 
-pub unsafe extern "C" fn create_wallet(password: *const c_char) -> *const c_char {
-    let password_c_str = CStr::from_ptr(password);
-    let password = password_c_str.to_str().unwrap();
-    let json = landingpad(|| _create_wallet(password));
+pub unsafe extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
+    let json_c_str = unsafe { CStr::from_ptr(json_str) };
+    let json_str = json_c_str.to_str().unwrap();
+    let v: Value = serde_json::from_str(json_str).unwrap();
+    let json = landingpad(|| _create_wallet(&v));
     CString::new(json).unwrap().into_raw()
 }
 
-fn _create_wallet(password: &str) -> Result<String> {
-    let keystore = HdKeystore::new(password);
+fn _create_wallet(v: &Value) -> Result<String> {
+    let meta: Metadata = serde_json::from_value(v.clone())?;
+    let password = v["password"].as_str().unwrap();
+    let keystore = HdKeystore::new(password, meta);
     let json = keystore.json();
     cache_keystore(keystore);
     Ok(json)
@@ -145,7 +147,7 @@ pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
     let v: Value = serde_json::from_str(json_str).unwrap();
     set_panic_hook();
     _scan_wallets(v);
-        ()
+    ()
 }
 
 fn _scan_wallets(v: Value) -> Result<()> {
@@ -184,17 +186,17 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let path = v["path"].as_str().unwrap();
     let network = v["network"].as_str().unwrap();
     let chain_type = v["chainType"].as_str().unwrap();
-    // todo: provider support
     let password = "InsecurePassword";
-    let ks = HdKeystore::from_mnemonic(mnemonic, password);
+    let meta: Metadata = serde_json::from_value(v.clone())?;
+    let ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
     let acc = match chain_type {
         "BCH" => BchCoin::<Secp256k1Curve, BchAddress>::mnemonic_to_account(mnemonic, path),
         _ => Err(format_err!("{}", "chain_type_not_support"))
     }?;
     let address = acc.address;
-    let kid= find_keystore_id_by_address(&address);
+    let kid = find_keystore_id_by_address(&address);
     if let Some(id) = kid {
-        let map =  KEYSTORE_MAP.lock().unwrap();
+        let map = KEYSTORE_MAP.lock().unwrap();
         let ks = map.get(&id).unwrap();
         Ok(ks.json())
     } else {
@@ -221,8 +223,8 @@ fn _import_wallet_from_mnemonic(json_str: &str) -> Result<String> {
     let overwrite = v["overwrite"].as_bool().unwrap();
     let file_dir = v["fileDir"].as_str().unwrap();
     let chain_type = v["chainType"].as_str().unwrap();
-
-    let mut ks = HdKeystore::from_mnemonic(mnemonic, password);
+    let meta: Metadata = serde_json::from_value(v.clone())?;
+    let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
     let coin = match chain_type {
         "BCH" => {
             BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut ks, password, path)

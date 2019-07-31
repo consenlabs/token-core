@@ -197,6 +197,7 @@ fn generate_address_from_wif(wif: &str) -> Result<String> {
 }
 
 
+
 pub trait Address {
      fn is_valid(address: &str) -> bool;
 //     fn new(address: &str) -> String;
@@ -257,10 +258,9 @@ pub struct HdKeystore {
 
 impl HdKeystore {
     pub const VERSION: i32 = 11000i32;
-    pub fn new(password: &str) -> HdKeystore {
+    pub fn new(password: &str, meta: Metadata) -> HdKeystore {
         let mnemonic = bips::generate_mnemonic();
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
-        let meta = Metadata::default();
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 11000,
@@ -271,9 +271,8 @@ impl HdKeystore {
         }
     }
 
-    pub fn from_mnemonic(mnemonic: &str, password: &str) -> HdKeystore {
+    pub fn from_mnemonic(mnemonic: &str, password: &str, meta: Metadata) -> HdKeystore {
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
-        let meta = Metadata::default();
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 11000,
