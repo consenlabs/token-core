@@ -69,7 +69,7 @@ impl Curve for Secp256k1Curve {
         Ok(signature.serialize_compact().to_vec())
     }
 
-    // todo: network
+
     fn key_at_path(path: &str, seed: &Seed) -> Result<Vec<u8>> {
         let s = Secp256k1::new();
         let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;

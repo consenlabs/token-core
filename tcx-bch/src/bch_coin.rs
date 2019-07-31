@@ -18,15 +18,13 @@ const SYMBOL: &'static str = "BCH";
 const PATH: &'static str = "m/44'/145'/0'/0/0";
 
 pub struct BchCoin<'z, C: Curve, A: Address> {
-    //    derivation_path: String,
     keystore: &'z HdKeystore,
     curve_type: PhantomData<C>,
     address_type: PhantomData<A>,
 }
 
 impl<'z, C, A> BchCoin<'z, C, A> where C: Curve, A: Address {
-    // can't use associate when use PhantomData
-//    const SYMBOL: &'static str = "BCH";
+
 }
 
 
@@ -96,7 +94,6 @@ impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
     fn key(&self, password: &str) -> Result<Vec<u8>> {
         let seed = self.keystore.seed(password)?;
         Ok(C::key_at_path(&self.account().derivation_path, &seed)?)
-//        Ok(C::key_at_path("", &seed)?)
     }
 
     fn extended_private_key(&self, password: &str) -> Result<String> {
@@ -129,7 +126,7 @@ impl<'z, C, A> Coin<'z> for BchCoin<'z, C, A> where C: Curve, A: Address {
             change_idx: change_idx as u32,
         };
 
-        let ret = bch_tran.sign_transaction(chain_id, &xprv)?;
+        let ret = bch_tran.sign_transaction::<A>(chain_id, &xprv)?;
         Ok(serde_json::to_string(&ret)?)
     }
 }
@@ -208,7 +205,7 @@ mod tests {
         let coin = BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut keystore, PASSWORD, BIP_PATH);
         let json_str = keystore.json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
-        println!("{}", keystore.json());
+
         let active_accounts = v["activeAccounts"].as_array().unwrap();
         assert_eq!(1, active_accounts.len());
         let account = active_accounts.first().unwrap();
@@ -230,7 +227,7 @@ mod tests {
         let coin = BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut keystore, PASSWORD, BIP_PATH);
         let json_str = keystore.json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
-        
+
         let active_accounts = v["activeAccounts"].as_array().unwrap();
         assert_eq!(1, active_accounts.len());
         let account = active_accounts.first().unwrap();

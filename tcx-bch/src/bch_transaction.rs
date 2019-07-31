@@ -3,7 +3,7 @@ use secp256k1::{Secp256k1, Message};
 use bitcoin_hashes::Hash;
 use bitcoin_hashes::sha256d::Hash as Hash256;
 use bitcoin_hashes::hex::FromHex;
-use bitcoin::{Address, PrivateKey, TxOut, TxIn, OutPoint, Script, Transaction};
+use bitcoin::{Address as BtcAddress, PrivateKey, TxOut, TxIn, OutPoint, Script, Transaction};
 use bitcoin::network::constants::Network;
 use bitcoin::util::bip32::{ExtendedPrivKey, ChildNumber};
 use crate::bip143_with_forkid::SighashComponentsWithForkId;
@@ -14,6 +14,8 @@ use std::str::FromStr;
 use crate::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tcx_chain::keystore::Address;
+use serde::export::PhantomData;
 
 const DUST: u64 = 546;
 
@@ -42,21 +44,14 @@ pub struct BitcoinCashTransaction {
 
 impl BitcoinCashTransaction {
 
-    fn collect_prv_keys_and_address(&self, xprv: &str) -> Result<(Address, Vec<PrivateKey>)> {
-//        let metadata = wallet.get_metadata();
-        // let network = match metadata.network.to_uppercase().as_str() {
-        //     "MAINNET" => Network::Bitcoin,
-        //     _ => Network::Testnet
-        // };
-
-        let network = Network::Bitcoin;
+    fn collect_prv_keys_and_address<A: Address>(&self, xprv: &str) -> Result<(String, Vec<PrivateKey>)> {
 
         let xprv_key = ExtendedPrivKey::from_str(xprv)?;
         let s = Secp256k1::new();
         let change_key = xprv_key.ckd_priv(&s, ChildNumber::from(0))?;
         let index_key = change_key.ckd_priv(&s, ChildNumber::from(self.change_idx))?;
         let index_pub_key = index_key.private_key.public_key(&s);
-        let change_addr = Address::p2pkh(&index_pub_key, network);
+        let change_addr = A::from_public_key(&index_pub_key.to_bytes())?;
 
         let mut prv_keys: Vec<PrivateKey> = vec![];
         for unspent in &self.unspents {
@@ -83,10 +78,8 @@ impl BitcoinCashTransaction {
         let pub_key_bytes = pri_key.public_key(&s).to_bytes();
         Ok(Builder::new().push_slice(&sig_bytes).push_slice(&pub_key_bytes).into_script())
     }
-}
 
-impl BitcoinCashTransaction {
-    pub fn sign_transaction(&self, chain_id: &str, xprv: &str) -> Result<TxSignResult> {
+    pub fn sign_transaction<A: Address>(&self, chain_id: &str, xprv: &str) -> Result<TxSignResult> {
         let mut total_amount = 0;
 
         for unspent in &self.unspents {
@@ -95,16 +88,18 @@ impl BitcoinCashTransaction {
 
         ensure!(total_amount >= (self.amount + self.fee), "total amount must ge amount + fee");
 
-        let (change_addr, prv_keys) = self.collect_prv_keys_and_address(xprv)?;
+        let (change_addr, prv_keys) = self.collect_prv_keys_and_address::<A>(xprv)?;
 
         let mut tx_outs: Vec<TxOut> = vec![];
-        let receiver_addr = Address::from_str(&self.to)?;
+        let receiver_addr = BtcAddress::from_str(&self.to)?;
         let receiver_tx_out = TxOut {
             value: self.amount as u64,
             script_pubkey: receiver_addr.script_pubkey()
         };
         tx_outs.push(receiver_tx_out);
         let change_amount = (total_amount - self.amount - self.fee);
+
+        let change_addr = BtcAddress::from_str(&change_addr)?;
         if change_amount > DUST as i64 {
             let change_tx_out = TxOut {
                 value: change_amount as u64,
