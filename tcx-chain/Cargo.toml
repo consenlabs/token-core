@@ -8,6 +8,7 @@ edition = "2018"
 tcx-crypto = { path = "../tcx-crypto" }
 #bitcoin = { path = "../../../rust-bitcoin"}
 bitcoin = "0.18.0"
+byteorder = "1.2"
 secp256k1 = "0.12"
 #secp256k1 = { path = "../../../rust-secp256k1"}
 tiny-bip39 = "0.6.0"
