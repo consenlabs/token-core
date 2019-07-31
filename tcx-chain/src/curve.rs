@@ -73,8 +73,8 @@ impl Curve for Secp256k1Curve {
         let s = Secp256k1::new();
         let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
         let path = DerivationPath::from_str(path)?;
-        let main_address_pk = sk.derive_priv(&s, &path)?;
-        Ok(main_address_pk.private_key.to_bytes())
+        let key_at_path = sk.derive_priv(&s, &path)?;
+        Ok(key_at_path.private_key.to_bytes())
     }
 
     fn extended_prv_key(path: &str, seed: &Seed) -> Result<String> {

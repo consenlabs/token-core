@@ -236,6 +236,7 @@ pub struct HdKeystore {
 }
 
 impl HdKeystore {
+    pub const VERSION: i32 = 11000i32;
     pub fn new(password: &str) -> HdKeystore {
         let mnemonic = bips::generate_mnemonic();
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
@@ -303,8 +304,14 @@ impl HdKeystore {
         Ok(main_address_pk.private_key.to_bytes())
     }
 
-    pub fn append_account(&mut self, account: Account) {
+    pub fn append_account(&mut self, account: Account) -> &Account {
         self.active_accounts.push(account);
+        // todo: flush
+        self.active_accounts.last().unwrap()
+    }
+
+    pub fn account(&self, symbol: &str) -> Option<&Account> {
+        self.active_accounts.iter().find(|acc| acc.coin == symbol)
     }
 
     pub fn json(&self) -> String {

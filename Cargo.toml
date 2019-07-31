@@ -4,5 +4,5 @@ members = [
     "tcx-chain",
     "tcx-bch",
     "tcx-tron",
-#    "tcx",
+    "tcx",
 ]
