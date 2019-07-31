@@ -13,6 +13,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use failure::Error;
 use crate::Result;
 use crate::bips;
+use tcx_crypto::PublicKey;
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
@@ -195,8 +196,8 @@ fn generate_address_from_wif(wif: &str) -> Result<String> {
     Ok(address.to_string())
 }
 
-pub trait Address : PartialEq {
-    fn from_public_key(public_key: PublicKey) -> Result<Self>;
+pub trait Address : PartialEq + Sized {
+    fn from_public_key(public_key: & impl PublicKey) -> Result<Self>;
 
     fn as_string(&self) -> &str;
 }

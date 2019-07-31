@@ -2,18 +2,14 @@ pub mod crypto;
 pub mod aes;
 pub mod numberic_util;
 pub mod error;
-pub mod key;
 
-use failure::Error;
-use core::result;
+mod types;
+mod ecc;
 
 pub use crypto::{Crypto, Pbkdf2Params, EncPair};
-
-pub type Result<T> = result::Result<T, Error>;
-
-pub type H256 = [u8; 32];
-pub type H128 = [u8; 16];
-pub type H160 = [u8; 20];
+pub use types::{Error, B256, B512, B160};
+pub use ecc::{PublicKey, PrivateKey};
+pub use ecc::secp256k1;
 
 #[macro_use] extern crate failure;
 
