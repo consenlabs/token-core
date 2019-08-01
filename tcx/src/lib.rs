@@ -27,6 +27,7 @@ use std::cell::RefCell;
 use core::borrow::{BorrowMut, Borrow};
 use serde_json::map::Keys;
 use std::sync::Mutex;
+use std::sync::RwLock;
 use crate::utils::set_panic_hook;
 use tcx_bch::bch_transaction::{Utxo, BitcoinCashTransaction};
 use tcx_bch::bch_coin::{BchCoin, BchAddress};
@@ -56,25 +57,22 @@ static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 //static mut WALLET_FILE_DIR: String = String::new();
 
 lazy_static! {
-    static ref KEYSTORE_MAP: Mutex<HashMap<String, HdKeystore>> = {
-        let mut m = Mutex::new(HashMap::new());
-        m
-    };
-
+    static ref KEYSTORE_MAP: RwLock<HashMap<String, HdKeystore>> = RwLock::new(HashMap::new());
+    static ref WALLET_FILE_DIR : RwLock<String> = RwLock::new(String::new());
 }
 
 lazy_static! {
-    static ref WALLET_FILE_DIR : Mutex<String> = Mutex::new(String::new());
+
 
 }
 
 fn cache_keystore(keystore: HdKeystore) {
-    KEYSTORE_MAP.lock().unwrap().insert(keystore.id.to_owned(), keystore);
+    KEYSTORE_MAP.write().unwrap().insert(keystore.id.to_owned(), keystore);
 }
 
 
 fn find_keystore_id_by_address(address: &str) -> Option<String> {
-    let map = KEYSTORE_MAP.lock().unwrap();
+    let map = KEYSTORE_MAP.read().unwrap();
     let mut k_id: Option<String> = None;
     for (id, keystore) in map.borrow().iter() {
         let mut iter = keystore.active_accounts.iter();
@@ -160,7 +158,7 @@ pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
 
 fn _scan_wallets(v: Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().unwrap();
-    *WALLET_FILE_DIR.lock().unwrap() = file_dir.to_string();
+    *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
     let p = Path::new(file_dir);
     let walk_dir = std::fs::read_dir(p).unwrap();
     for entry in walk_dir {
@@ -205,7 +203,7 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let address = acc.address;
     let kid = find_keystore_id_by_address(&address);
     if let Some(id) = kid {
-        let map = KEYSTORE_MAP.lock().unwrap();
+        let map = KEYSTORE_MAP.read().unwrap();
         let ks = map.get(&id).unwrap();
         Ok(ks.json())
     } else {
@@ -256,7 +254,7 @@ fn _import_wallet_from_mnemonic(json_str: &str) -> Result<String> {
     let json = ks.json();
 
 
-    let file_dir = WALLET_FILE_DIR.lock().unwrap();
+    let file_dir = WALLET_FILE_DIR.read().unwrap();
     let ks_path = format!("{}{}.json", &file_dir, ks.id);
     let path = Path::new(&ks_path);
     let mut file = File::create(path).unwrap();
@@ -282,7 +280,7 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
     let w_id = v["id"].as_str().unwrap();
     let chain_type = v["chainType"].as_str().unwrap();
 
-    let mut map = KEYSTORE_MAP.lock().unwrap();
+    let mut map = KEYSTORE_MAP.write().unwrap();
     let keystore = match map.get_mut(&w_id.to_owned()) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_id_not_found"))
