@@ -54,17 +54,12 @@ static PASSWORD: &'static str = "Insecure Pa55w0rd";
 static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 
-//static mut WALLET_FILE_DIR: String = String::new();
 
 lazy_static! {
     static ref KEYSTORE_MAP: RwLock<HashMap<String, HdKeystore>> = RwLock::new(HashMap::new());
     static ref WALLET_FILE_DIR : RwLock<String> = RwLock::new(String::new());
 }
 
-lazy_static! {
-
-
-}
 
 fn cache_keystore(keystore: HdKeystore) {
     KEYSTORE_MAP.write().unwrap().insert(keystore.id.to_owned(), keystore);
@@ -142,6 +137,7 @@ fn _create_wallet(v: &Value) -> Result<String> {
     let password = v["password"].as_str().unwrap();
     let keystore = HdKeystore::new(password, meta);
     let json = keystore.json();
+    _flush_keystore(&keystore);
     cache_keystore(keystore);
     Ok(json)
 }
@@ -248,18 +244,22 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
         }
     }
 
-    let json = ks.json();
 
+    _flush_keystore(&ks);
+    let json = ks.json();
+    cache_keystore(ks);
+    Ok(json)
+}
+
+fn _flush_keystore(ks: &HdKeystore) {
+
+    let json = ks.json();
 
     let file_dir = WALLET_FILE_DIR.read().unwrap();
     let ks_path = format!("{}{}.json", &file_dir, ks.id);
     let path = Path::new(&ks_path);
     let mut file = File::create(path).unwrap();
     file.write_all(&json.as_bytes());
-
-
-    cache_keystore(ks);
-    Ok(json)
 }
 
 #[no_mangle]
