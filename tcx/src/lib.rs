@@ -213,16 +213,13 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
 
 #[no_mangle]
 pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
-    let json_c_str = unsafe { CStr::from_ptr(json_str) };
-    let json_str = json_c_str.to_str().unwrap();
-    let json = crate::utils::landingpad(|| _import_wallet_from_mnemonic(json_str));
+    let v = parse_arguments(json_str);
+    let json = crate::utils::landingpad(|| _import_wallet_from_mnemonic(&v));
     CString::new(json).unwrap().into_raw()
 }
 
 
-fn _import_wallet_from_mnemonic(json_str: &str) -> Result<String> {
-    let v: Value = serde_json::from_str(json_str).unwrap();
-
+fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let mut meta: Metadata = serde_json::from_value(v.clone())?;
     let password = v["password"].as_str().unwrap();
     let mnemonic = v["mnemonic"].as_str().unwrap();
@@ -265,6 +262,26 @@ fn _import_wallet_from_mnemonic(json_str: &str) -> Result<String> {
     Ok(json)
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn export_mnemonic(json_str: *const c_char) -> *const c_char {
+    let v: Value = parse_arguments(json_str);
+    let json = crate::utils::landingpad(|| _export_mnemonic(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+
+fn _export_mnemonic(v: &Value) -> Result<String> {
+    let wid = v["id"].as_str().unwrap();
+    let password = v["password"].as_str().unwrap();
+
+    let map = KEYSTORE_MAP.read().unwrap();
+    let keystore = match map.get(wid) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found"))
+    }?;
+    keystore.mnemonic(password)
+}
+
 
 #[no_mangle]
 pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
@@ -281,9 +298,9 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
     let chain_type = v["chainType"].as_str().unwrap();
 
     let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore = match map.get_mut(&w_id.to_owned()) {
+    let keystore = match map.get_mut(w_id) {
         Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_id_not_found"))
+        _ => Err(format_err!("{}", "wallet_not_found"))
     }?;
 
     match chain_type {
