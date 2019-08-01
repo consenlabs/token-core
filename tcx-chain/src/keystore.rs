@@ -1,7 +1,7 @@
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address as BtcAddress;
 use secp256k1::Secp256k1;
-use bitcoin::PrivateKey;
+use bitcoin::PrivateKey as BtcPrivateKey;
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
 use bip39::{Mnemonic, Language, Seed};
 use std::str::FromStr;
@@ -14,6 +14,7 @@ use failure::Error;
 use crate::Result;
 use crate::bips;
 use crate::bips::DerivationInfo;
+use crate::curve::{CurveType, PublicKeyType, PrivateKey, PublicKey, Secp256k1Curve};
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
@@ -67,141 +68,141 @@ impl Default for Metadata {
 }
 
 
-// Send  used fo lazy_static
-pub trait Keystore: Send {
-    fn get_metadata(&self) -> Metadata;
-    fn get_address(&self) -> String;
-    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>>;
-    fn export_json(&self) -> String;
-    fn get_id(&self) -> String;
-    fn clone_box(&self) -> Box<Keystore>;
-    fn set_id(&mut self, id: String);
-}
-
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct V3Keystore {
-    pub id: String,
-    pub version: i32,
-    pub address: String,
-    pub crypto: Crypto<Pbkdf2Params>,
-    pub metadata: Metadata,
-}
-
-impl V3Keystore {
-    pub fn new(metadata: Metadata, password: &str, prv_key: &str) -> Result<V3Keystore> {
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, prv_key.to_owned().as_bytes());
-        let mut metadata = metadata.clone();
-        metadata.source = Source::Wif;
-        let keystore = V3Keystore {
-            id: Uuid::new_v4().to_hyphenated().to_string(),
-            version: 3,
-            address: generate_address_from_wif(prv_key)?,
-            crypto,
-            metadata,
-        };
-        Ok(keystore)
-    }
-}
-
-impl Keystore for V3Keystore {
-    fn get_metadata(&self) -> Metadata {
-        self.metadata.clone()
-    }
-
-    fn get_address(&self) -> String {
-        self.address.clone()
-    }
-
-    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>> {
-        self.crypto.decrypt(password)
-    }
-
-    fn export_json(&self) -> String {
-        serde_json::to_string(&self).unwrap()
-    }
-
-    fn get_id(&self) -> String {
-        self.id.to_owned()
-    }
-
-    fn clone_box(&self) -> Box<Keystore> {
-        Box::new(self.clone()) as Box<Keystore>
-    }
-
-    fn set_id(&mut self, id: String) {
-        self.id = id;
-    }
-}
-
-pub struct V3MnemonicKeystore {
-    id: String,
-    version: i32,
-    address: String,
-    crypto: Crypto<Pbkdf2Params>,
-    mnemonic_path: String,
-    enc_mnemonic: EncPair,
-}
-
-impl V3MnemonicKeystore {
-    pub fn new(password: &str, mnemonic: &str, path: &str) -> Result<V3MnemonicKeystore> {
-        let prv_key = Self::generate_prv_key_from_mnemonic(mnemonic, path)?;
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, &prv_key.to_bytes());
-        let enc_mnemonic = crypto.derive_enc_pair(password, mnemonic.as_bytes());
-
-        let keystore = V3MnemonicKeystore {
-            id: Uuid::new_v4().to_hyphenated().to_string(),
-            version: 3,
-            address: Self::address_from_private_key(&prv_key),
-            crypto,
-            mnemonic_path: String::from(path),
-            enc_mnemonic,
-        };
-        Ok(keystore)
-    }
-
-    fn generate_prv_key_from_mnemonic(mnemonic_str: &str, path: &str) -> Result<PrivateKey> {
-        let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
-        let seed = bip39::Seed::new(&mnemonic, &"");
-        let s = Secp256k1::new();
-        let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
-
-        let path = DerivationPath::from_str(path)?;
-        let main_address_pk = sk.derive_priv(&s, &path)?;
-        Ok(main_address_pk.private_key)
-    }
-
-    fn address_from_private_key(pk: &PrivateKey) -> String {
-        let s = Secp256k1::new();
-        let pub_key = pk.public_key(&s);
-        // Generate pay-to-pubkey-hash address
-        let address = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
-        address.to_string()
-    }
-
-    pub fn export_private_key(&self, password: &str) -> Result<String> {
-        let pk_bytes = self.crypto.decrypt(password)?;
-        let pk = pk_bytes.to_hex();
-        Ok(pk)
-    }
-}
-
-fn generate_address_from_wif(wif: &str) -> Result<String> {
-    let s = Secp256k1::new();
-    let prv_key = PrivateKey::from_wif(wif).map_err(|_| format_err!("invalid_wif"))?;
-    let pub_key = prv_key.public_key(&s);
-    // Generate pay-to-pubkey-hash address
-    let address = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
-    Ok(address.to_string())
-}
-
+//// Send  used fo lazy_static
+//pub trait Keystore: Send {
+//    fn get_metadata(&self) -> Metadata;
+//    fn get_address(&self) -> String;
+//    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>>;
+//    fn export_json(&self) -> String;
+//    fn get_id(&self) -> String;
+//    fn clone_box(&self) -> Box<Keystore>;
+//    fn set_id(&mut self, id: String);
+//}
+//
+//#[derive(Debug, Clone)]
+//#[derive(Serialize, Deserialize)]
+//#[serde(rename_all = "camelCase")]
+//pub struct V3Keystore {
+//    pub id: String,
+//    pub version: i32,
+//    pub address: String,
+//    pub crypto: Crypto<Pbkdf2Params>,
+//    pub metadata: Metadata,
+//}
+//
+//impl V3Keystore {
+//    pub fn new(metadata: Metadata, password: &str, prv_key: &str) -> Result<V3Keystore> {
+//        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, prv_key.to_owned().as_bytes());
+//        let mut metadata = metadata.clone();
+//        metadata.source = Source::Wif;
+//        let keystore = V3Keystore {
+//            id: Uuid::new_v4().to_hyphenated().to_string(),
+//            version: 3,
+//            address: generate_address_from_wif(prv_key)?,
+//            crypto,
+//            metadata,
+//        };
+//        Ok(keystore)
+//    }
+//}
+//
+//impl Keystore for V3Keystore {
+//    fn get_metadata(&self) -> Metadata {
+//        self.metadata.clone()
+//    }
+//
+//    fn get_address(&self) -> String {
+//        self.address.clone()
+//    }
+//
+//    fn decrypt_cipher_text(&self, password: &str) -> Result<Vec<u8>> {
+//        self.crypto.decrypt(password)
+//    }
+//
+//    fn export_json(&self) -> String {
+//        serde_json::to_string(&self).unwrap()
+//    }
+//
+//    fn get_id(&self) -> String {
+//        self.id.to_owned()
+//    }
+//
+//    fn clone_box(&self) -> Box<Keystore> {
+//        Box::new(self.clone()) as Box<Keystore>
+//    }
+//
+//    fn set_id(&mut self, id: String) {
+//        self.id = id;
+//    }
+//}
+//
+//pub struct V3MnemonicKeystore {
+//    id: String,
+//    version: i32,
+//    address: String,
+//    crypto: Crypto<Pbkdf2Params>,
+//    mnemonic_path: String,
+//    enc_mnemonic: EncPair,
+//}
+//
+//impl V3MnemonicKeystore {
+//    pub fn new(password: &str, mnemonic: &str, path: &str) -> Result<V3MnemonicKeystore> {
+//        let prv_key = Self::generate_prv_key_from_mnemonic(mnemonic, path)?;
+//        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, &prv_key.to_bytes());
+//        let enc_mnemonic = crypto.derive_enc_pair(password, mnemonic.as_bytes());
+//
+//        let keystore = V3MnemonicKeystore {
+//            id: Uuid::new_v4().to_hyphenated().to_string(),
+//            version: 3,
+//            address: Self::address_from_private_key(&prv_key),
+//            crypto,
+//            mnemonic_path: String::from(path),
+//            enc_mnemonic,
+//        };
+//        Ok(keystore)
+//    }
+//
+//    fn generate_prv_key_from_mnemonic(mnemonic_str: &str, path: &str) -> Result<PrivateKey> {
+//        let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
+//        let seed = bip39::Seed::new(&mnemonic, &"");
+//        let s = Secp256k1::new();
+//        let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
+//
+//        let path = DerivationPath::from_str(path)?;
+//        let main_address_pk = sk.derive_priv(&s, &path)?;
+//        Ok(main_address_pk.private_key)
+//    }
+//
+//    fn address_from_private_key(pk: &PrivateKey) -> String {
+//        let s = Secp256k1::new();
+//        let pub_key = pk.public_key(&s);
+//        // Generate pay-to-pubkey-hash address
+//        let address = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
+//        address.to_string()
+//    }
+//
+//    pub fn export_private_key(&self, password: &str) -> Result<String> {
+//        let pk_bytes = self.crypto.decrypt(password)?;
+//        let pk = pk_bytes.to_hex();
+//        Ok(pk)
+//    }
+//}
+//
+//fn generate_address_from_wif(wif: &str) -> Result<String> {
+//    let s = Secp256k1::new();
+//    let prv_key = PrivateKey::from_wif(wif).map_err(|_| format_err!("invalid_wif"))?;
+//    let pub_key = prv_key.public_key(&s);
+//    // Generate pay-to-pubkey-hash address
+//    let address = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
+//    Ok(address.to_string())
+//}
+//
 
 
 pub trait Address {
      fn is_valid(address: &str) -> bool;
 //     fn new(address: &str) -> String;
-     fn from_public_key(public_key: &[u8]) -> Result<String>;
+     fn from_public_key(public_key: &PublicKey) -> Result<String>;
     // fn from_data(data: &[u8]) -> Box<dyn Address>;
 
     fn extended_public_key_version() -> [u8;4] {
@@ -222,6 +223,17 @@ pub trait Address {
     }
 }
 
+enum ExtendedPubKeyType {
+    XPUB()
+}
+
+pub struct CoinInfo {
+    symbol: String,
+    derivation_path: String,
+    curve: CurveType,
+    pub_key_type: PublicKeyType,
+}
+
 // todo: process the extra field
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
@@ -230,6 +242,8 @@ pub struct Account {
     pub address: String,
     pub derivation_path: String,
     pub extended_public_key: String,
+    pub curve: CurveType,
+    pub pub_key_type: PublicKeyType,
     pub coin: String,
     #[serde(skip_deserializing)]
     pub extra: String,
@@ -311,22 +325,65 @@ impl HdKeystore {
         Ok(bip39::Seed::new(&mnemonic, &""))
     }
 
-    fn key_at_path(&self, path: &str, password: &str) -> Result<Vec<u8>> {
-        let mnemonic_str = self.mnemonic(password)?;
-        let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
-        let seed = bip39::Seed::new(&mnemonic, &"");
-        let s = Secp256k1::new();
-        let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
+    fn key_at_paths_with_seed(&self, curve: CurveType, paths: &[&str], seed: &[u8]) -> Result<Vec<PrivateKey>> {
+        match curve {
+            CurveType::SECP256k1 => {
+                let mut pks = vec![];
+                let s = Secp256k1::new();
+                let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed)?;
+                let pks: Vec<PrivateKey> = paths.iter().map(|path| {
+                    let path = DerivationPath::from_str(path)?;
+                    let prv_key = sk.derive_priv(&s, &path)?;
+                    PrivateKey {
+                        bytes: prv_key.private_key.to_bytes(),
+                        curve,
+                        pub_key_type: PublicKeyType::SECP256k1
+                    }
+                }).collect();
+                Ok(pks)
+            },
+            _ => Err(format_err!("{}", "unsupport_curve"))
+        }
+    }
 
-        let path = DerivationPath::from_str(path)?;
-        let main_address_pk = sk.derive_priv(&s, &path)?;
-        Ok(main_address_pk.private_key.to_bytes())
+    pub fn key_at_paths(&self, symbol: &str, paths: &[&str], password: &str) -> Result<Vec<PrivateKey>> {
+        let acc = self.account(symbol)?;
+        let seed = self.seed(password)?;
+        Ok(self.key_at_paths_with_seed(acc.curve, paths, &seed.as_bytes())?)
     }
 
     pub fn append_account(&mut self, account: Account) -> &Account {
         self.active_accounts.push(account);
         // todo: flush
         self.active_accounts.last().unwrap()
+    }
+
+    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo, password: &str) -> Result<&Account>{
+        let seed = self.seed(password)?;
+        let paths = vec![&coin_info.derivation_path];
+        let key = self.key_at_path(coin_info.curve, &paths, &seed.as_bytes())?.first();
+        let pub_key = key.public_key()?;
+        let address = A::from_public_key(&pub_key)?;
+        let derivation_info = match coin_info.curve {
+            CurveType::SECP256k1 => {
+                Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)
+            },
+            _ => Err(format_err!("{}", "unsupport_chain"))
+        }?;
+        let xpub = A::extended_public_key(&derivation_info);
+
+
+        let account = Account {
+            address,
+            derivation_path: coin_info.derivation_path.to_string(),
+            extended_public_key: xpub,
+            curve: coin_info.curve,
+            pub_key_type: coin_info.pub_key_type,
+            coin: coin_info.symbol.to_string(),
+            extra: "".to_string()
+        };
+        self.active_accounts.push(account);
+        Ok(self.active_accounts.last().unwrap())
     }
 
     pub fn account(&self, symbol: &str) -> Option<&Account> {

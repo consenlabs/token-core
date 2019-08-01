@@ -1,4 +1,4 @@
-use tcx_chain::{TxSignResult, TransactionSinger, Keystore, Metadata, Source};
+use tcx_chain::{TxSignResult, TransactionSinger, Keystore, Metadata, Source, HdKeystore};
 use secp256k1::{Secp256k1, Message};
 use bitcoin_hashes::Hash;
 use bitcoin_hashes::sha256d::Hash as Hash256;
@@ -44,16 +44,18 @@ pub struct BitcoinCashTransaction {
 
 impl BitcoinCashTransaction {
 
-    fn collect_prv_keys_and_address<A: Address>(&self, xprv: &str) -> Result<(String, Vec<PrivateKey>)> {
+    fn collect_prv_keys_paths(&self, path: &str) -> Vec<&str> {
 
-        let xprv_key = ExtendedPrivKey::from_str(xprv)?;
-        let s = Secp256k1::new();
-        let change_key = xprv_key.ckd_priv(&s, ChildNumber::from(0))?;
-        let index_key = change_key.ckd_priv(&s, ChildNumber::from(self.change_idx))?;
-        let index_pub_key = index_key.private_key.public_key(&s);
-        let change_addr = A::from_public_key(&index_pub_key.to_bytes())?;
+//        let xprv_key = ExtendedPrivKey::from_str(xprv)?;
+//        let s = Secp256k1::new();
+//        let change_key = xprv_key.ckd_priv(&s, ChildNumber::from(0))?;
+//        let index_key = change_key.ckd_priv(&s, ChildNumber::from(self.change_idx))?;
+//        let index_pub_key = index_key.private_key.public_key(&s);
+//        let change_addr = A::from_public_key(&index_pub_key.to_bytes())?;
+        let mut paths: Vec<&str> = vec![];
+        paths.push(&format!("{}/0/{}", path, &self.change_idx));
 
-        let mut prv_keys: Vec<PrivateKey> = vec![];
+//        let mut prv_keys: Vec<PrivateKey> = vec![];
         for unspent in &self.unspents {
             let derived_path = unspent.derived_path.trim();
             let path_with_space = derived_path.replace("/", " ");
@@ -61,11 +63,12 @@ impl BitcoinCashTransaction {
             let path_idxs: Vec<&str> = path_with_space.split(" ").collect();
             ensure!(path_idxs.len() == 2, "derived path must be x/x");
 
-            let account_key = xprv_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[0]).unwrap())?;
-            let unspent_index_key = account_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[1]).unwrap())?;
-            prv_keys.push(unspent_index_key.private_key);
+//            let account_key = xprv_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[0]).unwrap())?;
+//            let unspent_index_key = account_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[1]).unwrap())?;
+//            prv_keys.push(unspent_index_key.private_key);
+            paths.push(&format!("{}/{}", path, derived_path));
         }
-        Ok((change_addr, prv_keys))
+        paths
     }
 
     fn sign_hash(&self, pri_key: &PrivateKey, hash: &[u8]) -> Result<Script> {
@@ -79,7 +82,7 @@ impl BitcoinCashTransaction {
         Ok(Builder::new().push_slice(&sig_bytes).push_slice(&pub_key_bytes).into_script())
     }
 
-    pub fn sign_transaction<A: Address>(&self, chain_id: &str, xprv: &str) -> Result<TxSignResult> {
+    pub fn sign_transaction<A: Address>(&self, chain_id: &str, prv_keys: &[&PrivateKey]) -> Result<TxSignResult> {
         let mut total_amount = 0;
 
         for unspent in &self.unspents {
@@ -163,6 +166,38 @@ impl BitcoinCashTransaction {
 
 }
 
+pub struct BitcoinCashSinger {
+
+}
+
+impl BitcoinCashSinger {
+    fn sign_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+        let v: Value = serde_json::from_str(json).unwrap();
+        let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).unwrap();
+        let internal_used = v["internalUsed"].as_i64().unwrap();
+        let change_idx = internal_used + 1;
+        let to = v["to"].as_str().unwrap();
+        let amount = v["amount"].as_str().unwrap().parse::<i64>().unwrap();
+        let fee = v["fee"].as_str().unwrap().parse::<i64>().unwrap();
+        let password = v["password"].as_str().unwrap();
+        let chain_id = v["chainId"].as_str().unwrap();
+        let account = keystore.account(&"BCH")?;
+        let path = &account.derivation_path;
+
+        let bch_tran = BitcoinCashTransaction {
+            to: to.to_owned(),
+            amount,
+            unspents,
+            memo: "".to_string(),
+            fee,
+            change_idx: change_idx as u32,
+        };
+        let paths = bch_tran.collect_prv_keys_paths(path);
+        let priv_keys = &keystore.key_at_paths("BCH", paths.as_slice(), password);
+        let ret = bch_tran.sign_transaction::<A>(chain_id, &xprv)?;
+        Ok(serde_json::to_string(&ret)?)
+    }
+}
 
 #[cfg(test)]
 mod tests {
