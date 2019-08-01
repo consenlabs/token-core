@@ -53,11 +53,18 @@ static PASSWORD: &'static str = "Insecure Pa55w0rd";
 static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 
+//static mut WALLET_FILE_DIR: String = String::new();
+
 lazy_static! {
     static ref KEYSTORE_MAP: Mutex<HashMap<String, HdKeystore>> = {
         let mut m = Mutex::new(HashMap::new());
         m
     };
+
+}
+
+lazy_static! {
+    static ref WALLET_FILE_DIR : Mutex<String> = Mutex::new(String::new());
 
 }
 
@@ -78,6 +85,7 @@ fn find_keystore_id_by_address(address: &str) -> Option<String> {
     }
     k_id
 }
+
 
 #[no_mangle]
 pub extern fn read_file(file_path: *const c_char) -> *const c_char {
@@ -152,6 +160,7 @@ pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
 
 fn _scan_wallets(v: Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().unwrap();
+    *WALLET_FILE_DIR.lock().unwrap() = file_dir.to_string();
     let p = Path::new(file_dir);
     let walk_dir = std::fs::read_dir(p).unwrap();
     for entry in walk_dir {
@@ -221,7 +230,7 @@ fn _import_wallet_from_mnemonic(json_str: &str) -> Result<String> {
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let path = v["path"].as_str().unwrap();
     let overwrite = v["overwrite"].as_bool().unwrap();
-    let file_dir = v["fileDir"].as_str().unwrap();
+
     let chain_type = v["chainType"].as_str().unwrap();
     let meta: Metadata = serde_json::from_value(v.clone())?;
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
@@ -246,7 +255,9 @@ fn _import_wallet_from_mnemonic(json_str: &str) -> Result<String> {
 
     let json = ks.json();
 
-    let ks_path = format!("{}{}.json", file_dir, ks.id);
+
+    let file_dir = WALLET_FILE_DIR.lock().unwrap();
+    let ks_path = format!("{}{}.json", &file_dir, ks.id);
     let path = Path::new(&ks_path);
     let mut file = File::create(path).unwrap();
     file.write_all(&json.as_bytes());
