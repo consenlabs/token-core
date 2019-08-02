@@ -197,41 +197,25 @@ impl HdKeystore {
         Ok(bip39::Seed::new(&mnemonic, &""))
     }
 
-    fn key_at_paths_with_seed(&self, curve: CurveType, paths: &[String], seed: &[u8]) -> Result<Vec<impl PrivateKey>> {
+    fn key_at_paths_with_seed(&self, curve: CurveType, paths: &[impl AsRef<str>], seed: &Seed) -> Result<Vec<impl PrivateKey>> {
         match curve {
             CurveType::SECP256k1 => {
-//                let mut pks = vec![];
-                let s = Secp256k1::new();
-                let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed)?;
-                let pks: Result<Vec<Secp256k1PrivateKey>> = paths.iter().map(|path| {
-                    let path = DerivationPath::from_str(path)?;
-                    let prv_key = sk.derive_priv(&s, &path)?;
-                    Ok(Secp256k1PrivateKey {
-                        prv_key: prv_key.private_key
-                    })
-                }).collect();
-                pks
+                Secp256k1Curve::key_at_paths_with_seed(paths, seed)
             },
             _ => Err(format_err!("{}", "unsupport_curve"))
         }
     }
 
-    pub fn key_at_paths(&self, symbol: &str, paths: &[String], password: &str) -> Result<Vec<impl PrivateKey>> {
+    pub fn key_at_paths(&self, symbol: &str, paths: &[impl AsRef<str>], password: &str) -> Result<Vec<impl PrivateKey>> {
         let acc = self.account(symbol).ok_or(format_err!("{}", "account_not_found"))?;
         let seed = self.seed(password)?;
-        Ok(self.key_at_paths_with_seed(acc.curve, paths, &seed.as_bytes())?)
-    }
-
-    pub fn append_account(&mut self, account: Account) -> &Account {
-        self.active_accounts.push(account);
-        // todo: flush
-        self.active_accounts.last().unwrap()
+        Ok(self.key_at_paths_with_seed(acc.curve, paths, &seed)?)
     }
 
     pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo, password: &str) -> Result<&Account>{
         let seed = self.seed(password)?;
         let paths = vec![coin_info.derivation_path.clone()];
-        let keys = self.key_at_paths_with_seed(coin_info.curve, &paths, &seed.as_bytes())?;
+        let keys = self.key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
         let pub_key = key.public_key();
         let address = A::from_public_key(&pub_key.to_bytes())?;
@@ -242,7 +226,6 @@ impl HdKeystore {
             _ => Err(format_err!("{}", "unsupport_chain"))
         }?;
         let xpub = A::extended_public_key(&derivation_info);
-
 
         let account = Account {
             address,

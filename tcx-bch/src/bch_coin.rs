@@ -1,4 +1,4 @@
-use tcx_chain::curve::{Curve, Secp256k1Curve, PublicKey, Secp256k1PubKey};
+use tcx_chain::curve::{Secp256k1Curve, PublicKey, Secp256k1PubKey};
 use tcx_chain::{Coin, HdKeystore, Account};
 use crate::Result;
 use bitcoin::network::constants::Network;
