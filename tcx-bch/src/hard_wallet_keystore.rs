@@ -1,4 +1,4 @@
-use tcx_chain::{Keystore, Metadata};
+use tcx_chain::{Metadata};
 use crate::Result;
 use bitcoin_hashes::hex::ToHex;
 use bitcoin::util::bip32::{ExtendedPubKey, DerivationPath, Fingerprint, ChildNumber, ChainCode};

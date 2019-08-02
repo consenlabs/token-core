@@ -14,7 +14,7 @@ use failure::Error;
 use crate::Result;
 use crate::bips;
 use crate::bips::DerivationInfo;
-use crate::curve::{CurveType, PublicKeyType, PrivateKey, PublicKey, Secp256k1Curve};
+use crate::curve::{CurveType, PublicKeyType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey};
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
@@ -200,9 +200,12 @@ impl Default for Metadata {
 
 
 pub trait Address {
+//    type PubKey: PublicKey;
+
      fn is_valid(address: &str) -> bool;
 //     fn new(address: &str) -> String;
-     fn from_public_key(public_key: &PublicKey) -> Result<String>;
+    // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
+     fn from_public_key(public_key: &[u8]) -> Result<String>;
     // fn from_data(data: &[u8]) -> Box<dyn Address>;
 
     fn extended_public_key_version() -> [u8;4] {
@@ -325,29 +328,27 @@ impl HdKeystore {
         Ok(bip39::Seed::new(&mnemonic, &""))
     }
 
-    fn key_at_paths_with_seed(&self, curve: CurveType, paths: &[&str], seed: &[u8]) -> Result<Vec<PrivateKey>> {
+    fn key_at_paths_with_seed(&self, curve: CurveType, paths: &[String], seed: &[u8]) -> Result<Vec<impl PrivateKey>> {
         match curve {
             CurveType::SECP256k1 => {
-                let mut pks = vec![];
+//                let mut pks = vec![];
                 let s = Secp256k1::new();
                 let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed)?;
-                let pks: Vec<PrivateKey> = paths.iter().map(|path| {
+                let pks: Result<Vec<Secp256k1PrivateKey>> = paths.iter().map(|path| {
                     let path = DerivationPath::from_str(path)?;
                     let prv_key = sk.derive_priv(&s, &path)?;
-                    PrivateKey {
-                        bytes: prv_key.private_key.to_bytes(),
-                        curve,
-                        pub_key_type: PublicKeyType::SECP256k1
-                    }
+                    Ok(Secp256k1PrivateKey {
+                        prv_key: prv_key.private_key
+                    })
                 }).collect();
-                Ok(pks)
+                pks
             },
             _ => Err(format_err!("{}", "unsupport_curve"))
         }
     }
 
-    pub fn key_at_paths(&self, symbol: &str, paths: &[&str], password: &str) -> Result<Vec<PrivateKey>> {
-        let acc = self.account(symbol)?;
+    pub fn key_at_paths(&self, symbol: &str, paths: &[String], password: &str) -> Result<Vec<impl PrivateKey>> {
+        let acc = self.account(symbol).ok_or(format_err!("{}", "account_not_found"))?;
         let seed = self.seed(password)?;
         Ok(self.key_at_paths_with_seed(acc.curve, paths, &seed.as_bytes())?)
     }
@@ -360,10 +361,11 @@ impl HdKeystore {
 
     pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo, password: &str) -> Result<&Account>{
         let seed = self.seed(password)?;
-        let paths = vec![&coin_info.derivation_path];
-        let key = self.key_at_path(coin_info.curve, &paths, &seed.as_bytes())?.first();
-        let pub_key = key.public_key()?;
-        let address = A::from_public_key(&pub_key)?;
+        let paths = vec![coin_info.derivation_path.clone()];
+        let keys = self.key_at_paths_with_seed(coin_info.curve, &paths, &seed.as_bytes())?;
+        let key = keys.first().ok_or(format_err!("derivate_failed"))?;
+        let pub_key = key.public_key();
+        let address = A::from_public_key(&pub_key.to_bytes())?;
         let derivation_info = match coin_info.curve {
             CurveType::SECP256k1 => {
                 Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)

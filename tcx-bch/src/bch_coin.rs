@@ -1,4 +1,4 @@
-use tcx_chain::curve::{Curve, Secp256k1Curve, PublicKey};
+use tcx_chain::curve::{Curve, Secp256k1Curve, PublicKey, Secp256k1PubKey};
 use tcx_chain::{Coin, HdKeystore, Account};
 use crate::Result;
 use bitcoin::network::constants::Network;
@@ -140,47 +140,51 @@ impl BchAddress {
 }
 
 impl Address for BchAddress {
+//    type PubKey = Secp256k1PubKey;
+
     fn is_valid(addr: &str) -> bool {
         let convert = Converter::new();
         convert.is_cash_addr(addr)
     }
 
-    fn from_public_key(pub_key: PublicKey) -> Result<String> {
-        let pub_key = BtcPublicKey::from_slice(&pub_key.bytes)?;
+    fn from_public_key(pub_key: &[u8]) -> Result<String> {
+        let pub_key = BtcPublicKey::from_slice(pub_key)?;
+//        let pub_key = &pub_key.pub_key;
         let legacy = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
         let convert = Converter::new();
         convert.to_cash_addr(&legacy.to_string()).map_err(|err| format_err!("{}", "generate_address_failed"))
     }
 }
 
-//pub struct BchTestNetAddress {}
-//
-//impl BchTestNetAddress {
-//    const XPUB_VERSION: [u8;4] = [0x04, 0x35, 0x87, 0xCF];
-//    const XPRV_VERSION: [u8;4] = [0x04, 0x35, 0x83, 0x94];
-//}
-//
-//impl Address for BchTestNetAddress {
-//    fn is_valid(address: &str) -> bool {
-//        let convert = Converter::new();
-//        convert.is_cash_addr(address)
-//    }
-//
-//    fn from_public_key(public_key: &[u8]) -> Result<String> {
-//        let pub_key = PublicKey::from_slice(public_key)?;
-//        let legacy = BtcAddress::p2pkh(&pub_key, Network::Testnet);
-//        let convert = Converter::new();
-//        convert.to_cash_addr(&legacy.to_string()).map_err(|err| format_err!("{}", "generate_address_failed"))
-//    }
-//
-//    fn extended_public_key_version() -> [u8;4] {
-//        BchTestNetAddress::XPUB_VERSION
-//    }
-//    fn extended_private_key_version() -> [u8;4] {
-//        BchTestNetAddress::XPRV_VERSION
-//    }
-//
-//}
+pub struct BchTestNetAddress {}
+
+impl BchTestNetAddress {
+    const XPUB_VERSION: [u8;4] = [0x04, 0x35, 0x87, 0xCF];
+    const XPRV_VERSION: [u8;4] = [0x04, 0x35, 0x83, 0x94];
+}
+
+impl Address for BchTestNetAddress {
+
+    fn is_valid(address: &str) -> bool {
+        let convert = Converter::new();
+        convert.is_cash_addr(address)
+    }
+
+    fn from_public_key(pub_key: &[u8]) -> Result<String> {
+        let pub_key = BtcPublicKey::from_slice(pub_key)?;
+        let legacy = BtcAddress::p2pkh(&pub_key, Network::Testnet);
+        let convert = Converter::new();
+        convert.to_cash_addr(&legacy.to_string()).map_err(|err| format_err!("{}", "generate_address_failed"))
+    }
+
+    fn extended_public_key_version() -> [u8;4] {
+        BchTestNetAddress::XPUB_VERSION
+    }
+    fn extended_private_key_version() -> [u8;4] {
+        BchTestNetAddress::XPRV_VERSION
+    }
+
+}
 
 
 #[cfg(test)]
