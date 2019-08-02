@@ -9,7 +9,6 @@ pub trait Coin<'z> where Self: std::marker::Sized {
     fn account(&self) -> &Account;
     fn derive_address(prv_key: &[u8]) -> Result<String>;
     fn load(keystore: &'z HdKeystore) -> Result<Self>;
-//    fn load<'a>(keystore: &'a HdKeystore) -> Result<&'a Self>;
     fn append_account(keystore: &'z mut HdKeystore, password: &str, path: &str) -> Result<Self>;
     fn key(&self, password: &str) -> Result<Vec<u8>>;
 

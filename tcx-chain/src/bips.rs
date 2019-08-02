@@ -69,22 +69,3 @@ impl From<ExtendedPrivKey> for DerivationInfo {
         }
     }
 }
-//
-//impl fmt::Display for ExtendedPrivKey {
-//    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-//        let mut ret = [0; 78];
-//        ret[0..4].copy_from_slice(&match self.network {
-//            Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
-//            Network::Testnet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
-//        }[..]);
-//        ret[4] = self.depth as u8;
-//        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
-//
-//        BigEndian::write_u32(&mut ret[9..13], u32::from(self.child_number));
-//
-//        ret[13..45].copy_from_slice(&self.chain_code[..]);
-//        ret[45] = 0;
-//        ret[46..78].copy_from_slice(&self.private_key[..]);
-//        fmt.write_str(&base58::check_encode_slice(&ret[..]))
-//    }
-//}

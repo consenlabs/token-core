@@ -50,16 +50,8 @@ impl BitcoinCashTransaction {
 
     fn collect_prv_keys_paths(&self, path: &str) -> Result<Vec<String>> {
 
-//        let xprv_key = ExtendedPrivKey::from_str(xprv)?;
-//        let s = Secp256k1::new();
-//        let change_key = xprv_key.ckd_priv(&s, ChildNumber::from(0))?;
-//        let index_key = change_key.ckd_priv(&s, ChildNumber::from(self.change_idx))?;
-//        let index_pub_key = index_key.private_key.public_key(&s);
-//        let change_addr = A::from_public_key(&index_pub_key.to_bytes())?;
         let mut paths: Vec<String> = vec![];
         paths.push(format!("{}/0/{}", path, &self.change_idx));
-
-//        let mut prv_keys: Vec<PrivateKey> = vec![];
         for unspent in &self.unspents {
             let derived_path = unspent.derived_path.trim();
             let path_with_space = derived_path.replace("/", " ");
@@ -67,20 +59,14 @@ impl BitcoinCashTransaction {
             let path_idxs: Vec<&str> = path_with_space.split(" ").collect();
             ensure!(path_idxs.len() == 2, "derived path must be x/x");
 
-//            let account_key = xprv_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[0]).unwrap())?;
-//            let unspent_index_key = account_key.ckd_priv(&s, ChildNumber::from_str(&path_idxs[1]).unwrap())?;
-//            prv_keys.push(unspent_index_key.private_key);
             paths.push(format!("{}/{}", path, derived_path));
         }
         Ok(paths)
     }
 
     fn sign_hash(&self, pri_key: &impl PrivateKey, hash: &[u8]) -> Result<Script> {
-//        let s = Secp256k1::new();
-//        let msg = Message::from_slice(hash)?;
-//        let signature = s.sign(&msg, &pri_key.key);
+
         let signature_bytes = pri_key.sign(&hash)?;
-//        let signature_bytes = signature.serialize_der();
         let raw_bytes: Vec<u8> = vec![0x41];
         let sig_bytes: Vec<u8> = [signature_bytes, raw_bytes].concat();
         let pub_key_bytes = pri_key.public_key().to_bytes();
@@ -96,7 +82,6 @@ impl BitcoinCashTransaction {
 
         ensure!(total_amount >= (self.amount + self.fee), "total amount must ge amount + fee");
 
-//        let (change_addr, prv_keys) = self.collect_prv_keys_paths::<A>(xprv)?;
         let change_addr_prv_key = prv_keys.first().ok_or(format_err!("get_change_addr_prv_key_failed"))?;
         let change_addr_pub_key = change_addr_prv_key.public_key();
         // todo: network address

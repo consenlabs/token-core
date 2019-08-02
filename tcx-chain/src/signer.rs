@@ -21,18 +21,6 @@ pub trait TransactionSinger {
 }
 
 
-//
-//pub fn btc_hash_singer(hash: &[u8], password: &str, wallet: &V3MnemonicKeystore) -> Result<String> {
-//    let pk_str = wallet.export_private_key(password)?;
-////    let prv_key = PrivateKey::from_str(pk)?;
-//    let s = Secp256k1::new();
-//    let sk = SecretKey::from_str(pk_str.as_str())?;
-//    let msg = Message::from_slice(hash)?;
-//    let signature = s.sign(&msg, &sk);
-//    Ok(signature.to_string())
-//}
-
-
 mod tests {
 //    use crate::keystore::V3MnemonicKeystore;
 //    use crate::signer::btc_hash_singer;

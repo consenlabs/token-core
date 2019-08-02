@@ -23,13 +23,13 @@ pub enum CurveType {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PublicKeyType {
-    SECP256k1 = 0,
-    SECP256k1Extended = 1,
-    NIST256p1 = 2,
-    NIST256p1Extended = 3,
-    ED25519 = 4,
-    ED25519Blake2b = 5,
-    CURVE25519 = 6,
+    SECP256k1,
+    SECP256k1Extended,
+    NIST256p1,
+    NIST256p1Extended,
+    ED25519,
+    ED25519Blake2b,
+    CURVE25519,
 }
 
 pub trait PublicKey: Sized {
@@ -135,14 +135,6 @@ impl PublicKey for Secp256k1PubKey {
         }
     }
 }
-//
-//impl PrivateKey for bitcoin::PrivateKey {
-//    type PublicKey = bitcoin::PublicKey;
-//
-//    fn public_key(&self) -> Self::PublicKey {
-//        self.public_key(&secp256k1::Secp256k1::new())
-//    }
-//}
 
 // todo: try to move Curve to crypto
 pub trait Curve {
