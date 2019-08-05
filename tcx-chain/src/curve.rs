@@ -48,21 +48,95 @@ pub trait PrivateKey {
     fn sign(&self, data: &[u8]) -> Result<Vec<u8>>;
 }
 
+//
+//pub struct Secp256k1PrivateKey {
+//    //    bytes: Vec<u8>,
+////    curve: CurveType,
+////    pub_key_type: PublicKeyType,
+//    pub prv_key: bitcoin::PrivateKey
+//}
+//
+//impl PrivateKey for Secp256k1PrivateKey {
+//    type PublicKey = Secp256k1PubKey;
+//
+//    fn public_key(&self) -> Self::PublicKey {
+//        Secp256k1PubKey {
+//            pub_key: self.prv_key.public_key(&secp256k1::Secp256k1::new())
+//        }
+//    }
+//
+//    fn is_valid(data: &[u8]) -> bool {
+//        SecretKey::from_slice(data).is_ok()
+//    }
+//
+//    fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
+//        let s = Secp256k1::new();
+//        let msg = Message::from_slice(data)?;
+//        let signature = s.sign(&msg, &self.prv_key.key);
+//        Ok(signature.serialize_der().to_vec())
+//    }
+//}
+//
+//
+//
+//pub struct Secp256k1PubKey {
+//    pub pub_key: bitcoin::PublicKey
+//}
+//
+//impl PublicKey for Secp256k1PubKey {
+//    fn to_bytes(&self) -> Vec<u8> {
+//        self.pub_key.to_bytes()
+//    }
+//
+//    fn to_compressed(&self) -> Vec<u8> {
+//        self.pub_key.key.serialize().to_vec()
+//    }
+//
+//    fn to_uncompressed(&self) -> Vec<u8> {
+//        self.pub_key.key.serialize_uncompressed().to_vec()
+//    }
+//
+//    fn from_slice(data: &[u8]) -> Result<Secp256k1PubKey> {
+//        if let Ok(key) = bitcoin::PublicKey::from_slice(data) {
+//            Ok(Secp256k1PubKey {
+//                pub_key: key
+//            })
+//        } else {
+//            Err(format_err!("{}", "invalid_public_key"))
+//        }
+//    }
+//}
 
-pub struct Secp256k1PrivateKey {
-    //    bytes: Vec<u8>,
-//    curve: CurveType,
-//    pub_key_type: PublicKeyType,
-    pub prv_key: bitcoin::PrivateKey
+
+impl PublicKey for bitcoin::PublicKey {
+    fn to_bytes(&self) -> Vec<u8> {
+        self.to_bytes()
+    }
+
+    fn to_compressed(&self) -> Vec<u8> {
+        self.to_compressed()
+    }
+
+    fn to_uncompressed(&self) -> Vec<u8> {
+        self.to_uncompressed()
+    }
+
+    fn from_slice(data: &[u8]) -> Result<bitcoin::PublicKey> {
+        if let Ok(key) = bitcoin::PublicKey::from_slice(data) {
+            Ok(key)
+        } else {
+            Err(format_err!("invalid_secp256k1_public_key"))
+        }
+    }
 }
 
-impl PrivateKey for Secp256k1PrivateKey {
-    type PublicKey = Secp256k1PubKey;
+pub type Secp256k1PublicKey = bitcoin::PublicKey;
+
+impl PrivateKey for bitcoin::PrivateKey {
+    type PublicKey = bitcoin::PublicKey;
 
     fn public_key(&self) -> Self::PublicKey {
-        Secp256k1PubKey {
-            pub_key: self.prv_key.public_key(&secp256k1::Secp256k1::new())
-        }
+        self.public_key(&secp256k1::Secp256k1::new())
     }
 
     fn is_valid(data: &[u8]) -> bool {
@@ -72,40 +146,12 @@ impl PrivateKey for Secp256k1PrivateKey {
     fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
         let s = Secp256k1::new();
         let msg = Message::from_slice(data)?;
-        let signature = s.sign(&msg, &self.prv_key.key);
+        let signature = s.sign(&msg, &self.key);
         Ok(signature.serialize_der().to_vec())
     }
 }
 
-
-
-pub struct Secp256k1PubKey {
-    pub pub_key: bitcoin::PublicKey
-}
-
-impl PublicKey for Secp256k1PubKey {
-    fn to_bytes(&self) -> Vec<u8> {
-        self.pub_key.to_bytes()
-    }
-
-    fn to_compressed(&self) -> Vec<u8> {
-        self.pub_key.key.serialize().to_vec()
-    }
-
-    fn to_uncompressed(&self) -> Vec<u8> {
-        self.pub_key.key.serialize_uncompressed().to_vec()
-    }
-
-    fn from_slice(data: &[u8]) -> Result<Secp256k1PubKey> {
-        if let Ok(key) = bitcoin::PublicKey::from_slice(data) {
-            Ok(Secp256k1PubKey {
-                pub_key: key
-            })
-        } else {
-            Err(format_err!("{}", "invalid_public_key"))
-        }
-    }
-}
+pub type Secp256k1PrivateKey = bitcoin::PrivateKey;
 
 pub struct Secp256k1Curve {}
 
@@ -124,9 +170,7 @@ impl Secp256k1Curve {
         let pks: Result<Vec<Secp256k1PrivateKey>> = paths.iter().map(|path| {
             let path = DerivationPath::from_str(path.as_ref())?;
             let prv_key = sk.derive_priv(&s, &path)?;
-            Ok(Secp256k1PrivateKey {
-                prv_key: prv_key.private_key
-            })
+            Ok(prv_key.private_key)
         }).collect();
         pks
     }

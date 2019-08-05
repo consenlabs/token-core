@@ -85,7 +85,7 @@ impl BitcoinCashTransaction {
         let change_addr_prv_key = prv_keys.first().ok_or(format_err!("get_change_addr_prv_key_failed"))?;
         let change_addr_pub_key = change_addr_prv_key.public_key();
         // todo: network address
-        let change_addr = BchAddress::from_public_key(&change_addr_pub_key.to_bytes())?;
+        let change_addr = BchAddress::from_public_key(&change_addr_pub_key)?;
 
         let mut tx_outs: Vec<TxOut> = vec![];
         let receiver_addr = BtcAddress::from_str(&self.to)?;

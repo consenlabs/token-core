@@ -74,7 +74,7 @@ pub trait Address {
      fn is_valid(address: &str) -> bool;
 //     fn new(address: &str) -> String;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
-     fn from_public_key(public_key: &[u8]) -> Result<String>;
+     fn from_public_key(public_key: &impl PublicKey) -> Result<String>;
     // fn from_data(data: &[u8]) -> Box<dyn Address>;
 
     fn extended_public_key_version() -> [u8;4] {
@@ -218,7 +218,7 @@ impl HdKeystore {
         let keys = self.key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
         let pub_key = key.public_key();
-        let address = A::from_public_key(&pub_key.to_bytes())?;
+        let address = A::from_public_key(&pub_key)?;
         let derivation_info = match coin_info.curve {
             CurveType::SECP256k1 => {
                 Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)
