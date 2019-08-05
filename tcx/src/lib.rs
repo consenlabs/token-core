@@ -30,11 +30,12 @@ use std::sync::Mutex;
 use std::sync::RwLock;
 use crate::utils::set_panic_hook;
 use tcx_bch::bch_transaction::{Utxo, BitcoinCashTransaction};
-use tcx_bch::bch_coin::{BchAddress};
+use tcx_bch::bch_coin::BchAddress;
 use tcx_chain::curve::{Secp256k1Curve, CurveType, PublicKeyType};
 use tcx_chain::coin::Coin;
 use tcx_chain::keystore::CoinInfo;
 use serde::private::ser::constrain;
+use std::str::FromStr;
 
 
 // #[link(name = "TrezorCrypto")]
@@ -80,6 +81,18 @@ fn find_keystore_id_by_address(address: &str) -> Option<String> {
         }
     }
     k_id
+}
+
+fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo>{
+    match symbol {
+        "BCH" => Ok(CoinInfo {
+            symbol: "BCH".to_string(),
+            derivation_path: "m/44'/145'/0'".to_string(),
+            curve: CurveType::SECP256k1,
+            pub_key_type: PublicKeyType::SECP256k1,
+        }),
+        _ => Err(format_err!("unsupptored_chain"))
+    }
 }
 
 
@@ -196,12 +209,7 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let meta: Metadata = serde_json::from_value(v.clone())?;
     let acc = match chain_type {
         "BCH" => {
-            let coin_info = CoinInfo {
-                symbol: "BCH".to_string(),
-                derivation_path: "m/44'/145'/0'".to_string(),
-                curve: CurveType::SECP256k1,
-                pub_key_type: PublicKeyType::SECP256k1
-            };
+            let coin_info = _coin_info_from_symbol("BCH")?;
             HdKeystore::mnemonic_to_account::<BchAddress>(&coin_info, mnemonic)
         }
         _ => Err(format_err!("{}", "chain_type_not_support"))
@@ -237,19 +245,13 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
     let account = match chain_type {
         "BCH" => {
-            let coin_info = CoinInfo {
-                symbol: "BCH".to_string(),
-                derivation_path: "m/44'/145'/0'".to_string(),
-                curve: CurveType::SECP256k1,
-                pub_key_type: PublicKeyType::SECP256k1
-            };
+            let coin_info = _coin_info_from_symbol("BCH")?;
             ks.derive_coin::<BchAddress>(&coin_info, password)
         }
         _ => Err(format_err!("{}", "chain_type_not_support"))
     }?;
 
 
-//    let mut keystore = HdMnemonicKeystore::new(meta, password, mnemonic, path)?;
     let exist_kid_opt = find_keystore_id_by_address(&account.address);
     if exist_kid_opt.is_some() {
         if !overwrite {
@@ -267,7 +269,6 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
 }
 
 fn _flush_keystore(ks: &HdKeystore) {
-
     let json = ks.json();
 
     let file_dir = WALLET_FILE_DIR.read().unwrap();

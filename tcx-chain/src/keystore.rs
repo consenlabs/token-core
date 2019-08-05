@@ -106,6 +106,8 @@ pub struct CoinInfo {
     pub pub_key_type: PublicKeyType,
 }
 
+
+
 // todo: process the extra field
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
