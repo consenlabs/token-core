@@ -31,8 +31,10 @@ use std::sync::RwLock;
 use crate::utils::set_panic_hook;
 use tcx_bch::bch_transaction::{Utxo, BitcoinCashTransaction};
 use tcx_bch::bch_coin::{BchAddress};
-use tcx_chain::curve::Secp256k1Curve;
+use tcx_chain::curve::{Secp256k1Curve, CurveType, PublicKeyType};
 use tcx_chain::coin::Coin;
+use tcx_chain::keystore::CoinInfo;
+use serde::private::ser::constrain;
 
 
 // #[link(name = "TrezorCrypto")]
@@ -40,6 +42,7 @@ use tcx_chain::coin::Coin;
 //     fn mnemonic_generate(strength: c_int, mnemonic: *mut c_char) -> c_int;
 // }
 //pub mod utils;
+
 
 #[macro_use]
 extern crate failure;
@@ -176,80 +179,92 @@ fn _scan_wallets(v: Value) -> Result<()> {
 }
 
 //
-//#[no_mangle]
-//pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
-//    let v = parse_arguments(json_str);
-//    let json = crate::utils::landingpad(|| _find_wallet_by_mnemonic(&v));
-//    CString::new(json).unwrap().into_raw()
-//}
-//
-//
-//fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
-//    let mnemonic = v["mnemonic"].as_str().unwrap();
-//    let path = v["path"].as_str().unwrap();
-//    let network = v["network"].as_str().unwrap();
-//    let chain_type = v["chainType"].as_str().unwrap();
-//    let password = "InsecurePassword";
-//    let meta: Metadata = serde_json::from_value(v.clone())?;
-//    let ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
-//    let acc = match chain_type {
-//        "BCH" => BchCoin::<Secp256k1Curve, BchAddress>::mnemonic_to_account(mnemonic, path),
-//        _ => Err(format_err!("{}", "chain_type_not_support"))
-//    }?;
-//    let address = acc.address;
-//    let kid = find_keystore_id_by_address(&address);
-//    if let Some(id) = kid {
-//        let map = KEYSTORE_MAP.read().unwrap();
-//        let ks = map.get(&id).unwrap();
-//        Ok(ks.json())
-//    } else {
-//        Ok("{}".to_owned())
-//    }
-//}
-//
-//#[no_mangle]
-//pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
-//    let v = parse_arguments(json_str);
-//    let json = crate::utils::landingpad(|| _import_wallet_from_mnemonic(&v));
-//    CString::new(json).unwrap().into_raw()
-//}
-//
-//
-//fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
-//    let mut meta: Metadata = serde_json::from_value(v.clone())?;
-//    let password = v["password"].as_str().unwrap();
-//    let mnemonic = v["mnemonic"].as_str().unwrap();
-//    let path = v["path"].as_str().unwrap();
-//    let overwrite = v["overwrite"].as_bool().unwrap();
-//
-//    let chain_type = v["chainType"].as_str().unwrap();
-//    let meta: Metadata = serde_json::from_value(v.clone())?;
-//    let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
-//    let coin = match chain_type {
-//        "BCH" => {
-//            BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut ks, password, path)
-//        }
-//        _ => Err(format_err!("{}", "chain_type_not_support"))
-//    }?;
-//
-//
-////    let mut keystore = HdMnemonicKeystore::new(meta, password, mnemonic, path)?;
-//    let account = coin.account();
-//    let exist_kid_opt = find_keystore_id_by_address(&account.address);
-//    if exist_kid_opt.is_some() {
-//        if !overwrite {
-//            return Err(format_err!("{}", "wallet_exists"));
-//        } else {
-//            ks.id = exist_kid_opt.unwrap();
-//        }
-//    }
-//
-//
-//    _flush_keystore(&ks);
-//    let json = ks.json();
-//    cache_keystore(ks);
-//    Ok(json)
-//}
+#[no_mangle]
+pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = crate::utils::landingpad(|| _find_wallet_by_mnemonic(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+
+fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
+    let mnemonic = v["mnemonic"].as_str().unwrap();
+    let path = v["path"].as_str().unwrap();
+    let network = v["network"].as_str().unwrap();
+    let chain_type = v["chainType"].as_str().unwrap();
+    let password = "InsecurePassword";
+    let meta: Metadata = serde_json::from_value(v.clone())?;
+    let acc = match chain_type {
+        "BCH" => {
+            let coin_info = CoinInfo {
+                symbol: "BCH".to_string(),
+                derivation_path: "m/44'/145'/0'".to_string(),
+                curve: CurveType::SECP256k1,
+                pub_key_type: PublicKeyType::SECP256k1
+            };
+            HdKeystore::mnemonic_to_account::<BchAddress>(&coin_info, mnemonic)
+        }
+        _ => Err(format_err!("{}", "chain_type_not_support"))
+    }?;
+    let address = acc.address;
+    let kid = find_keystore_id_by_address(&address);
+    if let Some(id) = kid {
+        let map = KEYSTORE_MAP.read().unwrap();
+        let ks = map.get(&id).unwrap();
+        Ok(ks.json())
+    } else {
+        Ok("{}".to_owned())
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = crate::utils::landingpad(|| _import_wallet_from_mnemonic(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+
+fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
+    let mut meta: Metadata = serde_json::from_value(v.clone())?;
+    let password = v["password"].as_str().unwrap();
+    let mnemonic = v["mnemonic"].as_str().unwrap();
+    let path = v["path"].as_str().unwrap();
+    let overwrite = v["overwrite"].as_bool().unwrap();
+
+    let chain_type = v["chainType"].as_str().unwrap();
+    let meta: Metadata = serde_json::from_value(v.clone())?;
+    let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
+    let account = match chain_type {
+        "BCH" => {
+            let coin_info = CoinInfo {
+                symbol: "BCH".to_string(),
+                derivation_path: "m/44'/145'/0'".to_string(),
+                curve: CurveType::SECP256k1,
+                pub_key_type: PublicKeyType::SECP256k1
+            };
+            ks.derive_coin::<BchAddress>(&coin_info, password)
+        }
+        _ => Err(format_err!("{}", "chain_type_not_support"))
+    }?;
+
+
+//    let mut keystore = HdMnemonicKeystore::new(meta, password, mnemonic, path)?;
+    let exist_kid_opt = find_keystore_id_by_address(&account.address);
+    if exist_kid_opt.is_some() {
+        if !overwrite {
+            return Err(format_err!("{}", "wallet_exists"));
+        } else {
+            ks.id = exist_kid_opt.unwrap();
+        }
+    }
+
+
+    _flush_keystore(&ks);
+    let json = ks.json();
+    cache_keystore(ks);
+    Ok(json)
+}
 
 fn _flush_keystore(ks: &HdKeystore) {
 

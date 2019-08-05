@@ -144,6 +144,40 @@ pub struct HdKeystore {
 
 impl HdKeystore {
     pub const VERSION: i32 = 11000i32;
+
+    pub fn mnemonic_to_account<A: Address>(coin_info: &CoinInfo, mnemonic: &str) -> Result<Account>{
+        let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
+        let seed = bip39::Seed::new(&mnemonic, &"");
+        Self::derive_account_from_coin::<A>(coin_info, &seed)
+    }
+
+    pub fn derive_account_from_coin<A: Address>(coin_info: &CoinInfo, seed: &Seed) -> Result<Account> {
+
+        let paths = vec![coin_info.derivation_path.clone()];
+        let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
+        let key = keys.first().ok_or(format_err!("derivate_failed"))?;
+        let pub_key = key.public_key();
+        // todo: process the main address path
+        let address = A::from_public_key(&pub_key.to_bytes())?;
+        let derivation_info = match coin_info.curve {
+            CurveType::SECP256k1 => {
+                Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)
+            },
+            _ => Err(format_err!("{}", "unsupport_chain"))
+        }?;
+        let xpub = A::extended_public_key(&derivation_info);
+
+        Ok(Account {
+            address,
+            derivation_path: coin_info.derivation_path.to_string(),
+            extended_public_key: xpub,
+            curve: coin_info.curve,
+            pub_key_type: coin_info.pub_key_type,
+            coin: coin_info.symbol.to_string(),
+            extra: "".to_string()
+        })
+    }
+
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
         let mnemonic = bips::generate_mnemonic();
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
@@ -197,7 +231,7 @@ impl HdKeystore {
         Ok(bip39::Seed::new(&mnemonic, &""))
     }
 
-    fn key_at_paths_with_seed(&self, curve: CurveType, paths: &[impl AsRef<str>], seed: &Seed) -> Result<Vec<impl PrivateKey>> {
+    fn key_at_paths_with_seed(curve: CurveType, paths: &[impl AsRef<str>], seed: &Seed) -> Result<Vec<impl PrivateKey>> {
         match curve {
             CurveType::SECP256k1 => {
                 Secp256k1Curve::key_at_paths_with_seed(paths, seed)
@@ -209,33 +243,12 @@ impl HdKeystore {
     pub fn key_at_paths(&self, symbol: &str, paths: &[impl AsRef<str>], password: &str) -> Result<Vec<impl PrivateKey>> {
         let acc = self.account(symbol).ok_or(format_err!("{}", "account_not_found"))?;
         let seed = self.seed(password)?;
-        Ok(self.key_at_paths_with_seed(acc.curve, paths, &seed)?)
+        Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)
     }
 
     pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo, password: &str) -> Result<&Account>{
         let seed = self.seed(password)?;
-        let paths = vec![coin_info.derivation_path.clone()];
-        let keys = self.key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
-        let key = keys.first().ok_or(format_err!("derivate_failed"))?;
-        let pub_key = key.public_key();
-        let address = A::from_public_key(&pub_key.to_bytes())?;
-        let derivation_info = match coin_info.curve {
-            CurveType::SECP256k1 => {
-                Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)
-            },
-            _ => Err(format_err!("{}", "unsupport_chain"))
-        }?;
-        let xpub = A::extended_public_key(&derivation_info);
-
-        let account = Account {
-            address,
-            derivation_path: coin_info.derivation_path.to_string(),
-            extended_public_key: xpub,
-            curve: coin_info.curve,
-            pub_key_type: coin_info.pub_key_type,
-            coin: coin_info.symbol.to_string(),
-            extra: "".to_string()
-        };
+        let account = Self::derive_account_from_coin::<A>(coin_info, &seed)?;
         self.active_accounts.push(account);
         Ok(self.active_accounts.last().unwrap())
     }
