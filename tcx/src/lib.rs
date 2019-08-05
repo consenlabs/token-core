@@ -29,7 +29,7 @@ use serde_json::map::Keys;
 use std::sync::Mutex;
 use std::sync::RwLock;
 use crate::utils::set_panic_hook;
-use tcx_bch::bch_transaction::{Utxo, BitcoinCashTransaction};
+use tcx_bch::bch_transaction::{Utxo, BitcoinCashTransaction, BitcoinCashSinger};
 use tcx_bch::bch_coin::BchAddress;
 use tcx_chain::curve::{Secp256k1Curve, CurveType, PublicKeyType};
 use tcx_chain::coin::Coin;
@@ -53,10 +53,6 @@ pub mod utils;
 
 #[macro_use]
 extern crate lazy_static;
-
-static PASSWORD: &'static str = "Insecure Pa55w0rd";
-static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
-static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 
 
 lazy_static! {
@@ -299,34 +295,35 @@ fn _export_mnemonic(v: &Value) -> Result<String> {
 }
 
 //
-//#[no_mangle]
-//pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
-//    let json_c_str = unsafe { CStr::from_ptr(json_str) };
-//    let json_str = json_c_str.to_str().unwrap();
-//
-//    let json = crate::utils::landingpad(|| _sign_transaction(json_str));
-//    CString::new(json).unwrap().into_raw()
-//}
-//
-//fn _sign_transaction(json_str: &str) -> Result<String> {
-//    let v: Value = serde_json::from_str(json_str).unwrap();
-//    let w_id = v["id"].as_str().unwrap();
-//    let chain_type = v["chainType"].as_str().unwrap();
-//
-//    let mut map = KEYSTORE_MAP.write().unwrap();
-//    let keystore = match map.get_mut(w_id) {
-//        Some(keystore) => Ok(keystore),
-//        _ => Err(format_err!("{}", "wallet_not_found"))
-//    }?;
-//
-//    match chain_type {
-//        "BCH" => {
-//            let coin = BchCoin::<Secp256k1Curve, BchAddress>::load(&keystore)?;
-//            coin.sign_transaction(json_str)
-//        }
-//        _ => Err(format_err!("{}", "chain_type_not_support"))
-//    }
-//}
+#[no_mangle]
+pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
+    let json_c_str = unsafe { CStr::from_ptr(json_str) };
+    let json_str = json_c_str.to_str().unwrap();
+
+    let json = crate::utils::landingpad(|| _sign_transaction(json_str));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _sign_transaction(json_str: &str) -> Result<String> {
+    let v: Value = serde_json::from_str(json_str).unwrap();
+    let w_id = v["id"].as_str().unwrap();
+    let chain_type = v["chainType"].as_str().unwrap();
+    let password = v["password"].as_str().unwrap();
+
+    let mut map = KEYSTORE_MAP.write().unwrap();
+    let keystore = match map.get_mut(w_id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found"))
+    }?;
+
+    match chain_type {
+        "BCH" => {
+            let singer = BitcoinCashSinger {};
+            singer.sign_transaction(json_str, keystore, password)
+        }
+        _ => Err(format_err!("{}", "chain_type_not_support"))
+    }
+}
 
 
 #[no_mangle]
@@ -364,6 +361,12 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 mod tests {
     use crate::import_wallet_from_mnemonic;
     use std::ffi::{CString, CStr};
+
+
+    static PASSWORD: &'static str = "Insecure Pa55w0rd";
+    static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+    static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
+
 
     #[test]
     fn it_works() {

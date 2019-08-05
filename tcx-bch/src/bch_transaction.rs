@@ -164,8 +164,8 @@ pub struct BitcoinCashSinger {
 
 }
 
-impl BitcoinCashSinger {
-    fn sign_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+impl TransactionSinger for BitcoinCashSinger {
+    fn sign_transaction(&self, json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
         let v: Value = serde_json::from_str(json).unwrap();
         let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).unwrap();
         let internal_used = v["internalUsed"].as_i64().unwrap();

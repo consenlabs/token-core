@@ -4,7 +4,7 @@ use secp256k1::{Secp256k1, SecretKey, Message};
 use std::str::FromStr;
 //use crate::keystore::Keystore;
 use serde::{Deserialize, Serialize};
-use crate::Result;
+use crate::{Result, HdKeystore};
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
@@ -17,7 +17,7 @@ pub struct TxSignResult {
 
 
 pub trait TransactionSinger {
-    fn sign_transaction(json_str: &str) -> Result<String>;
+    fn sign_transaction(&self, json_str: &str, keystore: &HdKeystore, password: &str) -> Result<String>;
 }
 
 
