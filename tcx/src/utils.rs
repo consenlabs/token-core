@@ -7,26 +7,7 @@ use failure::Fail;
 use failure::Error;
 use failure::Backtrace;
 use core::borrow::BorrowMut;
-//use std::error::Error;
 
-// ref: https://github.com/getsentry/symbolic/blob/10d3f31057/cabi/src/utils.rs
-//
-//#[derive(Debug, Fail)]
-//pub enum Error {
-//    #[fail(display = "invalid toolchain name: {}", name)]
-//    InvalidToolchainName {
-//        name: String,
-//    },
-//    #[fail(display = "unknown toolchain version: {}", version)]
-//    UnknownToolchainVersion {
-//        version: String,
-//    },
-//    #[fail(display = "{}", msg)]
-//    Msg {
-//        msg: String
-//    }
-//
-//}
 
 pub type Result<T> = result::Result<T, Error>;
 

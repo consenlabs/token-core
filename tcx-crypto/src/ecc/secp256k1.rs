@@ -3,15 +3,15 @@ use super::{PublicKey, PrivateKey};
 
 impl PublicKey for bitcoin::PublicKey {
     fn to_bytes(&self) -> Vec<u8> {
-        self.to_bytes()
+        bitcoin::PublicKey::to_bytes(self)
     }
 
     fn to_compressed(&self) -> Vec<u8> {
-        self.to_compressed()
+        bitcoin::PublicKey::to_compressed(self)
     }
 
     fn to_uncompressed(&self) -> Vec<u8> {
-        self.to_uncompressed()
+        bitcoin::PublicKey::to_uncompressed(self)
     }
 
     fn from_slice(data: &[u8]) -> Result<bitcoin::PublicKey> {

@@ -7,6 +7,7 @@ pub mod ctr {
     };
     use core::borrow::BorrowMut;
 
+    // todo: check if crash
     pub fn encrypt_nopadding(data: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
         let key = GenericArray::from_slice(key);
         let iv = GenericArray::from_slice(iv);

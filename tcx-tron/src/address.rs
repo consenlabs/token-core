@@ -26,16 +26,6 @@ impl AddressTrait for Address {
     }
 }
 
-impl PartialEq for Address {
-
-    fn eq(&self, other: &Self) -> bool {
-        unimplemented!()
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        unimplemented!()
-    }
-}
 
 #[cfg(test)]
 mod tests {

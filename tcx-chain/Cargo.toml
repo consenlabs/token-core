@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 tcx-crypto = { path = "../tcx-crypto" }
 bitcoin = "0.18.0"
+byteorder = "1.2"
 secp256k1 = "0.12"
 tiny-bip39 = "0.6.0"
 bitcoin_hashes = "0.3.2"
