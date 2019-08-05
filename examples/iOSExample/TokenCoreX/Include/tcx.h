@@ -5,17 +5,17 @@
 
 void clear_err(void);
 
+const char *export_mnemonic(const char *json_str);
+
+const char *find_wallet_by_mnemonic(const char *json_str);
+
 void free_const_string(const char *s);
 
 void free_string(char *s);
 
 const char *get_last_err_message(void);
 
-const char *import_bch_wallet_from_mnemonic(const char *mnemonic, const char *password);
-
 const char *import_wallet_from_mnemonic(const char *json_str);
-
-const char *import_wallet_from_private_key(const char *json_str);
 
 const char *read_file(const char *file_path);
 
