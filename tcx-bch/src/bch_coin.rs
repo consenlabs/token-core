@@ -72,11 +72,12 @@ impl Address for BchTestNetAddress {
 
 #[cfg(test)]
 mod tests {
-    use tcx_chain::{HdKeystore, Metadata};
-    use crate::bch_coin::{BchCoin, BchAddress};
-    use tcx_chain::curve::Secp256k1Curve;
+    use tcx_chain::{HdKeystore, Metadata, Account};
+    use crate::bch_coin::{BchAddress};
+    use tcx_chain::curve::{Secp256k1Curve, CurveType, PublicKeyType};
     use tcx_chain::coin::Coin;
     use serde_json::Value;
+    use tcx_chain::keystore::CoinInfo;
 
     const PASSWORD: &str = "Insecure Password";
     const BIP_PATH: &str = "m/44'/145'/0'";
@@ -90,7 +91,14 @@ mod tests {
 
         let mut keystore = HdKeystore::new("Insecure Password", meta);
 
-        let coin = BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut keystore, PASSWORD, BIP_PATH);
+//        let coin = BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut keystore, PASSWORD, BIP_PATH);
+        let bch_coin = CoinInfo {
+            symbol: "BCH".to_string(),
+            derivation_path: BIP_PATH.to_string(),
+            curve: CurveType::SECP256k1,
+            pub_key_type: PublicKeyType::SECP256k1
+        };
+        let coin: &Account = keystore.derive_coin::<BchAddress>(&bch_coin, PASSWORD).unwrap();
         let json_str = keystore.json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
 
@@ -112,7 +120,14 @@ mod tests {
 
         let mut keystore = HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta);
 
-        let coin = BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut keystore, PASSWORD, BIP_PATH);
+        let bch_coin = CoinInfo {
+            symbol: "BCH".to_string(),
+            derivation_path: BIP_PATH.to_string(),
+            curve: CurveType::SECP256k1,
+            pub_key_type: PublicKeyType::SECP256k1
+        };
+
+        let coin: &Account = keystore.derive_coin::<BchAddress>(&bch_coin, PASSWORD).unwrap();
         let json_str = keystore.json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
 

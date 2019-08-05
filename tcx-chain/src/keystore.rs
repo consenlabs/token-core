@@ -100,10 +100,10 @@ enum ExtendedPubKeyType {
 }
 
 pub struct CoinInfo {
-    symbol: String,
-    derivation_path: String,
-    curve: CurveType,
-    pub_key_type: PublicKeyType,
+    pub symbol: String,
+    pub derivation_path: String,
+    pub curve: CurveType,
+    pub pub_key_type: PublicKeyType,
 }
 
 // todo: process the extra field
