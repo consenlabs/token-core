@@ -79,7 +79,7 @@ impl BitcoinCashTransaction {
         Ok(Builder::new().push_slice(&sig_bytes).push_slice(&pub_key_bytes).into_script())
     }
 
-    pub fn sign_transaction(&self, chain_id: &str, prv_keys: &[impl PrivateKey]) -> Result<TxSignResult> {
+    pub fn sign_transaction(&self, prv_keys: &[impl PrivateKey]) -> Result<TxSignResult> {
         let mut total_amount = 0;
 
         for unspent in &self.unspents {
@@ -176,7 +176,6 @@ impl TransactionSinger for BitcoinCashSinger {
         let amount = v["amount"].as_str().expect("amount").parse::<i64>().unwrap();
         let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
         let password = v["password"].as_str().expect("password");
-        let chain_id = v["chainId"].as_str().expect("chainId");
         let account = keystore.account(&"BCH").ok_or(format_err!("account_not_found"))?;
         let path = &account.derivation_path;
 
@@ -190,13 +189,8 @@ impl TransactionSinger for BitcoinCashSinger {
         };
         let paths = bch_tran.collect_prv_keys_paths(path)?;
         let priv_keys = &keystore.key_at_paths("BCH", &paths, password)?;
-        let network = BtcAddress::from_str(to)?.network;
-//        let ret = match network {
-//            Network::Bitcoin => bch_tran.sign_transaction::<BchAddress>(chain_id, &priv_keys)?,
-//            _ => bch_tran.sign_transaction::<BchTestNetAddress>(chain_id, &priv_keys)?
-//
-//        };
-        let ret = bch_tran.sign_transaction(chain_id, &priv_keys)?;
+
+        let ret = bch_tran.sign_transaction(&priv_keys)?;
         Ok(serde_json::to_string(&ret)?)
     }
 }
@@ -247,10 +241,9 @@ mod tests {
         };
 
         let singer = BitcoinCashSinger {};
-//        singer.si
         let paths = tran.collect_prv_keys_paths(&coin_info.derivation_path).unwrap();
         let priv_keys = keystore.key_at_paths("BCH", &paths, &PASSWORD).unwrap();
-        let sign_ret = tran.sign_transaction(&"0", &priv_keys).unwrap();
+        let sign_ret = tran.sign_transaction( &priv_keys).unwrap();
         // todo: not a real testdata, it's works at WIF: L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy
         assert_eq!(sign_ret.signature, "01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100c9df637109b43c88f4c3d68c2ace39fe454b9e239779adaceb273a2e5cc3494e02204fdc62c9792adb46e9f056eea6147f6776193bec380de86ef2959a77a226588841210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000");
     }
