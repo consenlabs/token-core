@@ -14,7 +14,7 @@ Encoding.default_internal = Encoding::UTF_8
 
 options = OpenStruct.new
 # default input / output path
-options.input = "#{CurrentDir}/../../rust/tcx-lib/cheader"
+options.input = "#{CurrentDir}/../../tcx/cheader"
 options.output = "#{CurrentDir}/../../generated"
 options.swift = true
 options.java = true

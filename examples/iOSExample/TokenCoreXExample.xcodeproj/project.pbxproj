@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		701E5DF122F928D20094748B /* TokenCoreX in Resources */ = {isa = PBXBuildFile; fileRef = 701E5DF022F928D20094748B /* TokenCoreX */; };
+		701E5DF222F928EF0094748B /* libsecp256k1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 70B3E3F622B3401600A34465 /* libsecp256k1.a */; };
+		701E5DF322F928EF0094748B /* libtcx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 70AFBB60229FC1E900A32248 /* libtcx.a */; };
 		709A61F52294ED38007F11E6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709A61F42294ED38007F11E6 /* AppDelegate.swift */; };
 		709A61F72294ED38007F11E6 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709A61F62294ED38007F11E6 /* ViewController.swift */; };
 		709A61FA2294ED38007F11E6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 709A61F82294ED38007F11E6 /* Main.storyboard */; };
@@ -14,8 +17,6 @@
 		709A61FF2294ED38007F11E6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 709A61FD2294ED38007F11E6 /* LaunchScreen.storyboard */; };
 		709A620A2294ED38007F11E6 /* TokenCoreXExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709A62092294ED38007F11E6 /* TokenCoreXExampleTests.swift */; };
 		709A62152294ED38007F11E6 /* TokenCoreXExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709A62142294ED38007F11E6 /* TokenCoreXExampleUITests.swift */; };
-		70AFBB61229FC1E900A32248 /* libtcx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 70AFBB60229FC1E900A32248 /* libtcx.a */; };
-		70B3E3F722B3401700A34465 /* libsecp256k1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 70B3E3F622B3401600A34465 /* libsecp256k1.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,6 +37,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		701E5DF022F928D20094748B /* TokenCoreX */ = {isa = PBXFileReference; lastKnownFileType = folder; path = TokenCoreX; sourceTree = "<group>"; };
 		709A61F12294ED38007F11E6 /* TokenCoreXExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TokenCoreXExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		709A61F42294ED38007F11E6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		709A61F62294ED38007F11E6 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -61,8 +63,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				70B3E3F722B3401700A34465 /* libsecp256k1.a in Frameworks */,
-				70AFBB61229FC1E900A32248 /* libtcx.a in Frameworks */,
+				701E5DF222F928EF0094748B /* libsecp256k1.a in Frameworks */,
+				701E5DF322F928EF0094748B /* libtcx.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -86,6 +88,7 @@
 		709A61E82294ED38007F11E6 = {
 			isa = PBXGroup;
 			children = (
+				701E5DF022F928D20094748B /* TokenCoreX */,
 				709A61F32294ED38007F11E6 /* TokenCoreXExample */,
 				709A62082294ED38007F11E6 /* TokenCoreXExampleTests */,
 				709A62132294ED38007F11E6 /* TokenCoreXExampleUITests */,
@@ -251,6 +254,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				701E5DF122F928D20094748B /* TokenCoreX in Resources */,
 				709A61FF2294ED38007F11E6 /* LaunchScreen.storyboard in Resources */,
 				709A61FC2294ED38007F11E6 /* Assets.xcassets in Resources */,
 				709A61FA2294ED38007F11E6 /* Main.storyboard in Resources */,
@@ -467,6 +471,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/TokenCoreX/Libs",
 				);
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = im.token.examples.TokenCoreXExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/TokenCoreX/Include/tcx.h";
@@ -492,6 +497,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/TokenCoreX/Libs",
 				);
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = im.token.examples.TokenCoreXExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/TokenCoreX/Include/tcx.h";

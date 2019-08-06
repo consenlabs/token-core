@@ -306,9 +306,9 @@ pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_c
 
 fn _sign_transaction(json_str: &str) -> Result<String> {
     let v: Value = serde_json::from_str(json_str).unwrap();
-    let w_id = v["id"].as_str().unwrap();
-    let chain_type = v["chainType"].as_str().unwrap();
-    let password = v["password"].as_str().unwrap();
+    let w_id = v["id"].as_str().expect("wid");
+    let chain_type = v["chainType"].as_str().expect("chainType");
+    let password = v["password"].as_str().expect("password");
 
     let mut map = KEYSTORE_MAP.write().unwrap();
     let keystore = match map.get_mut(w_id) {

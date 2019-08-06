@@ -79,6 +79,7 @@ class ViewController: UIViewController {
       "passwordHint": "",
       "chainType": "BCH",
       "network": "MAINNET",
+      "source": "MNEMONIC",
       "fileDir": fileDir
     ];
     let data = try! JSONSerialization.data(withJSONObject: map, options: [])
@@ -106,7 +107,7 @@ class ViewController: UIViewController {
       ]
     ];
     let map: [String: Any] = [
-      "id": "8568e669-21c2-49f5-b997-b6345b6a5d50",
+      "id": "c8c5fa34-eb36-469a-bbcf-cbd7f6cc63f5",
       "password": "imToken1",
       "to": "1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK",
       "amount": "15000",
@@ -114,6 +115,7 @@ class ViewController: UIViewController {
       "fee": "35000",
       "internalUsed": 0,
       "chainId": "0",
+      "chainType": "BCH",
       "outputs": unspents
       
     ];
@@ -150,27 +152,27 @@ class ViewController: UIViewController {
     try! scan_wallets(mapStr)
   }
   
-  func importBchWalletFromPrivateKey(_ privateKey: String, encryptedBy password: String) -> String {
-    
-    let fileDir = walletsDirectory.absoluteString.substring(from: String.Index(encodedOffset: "file://".count))
-    let map: [String: Any] = [
-      "password": password,
-      "privateKey": privateKey,
-      "overwrite": true,
-      "name": "bch-ios",
-      "passwordHint": "",
-      "chainType": "BCH",
-      "network": "MAINNET",
-      "fileDir": fileDir
-    ];
-    let data = try! JSONSerialization.data(withJSONObject: map, options: [])
-    let mapStr = String(data: data, encoding: .utf8)!
-    let cPtr = (try! import_wallet_from_private_key(mapStr))!
-    defer {
-      try! free_const_string(cPtr)
-    }
-    return String(cString: cPtr)
-  }
+//  func importBchWalletFromPrivateKey(_ privateKey: String, encryptedBy password: String) -> String {
+//
+//    let fileDir = walletsDirectory.absoluteString.substring(from: String.Index(encodedOffset: "file://".count))
+//    let map: [String: Any] = [
+//      "password": password,
+//      "privateKey": privateKey,
+//      "overwrite": true,
+//      "name": "bch-ios",
+//      "passwordHint": "",
+//      "chainType": "BCH",
+//      "network": "MAINNET",
+//      "fileDir": fileDir
+//    ];
+//    let data = try! JSONSerialization.data(withJSONObject: map, options: [])
+//    let mapStr = String(data: data, encoding: .utf8)!
+//    let cPtr = (try! import_wallet_from_private_key(mapStr))!
+//    defer {
+//      try! free_const_string(cPtr)
+//    }
+//    return String(cString: cPtr)
+//  }
   
   func readFileByRustThrow(filePath path: String) -> String {
     do {
@@ -200,7 +202,7 @@ class ViewController: UIViewController {
   }
   
   @IBAction func onPrivateKeyImportClick(_ sender: Any) {
-    self.tvResult.text = importBchWalletFromPrivateKey(WIF, encryptedBy: PASSWORD)
+//    self.tvResult.text = importBchWalletFromPrivateKey(WIF, encryptedBy: PASSWORD)
     
     print(self.tvResult.text)
   }
