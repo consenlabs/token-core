@@ -140,7 +140,6 @@ impl BitcoinCashTransaction {
             let unspent = &self.unspents[i];
             let script_bytes: Vec<u8> = FromHex::from_hex(&unspent.script_pub_key).unwrap();
             let script = Builder::from(script_bytes).into_script();
-            println!("pub key script {:?}", script.to_hex());
             let shc_hash = sig_hash_components.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | 0x40);
             let prv_key = &prv_keys[i];
             script_sigs.push(self.sign_hash(prv_key, &shc_hash.into_inner())?);
@@ -244,7 +243,7 @@ mod tests {
         let paths = tran.collect_prv_keys_paths(&coin_info.derivation_path).unwrap();
         let priv_keys = keystore.key_at_paths("BCH", &paths, &PASSWORD).unwrap();
         let sign_ret = tran.sign_transaction( &priv_keys).unwrap();
-        // todo: not a real testdata, it's works at WIF: L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy
+        // todo: not a real test data, it's works at WIF: L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy
         assert_eq!(sign_ret.signature, "01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100c9df637109b43c88f4c3d68c2ace39fe454b9e239779adaceb273a2e5cc3494e02204fdc62c9792adb46e9f056eea6147f6776193bec380de86ef2959a77a226588841210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000");
     }
 }

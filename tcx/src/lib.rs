@@ -91,19 +91,6 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo>{
     }
 }
 
-
-#[no_mangle]
-pub extern fn read_file(file_path: *const c_char) -> *const c_char {
-    let c_str = unsafe { CStr::from_ptr(file_path) };
-    let file_path = c_str.to_str().unwrap();
-    // let filePath: String = env.get_string(filePath).expect("Couldn't get java string!").into();
-    let mut file = File::open(file_path).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents);
-
-    CString::new(contents).unwrap().into_raw()
-}
-
 #[no_mangle]
 pub extern fn free_string(s: *mut c_char) {
     unsafe {
@@ -119,15 +106,6 @@ pub extern fn free_const_string(s: *const c_char) {
         CStr::from_ptr(s)
     };
 }
-
-#[no_mangle]
-pub unsafe extern "C" fn read_file_error() -> *const c_char {
-    crate::utils::landingpad(||
-        {
-            Err(format_err!("{}", "read file error"))
-        })
-}
-
 
 fn parse_arguments(json_str: *const c_char) -> Value {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
