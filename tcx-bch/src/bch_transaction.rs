@@ -3,7 +3,8 @@ use secp256k1::{Secp256k1, Message};
 use bitcoin_hashes::Hash;
 use bitcoin_hashes::sha256d::Hash as Hash256;
 use bitcoin_hashes::hex::FromHex;
-use bitcoin::{Address as BtcAddress, PrivateKey as Secp256k1PrivKey, TxOut, TxIn, OutPoint, Script, Transaction};
+use bitcoin::{Address as BtcAddress, TxOut, TxIn, OutPoint, Script, Transaction};
+use bitcoin::{PublicKey as BtcPublicKey};
 use bitcoin::network::constants::Network;
 use bitcoin::util::bip32::{ExtendedPrivKey, ChildNumber};
 use crate::bip143_with_forkid::SighashComponentsWithForkId;
@@ -62,6 +63,14 @@ impl BitcoinCashTransaction {
         Ok(paths)
     }
 
+    fn network(&self) -> Network {
+        let unspent = self.unspents.first().expect("empty_unspents");
+        match BchAddress::is_main_net(&unspent.address) {
+            true => Network::Bitcoin,
+            _ => Network::Testnet
+        }
+    }
+
     fn sign_hash(&self, pri_key: &impl PrivateKey, hash: &[u8]) -> Result<Script> {
         let signature_bytes = pri_key.sign(&hash)?;
         let raw_bytes: Vec<u8> = vec![0x41];
@@ -81,8 +90,8 @@ impl BitcoinCashTransaction {
 
         let change_addr_prv_key = prv_keys.first().ok_or(format_err!("get_change_addr_prv_key_failed"))?;
         let change_addr_pub_key = change_addr_prv_key.public_key();
-        // todo: network address
-        let change_addr = BchAddress::from_public_key(&change_addr_pub_key.to_compressed())?;
+        let pub_key = BtcPublicKey::from_slice(&change_addr_pub_key.to_compressed())?;
+        let change_addr = BtcAddress::p2pkh(&pub_key, self.network());
 
         let mut tx_outs: Vec<TxOut> = vec![];
         let receiver_addr = BtcAddress::from_str(&self.to)?;
@@ -93,7 +102,6 @@ impl BitcoinCashTransaction {
         tx_outs.push(receiver_tx_out);
         let change_amount = (total_amount - self.amount - self.fee);
 
-        let change_addr = BtcAddress::from_str(&change_addr)?;
         if change_amount > DUST as i64 {
             let change_tx_out = TxOut {
                 value: change_amount as u64,
@@ -212,7 +220,6 @@ mod tests {
     pub fn bch_signer() {
         let meta = Metadata::default();
         let mut keystore = HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta);
-//        let keystore = V3Keystore::new(meta,PASSWORD, WIF).unwrap();
 
         let coin_info = CoinInfo {
             symbol: "BCH".to_string(),
@@ -244,8 +251,7 @@ mod tests {
         let paths = tran.collect_prv_keys_paths(&coin_info.derivation_path).unwrap();
         let priv_keys = keystore.key_at_paths("BCH", &paths, &PASSWORD).unwrap();
         let sign_ret = tran.sign_transaction(&"0", &priv_keys).unwrap();
-        assert_eq!(sign_ret.signature, "");
-//        let ret = tran.sign_transaction("", PASSWORD, &keystore).unwrap();
-//        assert_eq!("01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100bc4295d369443e2cc4e20b50a6fd8e7e16c08aabdbb42bdf167dec9d41afc3d402207a8e0ccb91438785e51203e7d2f85c4698ff81245936ebb71935e3d052876dcd4121029f50f51d63b345039a290c94bffd3180c99ed659ff6ea6b1242bca47eb93b59fffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000".to_owned(), ret.signature);
+        // todo: not a real testdata, it's works at WIF: L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy
+        assert_eq!(sign_ret.signature, "01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100c9df637109b43c88f4c3d68c2ace39fe454b9e239779adaceb273a2e5cc3494e02204fdc62c9792adb46e9f056eea6147f6776193bec380de86ef2959a77a226588841210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000");
     }
 }

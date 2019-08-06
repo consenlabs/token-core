@@ -22,6 +22,11 @@ pub struct BchAddress {}
 impl BchAddress {
     const XPUB_VERSION: [u8;4] = [0x04, 0x88, 0xb2, 0x1e];
     const XPRV_VERSION: [u8;4] = [0x04, 0x88, 0xad, 0xe4];
+
+    pub fn is_main_net(addr: &str) -> bool {
+        let convert = Converter::new();
+        convert.is_mainnet_addr(addr)
+    }
 }
 
 impl Address for BchAddress {
