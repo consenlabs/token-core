@@ -1,0 +1,62 @@
+= 公私钥以及与相关的派生
+将公私钥与派生公钥结合在一起使用。公钥与私钥都具有派生能力, 私钥会实现 sign 方法来签名，如果同一种椭圆曲线，比如 curve25519 有不同的签名算法。则会采用不同的 Pair 实现。
+
+== 类结构
+
+=== TypedKey 
+usize 类型，主要是标记它的实际类型，不同的签名类型和椭圆曲线有不同的实现。比如曲线 curve25519 有两种签名算法 ed25519与 sr25519 有没的 TypedKey, 同样有不同的 Pair 实现。
+
+=== Pair
+公私钥对，并且具有派生特性。Pair中保存了seed。如果是BIP32, seed前可以从私钥派生子 Pair, Pair也保存了相对应的 Public。
+
+   dervie() 派生 Pair
+   sign(message) -> Signature 签名
+   to_ss58check() -> str 转换成 base58 checker。便于持久化
+   from_ss58check(s58: &str) -> 从base58中读取
+   public() -> Public 取相对应的 Public
+
+=== Public
+公钥, 公钥接口提供 as_ref() 转换成 [u8], 不同的椭圆曲线对公钥的保存方式是不一样的，比如 curve25519 就没有 uncompressed 与 compressed 的公钥区别, as_ref() 可以使用 Public::from_slice(data:&[u8]) 来生成公钥。
+
+   derive() 派生 Public
+   sign(message) -> Signature 签名
+   to_ss58Check() -> str 转换成 base58 checker。
+   from_ss58Check() -> Self 从 base58 创建 Public
+
+=== Derivation
+   派生处理，目前会实现 Bip32 与 Substrate
+
+   derive<Iter: Iteror<Item=DeriveJunction>(path: Iterator) -> Self (childkey, childcode)
+=== DeriveJunction
+保存派生的连接信息，可以使用 DeriveJunction::Hard(1) 代表 harden index为1。
+
+
+
+=== 错误
+   所有的错误都是 enum， 有 PublicError, DeriveError, SecretError 几个。
+
+== 例子
+
+取 m/44'/194'/0'/0'/0/0 用secp256k1+ecdsa来签名
+[source,rust]
+----
+let pair = secp256k1::Pair::from_seed(seed);
+
+let sign = pair.dervie(Derivation::from(Derivation::Bip32, "m/44'/194'/0'/0'/0/0")).sign(message)
+
+----
+
+
+取 substrate 派生算法用 ed25519来签名
+[code, rust]
+----
+let pair = ed25519::Pair::from_seed(seed);
+
+let sign = pair.dervie(Derivation::from(Derivation::Substrate, "Test/Alice")).sign(message)
+----
+
+
+
+
+
+
