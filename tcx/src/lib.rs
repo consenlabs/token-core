@@ -351,25 +351,6 @@ mod tests {
         assert_eq!(2 + 2, 4);
     }
 
-    //    #[test]
-//    unsafe fn import_wallet() {
-//        let data = r#"
-//        {
-//            "password": "PASSWORD",
-//            "mnemonic": "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
-//            "path": "m/44'/145'/0'",
-//            "overwrite": false,
-//            "name": "bch-ios",
-//            "passwordHint": "",
-//            "chainType": "BCH",
-//            "network": "MAINNET",
-//            "fileDir": "/tmp/imtoken/wallets"
-//
-//        }"#;
-//        let json_str = CString::new(data).unwrap().into_raw();
-//        let ret = unsafe { import_wallet_from_mnemonic(json_str)};
-//        assert_eq!("", CStr::from_ptr(ret).to_str().unwrap());
-//    }
     #[test]
     fn path() {
         let file_dir = "/Users/xyz/Library/Developer/CoreSimulator/Devices/1C6326AE-C550-43D5-A1A7-CF791B4A04CA/data/Containers/Data/Application/BC076852-DF07-42EA-82B1-2FA8C5CEE9EE/Documents/wallets/";

@@ -159,7 +159,6 @@ impl HdKeystore {
         let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
         let pub_key = key.public_key();
-        // todo: process the main address path
         let address = A::from_public_key(&pub_key.to_bytes())?;
         let derivation_info = match coin_info.curve {
             CurveType::SECP256k1 => {

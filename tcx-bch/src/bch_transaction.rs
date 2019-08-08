@@ -21,6 +21,7 @@ use tcx_chain::curve::PrivateKey;
 use crate::bch_coin::BchAddress;
 use crate::bch_coin::BchTestNetAddress;
 use tcx_chain::curve::PublicKey;
+use tcx_chain::bips::get_account_path;
 
 const DUST: u64 = 546;
 
@@ -50,7 +51,8 @@ pub struct BitcoinCashTransaction {
 impl BitcoinCashTransaction {
     fn collect_prv_keys_paths(&self, path: &str) -> Result<Vec<String>> {
         let mut paths: Vec<String> = vec![];
-        paths.push(format!("{}/0/{}", path, &self.change_idx));
+        let account_path = get_account_path(path)?;
+        paths.push(format!("{}/0/{}", account_path, &self.change_idx));
         for unspent in &self.unspents {
             let derived_path = unspent.derived_path.trim();
             let path_with_space = derived_path.replace("/", " ");
@@ -58,7 +60,7 @@ impl BitcoinCashTransaction {
             let path_idxs: Vec<&str> = path_with_space.split(" ").collect();
             ensure!(path_idxs.len() == 2, "derived path must be x/x");
 
-            paths.push(format!("{}/{}", path, derived_path));
+            paths.push(format!("{}/{}", account_path, derived_path));
         }
         Ok(paths)
     }
@@ -216,7 +218,7 @@ mod tests {
 
         let coin_info = CoinInfo {
             symbol: "BCH".to_string(),
-            derivation_path: "m/44'/145'/0'".to_string(),
+            derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             pub_key_type: PublicKeyType::SECP256k1,
         };
