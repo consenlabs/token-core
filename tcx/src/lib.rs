@@ -30,7 +30,7 @@ use std::sync::Mutex;
 use std::sync::RwLock;
 use crate::utils::set_panic_hook;
 use tcx_bch::bch_transaction::{Utxo, BitcoinCashTransaction, BitcoinCashSinger};
-use tcx_bch::bch_coin::BchAddress;
+use tcx_bch::bch_coin::{BchAddress, ExtendedPubKeyExtra};
 use tcx_chain::curve::{Secp256k1Curve, CurveType, PublicKeyType};
 use tcx_chain::coin::Coin;
 use tcx_chain::keystore::CoinInfo;
@@ -85,7 +85,6 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo>{
             symbol: "BCH".to_string(),
             derivation_path: "m/44'/145'/0'".to_string(),
             curve: CurveType::SECP256k1,
-            pub_key_type: PublicKeyType::SECP256k1,
         }),
         _ => Err(format_err!("unsupptored_chain"))
     }
@@ -184,7 +183,7 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let acc = match chain_type {
         "BCH" => {
             let coin_info = _coin_info_from_symbol("BCH")?;
-            HdKeystore::mnemonic_to_account::<BchAddress>(&coin_info, mnemonic)
+            HdKeystore::mnemonic_to_account::<BchAddress, ExtendedPubKeyExtra>(&coin_info, mnemonic)
         }
         _ => Err(format_err!("{}", "chain_type_not_support"))
     }?;
@@ -220,7 +219,7 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let account = match chain_type {
         "BCH" => {
             let coin_info = _coin_info_from_symbol("BCH")?;
-            ks.derive_coin::<BchAddress>(&coin_info, password)
+            ks.derive_coin::<BchAddress, ExtendedPubKeyExtra>(&coin_info, password)
         }
         _ => Err(format_err!("{}", "chain_type_not_support"))
     }?;

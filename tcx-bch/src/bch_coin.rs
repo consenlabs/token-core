@@ -1,22 +1,47 @@
-use tcx_chain::curve::{Secp256k1Curve, PublicKey, Secp256k1PublicKey};
+use tcx_chain::curve::{Secp256k1Curve, PublicKey, Secp256k1PublicKey, CurveType};
 use tcx_chain::{Coin, HdKeystore, Account};
 use crate::Result;
 use bitcoin::network::constants::Network;
 use bitcoin::{Address as BtcAddress, PublicKey as BtcPublicKey, PrivateKey};
-use tcx_chain::keystore::{KeyType, Address};
+use tcx_chain::keystore::{KeyType, Address, Extra, CoinInfo};
 use secp256k1::{SecretKey, Secp256k1};
 use bitcoin_hashes::hex::ToHex;
 use serde_json::Value;
 use crate::bch_transaction::{Utxo, BitcoinCashTransaction};
 use std::str::FromStr;
 use std::marker::PhantomData;
-use bip39::{Mnemonic, Language};
+use bip39::{Mnemonic, Language, Seed};
 use bch_addr::Converter;
 use tcx_chain::bips::DerivationInfo;
 use std::mem;
+use serde::{Deserialize, Serialize};
 
 const SYMBOL: &'static str = "BCH";
 const PATH: &'static str = "m/44'/145'/0'/0/0";
+
+#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtendedPubKeyExtra {
+    xpub: String
+}
+
+
+impl Extra for ExtendedPubKeyExtra {
+    fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self> {
+        let derivation_info = match coin_info.curve {
+            CurveType::SECP256k1 => {
+                Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)
+            },
+            _ => Err(format_err!("{}", "unsupport_chain"))
+        }?;
+        let xpub = BchAddress::extended_public_key(&derivation_info);
+        Ok(ExtendedPubKeyExtra {
+            xpub
+        })
+    }
+
+}
 
 pub struct BchAddress {}
 
@@ -39,7 +64,7 @@ impl Address for BchAddress {
 
     fn from_public_key(pub_key: &impl PublicKey) -> Result<String> {
 //        let pub_key: &Secp256k1PublicKey = &pub_key;
-        let pub_key: Secp256k1PublicKey =  unsafe { mem::transmute::<impl PublicKey, Secp256k1PublicKey>(pub_key) };
+        let pub_key: Secp256k1PublicKey =  Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
 //        let pub_key = pub_key as &Secp256k1PublicKey;
         let legacy = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
         let convert = Converter::new();
@@ -62,8 +87,8 @@ impl Address for BchTestNetAddress {
     }
 
     fn from_public_key(pub_key: &impl PublicKey) -> Result<String> {
-        let pub_key = pub_key as &Secp256k1PublicKey;
-        let legacy = BtcAddress::p2pkh(pub_key, Network::Testnet);
+        let pub_key = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
+        let legacy = BtcAddress::p2pkh(&pub_key, Network::Testnet);
         let convert = Converter::new();
         convert.to_cash_addr(&legacy.to_string()).map_err(|err| format_err!("{}", "generate_address_failed"))
     }
@@ -81,7 +106,7 @@ impl Address for BchTestNetAddress {
 #[cfg(test)]
 mod tests {
     use tcx_chain::{HdKeystore, Metadata, Account};
-    use crate::bch_coin::{BchAddress};
+    use crate::bch_coin::{BchAddress, ExtendedPubKeyExtra};
     use tcx_chain::curve::{Secp256k1Curve, CurveType, PublicKeyType};
     use tcx_chain::coin::Coin;
     use serde_json::Value;
@@ -104,9 +129,8 @@ mod tests {
             symbol: "BCH".to_string(),
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
-            pub_key_type: PublicKeyType::SECP256k1
         };
-        let coin: &Account = keystore.derive_coin::<BchAddress>(&bch_coin, PASSWORD).unwrap();
+        let coin: &Account = keystore.derive_coin::<BchAddress, ExtendedPubKeyExtra>(&bch_coin, PASSWORD).unwrap();
         let json_str = keystore.json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
 
@@ -132,10 +156,9 @@ mod tests {
             symbol: "BCH".to_string(),
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
-            pub_key_type: PublicKeyType::SECP256k1
         };
 
-        let coin: &Account = keystore.derive_coin::<BchAddress>(&bch_coin, PASSWORD).unwrap();
+        let coin: &Account = keystore.derive_coin::<BchAddress, ExtendedPubKeyExtra>(&bch_coin, PASSWORD).unwrap();
         let json_str = keystore.json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
 
@@ -151,7 +174,8 @@ mod tests {
         let coin = account["coin"].as_str().unwrap();
         assert_eq!("BCH", coin);
 
-        let xpub = account["extendedPublicKey"].as_str().unwrap();
+        let extra = account["extra"].as_object().expect("extra");
+        let xpub = extra["xpub"].as_str().expect("xpub");
         assert_eq!("xpub6Bmkv3mmRZZWoFSBdj9vDMqR2PCPSP6DEj8u3bBuv44g3Ncnro6cPVqZAw6wTEcxHQuodkuJG4EmAinqrrRXGsN3HHnRRMtAvzfYTiBATV1", xpub)
     }
 

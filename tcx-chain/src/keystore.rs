@@ -15,6 +15,7 @@ use crate::Result;
 use crate::bips;
 use crate::bips::DerivationInfo;
 use crate::curve::{CurveType, PublicKeyType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey};
+use serde_json::Value;
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
@@ -103,25 +104,40 @@ pub struct CoinInfo {
     pub symbol: String,
     pub derivation_path: String,
     pub curve: CurveType,
-    pub pub_key_type: PublicKeyType,
 }
 
 
 
-// todo: process the extra field
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Account {
     pub address: String,
     pub derivation_path: String,
-    pub extended_public_key: String,
     pub curve: CurveType,
-    pub pub_key_type: PublicKeyType,
     pub coin: String,
-    #[serde(skip_deserializing)]
-    pub extra: String,
+    pub extra: Value,
 }
+
+
+pub trait Extra: Sized + serde::Serialize {
+    fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self>;
+}
+
+#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EmptyExtra {
+
+}
+
+impl Extra for EmptyExtra {
+    fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self> {
+        Ok(EmptyExtra {})
+    }
+}
+
+
 
 #[derive(Debug, Clone, PartialEq)]
 #[derive(Serialize, Deserialize)]
@@ -147,35 +163,27 @@ pub struct HdKeystore {
 impl HdKeystore {
     pub const VERSION: i32 = 11000i32;
 
-    pub fn mnemonic_to_account<A: Address>(coin_info: &CoinInfo, mnemonic: &str) -> Result<Account>{
+    pub fn mnemonic_to_account<A: Address, E: Extra>(coin_info: &CoinInfo, mnemonic: &str) -> Result<Account>{
         let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
         let seed = bip39::Seed::new(&mnemonic, &"");
-        Self::derive_account_from_coin::<A>(coin_info, &seed)
+        Self::derive_account_from_coin::<A, E>(coin_info, &seed)
     }
 
-    pub fn derive_account_from_coin<A: Address>(coin_info: &CoinInfo, seed: &Seed) -> Result<Account> {
+    pub fn derive_account_from_coin<A: Address, E: Extra>(coin_info: &CoinInfo, seed: &Seed) -> Result<Account> {
 
         let paths = vec![coin_info.derivation_path.clone()];
         let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
         let pub_key = key.public_key();
-        let address = A::from_public_key(&pub_key.to_bytes())?;
-        let derivation_info = match coin_info.curve {
-            CurveType::SECP256k1 => {
-                Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)
-            },
-            _ => Err(format_err!("{}", "unsupport_chain"))
-        }?;
-        let xpub = A::extended_public_key(&derivation_info);
+        let address = A::from_public_key(&pub_key)?;
 
+        let extra = E::from(coin_info, seed)?;
         Ok(Account {
             address,
             derivation_path: coin_info.derivation_path.to_string(),
-            extended_public_key: xpub,
             curve: coin_info.curve,
-            pub_key_type: coin_info.pub_key_type,
             coin: coin_info.symbol.to_string(),
-            extra: "".to_string()
+            extra: serde_json::to_value(extra).expect("extra_error")
         })
     }
 
@@ -247,9 +255,9 @@ impl HdKeystore {
         Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)
     }
 
-    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo, password: &str) -> Result<&Account>{
+    pub fn derive_coin<A: Address, E: Extra>(&mut self, coin_info: &CoinInfo, password: &str) -> Result<&Account>{
         let seed = self.seed(password)?;
-        let account = Self::derive_account_from_coin::<A>(coin_info, &seed)?;
+        let account = Self::derive_account_from_coin::<A, E>(coin_info, &seed)?;
         self.active_accounts.push(account);
         Ok(self.active_accounts.last().unwrap())
     }

@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tcx_chain::keystore::Address;
 use serde::export::PhantomData;
-use tcx_chain::curve::PrivateKey;
+use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
 use crate::bch_coin::BchAddress;
 use crate::bch_coin::BchTestNetAddress;
 use tcx_chain::curve::PublicKey;
@@ -92,8 +92,8 @@ impl BitcoinCashTransaction {
 
         let change_addr_prv_key = prv_keys.first().ok_or(format_err!("get_change_addr_prv_key_failed"))?;
         let change_addr_pub_key = change_addr_prv_key.public_key();
-        // todo: network address
-        let change_addr = BchAddress::from_public_key(&change_addr_pub_key)?;
+        let pub_key = Secp256k1PublicKey::from_slice(&change_addr_pub_key.to_bytes())?;
+        let change_addr = BtcAddress::p2pkh(&pub_key, self.network());
 
         let mut tx_outs: Vec<TxOut> = vec![];
         let receiver_addr = BtcAddress::from_str(&self.to)?;
@@ -204,6 +204,7 @@ mod tests {
     use tcx_chain::HdKeystore;
     use tcx_chain::keystore::CoinInfo;
     use tcx_chain::curve::{CurveType, PublicKeyType};
+    use crate::bch_coin::ExtendedPubKeyExtra;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
@@ -220,9 +221,8 @@ mod tests {
             symbol: "BCH".to_string(),
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
-            pub_key_type: PublicKeyType::SECP256k1,
         };
-        let _ = keystore.derive_coin::<BchAddress>(&coin_info, &PASSWORD);
+        let _ = keystore.derive_coin::<BchAddress, ExtendedPubKeyExtra>(&coin_info, &PASSWORD);
         let unspents = vec![Utxo {
             tx_hash: "115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986".to_string(),
             vout: 0,
