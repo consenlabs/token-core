@@ -283,27 +283,6 @@ mod tests {
     }
 
     #[test]
-    pub fn new_v3_mnemonic_keystore() {
-//        let meta = Metadata::default();
-        let keystore = V3MnemonicKeystore::new(&PASSWORD, &MNEMONIC, &ETHEREUM_PATH);
-
-        assert!(keystore.is_ok());
-
-        let keystore = keystore.unwrap();
-        assert_eq!("16Hp1Ga779iaTe1TxUFDEBqNCGvfh3EHDZ", keystore.address);
-
-//        println!(se)
-    }
-
-    #[test]
-    pub fn bch_address() {
-        match generate_address_from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy") {
-            Ok(address) => assert_eq!("17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV", address),
-            Err(_) => panic!("could not get address"),
-        };
-    }
-
-    #[test]
     pub fn restore_keystore() {
         let json = r#"
         {

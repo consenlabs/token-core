@@ -36,7 +36,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation project(':tokencore')
+//    implementation project(':tokencore')
     // https://mvnrepository.com/artifact/net.java.dev.jna/jna
     implementation 'net.java.dev.jna:jna:5.3.1@aar'
 

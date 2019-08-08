@@ -4,6 +4,9 @@ use bitcoin::util::base58;
 use bitcoin::util::bip32::{ExtendedPubKey, ExtendedPrivKey};
 use byteorder::{BigEndian, ByteOrder};
 use std::convert::AsMut;
+use crate::Result;
+use regex::Regex;
+use std::str::FromStr;
 
 fn clone_into_array<A, T>(slice: &[T]) -> A
     where A: Sized + Default + AsMut<[T]>,
@@ -17,6 +20,18 @@ fn clone_into_array<A, T>(slice: &[T]) -> A
 
 pub fn generate_mnemonic() -> String {
     Mnemonic::new(MnemonicType::Words12, Language::English).to_string()
+}
+
+pub fn get_account_path(path: &str) -> Result<String> {
+    // example: m/44'/60'/0'/0/0
+    let _ = bitcoin::util::bip32::DerivationPath::from_str(path)?;
+    let mut childs: Vec<&str> = path.split("/").collect();
+
+    ensure!(childs.len() >= 4, format!("{} path is too short", path));
+    while childs.len() > 4 {
+        childs.remove(childs.len()-1);
+    }
+    Ok(childs.join("/"))
 }
 
 pub struct DerivationInfo {
@@ -67,5 +82,19 @@ impl From<ExtendedPrivKey> for DerivationInfo {
             chain_code: epk.chain_code.as_bytes().clone(),
             key,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::bips::get_account_path;
+    #[test]
+    fn account_path() {
+        let path = "m/44'/60'/0'/0/0";
+        let result = get_account_path(path);
+        assert_eq!(result.unwrap(), "m/44'/60'/0'");
+
+        let short_error = get_account_path("m/44'");
+        assert_eq!(short_error.err().unwrap().to_string(), "m/44'/60'/0'");
     }
 }

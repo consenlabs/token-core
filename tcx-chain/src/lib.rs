@@ -13,6 +13,7 @@ use failure::Error;
 use core::result;
 
 #[macro_use] extern crate failure;
+extern crate regex;
 
 pub type Result<T> = result::Result<T, Error>;
 
