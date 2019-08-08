@@ -1,4 +1,4 @@
-use tcx_chain::curve::{Secp256k1Curve, PublicKey, Secp256k1PubKey};
+use tcx_chain::curve::{Secp256k1Curve, PublicKey, Secp256k1PublicKey};
 use tcx_chain::{Coin, HdKeystore, Account};
 use crate::Result;
 use bitcoin::network::constants::Network;
@@ -13,6 +13,7 @@ use std::marker::PhantomData;
 use bip39::{Mnemonic, Language};
 use bch_addr::Converter;
 use tcx_chain::bips::DerivationInfo;
+use std::mem;
 
 const SYMBOL: &'static str = "BCH";
 const PATH: &'static str = "m/44'/145'/0'/0/0";
@@ -36,8 +37,10 @@ impl Address for BchAddress {
         convert.is_cash_addr(addr)
     }
 
-    fn from_public_key(pub_key: &[u8]) -> Result<String> {
-        let pub_key = BtcPublicKey::from_slice(pub_key)?;
+    fn from_public_key(pub_key: &impl PublicKey) -> Result<String> {
+//        let pub_key: &Secp256k1PublicKey = &pub_key;
+        let pub_key: Secp256k1PublicKey =  unsafe { mem::transmute::<impl PublicKey, Secp256k1PublicKey>(pub_key) };
+//        let pub_key = pub_key as &Secp256k1PublicKey;
         let legacy = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
         let convert = Converter::new();
         convert.to_cash_addr(&legacy.to_string()).map_err(|err| format_err!("{}", "generate_address_failed"))
@@ -58,9 +61,9 @@ impl Address for BchTestNetAddress {
         convert.is_cash_addr(address)
     }
 
-    fn from_public_key(pub_key: &[u8]) -> Result<String> {
-        let pub_key = BtcPublicKey::from_slice(pub_key)?;
-        let legacy = BtcAddress::p2pkh(&pub_key, Network::Testnet);
+    fn from_public_key(pub_key: &impl PublicKey) -> Result<String> {
+        let pub_key = pub_key as &Secp256k1PublicKey;
+        let legacy = BtcAddress::p2pkh(pub_key, Network::Testnet);
         let convert = Converter::new();
         convert.to_cash_addr(&legacy.to_string()).map_err(|err| format_err!("{}", "generate_address_failed"))
     }

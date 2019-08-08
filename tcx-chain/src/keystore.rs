@@ -74,7 +74,7 @@ pub trait Address {
      fn is_valid(address: &str) -> bool;
 //     fn new(address: &str) -> String;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
-     fn from_public_key(public_key: &[u8]) -> Result<String>;
+     fn from_public_key(public_key: &impl PublicKey) -> Result<String>;
     // fn from_data(data: &[u8]) -> Box<dyn Address>;
 
     fn extended_public_key_version() -> [u8;4] {
