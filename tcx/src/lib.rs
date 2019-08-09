@@ -16,19 +16,13 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::RwLock;
-use tcx_bch::address::BchAddress;
-use tcx_bch::transaction::{BitcoinCashTransaction, Utxo};
-use tcx_chain::curve::CurveType;
-use tcx_chain::keystore::CoinInfo;
-use tcx_chain::{HdKeystore, Metadata};
-
-use tcx_bch::ExtendedPubKeyExtra;
+use tcx_bch::{BitcoinCashTransaction, Utxo, BchAddress, ExtendedPubKeyExtra};
+use tcx_chain::{HdKeystore, Metadata, CurveType, CoinInfo};
 
 // #[link(name = "TrezorCrypto")]
 // extern {
 //     fn mnemonic_generate(strength: c_int, mnemonic: *mut c_char) -> c_int;
 // }
-//pub mod utils;
 
 #[macro_use]
 extern crate failure;

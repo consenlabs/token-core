@@ -59,10 +59,7 @@ impl Default for Metadata {
 }
 
 pub trait Address {
-    //    type PubKey: PublicKey;
-
     fn is_valid(address: &str) -> bool;
-    //     fn new(address: &str) -> String;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
     fn from_public_key(public_key: &impl PublicKey) -> Result<String>;
     // fn from_data(data: &[u8]) -> Box<dyn Address>;
@@ -338,10 +335,7 @@ mod tests {
     }
 }
 "#;
-        //        let keystore = HdKeystore::load(&json);
         let keystore: HdKeystore = serde_json::from_str(&json).unwrap();
-
-        //        assert!(keystore.is_ok());
         assert_eq!(keystore.active_accounts.len(), 2);
     }
 }

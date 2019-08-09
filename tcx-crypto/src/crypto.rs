@@ -1,10 +1,8 @@
 use bitcoin_hashes::hex::{FromHex, ToHex};
 use serde::{Deserialize, Serialize};
 
-use crate::error;
-use crate::error::Result;
 use crate::numberic_util;
-
+use crate::Result;
 const CREDENTIAL_LEN: usize = 64usize;
 
 pub type Credential = [u8; CREDENTIAL_LEN];
@@ -145,7 +143,7 @@ impl Crypto<Pbkdf2Params> {
 
         let mac = Self::generate_mac(&derived_key, encrypted);
         if self.mac != mac.to_hex() {
-            return Err(format_err!("{}", error::ERR_INVALID_PASSWORD));
+            return Err(format_err!("invalid_password"));
         }
 
         let key = &derived_key[0..16];

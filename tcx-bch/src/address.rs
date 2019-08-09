@@ -25,9 +25,7 @@ impl Address for BchAddress {
     }
 
     fn from_public_key(pub_key: &impl PublicKey) -> Result<String> {
-        //        let pub_key: &Secp256k1PublicKey = &pub_key;
         let pub_key: Secp256k1PublicKey = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
-        //        let pub_key = pub_key as &Secp256k1PublicKey;
         let legacy = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
         let convert = Converter::new();
         convert

@@ -1,13 +1,14 @@
 pub mod bips;
-pub mod coin;
 pub mod curve;
 pub mod keystore;
 pub mod signer;
 
-pub use coin::Coin;
+
 use core::result;
 use failure::Error;
-pub use keystore::{Account, HdKeystore, Metadata, Source};
+pub use keystore::{Account, HdKeystore, Metadata, Source, CoinInfo};
+pub use curve::{PublicKey, PrivateKey, Secp256k1PublicKey, Secp256k1PrivateKey, Secp256k1Curve, CurveType};
+pub use bips::DerivationInfo;
 pub use signer::{TransactionSinger, TxSignResult};
 
 #[macro_use]
