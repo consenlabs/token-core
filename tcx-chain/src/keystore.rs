@@ -82,7 +82,6 @@ pub trait Address {
     }
 }
 
-
 pub struct CoinInfo {
     pub symbol: String,
     pub derivation_path: String,

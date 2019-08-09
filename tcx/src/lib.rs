@@ -16,8 +16,8 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::RwLock;
-use tcx_bch::{BitcoinCashTransaction, Utxo, BchAddress, ExtendedPubKeyExtra};
-use tcx_chain::{HdKeystore, Metadata, CurveType, CoinInfo};
+use tcx_bch::{BchAddress, BitcoinCashTransaction, ExtendedPubKeyExtra, Utxo};
+use tcx_chain::{CoinInfo, CurveType, HdKeystore, Metadata};
 
 // #[link(name = "TrezorCrypto")]
 // extern {

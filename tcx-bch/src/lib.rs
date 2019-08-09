@@ -21,8 +21,8 @@ extern crate num_traits;
 pub type Result<T> = result::Result<T, failure::Error>;
 
 pub use address::{BchAddress, BchTestNetAddress};
-pub use transaction::{Utxo, BitcoinCashTransaction};
 use serde_json::Value;
+pub use transaction::{BitcoinCashTransaction, Utxo};
 
 const SYMBOL: &'static str = "BCH";
 const PATH: &'static str = "m/44'/145'/0'/0/0";

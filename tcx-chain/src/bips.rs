@@ -2,7 +2,7 @@ use bip39::{Language, Mnemonic, MnemonicType};
 
 use crate::Result;
 use bitcoin::util::base58;
-use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, ChildNumber};
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey};
 use byteorder::{BigEndian, ByteOrder};
 use std::convert::AsMut;
 use std::str::FromStr;
@@ -36,18 +36,23 @@ pub fn get_account_path(path: &str) -> Result<String> {
 pub fn relative_path_to_child_nums(path: &str) -> Result<Vec<ChildNumber>> {
     let mut child_nums: Vec<ChildNumber> = vec![];
     let childs: Vec<&str> = path.split("/").collect();
-    childs.iter().map(|child| {
-        if child.ends_with("'") {
-            let idx = child.replace("'", "").parse::<u32>()
-                .map_err(|err| format_err!("error happen when parse path from {}", child))?;
-            ChildNumber::from_hardened_idx(idx).map_err(|err| format_err!("parse idx err"))
-        } else {
-            let idx = child.parse::<u32>()
-                .map_err(|err| format_err!("error happen when parse path from {}", child))?;;
-            ChildNumber::from_normal_idx(idx).map_err(|err| format_err!("parse idx err"))
-        }
-    }).collect::<Result<Vec<ChildNumber>>>()
-
+    childs
+        .iter()
+        .map(|child| {
+            if child.ends_with("'") {
+                let idx = child
+                    .replace("'", "")
+                    .parse::<u32>()
+                    .map_err(|err| format_err!("error happen when parse path from {}", child))?;
+                ChildNumber::from_hardened_idx(idx).map_err(|err| format_err!("parse idx err"))
+            } else {
+                let idx = child
+                    .parse::<u32>()
+                    .map_err(|err| format_err!("error happen when parse path from {}", child))?;;
+                ChildNumber::from_normal_idx(idx).map_err(|err| format_err!("parse idx err"))
+            }
+        })
+        .collect::<Result<Vec<ChildNumber>>>()
 }
 
 pub struct DerivationInfo {
@@ -110,6 +115,9 @@ mod tests {
         assert_eq!(result.unwrap(), "m/44'/60'/0'");
 
         let short_error = get_account_path("m/44'");
-        assert_eq!(short_error.err().unwrap().to_string(), "m/44\' path is too short");
+        assert_eq!(
+            short_error.err().unwrap().to_string(),
+            "m/44\' path is too short"
+        );
     }
 }

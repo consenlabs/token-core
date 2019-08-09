@@ -1,4 +1,4 @@
-use tcx_chain::{TxSignResult, Secp256k1Curve};
+use tcx_chain::{Secp256k1Curve, TxSignResult};
 
 use bitcoin::{Address as BtcAddress, OutPoint, Script, Transaction, TxIn, TxOut};
 use bitcoin_hashes::hex::FromHex;
@@ -18,9 +18,9 @@ use std::str::FromStr;
 use crate::address::BchAddress;
 use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
 
+use bitcoin::util::bip32::ExtendedPubKey;
 use tcx_chain::bips::get_account_path;
 use tcx_chain::curve::PublicKey;
-use bitcoin::util::bip32::ExtendedPubKey;
 
 const DUST: u64 = 546;
 
@@ -142,22 +142,30 @@ impl BitcoinCashTransaction {
         tx_inputs
     }
 
-    fn script_sigs(&self, tx: &Transaction, shc: &SighashComponentsWithForkId, prv_keys: &[impl PrivateKey]) -> Result<Vec<Script>> {
+    fn script_sigs(
+        &self,
+        tx: &Transaction,
+        shc: &SighashComponentsWithForkId,
+        prv_keys: &[impl PrivateKey],
+    ) -> Result<Vec<Script>> {
         let mut script_sigs: Vec<Script> = vec![];
         for i in 0..tx.input.len() {
             let tx_in = &tx.input[i];
             let unspent = &self.unspents[i];
             let script_bytes: Vec<u8> = FromHex::from_hex(&unspent.script_pub_key).unwrap();
             let script = Builder::from(script_bytes).into_script();
-            let shc_hash =
-                shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | 0x40);
+            let shc_hash = shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | 0x40);
             let prv_key = &prv_keys[i];
             script_sigs.push(self.sign_hash(prv_key, &shc_hash.into_inner())?);
         }
         Ok(script_sigs)
     }
 
-    pub fn sign_transaction(&self, prv_keys: &[impl PrivateKey], xpub: &str) -> Result<TxSignResult> {
+    pub fn sign_transaction(
+        &self,
+        prv_keys: &[impl PrivateKey],
+        xpub: &str,
+    ) -> Result<TxSignResult> {
         let change_addr = self.change_addr(xpub)?;
         let tx_outs = self.tx_outs(&change_addr)?;
         let tx_inputs = self.tx_inputs();
@@ -211,7 +219,6 @@ mod tests {
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static BCH_MAIN_PATH: &'static str = "m/44'/145'/0'";
-
 
     //
     #[test]
