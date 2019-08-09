@@ -15,7 +15,7 @@ pub use signer::{TransactionSinger, TxSignResult};
 extern crate failure;
 extern crate regex;
 
-pub type Result<T> = result::Result<T, Error>;
+pub type Result<T> = result::Result<T,failure::Error>;
 
 #[cfg(test)]
 mod tests {

@@ -1,4 +1,4 @@
-use tcx_chain::TxSignResult;
+use tcx_chain::{TxSignResult, Secp256k1Curve};
 
 use bitcoin::{Address as BtcAddress, OutPoint, Script, Transaction, TxIn, TxOut};
 use bitcoin_hashes::hex::FromHex;
@@ -20,6 +20,7 @@ use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
 
 use tcx_chain::bips::get_account_path;
 use tcx_chain::curve::PublicKey;
+use bitcoin::util::bip32::ExtendedPubKey;
 
 const DUST: u64 = 546;
 
@@ -48,7 +49,7 @@ impl BitcoinCashTransaction {
     pub fn collect_prv_keys_paths(&self, path: &str) -> Result<Vec<String>> {
         let mut paths: Vec<String> = vec![];
         let account_path = get_account_path(path)?;
-        paths.push(format!("{}/0/{}", account_path, &self.change_idx));
+
         for unspent in &self.unspents {
             let derived_path = unspent.derived_path.trim();
             let path_with_space = derived_path.replace("/", " ");
@@ -80,7 +81,20 @@ impl BitcoinCashTransaction {
             .into_script())
     }
 
-    pub fn sign_transaction(&self, prv_keys: &[impl PrivateKey]) -> Result<TxSignResult> {
+    fn address_from_priv_key(&self, priv_key: &impl PrivateKey) -> Result<BtcAddress> {
+        let pub_key = priv_key.public_key();
+        let secp_pub_key = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
+        let change_addr = BtcAddress::p2pkh(&secp_pub_key, self.network());
+        Ok(change_addr)
+    }
+
+    fn change_addr(&self, xpub: &str) -> Result<BtcAddress> {
+        let change_path = format!("0/{}", &self.change_idx);
+        let pub_key = Secp256k1Curve::derive_pub_key_at_path(&xpub, &change_path)?;
+        Ok(BtcAddress::p2pkh(&pub_key, self.network()))
+    }
+
+    fn tx_outs(&self, change_addr: &BtcAddress) -> Result<Vec<TxOut>> {
         let mut total_amount = 0;
 
         for unspent in &self.unspents {
@@ -91,13 +105,6 @@ impl BitcoinCashTransaction {
             total_amount >= (self.amount + self.fee),
             "total amount must ge amount + fee"
         );
-
-        let change_addr_prv_key = prv_keys
-            .first()
-            .ok_or(format_err!("get_change_addr_prv_key_failed"))?;
-        let change_addr_pub_key = change_addr_prv_key.public_key();
-        let pub_key = Secp256k1PublicKey::from_slice(&change_addr_pub_key.to_bytes())?;
-        let change_addr = BtcAddress::p2pkh(&pub_key, self.network());
 
         let mut tx_outs: Vec<TxOut> = vec![];
         let receiver_addr = BtcAddress::from_str(&self.to)?;
@@ -115,7 +122,10 @@ impl BitcoinCashTransaction {
             };
             tx_outs.push(change_tx_out);
         }
+        Ok(tx_outs)
+    }
 
+    fn tx_inputs(&self) -> Vec<TxIn> {
         let mut tx_inputs: Vec<TxIn> = vec![];
 
         for unspent in &self.unspents {
@@ -129,6 +139,33 @@ impl BitcoinCashTransaction {
                 witness: vec![],
             });
         }
+        tx_inputs
+    }
+
+    fn script_sigs(&self, tx: &Transaction, shc: &SighashComponentsWithForkId, prv_keys: &[impl PrivateKey]) -> Result<Vec<Script>> {
+        let mut script_sigs: Vec<Script> = vec![];
+        for i in 0..tx.input.len() {
+            let tx_in = &tx.input[i];
+            let unspent = &self.unspents[i];
+            let script_bytes: Vec<u8> = FromHex::from_hex(&unspent.script_pub_key).unwrap();
+            let script = Builder::from(script_bytes).into_script();
+            let shc_hash =
+                shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | 0x40);
+            let prv_key = &prv_keys[i];
+            script_sigs.push(self.sign_hash(prv_key, &shc_hash.into_inner())?);
+        }
+        Ok(script_sigs)
+    }
+
+    pub fn sign_transaction(&self, prv_keys: &[impl PrivateKey], xpub: &str) -> Result<TxSignResult> {
+
+//        let change_addr_prv_key = prv_keys
+//            .first()
+//            .ok_or(format_err!("get_change_addr_prv_key_failed"))?;
+//        let change_addr = self.address_from_priv_key(change_addr_prv_key)?;
+        let change_addr = self.change_addr(xpub)?;
+        let tx_outs = self.tx_outs(&change_addr)?;
+        let tx_inputs = self.tx_inputs();
 
         let tx = Transaction {
             version: 1,
@@ -139,17 +176,7 @@ impl BitcoinCashTransaction {
 
         let sig_hash_components = SighashComponentsWithForkId::new(&tx);
 
-        let mut script_sigs: Vec<Script> = vec![];
-        for i in 0..tx.input.len() {
-            let tx_in = &tx.input[i];
-            let unspent = &self.unspents[i];
-            let script_bytes: Vec<u8> = FromHex::from_hex(&unspent.script_pub_key).unwrap();
-            let script = Builder::from(script_bytes).into_script();
-            let shc_hash =
-                sig_hash_components.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | 0x40);
-            let prv_key = &prv_keys[i];
-            script_sigs.push(self.sign_hash(prv_key, &shc_hash.into_inner())?);
-        }
+        let script_sigs: Vec<Script> = self.script_sigs(&tx, &sig_hash_components, &prv_keys)?;
 
         let signed_tx = Transaction {
             version: tx.version,
@@ -189,7 +216,7 @@ mod tests {
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static BCH_MAIN_PATH: &'static str = "m/44'/145'/0'";
-    static WIF: &'static str = "L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy";
+
 
     //
     #[test]
@@ -225,8 +252,11 @@ mod tests {
             .collect_prv_keys_paths(&coin_info.derivation_path)
             .unwrap();
         let priv_keys = keystore.key_at_paths("BCH", &paths, &PASSWORD).unwrap();
-        let sign_ret = tran.sign_transaction(&priv_keys).unwrap();
+        let acc = keystore.account("BCH").unwrap();
+        let extra = ExtendedPubKeyExtra::from(acc.extra.clone());
+
+        let sign_ret = tran.sign_transaction(&priv_keys, &extra.xpub).unwrap();
         // todo: not a real test data, it's works at WIF: L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy
-        assert_eq!(sign_ret.signature, "01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100c9df637109b43c88f4c3d68c2ace39fe454b9e239779adaceb273a2e5cc3494e02204fdc62c9792adb46e9f056eea6147f6776193bec380de86ef2959a77a226588841210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000");
+        assert_eq!(sign_ret.signature, "01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100be283eb3c936fbdc9159d7067cf3bf44b40c5fc790e6f06368c404a6c1962ebb022071741ed6e1d034f300d177582c870934d4b155d0eb40e6eda99b3e95323a4666412102cc987e200a13c771d9c840cd08db93debf4d4443cec3e084a4cde2aad4cfa77dffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000");
     }
 }

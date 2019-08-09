@@ -22,6 +22,7 @@ pub type Result<T> = result::Result<T, failure::Error>;
 
 pub use address::{BchAddress, BchTestNetAddress};
 pub use transaction::{Utxo, BitcoinCashTransaction};
+use serde_json::Value;
 
 const SYMBOL: &'static str = "BCH";
 const PATH: &'static str = "m/44'/145'/0'/0/0";
@@ -29,7 +30,7 @@ const PATH: &'static str = "m/44'/145'/0'/0/0";
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExtendedPubKeyExtra {
-    xpub: String,
+    pub xpub: String,
 }
 
 impl Extra for ExtendedPubKeyExtra {
@@ -41,6 +42,12 @@ impl Extra for ExtendedPubKeyExtra {
         let derivation_info = Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)?;
         let xpub = address::BchAddress::extended_public_key(&derivation_info);
         Ok(ExtendedPubKeyExtra { xpub })
+    }
+}
+
+impl From<Value> for ExtendedPubKeyExtra {
+    fn from(v: Value) -> Self {
+        serde_json::from_value::<Self>(v).unwrap()
     }
 }
 

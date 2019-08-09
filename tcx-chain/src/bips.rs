@@ -2,10 +2,9 @@ use bip39::{Language, Mnemonic, MnemonicType};
 
 use crate::Result;
 use bitcoin::util::base58;
-use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
+use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, ChildNumber};
 use byteorder::{BigEndian, ByteOrder};
 use std::convert::AsMut;
-
 use std::str::FromStr;
 
 fn clone_into_array<A, T>(slice: &[T]) -> A
@@ -32,6 +31,23 @@ pub fn get_account_path(path: &str) -> Result<String> {
         childs.remove(childs.len() - 1);
     }
     Ok(childs.join("/"))
+}
+
+pub fn relative_path_to_child_nums(path: &str) -> Result<Vec<ChildNumber>> {
+    let mut child_nums: Vec<ChildNumber> = vec![];
+    let childs: Vec<&str> = path.split("/").collect();
+    childs.iter().map(|child| {
+        if child.ends_with("'") {
+            let idx = child.replace("'", "").parse::<u32>()
+                .map_err(|err| format_err!("error happen when parse path from {}", child))?;
+            ChildNumber::from_hardened_idx(idx).map_err(|err| format_err!("parse idx err"))
+        } else {
+            let idx = child.parse::<u32>()
+                .map_err(|err| format_err!("error happen when parse path from {}", child))?;;
+            ChildNumber::from_normal_idx(idx).map_err(|err| format_err!("parse idx err"))
+        }
+    }).collect::<Result<Vec<ChildNumber>>>()
+
 }
 
 pub struct DerivationInfo {

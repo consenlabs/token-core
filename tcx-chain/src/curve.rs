@@ -119,4 +119,12 @@ impl Secp256k1Curve {
         let xpub = ExtendedPubKey::from_private(&s, &xprv);
         Ok(DerivationInfo::from(xpub))
     }
+
+    pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
+        let ext_pub_key = ExtendedPubKey::from_str(xpub)?;
+        let s = Secp256k1::new();
+        let child_nums = crate::bips::relative_path_to_child_nums(child_path)?;
+        let index_ext_pub_key = ext_pub_key.derive_pub(&s, &child_nums)?;
+        Ok(index_ext_pub_key.public_key)
+    }
 }
