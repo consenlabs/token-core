@@ -295,11 +295,37 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
 
     match chain_type {
         "BCH" => {
-            let singer = BitcoinCashSinger {};
-            singer.sign_transaction(json_str, keystore, password)
+            _sign_bch_transaction(json_str, keystore, password)
         }
         _ => Err(format_err!("{}", "chain_type_not_support"))
     }
+}
+
+fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+    let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
+    let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).expect("outputs");
+    let internal_used = v["internalUsed"].as_i64().expect("internalUsed");
+    let change_idx = internal_used + 1;
+    let to = v["to"].as_str().expect("to");
+    let amount = v["amount"].as_str().expect("amount").parse::<i64>().unwrap();
+    let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
+    let password = v["password"].as_str().expect("password");
+    let account = keystore.account(&"BCH").ok_or(format_err!("account_not_found"))?;
+    let path = &account.derivation_path;
+
+    let bch_tran = BitcoinCashTransaction {
+        to: to.to_owned(),
+        amount,
+        unspents,
+        memo: "".to_string(),
+        fee,
+        change_idx: change_idx as u32,
+    };
+    let paths = bch_tran.collect_prv_keys_paths(path)?;
+    let priv_keys = &keystore.key_at_paths("BCH", &paths, password)?;
+
+    let ret = bch_tran.sign_transaction(&priv_keys)?;
+    Ok(serde_json::to_string(&ret)?)
 }
 
 

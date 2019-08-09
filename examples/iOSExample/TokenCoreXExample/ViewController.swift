@@ -105,6 +105,7 @@ class ViewController: UIViewController {
     
     clear_err()
     let cPtr = sign_transaction(mapStr)!
+    
     defer {
       free_const_string(cPtr)
     }

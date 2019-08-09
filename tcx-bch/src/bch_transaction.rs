@@ -49,7 +49,7 @@ pub struct BitcoinCashTransaction {
 }
 
 impl BitcoinCashTransaction {
-    fn collect_prv_keys_paths(&self, path: &str) -> Result<Vec<String>> {
+    pub fn collect_prv_keys_paths(&self, path: &str) -> Result<Vec<String>> {
         let mut paths: Vec<String> = vec![];
         let account_path = get_account_path(path)?;
         paths.push(format!("{}/0/{}", account_path, &self.change_idx));
@@ -165,42 +165,10 @@ impl BitcoinCashTransaction {
     }
 }
 
-pub struct BitcoinCashSinger {}
-
-impl TransactionSinger for BitcoinCashSinger {
-    fn sign_transaction(&self, json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
-        let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
-        let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).expect("outputs");
-        let internal_used = v["internalUsed"].as_i64().expect("internalUsed");
-        let change_idx = internal_used + 1;
-        let to = v["to"].as_str().expect("to");
-        let amount = v["amount"].as_str().expect("amount").parse::<i64>().unwrap();
-        let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
-        let password = v["password"].as_str().expect("password");
-        let account = keystore.account(&"BCH").ok_or(format_err!("account_not_found"))?;
-        let path = &account.derivation_path;
-
-        let bch_tran = BitcoinCashTransaction {
-            to: to.to_owned(),
-            amount,
-            unspents,
-            memo: "".to_string(),
-            fee,
-            change_idx: change_idx as u32,
-        };
-        let paths = bch_tran.collect_prv_keys_paths(path)?;
-        let priv_keys = &keystore.key_at_paths("BCH", &paths, password)?;
-
-        let ret = bch_tran.sign_transaction(&priv_keys)?;
-        Ok(serde_json::to_string(&ret)?)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use bip39::Language;
-    //    use crate::hd_mnemonic_keystore::HdMnemonicKeystore;
     use tcx_chain::HdKeystore;
     use tcx_chain::keystore::CoinInfo;
     use tcx_chain::curve::{CurveType, PublicKeyType};
@@ -241,7 +209,7 @@ mod tests {
             change_idx: 0,
         };
 
-        let singer = BitcoinCashSinger {};
+
         let paths = tran.collect_prv_keys_paths(&coin_info.derivation_path).unwrap();
         let priv_keys = keystore.key_at_paths("BCH", &paths, &PASSWORD).unwrap();
         let sign_ret = tran.sign_transaction( &priv_keys).unwrap();
