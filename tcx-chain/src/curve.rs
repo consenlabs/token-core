@@ -1,20 +1,19 @@
-use secp256k1::{Secp256k1, Message, SecretKey};
 use bitcoin::network::constants::Network;
+use secp256k1::{Message, Secp256k1, SecretKey};
 
-use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
-use bip39::{Seed};
-use std::str::FromStr;
-use crate::Result;
 use crate::bips::DerivationInfo;
+use crate::Result;
+use bip39::Seed;
+use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum CurveType {
-    SECP256k1              /* "secp256k1" */,
-    ED25519                /* "ed25519" */,
-    ED25519Blake2bNano     /* "ed25519-blake2b-nano" */,
-    Curve25519             /* "curve25519" */,
+    SECP256k1,          /* "secp256k1" */
+    ED25519,            /* "ed25519" */
+    ED25519Blake2bNano, /* "ed25519-blake2b-nano" */
+    Curve25519,         /* "curve25519" */
     NIST256p1,
 }
 
@@ -84,7 +83,6 @@ pub type Secp256k1PrivateKey = bitcoin::PrivateKey;
 pub struct Secp256k1Curve {}
 
 impl Secp256k1Curve {
-
     fn _extended_pri_key(path: &str, seed: &Seed) -> Result<ExtendedPrivKey> {
         let s = Secp256k1::new();
         let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
@@ -92,14 +90,20 @@ impl Secp256k1Curve {
         Ok(sk.derive_priv(&s, &path)?)
     }
 
-    pub fn key_at_paths_with_seed(paths: &[impl AsRef<str>], seed: &Seed) -> Result<Vec<impl PrivateKey>> {
+    pub fn key_at_paths_with_seed(
+        paths: &[impl AsRef<str>],
+        seed: &Seed,
+    ) -> Result<Vec<impl PrivateKey>> {
         let s = Secp256k1::new();
         let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
-        let pks: Result<Vec<Secp256k1PrivateKey>> = paths.iter().map(|path| {
-            let path = DerivationPath::from_str(path.as_ref())?;
-            let prv_key = sk.derive_priv(&s, &path)?;
-            Ok(prv_key.private_key)
-        }).collect();
+        let pks: Result<Vec<Secp256k1PrivateKey>> = paths
+            .iter()
+            .map(|path| {
+                let path = DerivationPath::from_str(path.as_ref())?;
+                let prv_key = sk.derive_priv(&s, &path)?;
+                Ok(prv_key.private_key)
+            })
+            .collect();
         pks
     }
 
@@ -115,6 +119,4 @@ impl Secp256k1Curve {
         let xpub = ExtendedPubKey::from_private(&s, &xprv);
         Ok(DerivationInfo::from(xpub))
     }
-
 }
-

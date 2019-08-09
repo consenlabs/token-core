@@ -1,8 +1,10 @@
-use crate::keystore::{HdKeystore, Account};
+use crate::keystore::{Account, HdKeystore};
 use crate::Result;
 
-pub trait Coin<'z> where Self: std::marker::Sized {
-
+pub trait Coin<'z>
+where
+    Self: std::marker::Sized,
+{
     // used for find_wallet_by_mnemonic in TokenV2
     fn mnemonic_to_account(mnemonic: &str, path: &str) -> Result<Account>;
 
@@ -15,5 +17,4 @@ pub trait Coin<'z> where Self: std::marker::Sized {
     fn extended_private_key(&self, password: &str) -> Result<String>;
     fn extended_public_key(&self) -> String;
     fn sign_transaction(&self, json: &str) -> Result<String>;
-
 }

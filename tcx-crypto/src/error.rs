@@ -1,5 +1,3 @@
-
-
 use std::result;
 
 //#[derive(Fail, Debug)]
@@ -65,4 +63,3 @@ pub type Result<T> = result::Result<T, failure::Error>;
 //
 //
 //type Result<T> = result::Result<T, TokenError>;
-

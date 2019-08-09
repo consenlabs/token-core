@@ -1,29 +1,25 @@
-use bitcoin_hashes::hex::{ToHex, FromHex};
+use bitcoin_hashes::hex::{FromHex, ToHex};
 use serde::{Deserialize, Serialize};
 
-use crate::error::{Result};
 use crate::error;
+use crate::error::Result;
 use crate::numberic_util;
-
-
 
 const CREDENTIAL_LEN: usize = 64usize;
 
 pub type Credential = [u8; CREDENTIAL_LEN];
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EncPair {
     pub enc_str: String,
     pub nonce: String,
 }
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CipherParams {
-    iv: String
+    iv: String,
 }
 
 pub trait KdfParams {
@@ -31,9 +27,7 @@ pub trait KdfParams {
     fn generate_derived_key(&self, password: &[u8], out: &mut [u8]);
 }
 
-
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Pbkdf2Params {
     c: u32,
@@ -53,10 +47,9 @@ impl Pbkdf2Params {
     }
 }
 
-
 impl KdfParams for Pbkdf2Params {
     fn validate(&self) -> Result<()> {
-        if self.dklen == 0 || self.c == 0 || self.salt.len() <= 0 || self.prf.len()  <= 0 {
+        if self.dklen == 0 || self.c == 0 || self.salt.len() <= 0 || self.prf.len() <= 0 {
             Err(format_err!("kdf_params_invalid"))
         } else {
             Ok(())
@@ -69,9 +62,7 @@ impl KdfParams for Pbkdf2Params {
     }
 }
 
-
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Crypto<T: KdfParams> {
     cipher: String,
@@ -88,7 +79,6 @@ impl Crypto<Pbkdf2Params> {
         param.salt = numberic_util::random_iv(32).to_hex();
         let iv = numberic_util::random_iv(16);
 
-
         let mut crypto = Crypto {
             cipher: "aes-128-ctr".to_owned(),
             cipherparams: CipherParams { iv: iv.to_hex() },
@@ -99,7 +89,9 @@ impl Crypto<Pbkdf2Params> {
         };
 
         let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
-        crypto.kdfparams.generate_derived_key(password.as_bytes(), &mut derived_key);
+        crypto
+            .kdfparams
+            .generate_derived_key(password.as_bytes(), &mut derived_key);
 
         let ciphertext = crypto.encrypt(password, origin);
         crypto.ciphertext = ciphertext.to_hex();
@@ -114,10 +106,10 @@ impl Crypto<Pbkdf2Params> {
         self.decrypt_data(password, &encrypted, &iv)
     }
 
-
     fn encrypt(&self, password: &str, origin: &[u8]) -> Vec<u8> {
         let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
-        self.kdfparams.generate_derived_key(password.as_bytes(), &mut derived_key);
+        self.kdfparams
+            .generate_derived_key(password.as_bytes(), &mut derived_key);
         let key = &derived_key[0..16];
         let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).unwrap();
         super::aes::ctr::encrypt_nopadding(origin, key, &iv)
@@ -140,14 +132,16 @@ impl Crypto<Pbkdf2Params> {
 
     fn encrypt_data(&self, password: &str, origin: &[u8], iv: &[u8]) -> Vec<u8> {
         let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
-        self.kdfparams.generate_derived_key(password.as_bytes(), &mut derived_key);
+        self.kdfparams
+            .generate_derived_key(password.as_bytes(), &mut derived_key);
         let key = &derived_key[0..16];
         super::aes::ctr::encrypt_nopadding(origin, key, &iv)
     }
 
     fn decrypt_data(&self, password: &str, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
         let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
-        self.kdfparams.generate_derived_key(password.as_bytes(), &mut derived_key);
+        self.kdfparams
+            .generate_derived_key(password.as_bytes(), &mut derived_key);
 
         let mac = Self::generate_mac(&derived_key, encrypted);
         if self.mac != mac.to_hex() {
@@ -193,7 +187,10 @@ mod tests {
         let result = crypto.decrypt("aaa");
         assert!(result.is_err());
         println!("{:?}", result.err());
-        assert_eq!(crypto.mac, "4906577f075ad714f328e7b33829fdccfa8cd22eab2c0a8bc4f577824188ed16");
+        assert_eq!(
+            crypto.mac,
+            "4906577f075ad714f328e7b33829fdccfa8cd22eab2c0a8bc4f577824188ed16"
+        );
         assert_eq!(crypto.ciphertext, "17ff4858e697455f4966c6072473f3501534bc20deb339b58aeb8db0bd9fe91777148d0a909f679fb6e3a7a64609034afeb72a");
     }
 }

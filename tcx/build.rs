@@ -3,5 +3,4 @@ fn main() {
     for target in targets {
         println!("cargo:rustc-link-search=../../android/tokencore/build/intermediates/cmake/release/obj/{}/", target);
     }
-
 }

@@ -1,14 +1,12 @@
-
-pub mod crypto;
 pub mod aes;
-pub mod numberic_util;
+pub mod crypto;
 pub mod error;
+pub mod numberic_util;
 
-pub use crypto::{Crypto, Pbkdf2Params, EncPair};
+pub use crypto::{Crypto, EncPair, Pbkdf2Params};
 
-
-#[macro_use] extern crate failure;
-
+#[macro_use]
+extern crate failure;
 
 #[cfg(test)]
 mod tests {

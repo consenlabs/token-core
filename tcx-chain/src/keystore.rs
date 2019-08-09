@@ -1,24 +1,17 @@
-
-
-
-
-
-use bip39::{Mnemonic, Language, Seed};
-
+use bip39::{Language, Mnemonic, Seed};
 
 use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use uuid::Uuid;
-use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::Result;
 use crate::bips;
 use crate::bips::DerivationInfo;
 use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
+use crate::Result;
 use serde_json::Value;
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Source {
     Wif,
@@ -29,8 +22,7 @@ pub enum Source {
     RecoveredIdentity,
 }
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Metadata {
     pub name: String,
@@ -39,7 +31,6 @@ pub struct Metadata {
     pub timestamp: i64,
     #[serde(default = "metadata_default_source")]
     pub source: Source,
-
 }
 
 fn metadata_empty_str() -> String {
@@ -48,8 +39,7 @@ fn metadata_empty_str() -> String {
 
 fn metadata_default_time() -> i64 {
     let start = SystemTime::now();
-    let since_the_epoch = start.duration_since(UNIX_EPOCH)
-        .expect("get timestamp");
+    let since_the_epoch = start.duration_since(UNIX_EPOCH).expect("get timestamp");
     since_the_epoch.as_secs() as i64
 }
 
@@ -68,21 +58,20 @@ impl Default for Metadata {
     }
 }
 
-
 pub trait Address {
-//    type PubKey: PublicKey;
+    //    type PubKey: PublicKey;
 
-     fn is_valid(address: &str) -> bool;
-//     fn new(address: &str) -> String;
+    fn is_valid(address: &str) -> bool;
+    //     fn new(address: &str) -> String;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
-     fn from_public_key(public_key: &impl PublicKey) -> Result<String>;
+    fn from_public_key(public_key: &impl PublicKey) -> Result<String>;
     // fn from_data(data: &[u8]) -> Box<dyn Address>;
 
-    fn extended_public_key_version() -> [u8;4] {
+    fn extended_public_key_version() -> [u8; 4] {
         // default use btc mainnet
         [0x04, 0x88, 0xb2, 0x1e]
     }
-    fn extended_private_key_version() -> [u8;4] {
+    fn extended_private_key_version() -> [u8; 4] {
         // default use btc mainnet
         [0x04, 0x88, 0xad, 0xe4]
     }
@@ -96,9 +85,6 @@ pub trait Address {
     }
 }
 
-enum ExtendedPubKeyType {
-    XPUB()
-}
 
 pub struct CoinInfo {
     pub symbol: String,
@@ -106,10 +92,7 @@ pub struct CoinInfo {
     pub curve: CurveType,
 }
 
-
-
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Account {
     pub address: String,
@@ -119,17 +102,13 @@ pub struct Account {
     pub extra: Value,
 }
 
-
 pub trait Extra: Sized + serde::Serialize {
     fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self>;
 }
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct EmptyExtra {
-
-}
+pub struct EmptyExtra {}
 
 impl Extra for EmptyExtra {
     fn from(_coin_info: &CoinInfo, _seed: &Seed) -> Result<Self> {
@@ -137,18 +116,14 @@ impl Extra for EmptyExtra {
     }
 }
 
-
-
-#[derive(Debug, Clone, PartialEq)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum KeyType {
     PrivateKey,
-    Mnemonic
+    Mnemonic,
 }
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HdKeystore {
     pub id: String,
@@ -163,14 +138,20 @@ pub struct HdKeystore {
 impl HdKeystore {
     pub const VERSION: i32 = 11000i32;
 
-    pub fn mnemonic_to_account<A: Address, E: Extra>(coin_info: &CoinInfo, mnemonic: &str) -> Result<Account>{
-        let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
+    pub fn mnemonic_to_account<A: Address, E: Extra>(
+        coin_info: &CoinInfo,
+        mnemonic: &str,
+    ) -> Result<Account> {
+        let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English)
+            .map_err(|_| format_err!("invalid_mnemonic"))?;
         let seed = bip39::Seed::new(&mnemonic, &"");
         Self::derive_account_from_coin::<A, E>(coin_info, &seed)
     }
 
-    pub fn derive_account_from_coin<A: Address, E: Extra>(coin_info: &CoinInfo, seed: &Seed) -> Result<Account> {
-
+    pub fn derive_account_from_coin<A: Address, E: Extra>(
+        coin_info: &CoinInfo,
+        seed: &Seed,
+    ) -> Result<Account> {
         let paths = vec![coin_info.derivation_path.clone()];
         let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
@@ -183,7 +164,7 @@ impl HdKeystore {
             derivation_path: coin_info.derivation_path.to_string(),
             curve: coin_info.curve,
             coin: coin_info.symbol.to_string(),
-            extra: serde_json::to_value(extra).expect("extra_error")
+            extra: serde_json::to_value(extra).expect("extra_error"),
         })
     }
 
@@ -236,26 +217,40 @@ impl HdKeystore {
 
     pub fn seed(&self, password: &str) -> Result<Seed> {
         let mnemonic_str = self.mnemonic(password)?;
-        let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
+        let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English)
+            .map_err(|_| format_err!("invalid_mnemonic"))?;
         Ok(bip39::Seed::new(&mnemonic, &""))
     }
 
-    fn key_at_paths_with_seed(curve: CurveType, paths: &[impl AsRef<str>], seed: &Seed) -> Result<Vec<impl PrivateKey>> {
+    fn key_at_paths_with_seed(
+        curve: CurveType,
+        paths: &[impl AsRef<str>],
+        seed: &Seed,
+    ) -> Result<Vec<impl PrivateKey>> {
         match curve {
-            CurveType::SECP256k1 => {
-                Secp256k1Curve::key_at_paths_with_seed(paths, seed)
-            },
-            _ => Err(format_err!("{}", "unsupport_curve"))
+            CurveType::SECP256k1 => Secp256k1Curve::key_at_paths_with_seed(paths, seed),
+            _ => Err(format_err!("{}", "unsupport_curve")),
         }
     }
 
-    pub fn key_at_paths(&self, symbol: &str, paths: &[impl AsRef<str>], password: &str) -> Result<Vec<impl PrivateKey>> {
-        let acc = self.account(symbol).ok_or(format_err!("{}", "account_not_found"))?;
+    pub fn key_at_paths(
+        &self,
+        symbol: &str,
+        paths: &[impl AsRef<str>],
+        password: &str,
+    ) -> Result<Vec<impl PrivateKey>> {
+        let acc = self
+            .account(symbol)
+            .ok_or(format_err!("{}", "account_not_found"))?;
         let seed = self.seed(password)?;
         Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)
     }
 
-    pub fn derive_coin<A: Address, E: Extra>(&mut self, coin_info: &CoinInfo, password: &str) -> Result<&Account>{
+    pub fn derive_coin<A: Address, E: Extra>(
+        &mut self,
+        coin_info: &CoinInfo,
+        password: &str,
+    ) -> Result<&Account> {
         let seed = self.seed(password)?;
         let account = Self::derive_account_from_coin::<A, E>(coin_info, &seed)?;
         self.active_accounts.push(account);
@@ -281,7 +276,8 @@ mod tests {
     use super::*;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
-    static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+    static MNEMONIC: &'static str =
+        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 
     #[test]
@@ -342,11 +338,10 @@ mod tests {
     }
 }
 "#;
-//        let keystore = HdKeystore::load(&json);
+        //        let keystore = HdKeystore::load(&json);
         let keystore: HdKeystore = serde_json::from_str(&json).unwrap();
 
-//        assert!(keystore.is_ok());
+        //        assert!(keystore.is_ok());
         assert_eq!(keystore.active_accounts.len(), 2);
     }
 }
-

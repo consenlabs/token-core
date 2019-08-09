@@ -1,32 +1,29 @@
-use tcx_chain::{TxSignResult};
+use tcx_chain::TxSignResult;
 
-use bitcoin_hashes::Hash;
-use bitcoin_hashes::sha256d::Hash as Hash256;
+use bitcoin::{Address as BtcAddress, OutPoint, Script, Transaction, TxIn, TxOut};
 use bitcoin_hashes::hex::FromHex;
-use bitcoin::{Address as BtcAddress, TxOut, TxIn, OutPoint, Script, Transaction};
+use bitcoin_hashes::sha256d::Hash as Hash256;
+use bitcoin_hashes::Hash;
 
 use bitcoin::network::constants::Network;
 
 use crate::bip143_with_forkid::SighashComponentsWithForkId;
+use crate::Result;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::consensus::serialize;
 use bitcoin_hashes::hex::ToHex;
-use std::str::FromStr;
-use crate::Result;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
-
-
-use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
 use crate::address::BchAddress;
+use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
 
-use tcx_chain::curve::PublicKey;
 use tcx_chain::bips::get_account_path;
+use tcx_chain::curve::PublicKey;
 
 const DUST: u64 = 546;
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Utxo {
     pub tx_hash: String,
@@ -37,7 +34,6 @@ pub struct Utxo {
     pub derived_path: String,
     pub sequence: i64,
 }
-
 
 pub struct BitcoinCashTransaction {
     pub to: String,
@@ -69,7 +65,7 @@ impl BitcoinCashTransaction {
         let unspent = self.unspents.first().expect("empty_unspents");
         match BchAddress::is_main_net(&unspent.address) {
             true => Network::Bitcoin,
-            _ => Network::Testnet
+            _ => Network::Testnet,
         }
     }
 
@@ -78,7 +74,10 @@ impl BitcoinCashTransaction {
         let raw_bytes: Vec<u8> = vec![0x41];
         let sig_bytes: Vec<u8> = [signature_bytes, raw_bytes].concat();
         let pub_key_bytes = pri_key.public_key().to_bytes();
-        Ok(Builder::new().push_slice(&sig_bytes).push_slice(&pub_key_bytes).into_script())
+        Ok(Builder::new()
+            .push_slice(&sig_bytes)
+            .push_slice(&pub_key_bytes)
+            .into_script())
     }
 
     pub fn sign_transaction(&self, prv_keys: &[impl PrivateKey]) -> Result<TxSignResult> {
@@ -88,9 +87,14 @@ impl BitcoinCashTransaction {
             total_amount += unspent.amount;
         }
 
-        ensure!(total_amount >= (self.amount + self.fee), "total amount must ge amount + fee");
+        ensure!(
+            total_amount >= (self.amount + self.fee),
+            "total amount must ge amount + fee"
+        );
 
-        let change_addr_prv_key = prv_keys.first().ok_or(format_err!("get_change_addr_prv_key_failed"))?;
+        let change_addr_prv_key = prv_keys
+            .first()
+            .ok_or(format_err!("get_change_addr_prv_key_failed"))?;
         let change_addr_pub_key = change_addr_prv_key.public_key();
         let pub_key = Secp256k1PublicKey::from_slice(&change_addr_pub_key.to_bytes())?;
         let change_addr = BtcAddress::p2pkh(&pub_key, self.network());
@@ -126,7 +130,6 @@ impl BitcoinCashTransaction {
             });
         }
 
-
         let tx = Transaction {
             version: 1,
             lock_time: 0,
@@ -142,7 +145,8 @@ impl BitcoinCashTransaction {
             let unspent = &self.unspents[i];
             let script_bytes: Vec<u8> = FromHex::from_hex(&unspent.script_pub_key).unwrap();
             let script = Builder::from(script_bytes).into_script();
-            let shc_hash = sig_hash_components.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | 0x40);
+            let shc_hash =
+                sig_hash_components.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | 0x40);
             let prv_key = &prv_keys[i];
             script_sigs.push(self.sign_hash(prv_key, &shc_hash.into_inner())?);
         }
@@ -150,10 +154,18 @@ impl BitcoinCashTransaction {
         let signed_tx = Transaction {
             version: tx.version,
             lock_time: tx.lock_time,
-            input: tx.input.iter().enumerate().map(|(i, txin)| TxIn { script_sig: script_sigs[i].clone(), witness: vec![], ..*txin }).collect(),
+            input: tx
+                .input
+                .iter()
+                .enumerate()
+                .map(|(i, txin)| TxIn {
+                    script_sig: script_sigs[i].clone(),
+                    witness: vec![],
+                    ..*txin
+                })
+                .collect(),
             output: tx.output.clone(),
         };
-
 
         let tx_bytes = serialize(&signed_tx);
 
@@ -168,13 +180,14 @@ impl BitcoinCashTransaction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tcx_chain::{HdKeystore, Metadata};
-    use tcx_chain::keystore::CoinInfo;
-    use tcx_chain::curve::{CurveType};
     use crate::ExtendedPubKeyExtra;
+    use tcx_chain::curve::CurveType;
+    use tcx_chain::keystore::CoinInfo;
+    use tcx_chain::{HdKeystore, Metadata};
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
-    static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+    static MNEMONIC: &'static str =
+        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static BCH_MAIN_PATH: &'static str = "m/44'/145'/0'";
     static WIF: &'static str = "L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy";
 
@@ -208,10 +221,11 @@ mod tests {
             change_idx: 0,
         };
 
-
-        let paths = tran.collect_prv_keys_paths(&coin_info.derivation_path).unwrap();
+        let paths = tran
+            .collect_prv_keys_paths(&coin_info.derivation_path)
+            .unwrap();
         let priv_keys = keystore.key_at_paths("BCH", &paths, &PASSWORD).unwrap();
-        let sign_ret = tran.sign_transaction( &priv_keys).unwrap();
+        let sign_ret = tran.sign_transaction(&priv_keys).unwrap();
         // todo: not a real test data, it's works at WIF: L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy
         assert_eq!(sign_ret.signature, "01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100c9df637109b43c88f4c3d68c2ace39fe454b9e239779adaceb273a2e5cc3494e02204fdc62c9792adb46e9f056eea6147f6776193bec380de86ef2959a77a226588841210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000");
     }
