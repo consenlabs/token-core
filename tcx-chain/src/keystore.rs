@@ -14,7 +14,7 @@ use failure::Error;
 use crate::Result;
 use crate::bips;
 use crate::bips::DerivationInfo;
-use crate::curve::{CurveType, PublicKeyType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey};
+use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey};
 use serde_json::Value;
 
 #[derive(Debug, Clone)]

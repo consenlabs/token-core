@@ -31,7 +31,7 @@ use std::sync::RwLock;
 use crate::utils::set_panic_hook;
 use tcx_bch::transaction::{Utxo, BitcoinCashTransaction};
 use tcx_bch::address::{BchAddress};
-use tcx_chain::curve::{Secp256k1Curve, CurveType, PublicKeyType};
+use tcx_chain::curve::{Secp256k1Curve, CurveType};
 use tcx_chain::coin::Coin;
 use tcx_chain::keystore::CoinInfo;
 use serde::private::ser::constrain;

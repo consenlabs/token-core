@@ -47,12 +47,8 @@ pub struct ExtendedPubKeyExtra {
 
 impl Extra for ExtendedPubKeyExtra {
     fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self> {
-        let derivation_info = match coin_info.curve {
-            CurveType::SECP256k1 => {
-                Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)
-            },
-            _ => Err(format_err!("{}", "unsupport_chain"))
-        }?;
+        ensure!(coin_info.curve == CurveType::SECP256k1, "BCH must be at secp256k1");
+        let derivation_info = Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)?;
         let xpub = address::BchAddress::extended_public_key(&derivation_info);
         Ok(ExtendedPubKeyExtra {
             xpub
