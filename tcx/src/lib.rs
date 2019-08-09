@@ -29,13 +29,14 @@ use serde_json::map::Keys;
 use std::sync::Mutex;
 use std::sync::RwLock;
 use crate::utils::set_panic_hook;
-use tcx_bch::bch_transaction::{Utxo, BitcoinCashTransaction, BitcoinCashSinger};
-use tcx_bch::bch_coin::{BchAddress, ExtendedPubKeyExtra};
+use tcx_bch::transaction::{Utxo, BitcoinCashTransaction};
+use tcx_bch::address::{BchAddress};
 use tcx_chain::curve::{Secp256k1Curve, CurveType, PublicKeyType};
 use tcx_chain::coin::Coin;
 use tcx_chain::keystore::CoinInfo;
 use serde::private::ser::constrain;
 use std::str::FromStr;
+use tcx_bch::ExtendedPubKeyExtra;
 
 
 // #[link(name = "TrezorCrypto")]

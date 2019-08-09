@@ -7,41 +7,15 @@ use tcx_chain::keystore::{KeyType, Address, Extra, CoinInfo};
 use secp256k1::{SecretKey, Secp256k1};
 use bitcoin_hashes::hex::ToHex;
 use serde_json::Value;
-use crate::bch_transaction::{Utxo, BitcoinCashTransaction};
+use crate::transaction::{Utxo, BitcoinCashTransaction};
 use std::str::FromStr;
 use std::marker::PhantomData;
 use bip39::{Mnemonic, Language, Seed};
 use bch_addr::Converter;
 use tcx_chain::bips::DerivationInfo;
 use std::mem;
-use serde::{Deserialize, Serialize};
-
-const SYMBOL: &'static str = "BCH";
-const PATH: &'static str = "m/44'/145'/0'/0/0";
-
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ExtendedPubKeyExtra {
-    xpub: String
-}
 
 
-impl Extra for ExtendedPubKeyExtra {
-    fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self> {
-        let derivation_info = match coin_info.curve {
-            CurveType::SECP256k1 => {
-                Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)
-            },
-            _ => Err(format_err!("{}", "unsupport_chain"))
-        }?;
-        let xpub = BchAddress::extended_public_key(&derivation_info);
-        Ok(ExtendedPubKeyExtra {
-            xpub
-        })
-    }
-
-}
 
 pub struct BchAddress {}
 
@@ -106,7 +80,7 @@ impl Address for BchTestNetAddress {
 #[cfg(test)]
 mod tests {
     use tcx_chain::{HdKeystore, Metadata, Account};
-    use crate::bch_coin::{BchAddress, ExtendedPubKeyExtra};
+    use crate::address::{BchAddress, ExtendedPubKeyExtra};
     use tcx_chain::curve::{Secp256k1Curve, CurveType, PublicKeyType};
     use tcx_chain::coin::Coin;
     use serde_json::Value;

@@ -18,8 +18,8 @@ use serde_json::Value;
 use tcx_chain::keystore::Address;
 use serde::export::PhantomData;
 use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
-use crate::bch_coin::BchAddress;
-use crate::bch_coin::BchTestNetAddress;
+use crate::address::BchAddress;
+use crate::address::BchTestNetAddress;
 use tcx_chain::curve::PublicKey;
 use tcx_chain::bips::get_account_path;
 
@@ -172,7 +172,7 @@ mod tests {
     use tcx_chain::HdKeystore;
     use tcx_chain::keystore::CoinInfo;
     use tcx_chain::curve::{CurveType, PublicKeyType};
-    use crate::bch_coin::ExtendedPubKeyExtra;
+    use crate::address::ExtendedPubKeyExtra;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
