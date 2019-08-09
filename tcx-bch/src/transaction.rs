@@ -158,11 +158,6 @@ impl BitcoinCashTransaction {
     }
 
     pub fn sign_transaction(&self, prv_keys: &[impl PrivateKey], xpub: &str) -> Result<TxSignResult> {
-
-//        let change_addr_prv_key = prv_keys
-//            .first()
-//            .ok_or(format_err!("get_change_addr_prv_key_failed"))?;
-//        let change_addr = self.address_from_priv_key(change_addr_prv_key)?;
         let change_addr = self.change_addr(xpub)?;
         let tx_outs = self.tx_outs(&change_addr)?;
         let tx_inputs = self.tx_inputs();
