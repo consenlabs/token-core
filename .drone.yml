@@ -4,5 +4,14 @@ name: default
 steps:
   - name: build
     image: rust
+    environment:
+      CARGO_HOME: /var/cache/drone/cargo
+    volumes:
+      - name: cache
+        path: /var/cache/drone/cargo
     commands:
       - cargo test
+
+volumes:
+  - name: cache
+    temp: {}
