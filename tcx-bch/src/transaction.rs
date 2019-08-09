@@ -171,8 +171,8 @@ mod tests {
     use bip39::Language;
     use tcx_chain::HdKeystore;
     use tcx_chain::keystore::CoinInfo;
-    use tcx_chain::curve::{CurveType, PublicKeyType};
-    use crate::address::ExtendedPubKeyExtra;
+    use tcx_chain::curve::{CurveType};
+    use crate::ExtendedPubKeyExtra;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
