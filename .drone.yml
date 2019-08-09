@@ -5,6 +5,4 @@ steps:
   - name: build
     image: rust
     commands:
-      - cargo fmt -- --check
-      - cargo clippy -- -D warnings
       - cargo test
