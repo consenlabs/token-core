@@ -1,4 +1,4 @@
-use crate::keystore::{HdKeystore, Account, Address};
+use crate::keystore::{HdKeystore, Account};
 use crate::Result;
 
 pub trait Coin<'z> where Self: std::marker::Sized {

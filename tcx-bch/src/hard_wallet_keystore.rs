@@ -1,16 +1,16 @@
-use tcx_chain::{Metadata};
+
 use crate::Result;
 use bitcoin_hashes::hex::ToHex;
-use bitcoin::util::bip32::{ExtendedPubKey, DerivationPath, Fingerprint, ChildNumber, ChainCode};
+use bitcoin::util::bip32::{ExtendedPubKey, Fingerprint, ChildNumber, ChainCode};
 use bitcoin::PublicKey;
 use bitcoin_hashes::ripemd160::Hash as Hash160;
 use bitcoin_hashes::sha256::Hash as Sha256;
 use bitcoin_hashes::hex::FromHex;
 use bitcoin_hashes::Hash;
-use num_bigint::{BigUint, BigInt, Sign};
+use num_bigint::BigInt;
 use num_integer::Integer;
 use num_traits::Num;
-use byteorder::{BigEndian, ReadBytesExt, LittleEndian, BE, LE};
+
 
 pub struct HardWalletKeystore {}
 
@@ -97,7 +97,7 @@ fn get_parent_path(path: &str) -> String {
 
 fn compress_pub_key(hex: &str) -> String {
     let x = &hex[2..66];
-    let mut y = &hex[66..130];
+    let y = &hex[66..130];
 //    let y_bytes = <[u8; 32]>::from_hex(y).unwrap();
     let b = BigInt::from_str_radix( y, 16).unwrap();
     if b.is_odd() {
@@ -118,22 +118,22 @@ impl HardWalletKeystore {
     pub fn xpub_apdu(path: &str, verify_key: bool) -> Vec<String> {
         let parent_path = get_parent_path(path);
         [parent_path.as_bytes(), path.as_bytes()].iter().map(|bytes| {
-            let mut apdu_bytes: Vec<u8> = Vec::with_capacity(6 + bytes.len());
+            let _apdu_bytes: Vec<u8> = Vec::with_capacity(6 + bytes.len());
             let p1 = if verify_key { 0x01 } else { 0x00 };
             let header = Header::new(0x80, 0x43, p1, 0x00, bytes.len() as u8);
             [header.as_bytes(), bytes.to_vec(), vec![0x00]].concat().to_hex().to_uppercase()
         }).collect()
     }
 
-    pub fn apdu_to_xpub(apdus: &[&str], path: &str, network: &str) -> Result<String> {
+    pub fn apdu_to_xpub(apdus: &[&str], _path: &str, _network: &str) -> Result<String> {
         apdus.iter().for_each(|apdu| {
             valid_response(apdu);
         });
         let xpub_hexs: Vec<&str> = apdus.iter().map(|apdu| {
 
             // 65 bytes pub + 32 bytes chaincode + signature
-            let signature = &apdu[97 * 2..apdu.len() - 4];
-            let data = &apdu[0..97 * 2];
+            let _signature = &apdu[97 * 2..apdu.len() - 4];
+            let _data = &apdu[0..97 * 2];
             &apdu[0..194]
         }).collect();
 
@@ -157,7 +157,7 @@ impl HardWalletKeystore {
         // cn: -2147483648
         // cp 02A4AC7774E4DD4FC8AFCF39D4264CF217E408D23DA372CEC935C4F24189BB17B4
         // cc 407D0B0B0A67510BDCC345733162BA881E4420C8FD75D7DB93FAAA7CFA512E0F
-        let mut fingerprint = &hash.into_inner()[0..4];
+        let fingerprint = &hash.into_inner()[0..4];
 
         let extend_pub_key = ExtendedPubKey {
             network: bitcoin::Network::Bitcoin,
@@ -191,8 +191,6 @@ mod tests {
         let apdu = HardWalletKeystore::xpub_apdu(BTC_PATH, true);
         let expected = vec!["80430100086D2F3439272F302700", "804301000B6D2F3439272F30272F302700"];
         assert_eq!(apdu, expected);
-
-        let expected = "xpub6CQmpQ34RDxVHAHBD86BjkTk6hQvDWQ3xCynZPu6H9uD5HHDx5pz5xT8EutdzHYHkWZqZW2xL4PHmUxTw2tYs3iHuRrmuMX4Sws2x2R3f3r";
 
         let xpub_res = "04A4AC7774E4DD4FC8AFCF39D4264CF217E408D23DA372CEC935C4F24189BB17B4D40C6985A1E0E6458B9AFE3F548CC66A971917FF471B068102A6604C0353F4EC407D0B0B0A67510BDCC345733162BA881E4420C8FD75D7DB93FAAA7CFA512E0F3046022100B949A251CADF273C093004A00877F1B6CFAD7809972A3B34A5E5495791741CD9022100F6F3D0FBBDA536461149AEA1BEA578E2950C7308F5E8EBF5846A941D9120ED6E9000";
         let parent_xpub_res = "042C15224C69B254D8466FD70F03DF2EECD945373FCE247CED07DFA9DE420E4283FDFC98E28A99082C491EA3E2521F47805A79346DC16A72F292F21190D98AF872848713B1761239BC6615CD93BBA189E1DFFD65EFC703B84EE0BBB82B863EFCC43046022100B468DCB7C99D9E71EE0604168BDAF8C1B4D985DA08F185DB773AE4F88A6AA24D022100DC2A7C376C9587E7055015824E9065B64D09D73732CF7C1452DD5177B52EDA819000";

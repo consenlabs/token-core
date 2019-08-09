@@ -1,41 +1,31 @@
 use std::ffi::{CString, CStr};
-use libc::{size_t, c_int};
-use std::os::raw::{c_char, c_void};
-use log::Level;
-use log::{info, trace, warn};
+
+use std::os::raw::{c_char};
+
+
 
 use std::fs::File;
 use std::io::{Read, Write};
 use utils::Result;
 use utils::LAST_BACKTRACE;
 use utils::LAST_ERROR;
-use failure::Fail;
+
 
 use crate::utils::landingpad;
 
 use serde_json::Value;
 use tcx_chain::{Metadata, HdKeystore};
-
-
 use std::path::Path;
 use std::collections::HashMap;
-use tcx_chain::signer::TransactionSinger;
-use std::fs::{self, DirEntry};
-
-use std::rc::Rc;
-use std::cell::RefCell;
-use core::borrow::{BorrowMut, Borrow};
-use serde_json::map::Keys;
-use std::sync::Mutex;
+use core::borrow::{Borrow};
 use std::sync::RwLock;
 use crate::utils::set_panic_hook;
 use tcx_bch::transaction::{Utxo, BitcoinCashTransaction};
 use tcx_bch::address::{BchAddress};
-use tcx_chain::curve::{Secp256k1Curve, CurveType};
-use tcx_chain::coin::Coin;
+use tcx_chain::curve::{CurveType};
 use tcx_chain::keystore::CoinInfo;
-use serde::private::ser::constrain;
-use std::str::FromStr;
+
+
 use tcx_bch::ExtendedPubKeyExtra;
 
 
@@ -176,11 +166,11 @@ pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *co
 
 fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let mnemonic = v["mnemonic"].as_str().unwrap();
-    let path = v["path"].as_str().unwrap();
-    let network = v["network"].as_str().unwrap();
+    let _path = v["path"].as_str().unwrap();
+    let _network = v["network"].as_str().unwrap();
     let chain_type = v["chainType"].as_str().unwrap();
-    let password = "InsecurePassword";
-    let meta: Metadata = serde_json::from_value(v.clone())?;
+    let _password = "InsecurePassword";
+    let _meta: Metadata = serde_json::from_value(v.clone())?;
     let acc = match chain_type {
         "BCH" => {
             let coin_info = _coin_info_from_symbol("BCH")?;
@@ -208,10 +198,10 @@ pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) ->
 
 
 fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
-    let mut meta: Metadata = serde_json::from_value(v.clone())?;
+    let _meta: Metadata = serde_json::from_value(v.clone())?;
     let password = v["password"].as_str().unwrap();
     let mnemonic = v["mnemonic"].as_str().unwrap();
-    let path = v["path"].as_str().unwrap();
+    let _path = v["path"].as_str().unwrap();
     let overwrite = v["overwrite"].as_bool().unwrap();
 
     let chain_type = v["chainType"].as_str().unwrap();
@@ -302,7 +292,7 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
     }
 }
 
-fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, _password: &str) -> Result<String> {
     let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
     let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).expect("outputs");
     let internal_used = v["internalUsed"].as_i64().expect("internalUsed");
@@ -342,11 +332,11 @@ pub unsafe extern "C" fn clear_err() {
 
 #[no_mangle]
 pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
-    use std::fmt::Write;
-    use std::error::Error;
+    
+    
     LAST_ERROR.with(|e| {
         if let Some(ref err) = *e.borrow() {
-            let mut msg = err.to_string();
+            let msg = err.to_string();
             // todo: follow cause
 //            let mut cause = err.cause();
 //            while let Some(the_cause) = cause {
@@ -363,8 +353,8 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 
 #[cfg(test)]
 mod tests {
-    use crate::import_wallet_from_mnemonic;
-    use std::ffi::{CString, CStr};
+    
+    
 
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
@@ -382,7 +372,7 @@ mod tests {
         let file_dir = "/Users/xyz/Library/Developer/CoreSimulator/Devices/1C6326AE-C550-43D5-A1A7-CF791B4A04CA/data/Containers/Data/Application/BC076852-DF07-42EA-82B1-2FA8C5CEE9EE/Documents/wallets/";
         let id = "ec9298f7-7f2b-4483-90af-cc440a411d82";
 
-        let a_str = String::from("aaa");
+        let _a_str = String::from("aaa");
 
         let ks_path = format!("{}{}.json", file_dir, id);
         assert_eq!("", ks_path);

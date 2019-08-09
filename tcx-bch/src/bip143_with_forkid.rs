@@ -4,9 +4,9 @@ use bitcoin_hashes::{sha256d, Hash};
 use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::{Transaction, TxIn};
 use bitcoin::consensus::encode::Encodable;
-use std::io::{Cursor, Read, Write};
-use bitcoin_hashes::hex::ToHex;
-use bitcoin_hashes::hex::FromHex;
+use std::io::{Cursor};
+
+
 
 
 /// Parts of a sighash which are common across inputs or signatures, and which are

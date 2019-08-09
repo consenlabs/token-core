@@ -1,12 +1,12 @@
-use tcx_chain::{TxSignResult, TransactionSinger, Metadata, Source, HdKeystore};
-use secp256k1::{Secp256k1, Message};
+use tcx_chain::{TxSignResult};
+
 use bitcoin_hashes::Hash;
 use bitcoin_hashes::sha256d::Hash as Hash256;
 use bitcoin_hashes::hex::FromHex;
 use bitcoin::{Address as BtcAddress, TxOut, TxIn, OutPoint, Script, Transaction};
-use bitcoin::{PublicKey as BtcPublicKey};
+
 use bitcoin::network::constants::Network;
-use bitcoin::util::bip32::{ExtendedPrivKey, ChildNumber};
+
 use crate::bip143_with_forkid::SighashComponentsWithForkId;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::consensus::serialize;
@@ -14,12 +14,12 @@ use bitcoin_hashes::hex::ToHex;
 use std::str::FromStr;
 use crate::Result;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use tcx_chain::keystore::Address;
-use serde::export::PhantomData;
+
+
+
 use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
 use crate::address::BchAddress;
-use crate::address::BchTestNetAddress;
+
 use tcx_chain::curve::PublicKey;
 use tcx_chain::bips::get_account_path;
 
@@ -102,7 +102,7 @@ impl BitcoinCashTransaction {
             script_pubkey: receiver_addr.script_pubkey(),
         };
         tx_outs.push(receiver_tx_out);
-        let change_amount = (total_amount - self.amount - self.fee);
+        let change_amount = total_amount - self.amount - self.fee;
 
         if change_amount > DUST as i64 {
             let change_tx_out = TxOut {
@@ -168,8 +168,7 @@ impl BitcoinCashTransaction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bip39::Language;
-    use tcx_chain::HdKeystore;
+    use tcx_chain::{HdKeystore, Metadata};
     use tcx_chain::keystore::CoinInfo;
     use tcx_chain::curve::{CurveType};
     use crate::ExtendedPubKeyExtra;

@@ -18,7 +18,7 @@ thread_local! {
 
 
 fn notify_err(err: Error) {
-    if let backtrace = err.backtrace() {
+    if let _backtrace = err.backtrace() {
         LAST_BACKTRACE.with(|e| {
             *e.borrow_mut() = Some((None, Backtrace::new()));
         });

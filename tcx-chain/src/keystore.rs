@@ -1,20 +1,20 @@
-use bitcoin::network::constants::Network;
-use bitcoin::util::address::Address as BtcAddress;
-use secp256k1::Secp256k1;
-use bitcoin::PrivateKey as BtcPrivateKey;
-use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
+
+
+
+
+
 use bip39::{Mnemonic, Language, Seed};
-use std::str::FromStr;
-use bitcoin_hashes::hex::{ToHex, FromHex};
+
+
 use serde::{Deserialize, Serialize};
-use tcx_crypto::{Crypto, Pbkdf2Params, EncPair};
+use tcx_crypto::{Crypto, Pbkdf2Params};
 use uuid::Uuid;
 use std::time::{SystemTime, UNIX_EPOCH};
-use failure::Error;
+
 use crate::Result;
 use crate::bips;
 use crate::bips::DerivationInfo;
-use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey};
+use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
 use serde_json::Value;
 
 #[derive(Debug, Clone)]
@@ -132,7 +132,7 @@ pub struct EmptyExtra {
 }
 
 impl Extra for EmptyExtra {
-    fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self> {
+    fn from(_coin_info: &CoinInfo, _seed: &Seed) -> Result<Self> {
         Ok(EmptyExtra {})
     }
 }

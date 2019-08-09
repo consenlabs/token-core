@@ -3,9 +3,9 @@ pub mod ctr {
 
     use aes_ctr::stream_cipher::generic_array::GenericArray;
     use aes_ctr::stream_cipher::{
-        NewStreamCipher, SyncStreamCipher, SyncStreamCipherSeek
+        NewStreamCipher, SyncStreamCipher
     };
-    use core::borrow::BorrowMut;
+    
 
     // todo: check if crash
     pub fn encrypt_nopadding(data: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {

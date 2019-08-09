@@ -1,8 +1,8 @@
 use secp256k1::{Secp256k1, Message, SecretKey};
 use bitcoin::network::constants::Network;
-use bitcoin::PrivateKey as BtcPrivateKey;
+
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
-use bip39::{Mnemonic, Language, Seed};
+use bip39::{Seed};
 use std::str::FromStr;
 use crate::Result;
 use crate::bips::DerivationInfo;
@@ -39,12 +39,14 @@ impl PublicKey for bitcoin::PublicKey {
         self.to_bytes()
     }
 
+    #[warn(unconditional_recursion)]
     fn to_compressed(&self) -> Vec<u8> {
-        self.to_compressed()
+        bitcoin::PublicKey::to_compressed(self)
     }
 
+    #[warn(unconditional_recursion)]
     fn to_uncompressed(&self) -> Vec<u8> {
-        self.to_uncompressed()
+        bitcoin::PublicKey::to_uncompressed(&self)
     }
 
     fn from_slice(data: &[u8]) -> Result<bitcoin::PublicKey> {

@@ -1,11 +1,11 @@
 use bip39::{Mnemonic, MnemonicType, Language};
-use core::fmt;
+
 use bitcoin::util::base58;
 use bitcoin::util::bip32::{ExtendedPubKey, ExtendedPrivKey};
 use byteorder::{BigEndian, ByteOrder};
 use std::convert::AsMut;
 use crate::Result;
-use regex::Regex;
+
 use std::str::FromStr;
 
 fn clone_into_array<A, T>(slice: &[T]) -> A
