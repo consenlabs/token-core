@@ -288,7 +288,7 @@ mod tests {
         {
     "id": "41923f0c-427b-4e5f-a55c-a6a30d2ee0a5",
     "version": 11000,
-    "keyType": "mnemonic",
+    "keyType": "MNEMONIC",
     "crypto": {
         "cipher": "aes-128-ctr",
         "cipherparams": {
@@ -308,13 +308,14 @@ mod tests {
         {
             "address": "bc1q32nssyaw5ph0skae5nja0asmw2y2a6qw8f0p38",
             "derivationPath": "m/84'/0'/0'/0/0",
-            "extendedPublicKey": "zpub6qsMtyUc63xx7hDdL5MnLUT3jNV2opgWiugqiYc2CwFdgJPJeC57kQ6VxYiENXtgdDd5APjNHoTHDqj5iyitUo8i66fSsEguf8gPd6LtHkP",
-            "coin": "BTC"
+            "curve": "SECP256k1",
+            "coin": "BTC",
+            "extra": {}
         },
         {
             "address": "tokencorex66",
             "derivationPath": "m/84'/0'/0'/0/0",
-            "extendedPublicKey": "zpub6qsMtyUc63xx7hDdL5MnLUT3jNV2opgWiugqiYc2CwFdgJPJeC57kQ6VxYiENXtgdDd5APjNHoTHDqj5iyitUo8i66fSsEguf8gPd6LtHkP",
+            "curve": "SECP256k1",
             "coin": "EOS",
             "extra": [
                 {
