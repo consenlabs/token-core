@@ -110,6 +110,6 @@ mod tests {
         assert_eq!(result.unwrap(), "m/44'/60'/0'");
 
         let short_error = get_account_path("m/44'");
-        assert_eq!(short_error.err().unwrap().to_string(), "m/44'/60'/0'");
+        assert_eq!(short_error.err().unwrap().to_string(), "m/44\' path is too short");
     }
 }
