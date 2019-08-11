@@ -7,8 +7,6 @@ use core::result;
 extern crate failure;
 extern crate regex;
 
-use failure::Error;
-
 pub mod bips;
 pub mod curve;
 pub mod keystore;

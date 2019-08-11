@@ -37,10 +37,6 @@ pub struct Metadata {
     pub source: Source,
 }
 
-fn metadata_empty_str() -> String {
-    "".to_owned()
-}
-
 fn metadata_default_time() -> i64 {
     let start = SystemTime::now();
     let since_the_epoch = start.duration_since(UNIX_EPOCH).expect("get timestamp");
@@ -296,14 +292,6 @@ mod tests {
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 
-    static coin: &'static CoinInfo = &CoinInfo {
-        symbol: "Test".into(),
-        derivation_path: "m/44'/999'/0'/0/0".into(),
-        curve: CurveType::SECP256k1,
-    };
-
-    struct TestAddress {}
-
     #[test]
     pub fn test_defualt_metadata() {
         let md = Metadata::default();
@@ -313,6 +301,7 @@ mod tests {
     #[test]
     pub fn test_derive_account() {
         let hdks = HdKeystore::new("insecure", Metadata::default());
+        assert_eq!(0, hdks.active_accounts.len());
     }
 
     #[test]
