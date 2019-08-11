@@ -1,16 +1,19 @@
 use bip39::{Language, Mnemonic, Seed};
-
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tcx_crypto::{Crypto, Pbkdf2Params};
 use uuid::Uuid;
+
+use tcx_crypto::{Crypto, Pbkdf2Params};
 
 use crate::bips;
 use crate::bips::DerivationInfo;
 use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
 use crate::Result;
-use serde_json::Value;
 
+/// Source to remember which format it comes from
+///
+/// NOTE: Identity related type is only for imToken App v2.x
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Source {
@@ -22,6 +25,7 @@ pub enum Source {
     RecoveredIdentity,
 }
 
+/// Metadata of keystore, for presenting wallet data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Metadata {
@@ -50,7 +54,7 @@ fn metadata_default_source() -> Source {
 impl Default for Metadata {
     fn default() -> Self {
         Metadata {
-            name: String::from("BCH"),
+            name: String::from("Unknown"),
             password_hint: String::new(),
             timestamp: metadata_default_time(),
             source: Source::Mnemonic,
@@ -58,6 +62,7 @@ impl Default for Metadata {
     }
 }
 
+/// Chain address interface, for encapsulate derivation
 pub trait Address {
     fn is_valid(address: &str) -> bool;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
@@ -82,12 +87,16 @@ pub trait Address {
     }
 }
 
+/// Blockchain basic config
+///
+/// NOTE: Unique key field is `symbol`
 pub struct CoinInfo {
     pub symbol: String,
     pub derivation_path: String,
     pub curve: CurveType,
 }
 
+/// Account that presents one blockchain wallet on a keystore
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Account {
@@ -98,6 +107,7 @@ pub struct Account {
     pub extra: Value,
 }
 
+/// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
 pub trait Extra: Sized + serde::Serialize {
     fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self>;
 }
@@ -112,6 +122,9 @@ impl Extra for EmptyExtra {
     }
 }
 
+/// Keystore type
+///
+/// NOTE: mnemonic for HD wallet
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum KeyType {
@@ -119,6 +132,7 @@ pub enum KeyType {
     Mnemonic,
 }
 
+/// Primary keystore type to store a root seed for deriving multi chain accounts.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HdKeystore {
@@ -134,6 +148,7 @@ pub struct HdKeystore {
 impl HdKeystore {
     pub const VERSION: i32 = 11000i32;
 
+    /// Derive account from a mnemonic phase
     pub fn mnemonic_to_account<A: Address, E: Extra>(
         coin_info: &CoinInfo,
         mnemonic: &str,
@@ -229,6 +244,7 @@ impl HdKeystore {
         }
     }
 
+    /// Derive a private key at a specific path, it's coin independent
     pub fn key_at_paths(
         &self,
         symbol: &str,
@@ -242,6 +258,7 @@ impl HdKeystore {
         Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)
     }
 
+    /// Derive an account on a specific coin
     pub fn derive_coin<A: Address, E: Extra>(
         &mut self,
         coin_info: &CoinInfo,
@@ -253,14 +270,17 @@ impl HdKeystore {
         Ok(self.active_accounts.last().unwrap())
     }
 
+    /// Find an account by coin symbol
     pub fn account(&self, symbol: &str) -> Option<&Account> {
         self.active_accounts.iter().find(|acc| acc.coin == symbol)
     }
 
+    // TODO: rename to `to_json`
     pub fn json(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }
 
+    /// Load a json to create HD keystore instance
     pub fn load(json: &str) -> Result<HdKeystore> {
         let ret: HdKeystore = serde_json::from_str(json)?;
         Ok(ret)
@@ -276,9 +296,23 @@ mod tests {
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 
+    static coin: &'static CoinInfo = &CoinInfo {
+        symbol: "Test".into(),
+        derivation_path: "m/44'/999'/0'/0/0".into(),
+        curve: CurveType::SECP256k1,
+    };
+
+    struct TestAddress {}
+
     #[test]
-    pub fn it_works() {
-        assert_eq!(1, 1)
+    pub fn test_defualt_metadata() {
+        let md = Metadata::default();
+        assert_eq!(md.name, "Unknown");
+    }
+
+    #[test]
+    pub fn test_derive_account() {
+        let hdks = HdKeystore::new("insecure", Metadata::default());
     }
 
     #[test]
