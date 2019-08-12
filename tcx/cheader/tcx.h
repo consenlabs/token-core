@@ -17,10 +17,6 @@ const char *get_last_err_message(void);
 
 const char *import_wallet_from_mnemonic(const char *json_str);
 
-const char *read_file(const char *file_path);
-
-const char *read_file_error(void);
-
-void scan_wallets(const char *json_str);
+void init_token_core_x(const char *json_str);
 
 const char *sign_transaction(const char *json_str);

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-JNI_LIBS=../examples/android/app/src/main/jniLibs
+#JNI_LIBS=../examples/android/app/src/main/jniLibs
+JNI_LIBS=../../token-v2/android/app/src/main/jniLibs
 TREZOR_CRYPTO_LIBS=../examples/android/tokencore/build/intermediates/cmake/release/obj
 
 # pushd ../android

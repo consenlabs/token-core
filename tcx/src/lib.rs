@@ -114,16 +114,16 @@ fn _create_wallet(v: &Value) -> Result<String> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
+pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
     let v: Value = serde_json::from_str(json_str).unwrap();
     set_panic_hook();
-    _scan_wallets(v);
+    _init_token_core_x(v);
     ()
 }
 
-fn _scan_wallets(v: Value) -> Result<()> {
+fn _init_token_core_x(v: Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().unwrap();
     *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
     let p = Path::new(file_dir);
