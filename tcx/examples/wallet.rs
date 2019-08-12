@@ -73,10 +73,10 @@ fn main() {
         let result = CStr::from_ptr(result);
         println!("import_wallet: {:?}", result);
         let err = CStr::from_ptr(get_last_err_message());
-        println!("import_wallet(error): {:?}", err);
+        println!("import_wallet(error): {:?}", err.to_str());
     }
 
-    // 5) find wallet
+    // 5) find keystore
     let json = format!("{{\"mnemonic\": \"{}\",\"network\": \"mainnet\",\"chainType\": \"BCH\",\"password\": \"mypass\",\"name\": \"urugang\",\"passwordHint\": \"hint\",\"timestamp\": 0,\"source\": \"KEYSTORE\",\"path\": \"0/1\"}}",
                        mnemonic);
     let json = CString::new(json).expect("CString:new failed");
@@ -85,7 +85,7 @@ fn main() {
         let result = CStr::from_ptr(result);
         println!("find keystore: {:?}", result);
         let err = CStr::from_ptr(get_last_err_message());
-        println!("find keystore(error): {:?}", err);
+        println!("find keystore(error): {:?}", err.to_str());
 
         let result = result.to_str().unwrap();
         let value: Value = serde_json::from_str(result).unwrap();
