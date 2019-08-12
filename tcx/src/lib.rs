@@ -118,7 +118,8 @@ pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
     let v: Value = serde_json::from_str(json_str).unwrap();
-    set_panic_hook();
+    // !!! warning !!! just set_panic_hook when debug
+//    set_panic_hook();
     _init_token_core_x(v);
     ()
 }
