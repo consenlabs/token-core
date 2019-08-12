@@ -119,12 +119,12 @@ pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
     let json_str = json_c_str.to_str().unwrap();
     let v: Value = serde_json::from_str(json_str).unwrap();
     // !!! warning !!! just set_panic_hook when debug
-//    set_panic_hook();
-    _init_token_core_x(v);
+    // set_panic_hook();
+    crate::utils::landingpad(|| _init_token_core_x(&v));
     ()
 }
 
-fn _init_token_core_x(v: Value) -> Result<()> {
+fn _init_token_core_x(v: &Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().unwrap();
     *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
     let p = Path::new(file_dir);
