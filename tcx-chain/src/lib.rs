@@ -1,25 +1,22 @@
-pub mod signer;
-pub mod keystore;
-pub mod bips;
-pub mod coin;
-pub mod curve;
+//! TokenCore Chain
+//! This is an abstract package to define basic chain data structures.
 
-
-
-pub use signer::{TxSignResult, TransactionSinger};
-pub use keystore::{Metadata, Source,  HdKeystore, Account};
-pub use coin::Coin;
-use failure::Error;
 use core::result;
 
-#[macro_use] extern crate failure;
+#[macro_use]
+extern crate failure;
+extern crate regex;
 
-pub type Result<T> = result::Result<T, Error>;
+pub mod bips;
+pub mod curve;
+pub mod keystore;
+pub mod signer;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+pub use bips::DerivationInfo;
+pub use curve::{
+    CurveType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey, Secp256k1PublicKey,
+};
+pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
+pub use signer::{TransactionSinger, TxSignResult};
+
+pub type Result<T> = result::Result<T, failure::Error>;

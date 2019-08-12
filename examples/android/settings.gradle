@@ -1,1 +1,2 @@
-include ':app', ':tokencore'
+//include ':app', ':tokencore'
+include ':app'

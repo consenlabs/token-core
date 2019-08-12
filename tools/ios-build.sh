@@ -7,12 +7,12 @@
 # cmake --build . --config Release
 
 
-pushd ../rust/tcx-lib
-RUST_BACKTRACE=1 cbindgen src/lib.rs -l c > tcx.h
+pushd ../tcx
+RUST_BACKTRACE=1 cbindgen src/lib.rs -l c > cheader/tcx.h
 cargo lipo --release
 
-mkdir -p ../../TokenCoreXExample/TokenCoreX/Include
-mkdir -p ../../TokenCoreXExample/TokenCoreX/Libs
-cp tcx.h ../../TokenCoreXExample/TokenCoreX/Include
-cp ../target/universal/release/libtcx.a ../../TokenCoreXExample/TokenCoreX/Libs
+mkdir -p ../examples/iOSExample/TokenCoreX/Include
+mkdir -p ../examples/iOSExample/TokenCoreX/Libs
+cp cheader/tcx.h ../examples/iOSExample/TokenCoreX/Include
+cp ../target/universal/release/libtcx.a ../examples/iOSExample/TokenCoreX/Libs
 popd

@@ -1,14 +1,14 @@
-
-pub mod crypto;
 pub mod aes;
+pub mod crypto;
 pub mod numberic_util;
-pub mod error;
 
-pub use crypto::{Crypto, Pbkdf2Params, EncPair};
+use core::result;
+pub use crypto::{Crypto, EncPair, Pbkdf2Params};
 
+#[macro_use]
+extern crate failure;
 
-#[macro_use] extern crate failure;
-
+pub type Result<T> = result::Result<T, failure::Error>;
 
 #[cfg(test)]
 mod tests {

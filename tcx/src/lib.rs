@@ -1,45 +1,28 @@
-use std::ffi::{CString, CStr};
-use libc::{size_t, c_int};
-use std::os::raw::{c_char, c_void};
-use log::Level;
-use log::{info, trace, warn};
+use std::ffi::{CStr, CString};
+
+use std::os::raw::c_char;
 
 use std::fs::File;
 use std::io::{Read, Write};
 use utils::Result;
 use utils::LAST_BACKTRACE;
 use utils::LAST_ERROR;
-use failure::Fail;
 
 use crate::utils::landingpad;
 
-use serde_json::Value;
-use tcx_chain::{Metadata, HdKeystore};
-
-
-use std::path::Path;
-use std::collections::HashMap;
-use tcx_chain::signer::TransactionSinger;
-use std::fs::{self, DirEntry};
-
-use std::rc::Rc;
-use std::cell::RefCell;
-use core::borrow::{BorrowMut, Borrow};
-use serde_json::map::Keys;
-use std::sync::Mutex;
-use std::sync::RwLock;
 use crate::utils::set_panic_hook;
-use tcx_bch::bch_transaction::{Utxo, BitcoinCashTransaction};
-use tcx_bch::bch_coin::{BchAddress};
-use tcx_chain::curve::Secp256k1Curve;
-use tcx_chain::coin::Coin;
-
+use core::borrow::Borrow;
+use serde_json::Value;
+use std::collections::HashMap;
+use std::path::Path;
+use std::sync::RwLock;
+use tcx_bch::{BchAddress, BitcoinCashTransaction, ExtendedPubKeyExtra, Utxo};
+use tcx_chain::{CoinInfo, CurveType, HdKeystore, Metadata};
 
 // #[link(name = "TrezorCrypto")]
 // extern {
 //     fn mnemonic_generate(strength: c_int, mnemonic: *mut c_char) -> c_int;
 // }
-//pub mod utils;
 
 #[macro_use]
 extern crate failure;
@@ -50,21 +33,17 @@ pub mod utils;
 #[macro_use]
 extern crate lazy_static;
 
-static PASSWORD: &'static str = "Insecure Pa55w0rd";
-static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
-static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
-
-
 lazy_static! {
     static ref KEYSTORE_MAP: RwLock<HashMap<String, HdKeystore>> = RwLock::new(HashMap::new());
-    static ref WALLET_FILE_DIR : RwLock<String> = RwLock::new(String::new());
+    static ref WALLET_FILE_DIR: RwLock<String> = RwLock::new(String::new());
 }
-
 
 fn cache_keystore(keystore: HdKeystore) {
-    KEYSTORE_MAP.write().unwrap().insert(keystore.id.to_owned(), keystore);
+    KEYSTORE_MAP
+        .write()
+        .unwrap()
+        .insert(keystore.id.to_owned(), keystore);
 }
-
 
 fn find_keystore_id_by_address(address: &str) -> Option<String> {
     let map = KEYSTORE_MAP.read().unwrap();
@@ -79,50 +58,42 @@ fn find_keystore_id_by_address(address: &str) -> Option<String> {
     k_id
 }
 
-
-#[no_mangle]
-pub extern fn read_file(file_path: *const c_char) -> *const c_char {
-    let c_str = unsafe { CStr::from_ptr(file_path) };
-    let file_path = c_str.to_str().unwrap();
-    // let filePath: String = env.get_string(filePath).expect("Couldn't get java string!").into();
-    let mut file = File::open(file_path).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents);
-
-    CString::new(contents).unwrap().into_raw()
+fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
+    match symbol {
+        "BCH" => Ok(CoinInfo {
+            symbol: "BCH".to_string(),
+            derivation_path: "m/44'/145'/0'".to_string(),
+            curve: CurveType::SECP256k1,
+        }),
+        _ => Err(format_err!("unsupptored_chain")),
+    }
 }
 
 #[no_mangle]
-pub extern fn free_string(s: *mut c_char) {
+pub extern "C" fn free_string(s: *mut c_char) {
     unsafe {
-        if s.is_null() { return; }
+        if s.is_null() {
+            return;
+        }
         CString::from_raw(s)
     };
 }
 
 #[no_mangle]
-pub extern fn free_const_string(s: *const c_char) {
+pub extern "C" fn free_const_string(s: *const c_char) {
     unsafe {
-        if s.is_null() { return; }
+        if s.is_null() {
+            return;
+        }
         CStr::from_ptr(s)
     };
 }
-
-#[no_mangle]
-pub unsafe extern "C" fn read_file_error() -> *const c_char {
-    crate::utils::landingpad(||
-        {
-            Err(format_err!("{}", "read file error"))
-        })
-}
-
 
 fn parse_arguments(json_str: *const c_char) -> Value {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
     serde_json::from_str(json_str).unwrap()
 }
-
 
 pub unsafe extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
@@ -143,16 +114,17 @@ fn _create_wallet(v: &Value) -> Result<String> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn scan_wallets(json_str: *const c_char) {
+pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
     let v: Value = serde_json::from_str(json_str).unwrap();
-    set_panic_hook();
-    _scan_wallets(v);
+    // !!! warning !!! just set_panic_hook when debug
+    // set_panic_hook();
+    crate::utils::landingpad(|| _init_token_core_x(&v));
     ()
 }
 
-fn _scan_wallets(v: Value) -> Result<()> {
+fn _init_token_core_x(v: &Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().unwrap();
     *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
     let p = Path::new(file_dir);
@@ -176,83 +148,77 @@ fn _scan_wallets(v: Value) -> Result<()> {
 }
 
 //
-//#[no_mangle]
-//pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
-//    let v = parse_arguments(json_str);
-//    let json = crate::utils::landingpad(|| _find_wallet_by_mnemonic(&v));
-//    CString::new(json).unwrap().into_raw()
-//}
-//
-//
-//fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
-//    let mnemonic = v["mnemonic"].as_str().unwrap();
-//    let path = v["path"].as_str().unwrap();
-//    let network = v["network"].as_str().unwrap();
-//    let chain_type = v["chainType"].as_str().unwrap();
-//    let password = "InsecurePassword";
-//    let meta: Metadata = serde_json::from_value(v.clone())?;
-//    let ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
-//    let acc = match chain_type {
-//        "BCH" => BchCoin::<Secp256k1Curve, BchAddress>::mnemonic_to_account(mnemonic, path),
-//        _ => Err(format_err!("{}", "chain_type_not_support"))
-//    }?;
-//    let address = acc.address;
-//    let kid = find_keystore_id_by_address(&address);
-//    if let Some(id) = kid {
-//        let map = KEYSTORE_MAP.read().unwrap();
-//        let ks = map.get(&id).unwrap();
-//        Ok(ks.json())
-//    } else {
-//        Ok("{}".to_owned())
-//    }
-//}
-//
-//#[no_mangle]
-//pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
-//    let v = parse_arguments(json_str);
-//    let json = crate::utils::landingpad(|| _import_wallet_from_mnemonic(&v));
-//    CString::new(json).unwrap().into_raw()
-//}
-//
-//
-//fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
-//    let mut meta: Metadata = serde_json::from_value(v.clone())?;
-//    let password = v["password"].as_str().unwrap();
-//    let mnemonic = v["mnemonic"].as_str().unwrap();
-//    let path = v["path"].as_str().unwrap();
-//    let overwrite = v["overwrite"].as_bool().unwrap();
-//
-//    let chain_type = v["chainType"].as_str().unwrap();
-//    let meta: Metadata = serde_json::from_value(v.clone())?;
-//    let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
-//    let coin = match chain_type {
-//        "BCH" => {
-//            BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut ks, password, path)
-//        }
-//        _ => Err(format_err!("{}", "chain_type_not_support"))
-//    }?;
-//
-//
-////    let mut keystore = HdMnemonicKeystore::new(meta, password, mnemonic, path)?;
-//    let account = coin.account();
-//    let exist_kid_opt = find_keystore_id_by_address(&account.address);
-//    if exist_kid_opt.is_some() {
-//        if !overwrite {
-//            return Err(format_err!("{}", "wallet_exists"));
-//        } else {
-//            ks.id = exist_kid_opt.unwrap();
-//        }
-//    }
-//
-//
-//    _flush_keystore(&ks);
-//    let json = ks.json();
-//    cache_keystore(ks);
-//    Ok(json)
-//}
+#[no_mangle]
+pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = crate::utils::landingpad(|| _find_wallet_by_mnemonic(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
+    let mnemonic = v["mnemonic"].as_str().unwrap();
+    let path = v["path"].as_str().unwrap();
+    // todo: can change path
+    let chain_type = v["chainType"].as_str().unwrap();
+
+    let acc = match chain_type {
+        "BCH" => {
+            let coin_info = _coin_info_from_symbol("BCH")?;
+            HdKeystore::mnemonic_to_account::<BchAddress, ExtendedPubKeyExtra>(&coin_info, mnemonic)
+        }
+        _ => Err(format_err!("{}", "chain_type_not_support")),
+    }?;
+    let address = acc.address;
+    let kid = find_keystore_id_by_address(&address);
+    if let Some(id) = kid {
+        let map = KEYSTORE_MAP.read().unwrap();
+        let ks = map.get(&id).unwrap();
+        Ok(ks.json())
+    } else {
+        Ok("{}".to_owned())
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = crate::utils::landingpad(|| _import_wallet_from_mnemonic(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
+    let password = v["password"].as_str().unwrap();
+    let mnemonic = v["mnemonic"].as_str().unwrap();
+    let _path = v["path"].as_str().unwrap();
+    let overwrite = v["overwrite"].as_bool().unwrap();
+
+    let chain_type = v["chainType"].as_str().unwrap();
+    let meta: Metadata = serde_json::from_value(v.clone())?;
+    let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
+    let account = match chain_type {
+        "BCH" => {
+            let coin_info = _coin_info_from_symbol("BCH")?;
+            ks.derive_coin::<BchAddress, ExtendedPubKeyExtra>(&coin_info, password)
+        }
+        _ => Err(format_err!("{}", "chain_type_not_support")),
+    }?;
+
+    let exist_kid_opt = find_keystore_id_by_address(&account.address);
+    if exist_kid_opt.is_some() {
+        if !overwrite {
+            return Err(format_err!("{}", "wallet_exists"));
+        } else {
+            ks.id = exist_kid_opt.unwrap();
+        }
+    }
+
+    _flush_keystore(&ks);
+    let json = ks.json();
+    cache_keystore(ks);
+    Ok(json)
+}
 
 fn _flush_keystore(ks: &HdKeystore) {
-
     let json = ks.json();
 
     let file_dir = WALLET_FILE_DIR.read().unwrap();
@@ -269,7 +235,6 @@ pub unsafe extern "C" fn export_mnemonic(json_str: *const c_char) -> *const c_ch
     CString::new(json).unwrap().into_raw()
 }
 
-
 fn _export_mnemonic(v: &Value) -> Result<String> {
     let wid = v["id"].as_str().unwrap();
     let password = v["password"].as_str().unwrap();
@@ -277,41 +242,98 @@ fn _export_mnemonic(v: &Value) -> Result<String> {
     let map = KEYSTORE_MAP.read().unwrap();
     let keystore = match map.get(wid) {
         Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found"))
+        _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
     keystore.mnemonic(password)
 }
 
 //
-//#[no_mangle]
-//pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
-//    let json_c_str = unsafe { CStr::from_ptr(json_str) };
-//    let json_str = json_c_str.to_str().unwrap();
-//
-//    let json = crate::utils::landingpad(|| _sign_transaction(json_str));
-//    CString::new(json).unwrap().into_raw()
-//}
-//
-//fn _sign_transaction(json_str: &str) -> Result<String> {
-//    let v: Value = serde_json::from_str(json_str).unwrap();
-//    let w_id = v["id"].as_str().unwrap();
-//    let chain_type = v["chainType"].as_str().unwrap();
-//
-//    let mut map = KEYSTORE_MAP.write().unwrap();
-//    let keystore = match map.get_mut(w_id) {
-//        Some(keystore) => Ok(keystore),
-//        _ => Err(format_err!("{}", "wallet_not_found"))
-//    }?;
-//
-//    match chain_type {
-//        "BCH" => {
-//            let coin = BchCoin::<Secp256k1Curve, BchAddress>::load(&keystore)?;
-//            coin.sign_transaction(json_str)
-//        }
-//        _ => Err(format_err!("{}", "chain_type_not_support"))
-//    }
-//}
+#[no_mangle]
+pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
+    let json_c_str = unsafe { CStr::from_ptr(json_str) };
+    let json_str = json_c_str.to_str().unwrap();
 
+    let json = crate::utils::landingpad(|| _sign_transaction(json_str));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _sign_transaction(json_str: &str) -> Result<String> {
+    let v: Value = serde_json::from_str(json_str).unwrap();
+    let w_id = v["id"].as_str().expect("wid");
+    let chain_type = v["chainType"].as_str().expect("chainType");
+    let password = v["password"].as_str().expect("password");
+
+    let mut map = KEYSTORE_MAP.write().unwrap();
+    let keystore = match map.get_mut(w_id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    match chain_type {
+        "BCH" => _sign_bch_transaction(json_str, keystore, password),
+        _ => Err(format_err!("{}", "chain_type_not_support")),
+    }
+}
+
+fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+    let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
+    let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).expect("outputs");
+    let internal_used = v["internalUsed"].as_i64().expect("internalUsed");
+    let change_idx = internal_used + 1;
+    let to = v["to"].as_str().expect("to");
+    let amount = v["amount"]
+        .as_str()
+        .expect("amount")
+        .parse::<i64>()
+        .unwrap();
+    let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
+    let account = keystore
+        .account(&"BCH")
+        .ok_or(format_err!("account_not_found"))?;
+    let path = &account.derivation_path;
+    let extra = ExtendedPubKeyExtra::from(account.extra.clone());
+    let bch_tran = BitcoinCashTransaction {
+        to: to.to_owned(),
+        amount,
+        unspents,
+        memo: "".to_string(),
+        fee,
+        change_idx: change_idx as u32,
+    };
+    let paths = bch_tran.collect_prv_keys_paths(path)?;
+    let priv_keys = &keystore.key_at_paths("BCH", &paths, password)?;
+
+    let ret = bch_tran.sign_transaction(&priv_keys, &extra.xpub)?;
+    Ok(serde_json::to_string(&ret)?)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = crate::utils::landingpad(|| _calc_external_address(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _calc_external_address(v: &Value) -> Result<String> {
+    let w_id = v["id"].as_str().unwrap();
+    let external_id = v["externalIdx"].as_i64().expect("external_id");
+    let network = v["network"].as_str().unwrap();
+    let chain_type = v["chainType"].as_str().unwrap();
+
+    let mut map = KEYSTORE_MAP.write().unwrap();
+    let keystore = match map.get_mut(w_id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let account = keystore
+        .account(&chain_type)
+        .ok_or(format_err!("account_not_found, chainType: {}", &chain_type))?;
+
+    let extra = ExtendedPubKeyExtra::from(account.extra.clone());
+    let external_addr = extra.calc_external_address::<BchAddress>(external_id)?;
+    Ok(serde_json::to_string(&external_addr)?)
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn clear_err() {
@@ -325,17 +347,15 @@ pub unsafe extern "C" fn clear_err() {
 
 #[no_mangle]
 pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
-    use std::fmt::Write;
-    use std::error::Error;
     LAST_ERROR.with(|e| {
         if let Some(ref err) = *e.borrow() {
-            let mut msg = err.to_string();
+            let msg = err.to_string();
             // todo: follow cause
-//            let mut cause = err.cause();
-//            while let Some(the_cause) = cause {
-//                write!(&mut msg, "\n  caused by: {}", the_cause).ok();
-//                cause = &the_cause.cause();
-//            }
+            //            let mut cause = err.cause();
+            //            while let Some(the_cause) = cause {
+            //                write!(&mut msg, "\n  caused by: {}", the_cause).ok();
+            //                cause = &the_cause.cause();
+            //            }
             CString::new(msg).unwrap().into_raw()
         } else {
             CString::new("").unwrap().into_raw()
@@ -343,44 +363,25 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
     })
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::import_wallet_from_mnemonic;
-    use std::ffi::{CString, CStr};
+
+    static PASSWORD: &'static str = "Insecure Pa55w0rd";
+    static MNEMONIC: &'static str =
+        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+    static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 
     #[test]
     fn it_works() {
         assert_eq!(2 + 2, 4);
     }
 
-    //    #[test]
-//    unsafe fn import_wallet() {
-//        let data = r#"
-//        {
-//            "password": "PASSWORD",
-//            "mnemonic": "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
-//            "path": "m/44'/145'/0'",
-//            "overwrite": false,
-//            "name": "bch-ios",
-//            "passwordHint": "",
-//            "chainType": "BCH",
-//            "network": "MAINNET",
-//            "fileDir": "/tmp/imtoken/wallets"
-//
-//        }"#;
-//        let json_str = CString::new(data).unwrap().into_raw();
-//        let ret = unsafe { import_wallet_from_mnemonic(json_str)};
-//        assert_eq!("", CStr::from_ptr(ret).to_str().unwrap());
-//    }
     #[test]
     fn path() {
         let file_dir = "/Users/xyz/Library/Developer/CoreSimulator/Devices/1C6326AE-C550-43D5-A1A7-CF791B4A04CA/data/Containers/Data/Application/BC076852-DF07-42EA-82B1-2FA8C5CEE9EE/Documents/wallets/";
         let id = "ec9298f7-7f2b-4483-90af-cc440a411d82";
 
-        let a_str = String::from("aaa");
-
         let ks_path = format!("{}{}.json", file_dir, id);
-        assert_eq!("", ks_path);
+        assert_eq!("/Users/xyz/Library/Developer/CoreSimulator/Devices/1C6326AE-C550-43D5-A1A7-CF791B4A04CA/data/Containers/Data/Application/BC076852-DF07-42EA-82B1-2FA8C5CEE9EE/Documents/wallets/ec9298f7-7f2b-4483-90af-cc440a411d82.json", ks_path);
     }
 }

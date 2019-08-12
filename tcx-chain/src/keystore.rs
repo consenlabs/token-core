@@ -1,23 +1,20 @@
-use bitcoin::network::constants::Network;
-use bitcoin::util::address::Address as BtcAddress;
-use secp256k1::Secp256k1;
-use bitcoin::PrivateKey as BtcPrivateKey;
-use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
-use bip39::{Mnemonic, Language, Seed};
-use std::str::FromStr;
-use bitcoin_hashes::hex::{ToHex, FromHex};
+use bip39::{Language, Mnemonic, Seed};
 use serde::{Deserialize, Serialize};
-use tcx_crypto::{Crypto, Pbkdf2Params, EncPair};
-use uuid::Uuid;
+use serde_json::Value;
 use std::time::{SystemTime, UNIX_EPOCH};
-use failure::Error;
-use crate::Result;
+use uuid::Uuid;
+
+use tcx_crypto::{Crypto, Pbkdf2Params};
+
 use crate::bips;
 use crate::bips::DerivationInfo;
-use crate::curve::{CurveType, PublicKeyType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey};
+use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
+use crate::Result;
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+/// Source to remember which format it comes from
+///
+/// NOTE: Identity related type is only for imToken App v2.x
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Source {
     Wif,
@@ -28,8 +25,8 @@ pub enum Source {
     RecoveredIdentity,
 }
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+/// Metadata of keystore, for presenting wallet data
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Metadata {
     pub name: String,
@@ -38,17 +35,11 @@ pub struct Metadata {
     pub timestamp: i64,
     #[serde(default = "metadata_default_source")]
     pub source: Source,
-
-}
-
-fn metadata_empty_str() -> String {
-    "".to_owned()
 }
 
 fn metadata_default_time() -> i64 {
     let start = SystemTime::now();
-    let since_the_epoch = start.duration_since(UNIX_EPOCH)
-        .expect("get timestamp");
+    let since_the_epoch = start.duration_since(UNIX_EPOCH).expect("get timestamp");
     since_the_epoch.as_secs() as i64
 }
 
@@ -59,7 +50,7 @@ fn metadata_default_source() -> Source {
 impl Default for Metadata {
     fn default() -> Self {
         Metadata {
-            name: String::from("BCH"),
+            name: String::from("Unknown"),
             password_hint: String::new(),
             timestamp: metadata_default_time(),
             source: Source::Mnemonic,
@@ -67,21 +58,18 @@ impl Default for Metadata {
     }
 }
 
-
+/// Chain address interface, for encapsulate derivation
 pub trait Address {
-//    type PubKey: PublicKey;
-
-     fn is_valid(address: &str) -> bool;
-//     fn new(address: &str) -> String;
+    fn is_valid(address: &str) -> bool;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
-     fn from_public_key(public_key: &impl PublicKey) -> Result<String>;
+    fn from_public_key(public_key: &impl PublicKey) -> Result<String>;
     // fn from_data(data: &[u8]) -> Box<dyn Address>;
 
-    fn extended_public_key_version() -> [u8;4] {
+    fn extended_public_key_version() -> [u8; 4] {
         // default use btc mainnet
         [0x04, 0x88, 0xb2, 0x1e]
     }
-    fn extended_private_key_version() -> [u8;4] {
+    fn extended_private_key_version() -> [u8; 4] {
         // default use btc mainnet
         [0x04, 0x88, 0xad, 0xe4]
     }
@@ -95,42 +83,53 @@ pub trait Address {
     }
 }
 
-enum ExtendedPubKeyType {
-    XPUB()
-}
-
+/// Blockchain basic config
+///
+/// NOTE: Unique key field is `symbol`
 pub struct CoinInfo {
     pub symbol: String,
     pub derivation_path: String,
     pub curve: CurveType,
-    pub pub_key_type: PublicKeyType,
 }
 
-// todo: process the extra field
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+/// Account that presents one blockchain wallet on a keystore
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Account {
     pub address: String,
     pub derivation_path: String,
-    pub extended_public_key: String,
     pub curve: CurveType,
-    pub pub_key_type: PublicKeyType,
     pub coin: String,
-    #[serde(skip_deserializing)]
-    pub extra: String,
+    pub extra: Value,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-#[derive(Serialize, Deserialize)]
+/// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
+pub trait Extra: Sized + serde::Serialize {
+    fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self>;
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EmptyExtra {}
+
+impl Extra for EmptyExtra {
+    fn from(_coin_info: &CoinInfo, _seed: &Seed) -> Result<Self> {
+        Ok(EmptyExtra {})
+    }
+}
+
+/// Keystore type
+///
+/// NOTE: mnemonic for HD wallet
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum KeyType {
     PrivateKey,
-    Mnemonic
+    Mnemonic,
 }
 
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
+/// Primary keystore type to store a root seed for deriving multi chain accounts.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HdKeystore {
     pub id: String,
@@ -144,6 +143,38 @@ pub struct HdKeystore {
 
 impl HdKeystore {
     pub const VERSION: i32 = 11000i32;
+
+    /// Derive account from a mnemonic phase
+    pub fn mnemonic_to_account<A: Address, E: Extra>(
+        coin_info: &CoinInfo,
+        mnemonic: &str,
+    ) -> Result<Account> {
+        let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English)
+            .map_err(|_| format_err!("invalid_mnemonic"))?;
+        let seed = bip39::Seed::new(&mnemonic, &"");
+        Self::derive_account_from_coin::<A, E>(coin_info, &seed)
+    }
+
+    pub fn derive_account_from_coin<A: Address, E: Extra>(
+        coin_info: &CoinInfo,
+        seed: &Seed,
+    ) -> Result<Account> {
+        let paths = vec![coin_info.derivation_path.clone()];
+        let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
+        let key = keys.first().ok_or(format_err!("derivate_failed"))?;
+        let pub_key = key.public_key();
+        let address = A::from_public_key(&pub_key)?;
+
+        let extra = E::from(coin_info, seed)?;
+        Ok(Account {
+            address,
+            derivation_path: coin_info.derivation_path.to_string(),
+            curve: coin_info.curve,
+            coin: coin_info.symbol.to_string(),
+            extra: serde_json::to_value(extra).expect("extra_error"),
+        })
+    }
+
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
         let mnemonic = bips::generate_mnemonic();
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
@@ -193,61 +224,59 @@ impl HdKeystore {
 
     pub fn seed(&self, password: &str) -> Result<Seed> {
         let mnemonic_str = self.mnemonic(password)?;
-        let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English).map_err(|_| format_err!("invalid_mnemonic"))?;
+        let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English)
+            .map_err(|_| format_err!("invalid_mnemonic"))?;
         Ok(bip39::Seed::new(&mnemonic, &""))
     }
 
-    fn key_at_paths_with_seed(&self, curve: CurveType, paths: &[impl AsRef<str>], seed: &Seed) -> Result<Vec<impl PrivateKey>> {
+    fn key_at_paths_with_seed(
+        curve: CurveType,
+        paths: &[impl AsRef<str>],
+        seed: &Seed,
+    ) -> Result<Vec<impl PrivateKey>> {
         match curve {
-            CurveType::SECP256k1 => {
-                Secp256k1Curve::key_at_paths_with_seed(paths, seed)
-            },
-            _ => Err(format_err!("{}", "unsupport_curve"))
+            CurveType::SECP256k1 => Secp256k1Curve::key_at_paths_with_seed(paths, seed),
+            _ => Err(format_err!("{}", "unsupport_curve")),
         }
     }
 
-    pub fn key_at_paths(&self, symbol: &str, paths: &[impl AsRef<str>], password: &str) -> Result<Vec<impl PrivateKey>> {
-        let acc = self.account(symbol).ok_or(format_err!("{}", "account_not_found"))?;
+    /// Derive a private key at a specific path, it's coin independent
+    pub fn key_at_paths(
+        &self,
+        symbol: &str,
+        paths: &[impl AsRef<str>],
+        password: &str,
+    ) -> Result<Vec<impl PrivateKey>> {
+        let acc = self
+            .account(symbol)
+            .ok_or(format_err!("{}", "account_not_found"))?;
         let seed = self.seed(password)?;
-        Ok(self.key_at_paths_with_seed(acc.curve, paths, &seed)?)
+        Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)
     }
 
-    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo, password: &str) -> Result<&Account>{
+    /// Derive an account on a specific coin
+    pub fn derive_coin<A: Address, E: Extra>(
+        &mut self,
+        coin_info: &CoinInfo,
+        password: &str,
+    ) -> Result<&Account> {
         let seed = self.seed(password)?;
-        let paths = vec![coin_info.derivation_path.clone()];
-        let keys = self.key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
-        let key = keys.first().ok_or(format_err!("derivate_failed"))?;
-        let pub_key = key.public_key();
-        let address = A::from_public_key(&pub_key)?;
-        let derivation_info = match coin_info.curve {
-            CurveType::SECP256k1 => {
-                Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)
-            },
-            _ => Err(format_err!("{}", "unsupport_chain"))
-        }?;
-        let xpub = A::extended_public_key(&derivation_info);
-
-        let account = Account {
-            address,
-            derivation_path: coin_info.derivation_path.to_string(),
-            extended_public_key: xpub,
-            curve: coin_info.curve,
-            pub_key_type: coin_info.pub_key_type,
-            coin: coin_info.symbol.to_string(),
-            extra: "".to_string()
-        };
+        let account = Self::derive_account_from_coin::<A, E>(coin_info, &seed)?;
         self.active_accounts.push(account);
         Ok(self.active_accounts.last().unwrap())
     }
 
+    /// Find an account by coin symbol
     pub fn account(&self, symbol: &str) -> Option<&Account> {
         self.active_accounts.iter().find(|acc| acc.coin == symbol)
     }
 
+    // TODO: rename to `to_json`
     pub fn json(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }
 
+    /// Load a json to create HD keystore instance
     pub fn load(json: &str) -> Result<HdKeystore> {
         let ret: HdKeystore = serde_json::from_str(json)?;
         Ok(ret)
@@ -259,33 +288,20 @@ mod tests {
     use super::*;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
-    static MNEMONIC: &'static str = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+    static MNEMONIC: &'static str =
+        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
 
     #[test]
-    pub fn it_works() {
-        assert_eq!(1, 1)
+    pub fn test_defualt_metadata() {
+        let md = Metadata::default();
+        assert_eq!(md.name, "Unknown");
     }
 
     #[test]
-    pub fn new_v3_mnemonic_keystore() {
-//        let meta = Metadata::default();
-        let keystore = V3MnemonicKeystore::new(&PASSWORD, &MNEMONIC, &ETHEREUM_PATH);
-
-        assert!(keystore.is_ok());
-
-        let keystore = keystore.unwrap();
-        assert_eq!("16Hp1Ga779iaTe1TxUFDEBqNCGvfh3EHDZ", keystore.address);
-
-//        println!(se)
-    }
-
-    #[test]
-    pub fn bch_address() {
-        match generate_address_from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy") {
-            Ok(address) => assert_eq!("17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV", address),
-            Err(_) => panic!("could not get address"),
-        };
+    pub fn test_derive_account() {
+        let hdks = HdKeystore::new("insecure", Metadata::default());
+        assert_eq!(0, hdks.active_accounts.len());
     }
 
     #[test]
@@ -294,7 +310,7 @@ mod tests {
         {
     "id": "41923f0c-427b-4e5f-a55c-a6a30d2ee0a5",
     "version": 11000,
-    "keyType": "mnemonic",
+    "keyType": "MNEMONIC",
     "crypto": {
         "cipher": "aes-128-ctr",
         "cipherparams": {
@@ -314,13 +330,14 @@ mod tests {
         {
             "address": "bc1q32nssyaw5ph0skae5nja0asmw2y2a6qw8f0p38",
             "derivationPath": "m/84'/0'/0'/0/0",
-            "extendedPublicKey": "zpub6qsMtyUc63xx7hDdL5MnLUT3jNV2opgWiugqiYc2CwFdgJPJeC57kQ6VxYiENXtgdDd5APjNHoTHDqj5iyitUo8i66fSsEguf8gPd6LtHkP",
-            "coin": "BTC"
+            "curve": "SECP256k1",
+            "coin": "BTC",
+            "extra": {}
         },
         {
             "address": "tokencorex66",
             "derivationPath": "m/84'/0'/0'/0/0",
-            "extendedPublicKey": "zpub6qsMtyUc63xx7hDdL5MnLUT3jNV2opgWiugqiYc2CwFdgJPJeC57kQ6VxYiENXtgdDd5APjNHoTHDqj5iyitUo8i66fSsEguf8gPd6LtHkP",
+            "curve": "SECP256k1",
             "coin": "EOS",
             "extra": [
                 {
@@ -341,11 +358,7 @@ mod tests {
     }
 }
 "#;
-//        let keystore = HdKeystore::load(&json);
         let keystore: HdKeystore = serde_json::from_str(&json).unwrap();
-
-//        assert!(keystore.is_ok());
         assert_eq!(keystore.active_accounts.len(), 2);
     }
 }
-

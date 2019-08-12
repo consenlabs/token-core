@@ -1,13 +1,9 @@
-
 use bitcoin_hashes::{sha256d, Hash};
 
 use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::{Transaction, TxIn};
 use bitcoin::consensus::encode::Encodable;
-use std::io::{Cursor, Read, Write};
-use bitcoin_hashes::hex::ToHex;
-use bitcoin_hashes::hex::FromHex;
-
+use std::io::Cursor;
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
 /// sufficient (in conjunction with a private key) to sign the transaction
@@ -64,9 +60,15 @@ impl SighashComponentsWithForkId {
 
     /// Compute the BIP143 sighash for a `SIGHASH_ALL` signature for the given
     /// input.
-    pub fn sighash_all(&self, txin: &TxIn, witness_script: &Script, value: u64, fork_id: u32) -> sha256d::Hash {
+    pub fn sighash_all(
+        &self,
+        txin: &TxIn,
+        witness_script: &Script,
+        value: u64,
+        fork_id: u32,
+    ) -> sha256d::Hash {
         let mut enc = sha256d::Hash::engine();
-        let mut encoder :Cursor<Vec<u8>>= Cursor::new(vec![]);
+        let mut encoder: Cursor<Vec<u8>> = Cursor::new(vec![]);
         self.tx_version.consensus_encode(&mut enc).unwrap();
         self.tx_version.consensus_encode(&mut encoder).unwrap();
 
@@ -74,14 +76,8 @@ impl SighashComponentsWithForkId {
         self.hash_prevouts.consensus_encode(&mut encoder).unwrap();
         self.hash_sequence.consensus_encode(&mut enc).unwrap();
         self.hash_sequence.consensus_encode(&mut encoder).unwrap();
-        txin
-            .previous_output
-            .consensus_encode(&mut enc)
-            .unwrap();
-        txin
-            .previous_output
-            .consensus_encode(&mut encoder)
-            .unwrap();
+        txin.previous_output.consensus_encode(&mut enc).unwrap();
+        txin.previous_output.consensus_encode(&mut encoder).unwrap();
         witness_script.consensus_encode(&mut enc).unwrap();
         witness_script.consensus_encode(&mut encoder).unwrap();
         value.consensus_encode(&mut enc).unwrap();
@@ -92,8 +88,8 @@ impl SighashComponentsWithForkId {
         self.hash_outputs.consensus_encode(&mut encoder).unwrap();
         self.tx_locktime.consensus_encode(&mut enc).unwrap();
         self.tx_locktime.consensus_encode(&mut encoder).unwrap();
-        fork_id.consensus_encode(&mut enc).unwrap();// hashtype
-        fork_id.consensus_encode(&mut encoder).unwrap();// hashtype
+        fork_id.consensus_encode(&mut enc).unwrap(); // hashtype
+        fork_id.consensus_encode(&mut encoder).unwrap(); // hashtype
         sha256d::Hash::hash(&encoder.into_inner())
     }
 
