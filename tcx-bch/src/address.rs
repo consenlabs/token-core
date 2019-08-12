@@ -16,6 +16,17 @@ impl BchAddress {
         let convert = Converter::new();
         convert.is_mainnet_addr(addr)
     }
+
+    pub fn convert_to_legacy_if_need(addr: &str) -> Result<String> {
+        let convert = Converter::new();
+        if !convert.is_legacy_addr(&addr) {
+            convert
+                .to_legacy_addr(&addr)
+                .map_err(|_| format_err!("convert failed"))
+        } else {
+            Ok(addr.to_string())
+        }
+    }
 }
 
 impl Address for BchAddress {

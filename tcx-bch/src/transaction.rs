@@ -70,6 +70,12 @@ impl BitcoinCashTransaction {
         }
     }
 
+    fn receive_addr(&self) -> Result<BtcAddress> {
+        let legacy_to = BchAddress::convert_to_legacy_if_need(&self.to)?;
+        BtcAddress::from_str(&legacy_to)
+            .map_err(|_| format_err!("create bch address failed: {}", legacy_to))
+    }
+
     fn sign_hash(&self, pri_key: &impl PrivateKey, hash: &[u8]) -> Result<Script> {
         let signature_bytes = pri_key.sign(&hash)?;
         let raw_bytes: Vec<u8> = vec![0x41];
@@ -107,7 +113,8 @@ impl BitcoinCashTransaction {
         );
 
         let mut tx_outs: Vec<TxOut> = vec![];
-        let receiver_addr = BtcAddress::from_str(&self.to)?;
+
+        let receiver_addr = self.receive_addr()?;
         let receiver_tx_out = TxOut {
             value: self.amount as u64,
             script_pubkey: receiver_addr.script_pubkey(),
