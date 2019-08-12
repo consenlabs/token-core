@@ -6,6 +6,7 @@
 
 *.o
 *.so
+!examples/android/app/src/main/jniLibs/**
 *.rlib
 *.dll
 .gdb_history
