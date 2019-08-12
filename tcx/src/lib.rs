@@ -157,11 +157,10 @@ pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *co
 
 fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let mnemonic = v["mnemonic"].as_str().unwrap();
-    let _path = v["path"].as_str().unwrap();
-    let _network = v["network"].as_str().unwrap();
+    let path = v["path"].as_str().unwrap();
+    // todo: can change path
     let chain_type = v["chainType"].as_str().unwrap();
-    let _password = "InsecurePassword";
-    let _meta: Metadata = serde_json::from_value(v.clone())?;
+
     let acc = match chain_type {
         "BCH" => {
             let coin_info = _coin_info_from_symbol("BCH")?;
@@ -188,7 +187,6 @@ pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) ->
 }
 
 fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
-    let _meta: Metadata = serde_json::from_value(v.clone())?;
     let password = v["password"].as_str().unwrap();
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let _path = v["path"].as_str().unwrap();
@@ -307,6 +305,34 @@ fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
 
     let ret = bch_tran.sign_transaction(&priv_keys, &extra.xpub)?;
     Ok(serde_json::to_string(&ret)?)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = crate::utils::landingpad(|| _calc_external_address(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _calc_external_address(v: &Value) -> Result<String> {
+    let w_id = v["id"].as_str().unwrap();
+    let external_id = v["externalIdx"].as_i64().expect("external_id");
+    let network = v["network"].as_str().unwrap();
+    let chain_type = v["chainType"].as_str().unwrap();
+
+    let mut map = KEYSTORE_MAP.write().unwrap();
+    let keystore = match map.get_mut(w_id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let account = keystore
+        .account(&chain_type)
+        .ok_or(format_err!("account_not_found, chainType: {}", &chain_type))?;
+
+    let extra = ExtendedPubKeyExtra::from(account.extra.clone());
+    let external_addr = extra.calc_external_address::<BchAddress>(external_id)?;
+    Ok(serde_json::to_string(&external_addr)?)
 }
 
 #[no_mangle]

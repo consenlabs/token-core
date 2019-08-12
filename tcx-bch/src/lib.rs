@@ -7,6 +7,7 @@ pub mod transaction;
 
 use core::result;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use tcx_chain::curve::{CurveType, Secp256k1Curve};
 use tcx_chain::keystore::Address;
 use tcx_chain::keystore::{CoinInfo, Extra};
@@ -21,11 +22,23 @@ extern crate num_traits;
 pub type Result<T> = result::Result<T, failure::Error>;
 
 pub use address::{BchAddress, BchTestNetAddress};
+use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
+use secp256k1::Secp256k1;
 use serde_json::Value;
+use tcx_crypto::aes::ctr::encrypt_nopadding;
 pub use transaction::{BitcoinCashTransaction, Utxo};
 
 const SYMBOL: &'static str = "BCH";
 const PATH: &'static str = "m/44'/145'/0'/0/0";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalAddress {
+    pub address: String,
+    #[serde(alias = "type")]
+    pub addr_type: String,
+    pub derived_path: String,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -42,6 +55,30 @@ impl Extra for ExtendedPubKeyExtra {
         let derivation_info = Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)?;
         let xpub = address::BchAddress::extended_public_key(&derivation_info);
         Ok(ExtendedPubKeyExtra { xpub })
+    }
+}
+
+impl ExtendedPubKeyExtra {
+    //    fn enc_xpub(&self) -> Result<String> {
+    //        let hex = encrypt_nopadding(&self.xpub.as_bytes())
+    //    }
+
+    pub fn calc_external_address<A: Address>(&self, idx: i64) -> Result<ExternalAddress> {
+        let extended_pub_key = ExtendedPubKey::from_str(&self.xpub)?;
+        let s = Secp256k1::new();
+        let index_pub = extended_pub_key.derive_pub(
+            &s,
+            &vec![
+                ChildNumber::from_normal_idx(0).unwrap(),
+                ChildNumber::from_normal_idx(idx as u32).unwrap(),
+            ],
+        )?;
+        let address = A::from_public_key(&index_pub.public_key)?;
+        Ok(ExternalAddress {
+            address,
+            addr_type: "EXTERNAL".to_string(),
+            derived_path: format!("0/{}", idx).to_string(),
+        })
     }
 }
 
