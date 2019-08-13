@@ -18,5 +18,14 @@ pub use curve::{
 };
 pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
 pub use signer::{TransactionSinger, TxSignResult};
+use std::str::FromStr;
+
+use tcx_primitive::key::Public;
+
+pub trait Address1: Sized + FromStr + Into<String> {
+    type Error;
+
+    fn from_public<T: Public>(public: &T) -> core::result::Result<Self, Self::Error>;
+}
 
 pub type Result<T> = result::Result<T, failure::Error>;

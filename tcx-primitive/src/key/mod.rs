@@ -1,14 +1,15 @@
-mod secp256k1;
 mod derive;
+pub mod secp256k1;
 
+use crate::U256;
+use ::secp256k1::{RecoverableSignature, Signature};
 use core::result::Result;
 use std::str::FromStr;
-use crate::U256;
-use ::secp256k1::{Signature, RecoverableSignature};
+
+pub use derive::{Derive, DeriveJunction};
 
 /// An identifier for a type of cryptographic key.
 ///
-/// 0..=2048 is
 pub type KeyTypeId = u32;
 
 pub mod key_types {
@@ -39,13 +40,13 @@ pub enum KeyError {
 pub trait EcdsaSigner {
     type Error;
 
-    fn sign(&self, data: &[u8]) -> Result<Signature, Self::Error> ;
+    fn sign(&self, data: &[u8]) -> Result<Signature, Self::Error>;
 }
 
 pub trait EcdsaRecoverableSigner {
     type Error;
 
-    fn sign(&self, data: &[u8]) -> Result<RecoverableSignature, Self::Error> ;
+    fn sign(&self, data: &[u8]) -> Result<RecoverableSignature, Self::Error>;
 }
 
 pub trait TypedKey {
@@ -75,6 +76,3 @@ pub trait Pair: TypedKey + Sized + FromStr {
 
     fn public(&self) -> Self::Public;
 }
-
-
-

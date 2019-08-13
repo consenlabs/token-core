@@ -1,14 +1,18 @@
-use super::{KeyTypeId, key_types, TypedKey, Public as TraitPublic, Pair as TraitPair, EcdsaRecoverableSigner as TraitEcdsaRecoverableSigner, EcdsaSigner as TraitEcdsaSigner, KeyError};
+use super::{
+    key_types, EcdsaRecoverableSigner as TraitEcdsaRecoverableSigner,
+    EcdsaSigner as TraitEcdsaSigner, KeyError, KeyTypeId, Pair as TraitPair, Public as TraitPublic,
+    TypedKey,
+};
 
-use secp256k1::{Secp256k1, Message, Signature, RecoverableSignature};
+use bitcoin::network::constants::Network;
+use bitcoin::util::bip32::{Error as Bip32Error, ExtendedPrivKey, ExtendedPubKey};
+use secp256k1::{Message, RecoverableSignature, Secp256k1, Signature};
+use std::convert::TryInto;
 use std::fmt;
 use std::str::FromStr;
-use bitcoin::util::bip32::{ExtendedPubKey, ExtendedPrivKey, Error as Bip32Error};
-use bitcoin::network::constants::Network;
-use std::convert::TryInto;
 
-use lazy_static::lazy_static;
 use crate::key::derive::*;
+use lazy_static::lazy_static;
 
 lazy_static! {
     /// Lazily initialized secp256k1 engine
@@ -40,14 +44,17 @@ fn transform_secp256k1_error(err: secp256k1::Error) -> KeyError {
 
 pub type Seed = Vec<u8>;
 
-pub struct Public(ExtendedPubKey);
+pub struct Public(pub ExtendedPubKey);
 
-pub struct Pair(ExtendedPrivKey);
+pub struct Pair(pub ExtendedPrivKey);
 
 impl Derive for Public {
     type Error = KeyError;
 
-    fn derive<Iter: Iterator<Item=DeriveJunction>>(&self, path: Iter) -> Result<Self, Self::Error> {
+    fn derive<Iter: Iterator<Item = DeriveJunction>>(
+        &self,
+        path: Iter,
+    ) -> Result<Self, Self::Error> {
         let mut extended_key = self.0;
 
         for j in path {
@@ -57,7 +64,7 @@ impl Derive for Public {
                 Ok(r) => extended_key = r,
                 Err(e) => {
                     return Err(transform_bip32_error(e));
-                },
+                }
             }
         }
 
@@ -68,8 +75,8 @@ impl Derive for Public {
 impl Derive for Pair {
     type Error = KeyError;
 
-    fn derive<T: Iterator<Item=DeriveJunction>>(&self, path: T) -> Result<Self, Self::Error> {
-        let mut extended_key= self.0;
+    fn derive<T: Iterator<Item = DeriveJunction>>(&self, path: T) -> Result<Self, Self::Error> {
+        let mut extended_key = self.0;
 
         for j in path {
             let child_number = j.try_into()?;
@@ -78,7 +85,7 @@ impl Derive for Pair {
                 Ok(r) => extended_key = r,
                 Err(e) => {
                     return Err(transform_bip32_error(e));
-                },
+                }
             }
         }
 
@@ -102,7 +109,7 @@ impl Pair {
     pub fn new_pair(network: Network, seed: &[u8]) -> Result<Pair, KeyError> {
         match ExtendedPrivKey::new_master(network, seed) {
             Ok(r) => Ok(Pair(r)),
-            Err(e) => Err(transform_bip32_error(e))
+            Err(e) => Err(transform_bip32_error(e)),
         }
     }
 }
@@ -125,7 +132,7 @@ impl TraitPair for Pair {
     }
 
     fn public(&self) -> Public {
-        let pub_key = ExtendedPubKey::from_private(&SECP256K1_ENGINE,&self.0);
+        let pub_key = ExtendedPubKey::from_private(&SECP256K1_ENGINE, &self.0);
 
         Public(pub_key)
     }
@@ -217,5 +224,3 @@ mod tests {
 
     //TODO add more test
 }
-
-

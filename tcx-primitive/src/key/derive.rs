@@ -10,7 +10,10 @@ pub enum DeriveJunction {
 pub trait Derive: Sized {
     type Error;
 
-    fn derive<Iter: Iterator<Item=DeriveJunction>>(&self, path: Iter) -> Result<Self, Self::Error> ;
+    fn derive<Iter: Iterator<Item = DeriveJunction>>(
+        &self,
+        path: Iter,
+    ) -> Result<Self, Self::Error>;
 }
 
 // TODO add parity string derivation path
@@ -27,14 +30,14 @@ impl DeriveJunction {
     pub fn is_soft(&self) -> bool {
         match *self {
             DeriveJunction::Soft(_) => true,
-            _ => false
+            _ => false,
         }
     }
 
     pub fn is_hard(&self) -> bool {
         match *self {
             DeriveJunction::Hard(_) => true,
-            _ => false
+            _ => false,
         }
     }
 }
@@ -53,4 +56,3 @@ impl TryInto<ChildNumber> for DeriveJunction {
         }
     }
 }
-

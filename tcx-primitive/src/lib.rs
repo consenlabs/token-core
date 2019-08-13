@@ -1,5 +1,4 @@
-mod key;
+pub mod key;
 mod types;
 
-pub use types::{U256, U128, U160};
-
+pub use types::{U128, U160, U256};
