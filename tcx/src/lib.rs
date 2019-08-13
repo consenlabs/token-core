@@ -12,13 +12,13 @@ use crate::utils::landingpad;
 
 use crate::utils::set_panic_hook;
 use core::borrow::Borrow;
-use serde_json::Value;
+use serde_json::json;
+use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::RwLock;
 use tcx_bch::{BchAddress, BitcoinCashTransaction, ExtendedPubKeyExtra, Utxo};
-use tcx_chain::{CoinInfo, CurveType, HdKeystore, Metadata};
-
+use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source};
 // #[link(name = "TrezorCrypto")]
 // extern {
 //     fn mnemonic_generate(strength: c_int, mnemonic: *mut c_char) -> c_int;
@@ -36,6 +36,8 @@ extern crate lazy_static;
 lazy_static! {
     static ref KEYSTORE_MAP: RwLock<HashMap<String, HdKeystore>> = RwLock::new(HashMap::new());
     static ref WALLET_FILE_DIR: RwLock<String> = RwLock::new(String::new());
+    static ref XPubCommonKey128: RwLock<String> = RwLock::new(String::new());
+    static ref XPubCommonIv: RwLock<String> = RwLock::new(String::new());
 }
 
 fn cache_keystore(keystore: HdKeystore) {
@@ -126,7 +128,13 @@ pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
 
 fn _init_token_core_x(v: &Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().unwrap();
+    let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
+    let xpub_common_iv = v["xpubCommonKeyIv"].as_str().expect("XPubCommonKeyIv");
     *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
+
+    *XPubCommonKey128.write().unwrap() = xpub_common_key.to_string();
+    *XPubCommonIv.write().unwrap() = xpub_common_iv.to_string();
+
     let p = Path::new(file_dir);
     let walk_dir = std::fs::read_dir(p).unwrap();
     for entry in walk_dir {
@@ -161,7 +169,7 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     // todo: can change path
     let chain_type = v["chainType"].as_str().unwrap();
 
-    let acc = match chain_type {
+    let (acc, _) = match chain_type {
         "BCH" => {
             let coin_info = _coin_info_from_symbol("BCH")?;
             HdKeystore::mnemonic_to_account::<BchAddress, ExtendedPubKeyExtra>(&coin_info, mnemonic)
@@ -195,7 +203,9 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let chain_type = v["chainType"].as_str().unwrap();
     let meta: Metadata = serde_json::from_value(v.clone())?;
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
-    let account = match chain_type {
+    let mut pw = Map::new();
+
+    let (account, extra) = match chain_type {
         "BCH" => {
             let coin_info = _coin_info_from_symbol("BCH")?;
             ks.derive_coin::<BchAddress, ExtendedPubKeyExtra>(&coin_info, password)
@@ -213,9 +223,45 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     }
 
     _flush_keystore(&ks);
-    let json = ks.json();
+    let account = &ks.account(chain_type).expect("account");
+    let mut pw = _presented_wallet(&ks, &account)?;
+
+    match chain_type {
+        "BCH" => {
+            let key = XPubCommonKey128.read().unwrap();
+            let iv = XPubCommonIv.read().unwrap();
+            let enc_xpub = extra.enc_xpub(&*key, &*iv)?;
+            pw.insert("encXPub".to_string(), json!(enc_xpub));
+
+            let external_address = extra.calc_external_address::<BchAddress>(0)?;
+            pw.insert("externalAddress".to_string(), json!(external_address));
+        }
+        _ => {}
+    }
+
+    let json = serde_json::to_string(&pw)?;
     cache_keystore(ks);
+
     Ok(json)
+}
+
+struct PresentedWallet {
+    id: String,
+    address: String,
+    created_at: i64,
+    source: Source,
+    chain_type: String,
+}
+
+fn _presented_wallet(keystore: &HdKeystore, acc: &Account) -> Result<Map<String, Value>> {
+    let mut pw = Map::new();
+    pw.insert("id".to_string(), json!(keystore.id.to_string()));
+    pw.insert("address".to_string(), json!(acc.address.to_string()));
+    pw.insert("createdAt".to_string(), json!(keystore.meta.timestamp));
+    pw.insert("source".to_string(), json!(keystore.meta.source));
+    pw.insert("chainType".to_string(), json!(acc.coin.to_string()));
+
+    Ok(pw)
 }
 
 fn _flush_keystore(ks: &HdKeystore) {

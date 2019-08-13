@@ -8,7 +8,8 @@ edition = "2018"
 tcx-crypto = { path = "../tcx-crypto" }
 tcx-chain = { path = "../tcx-chain" }
 bch_addr = "0.1.0"
-hex-literal = "0.1.4"
+hex = "0.3.2"
+base64 = "0.10.1"
 #bitcoin = { path = "../../../rust-bitcoin"}
 #secp256k1 = { path = "../../../rust-secp256k1"}
 bitcoin = "0.18.0"
