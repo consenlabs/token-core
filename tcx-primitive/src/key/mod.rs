@@ -3,6 +3,8 @@ mod derive;
 
 use core::result::Result;
 use std::str::FromStr;
+use crate::U256;
+use ::secp256k1::{Signature, RecoverableSignature};
 
 /// An identifier for a type of cryptographic key.
 ///
@@ -28,7 +30,22 @@ pub enum KeyError {
     InvalidBase58,
     InvalidPrivateKey,
     InvalidPublicKey,
+    InvalidMessage,
+    InvalidRecoveryId,
+    InvalidTweak,
     Unknown,
+}
+
+pub trait EcdsaSigner {
+    type Error;
+
+    fn sign(&self, data: &[u8]) -> Result<Signature, Self::Error> ;
+}
+
+pub trait EcdsaRecoverableSigner {
+    type Error;
+
+    fn sign(&self, data: &[u8]) -> Result<RecoverableSignature, Self::Error> ;
 }
 
 pub trait TypedKey {

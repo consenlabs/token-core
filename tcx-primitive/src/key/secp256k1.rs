@@ -1,6 +1,6 @@
-use super::{KeyTypeId, key_types, TypedKey, Public as TraitPublic, Pair as TraitPair, KeyError};
+use super::{KeyTypeId, key_types, TypedKey, Public as TraitPublic, Pair as TraitPair, EcdsaRecoverableSigner as TraitEcdsaRecoverableSigner, EcdsaSigner as TraitEcdsaSigner, KeyError};
 
-use secp256k1::{Secp256k1, Message};
+use secp256k1::{Secp256k1, Message, Signature, RecoverableSignature};
 use std::fmt;
 use std::str::FromStr;
 use bitcoin::util::bip32::{ExtendedPubKey, ExtendedPrivKey, Error as Bip32Error};
@@ -23,6 +23,18 @@ fn transform_bip32_error(err: Bip32Error) -> KeyError {
         Bip32Error::InvalidChildNumber(_) => KeyError::InvalidChildNumber,
         Bip32Error::InvalidChildNumberFormat => KeyError::InvalidChildNumber,
         Bip32Error::InvalidDerivationPathFormat => KeyError::InvalidDerivationPathFormat,
+    }
+}
+
+fn transform_secp256k1_error(err: secp256k1::Error) -> KeyError {
+    match err {
+        secp256k1::Error::IncorrectSignature => KeyError::InvalidSignature,
+        secp256k1::Error::InvalidMessage => KeyError::InvalidMessage,
+        secp256k1::Error::InvalidPublicKey => KeyError::InvalidPublicKey,
+        secp256k1::Error::InvalidSignature => KeyError::InvalidSignature,
+        secp256k1::Error::InvalidSecretKey => KeyError::InvalidPrivateKey,
+        secp256k1::Error::InvalidRecoveryId => KeyError::InvalidRecoveryId,
+        secp256k1::Error::InvalidTweak => KeyError::InvalidTweak,
     }
 }
 
@@ -174,6 +186,30 @@ impl TypedKey for Public {
 
 impl TypedKey for Pair {
     const KEY_TYPE: KeyTypeId = key_types::SECP256K1;
+}
+
+pub struct EcdsaSigner(Pair);
+
+impl TraitEcdsaSigner for EcdsaSigner {
+    type Error = KeyError;
+
+    fn sign(&self, data: &[u8]) -> Result<Signature, Self::Error> {
+        let msg = Message::from_slice(data).map_err(transform_secp256k1_error)?;
+
+        Ok(SECP256K1_ENGINE.sign(&msg, &(self.0).0.private_key.key))
+    }
+}
+
+pub struct EcdsaRecoverableSigner(Pair);
+
+impl TraitEcdsaRecoverableSigner for EcdsaRecoverableSigner {
+    type Error = KeyError;
+
+    fn sign(&self, data: &[u8]) -> Result<RecoverableSignature, Self::Error> {
+        let msg = Message::from_slice(data).map_err(transform_secp256k1_error)?;
+
+        Ok(SECP256K1_ENGINE.sign_recoverable(&msg, &(self.0).0.private_key.key))
+    }
 }
 
 #[cfg(test)]
