@@ -25,6 +25,7 @@ pub use address::{BchAddress, BchTestNetAddress};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
 use secp256k1::Secp256k1;
 use serde_json::Value;
+use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::aes::ctr::encrypt_nopadding;
 pub use transaction::{BitcoinCashTransaction, Utxo};
 
@@ -35,7 +36,7 @@ const PATH: &'static str = "m/44'/145'/0'/0/0";
 #[serde(rename_all = "camelCase")]
 pub struct ExternalAddress {
     pub address: String,
-    #[serde(alias = "type")]
+    #[serde(rename = "type")]
     pub addr_type: String,
     pub derived_path: String,
 }
@@ -59,9 +60,12 @@ impl Extra for ExtendedPubKeyExtra {
 }
 
 impl ExtendedPubKeyExtra {
-    //    fn enc_xpub(&self) -> Result<String> {
-    //        let hex = encrypt_nopadding(&self.xpub.as_bytes())
-    //    }
+    pub fn enc_xpub(&self, key: &str, iv: &str) -> Result<String> {
+        let key_bytes = hex::decode(key)?;
+        let iv_bytes = hex::decode(iv)?;
+        let encrypted = encrypt_pkcs7(&self.xpub.as_bytes(), &key_bytes, &iv_bytes);
+        Ok(base64::encode(&encrypted))
+    }
 
     pub fn calc_external_address<A: Address>(&self, idx: i64) -> Result<ExternalAddress> {
         let extended_pub_key = ExtendedPubKey::from_str(&self.xpub)?;
@@ -170,5 +174,4 @@ mod tests {
         let xpub = extra["xpub"].as_str().expect("xpub");
         assert_eq!("xpub6Bmkv3mmRZZWoFSBdj9vDMqR2PCPSP6DEj8u3bBuv44g3Ncnro6cPVqZAw6wTEcxHQuodkuJG4EmAinqrrRXGsN3HHnRRMtAvzfYTiBATV1", xpub)
     }
-
 }

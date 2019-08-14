@@ -16,7 +16,7 @@ use std::str::FromStr;
 /// Source to remember which format it comes from
 ///
 /// NOTE: Identity related type is only for imToken App v2.x
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Source {
     Wif,
@@ -106,7 +106,7 @@ pub struct Account {
 }
 
 /// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
-pub trait Extra: Sized + serde::Serialize {
+pub trait Extra: Sized + serde::Serialize + Clone {
     fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self>;
 }
 
@@ -139,7 +139,7 @@ pub struct HdKeystore {
     pub key_type: KeyType,
     pub crypto: Crypto<Pbkdf2Params>,
     pub active_accounts: Vec<Account>,
-    #[serde(alias = "imTokenMeta")]
+    #[serde(rename = "imTokenMeta")]
     pub meta: Metadata,
 }
 
@@ -150,7 +150,7 @@ impl HdKeystore {
     pub fn mnemonic_to_account<A: Address, E: Extra>(
         coin_info: &CoinInfo,
         mnemonic: &str,
-    ) -> Result<Account> {
+    ) -> Result<(Account, E)> {
         let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English)
             .map_err(|_| format_err!("invalid_mnemonic"))?;
         let seed = bip39::Seed::new(&mnemonic, &"");
@@ -160,7 +160,7 @@ impl HdKeystore {
     pub fn derive_account_from_coin<A: Address, E: Extra>(
         coin_info: &CoinInfo,
         seed: &Seed,
-    ) -> Result<Account> {
+    ) -> Result<(Account, E)> {
         let paths = vec![coin_info.derivation_path.clone()];
         let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
@@ -168,13 +168,14 @@ impl HdKeystore {
         let address = A::from_public_key(&pub_key)?;
 
         let extra = E::from(coin_info, seed)?;
-        Ok(Account {
+        let acc = Account {
             address,
             derivation_path: coin_info.derivation_path.to_string(),
             curve: coin_info.curve,
             coin: coin_info.symbol.to_string(),
-            extra: serde_json::to_value(extra).expect("extra_error"),
-        })
+            extra: serde_json::to_value(extra.clone()).expect("extra_error"),
+        };
+        Ok((acc, extra))
     }
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
@@ -275,11 +276,11 @@ impl HdKeystore {
         &mut self,
         coin_info: &CoinInfo,
         password: &str,
-    ) -> Result<&Account> {
+    ) -> Result<(&Account, E)> {
         let seed = self.seed(password)?;
-        let account = Self::derive_account_from_coin::<A, E>(coin_info, &seed)?;
+        let (account, extra) = Self::derive_account_from_coin::<A, E>(coin_info, &seed)?;
         self.active_accounts.push(account);
-        Ok(self.active_accounts.last().unwrap())
+        Ok((self.active_accounts.last().unwrap(), extra))
     }
 
     /// Find an account by coin symbol
