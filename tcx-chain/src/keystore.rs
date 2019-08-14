@@ -246,15 +246,18 @@ impl HdKeystore {
     pub fn get_pair<T: Pair>(&self, path: &str, password: &str) -> Result<T> {
         let seed = self.seed(password)?;
 
-        /*        match T::from_seed_slice(seed.as_bytes()) {
+        match T::from_seed_slice(seed.as_bytes()) {
             Ok(r) => {
-                let p = Der
-                Ok(r.derive(DerivePath::from_str(path)?.into_iter()).map_err(|_| format_err!("{}", "can_not_derive_child"))?)
-            },
+                if let Ok(p) = DerivePath::from_str(path) {
+                    if let Ok(ret) = r.derive(p.into_iter()) {
+                        return Ok(ret);
+                    }
+                }
+
+                Err(format_err!("{}", "can_not_derive_pair_from_seed"))
+            }
             _ => Err(format_err!("{}", "can_not_derive_pair_from_seed")),
         }
-        */
-        unimplemented!()
     }
 
     /// Derive a private key at a specific path, it's coin independent
