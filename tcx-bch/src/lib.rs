@@ -25,6 +25,7 @@ pub use address::{BchAddress, BchTestNetAddress};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
 use secp256k1::Secp256k1;
 use serde_json::Value;
+use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::aes::ctr::encrypt_nopadding;
 pub use transaction::{BitcoinCashTransaction, Utxo};
 
@@ -35,7 +36,7 @@ const PATH: &'static str = "m/44'/145'/0'/0/0";
 #[serde(rename_all = "camelCase")]
 pub struct ExternalAddress {
     pub address: String,
-    #[serde(alias = "type")]
+    #[serde(rename = "type")]
     pub addr_type: String,
     pub derived_path: String,
 }
@@ -62,7 +63,7 @@ impl ExtendedPubKeyExtra {
     pub fn enc_xpub(&self, key: &str, iv: &str) -> Result<String> {
         let key_bytes = hex::decode(key)?;
         let iv_bytes = hex::decode(iv)?;
-        let encrypted = encrypt_nopadding(&self.xpub.as_bytes(), &key_bytes, &iv_bytes);
+        let encrypted = encrypt_pkcs7(&self.xpub.as_bytes(), &key_bytes, &iv_bytes);
         Ok(base64::encode(&encrypted))
     }
 

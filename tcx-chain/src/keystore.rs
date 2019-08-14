@@ -137,7 +137,7 @@ pub struct HdKeystore {
     pub key_type: KeyType,
     pub crypto: Crypto<Pbkdf2Params>,
     pub active_accounts: Vec<Account>,
-    #[serde(alias = "imTokenMeta")]
+    #[serde(rename = "imTokenMeta")]
     pub meta: Metadata,
 }
 

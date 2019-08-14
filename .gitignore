@@ -21,3 +21,5 @@ generated/
 *.iml
 *.swp
 *.swo
+
+test-data/**
