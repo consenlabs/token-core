@@ -6,7 +6,7 @@ use ::secp256k1::{RecoverableSignature, Signature};
 use core::result::Result;
 use std::str::FromStr;
 
-pub use derive::{Derive, DeriveJunction};
+pub use derive::{Derive, DeriveJunction, DerivePath};
 
 /// An identifier for a type of cryptographic key.
 ///
@@ -21,6 +21,7 @@ pub mod key_types {
 #[allow(dead_code)]
 pub enum KeyError {
     InvalidEcdsa,
+    InvalidChildNumberFormat,
     OverflowChildNumber,
     InvalidDerivationPathFormat,
     InvalidKeyLength,
@@ -53,20 +54,16 @@ pub trait TypedKey {
     const KEY_TYPE: KeyTypeId;
 }
 
-pub trait Public: AsRef<[u8]> + TypedKey + Sized + FromStr {
-    type Error;
-
+pub trait Public: AsRef<[u8]> + TypedKey + Sized + FromStr + Derive {
     fn from_slice(data: &[u8]) -> Result<Self, Self::Error>;
 
     fn as_slice(&self) -> &[u8];
 }
 
-pub trait Pair: TypedKey + Sized + FromStr {
+pub trait Pair: TypedKey + Sized + FromStr + Derive {
     type Public: Public;
 
     type Seed: Default + AsRef<[u8]> + AsMut<[u8]> + Clone;
-
-    type Error;
 
     fn from_slice(data: &[u8]) -> Result<Self, Self::Error>;
 

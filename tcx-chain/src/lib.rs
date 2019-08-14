@@ -22,10 +22,11 @@ use std::str::FromStr;
 
 use tcx_primitive::key::Public;
 
-pub trait Address1: Sized + FromStr + Into<String> {
+pub trait Address1: Sized {
     type Error;
+    type Public: Public;
 
-    fn from_public<T: Public>(public: &T) -> core::result::Result<Self, Self::Error>;
+    fn from_public(public: &Self::Public) -> core::result::Result<Self, Self::Error>;
 }
 
 pub type Result<T> = result::Result<T, failure::Error>;

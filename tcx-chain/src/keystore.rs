@@ -5,11 +5,13 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use tcx_crypto::{Crypto, Pbkdf2Params};
+use tcx_primitive::key::{DerivePath, Pair};
 
 use crate::bips;
 use crate::bips::DerivationInfo;
 use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
 use crate::Result;
+use std::str::FromStr;
 
 /// Source to remember which format it comes from
 ///
@@ -238,6 +240,20 @@ impl HdKeystore {
             CurveType::SECP256k1 => Secp256k1Curve::key_at_paths_with_seed(paths, seed),
             _ => Err(format_err!("{}", "unsupport_curve")),
         }
+    }
+
+    pub fn get_pair<T: Pair>(&self, path: &str, password: &str) -> Result<T> {
+        let seed = self.seed(password)?;
+
+        /*        match T::from_seed_slice(seed.as_bytes()) {
+            Ok(r) => {
+                let p = Der
+                Ok(r.derive(DerivePath::from_str(path)?.into_iter()).map_err(|_| format_err!("{}", "can_not_derive_child"))?)
+            },
+            _ => Err(format_err!("{}", "can_not_derive_pair_from_seed")),
+        }
+        */
+        unimplemented!()
     }
 
     /// Derive a private key at a specific path, it's coin independent

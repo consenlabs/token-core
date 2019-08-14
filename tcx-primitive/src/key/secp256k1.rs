@@ -117,7 +117,6 @@ impl Pair {
 impl TraitPair for Pair {
     type Public = Public;
     type Seed = Seed;
-    type Error = KeyError;
 
     fn from_slice(_: &[u8]) -> Result<Self, KeyError> {
         unimplemented!()
@@ -151,8 +150,6 @@ impl std::fmt::Debug for Public {
 }
 
 impl TraitPublic for Public {
-    type Error = KeyError;
-
     fn from_slice(data: &[u8]) -> Result<Self, Self::Error> {
         //TODO from
         unimplemented!()

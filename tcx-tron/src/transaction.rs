@@ -1,10 +1,11 @@
 use tcx_chain::{TransactionSinger as TransactionSignerTrait, TransactionSinger};
 
 use failure::Error;
-use protos::Transaction;
+//use protos::Transaction;
 
 pub struct TransactionBuilder {}
 
+/*
 impl TransactionBuilder {
     fn build(&self) -> Transaction {
         Transaction {}
@@ -20,3 +21,4 @@ impl TransactionSignerTrait for TransactionSinger {
         unimplemented!()
     }
 }
+*/
