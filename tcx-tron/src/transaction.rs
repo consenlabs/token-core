@@ -1,9 +1,31 @@
-use tcx_chain::{TransactionSinger as TransactionSignerTrait, TransactionSinger};
+use tcx_chain::{TransactionSigner as TraitTransactionSigner, SignedTransaction as TraitSignedTransaction, Transaction as TraitTransaction, HdKeystore};
 
 use failure::Error;
-//use protos::Transaction;
+use super::Address;
 
-pub struct TransactionBuilder {}
+pub struct Transaction {
+
+}
+
+impl TraitTransaction for Transaction {
+
+}
+
+pub struct SignedTransaction {
+
+}
+
+impl TraitSignedTransaction for SignedTransaction {
+}
+
+
+impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
+    fn sign(&self, tx: &Transaction) -> SignedTransaction {
+        SignedTransaction {}
+    }
+}
+
+
 
 /*
 impl TransactionBuilder {

@@ -17,7 +17,7 @@ pub use curve::{
     CurveType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey, Secp256k1PublicKey,
 };
 pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
-pub use signer::{TransactionSinger, TxSignResult};
+pub use signer::{TransactionSigner, Transaction, SignedTransaction, TxSignResult};
 use std::str::FromStr;
 
 use tcx_primitive::key::Public;

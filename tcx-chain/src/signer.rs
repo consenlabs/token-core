@@ -11,7 +11,7 @@ pub struct TxSignResult {
     pub tx_hash: String,
     pub wtx_id: String,
 }
-
+/*
 pub trait TransactionSinger {
     fn sign_transaction(
         &self,
@@ -20,3 +20,16 @@ pub trait TransactionSinger {
         password: &str,
     ) -> Result<String>;
 }
+*/
+
+pub trait Transaction: Sized {
+}
+
+pub trait SignedTransaction: Sized {
+}
+
+pub trait TransactionSigner<Input: Transaction, Output: SignedTransaction> {
+    fn sign(&self, tx: &Input) -> Output;
+}
+
+

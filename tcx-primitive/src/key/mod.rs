@@ -1,7 +1,8 @@
 mod derive;
 pub mod secp256k1;
 
-use crate::U256;
+use crate::Error;
+
 use ::secp256k1::{RecoverableSignature, Signature};
 use core::result::Result;
 use std::str::FromStr;
@@ -17,6 +18,8 @@ pub mod key_types {
 
     pub const SECP256K1: KeyTypeId = 10;
 }
+
+pub mod key_errors {}
 
 #[allow(dead_code)]
 pub enum KeyError {
