@@ -22,6 +22,7 @@ pub mod key_types {
 pub mod key_errors {}
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub enum KeyError {
     InvalidEcdsa,
     InvalidChildNumberFormat,
@@ -32,6 +33,7 @@ pub enum KeyError {
     InvalidSignatureLength,
     InvalidChildNumber,
     CannotDeriveFromHardenedKey,
+    CannotDeriveKey,
     InvalidBase58,
     InvalidPrivateKey,
     InvalidPublicKey,
@@ -41,16 +43,10 @@ pub enum KeyError {
     Unknown,
 }
 
-pub trait EcdsaSigner {
+pub trait Signer<U> {
     type Error;
 
-    fn sign(&self, data: &[u8]) -> Result<Signature, Self::Error>;
-}
-
-pub trait EcdsaRecoverableSigner {
-    type Error;
-
-    fn sign(&self, data: &[u8]) -> Result<RecoverableSignature, Self::Error>;
+    fn sign<T: AsRef<[u8]>>(&self, data: T) -> Result<U, Self::Error>;
 }
 
 pub trait TypedKey {
