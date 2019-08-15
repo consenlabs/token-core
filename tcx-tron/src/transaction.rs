@@ -1,31 +1,24 @@
-use tcx_chain::{TransactionSigner as TraitTransactionSigner, SignedTransaction as TraitSignedTransaction, Transaction as TraitTransaction, HdKeystore};
+use tcx_chain::{
+    HdKeystore, SignedTransaction as TraitSignedTransaction, Transaction as TraitTransaction,
+    TransactionSigner as TraitTransactionSigner,
+};
 
-use failure::Error;
 use super::Address;
+use failure::Error;
 
-pub struct Transaction {
+pub struct Transaction {}
 
-}
+impl TraitTransaction for Transaction {}
 
-impl TraitTransaction for Transaction {
+pub struct SignedTransaction {}
 
-}
-
-pub struct SignedTransaction {
-
-}
-
-impl TraitSignedTransaction for SignedTransaction {
-}
-
+impl TraitSignedTransaction for SignedTransaction {}
 
 impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
     fn sign(&self, tx: &Transaction) -> SignedTransaction {
         SignedTransaction {}
     }
 }
-
-
 
 /*
 impl TransactionBuilder {

@@ -22,14 +22,10 @@ pub trait TransactionSinger {
 }
 */
 
-pub trait Transaction: Sized {
-}
+pub trait Transaction: Sized {}
 
-pub trait SignedTransaction: Sized {
-}
+pub trait SignedTransaction: Sized {}
 
 pub trait TransactionSigner<Input: Transaction, Output: SignedTransaction> {
     fn sign(&self, tx: &Input) -> Output;
 }
-
-
