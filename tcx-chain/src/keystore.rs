@@ -291,7 +291,6 @@ impl HdKeystore {
         self.active_accounts.iter().find(|acc| acc.coin == symbol)
     }
 
-    // TODO: rename to `to_json`
     pub fn json(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }
