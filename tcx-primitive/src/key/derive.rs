@@ -1,5 +1,8 @@
 use crate::key::KeyError;
-use bitcoin::util::bip32::ChildNumber;
+use crate::Error;
+use bitcoin::util::base58;
+use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
+use byteorder::{BigEndian, ByteOrder};
 use std::convert::TryInto;
 use std::str::FromStr;
 
@@ -97,7 +100,7 @@ impl FromStr for DerivePath {
     }
 }
 
-impl ::std::iter::IntoIterator for &DerivePath {
+impl std::iter::IntoIterator for &DerivePath {
     type Item = DeriveJunction;
     type IntoIter = ::std::vec::IntoIter<DeriveJunction>;
     fn into_iter(self) -> Self::IntoIter {
@@ -109,6 +112,12 @@ impl AsRef<[DeriveJunction]> for DerivePath {
     fn as_ref(&self) -> &[DeriveJunction] {
         &self.0
     }
+}
+
+pub trait Ss58Codec: Sized {
+    fn from_ss58check(s: &str) -> Result<Self, Error>;
+
+    fn to_ss58check_with_version(&self, version: &[u8]) -> String;
 }
 
 #[cfg(test)]

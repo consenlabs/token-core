@@ -12,7 +12,6 @@ pub mod curve;
 pub mod keystore;
 pub mod signer;
 
-pub use bips::DerivationInfo;
 pub use curve::{
     CurveType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey, Secp256k1PublicKey,
 };

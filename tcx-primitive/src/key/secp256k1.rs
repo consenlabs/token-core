@@ -12,6 +12,10 @@ use std::fmt;
 use std::str::FromStr;
 
 use crate::key::derive::*;
+use crate::Error;
+use bitcoin::util::base58;
+use byteorder::BigEndian;
+use byteorder::ByteOrder;
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -45,6 +49,75 @@ fn transform_secp256k1_error(err: secp256k1::Error) -> KeyError {
 pub type Seed = Vec<u8>;
 
 pub struct Public(pub ExtendedPubKey);
+
+pub struct DerivationInfo {
+    depth: u8,
+    parent_fingerprint: [u8; 4],
+    child_number: u32,
+    chain_code: [u8; 32],
+    key: [u8; 33],
+}
+
+impl DerivationInfo {
+    pub fn encode_with_network(&self, network: &[u8]) -> String {
+        let mut ret = [0; 78];
+        ret[0..4].copy_from_slice(network);
+        ret[4] = self.depth as u8;
+        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
+
+        BigEndian::write_u32(&mut ret[9..13], u32::from(self.child_number));
+
+        ret[13..45].copy_from_slice(&self.chain_code[..]);
+        ret[45..78].copy_from_slice(&self.key[..]);
+        base58::check_encode_slice(&ret[..]).to_string()
+    }
+}
+
+impl From<ExtendedPubKey> for DerivationInfo {
+    fn from(epk: ExtendedPubKey) -> Self {
+        DerivationInfo {
+            depth: epk.depth,
+            parent_fingerprint: epk.parent_fingerprint.as_bytes().clone(),
+            child_number: u32::from(epk.child_number),
+            chain_code: epk.chain_code.as_bytes().clone(),
+            key: epk.public_key.key.serialize(),
+        }
+    }
+}
+
+impl From<ExtendedPrivKey> for DerivationInfo {
+    fn from(epk: ExtendedPrivKey) -> Self {
+        let mut key = [0u8; 33];
+        key[0] = 0u8;
+        key[1..33].copy_from_slice(&epk.private_key[..]);
+        DerivationInfo {
+            depth: epk.depth,
+            parent_fingerprint: epk.parent_fingerprint.as_bytes().clone(),
+            child_number: u32::from(epk.child_number),
+            chain_code: epk.chain_code.as_bytes().clone(),
+            key,
+        }
+    }
+}
+
+impl From<DerivationInfo> for ExtendedPubKey {
+    fn from(di: DerivationInfo) -> Self {
+        unimplemented!()
+    }
+}
+
+impl Ss58Codec for Public {
+    fn from_ss58check(s: &str) -> Result<Self, Error> {
+        let epk = ExtendedPubKey::from_str(s)
+            .map_err(|_| Error::new("invalid_xpub".to_string(), "XPub is invalid".to_string()))?;
+        Ok(Public(epk))
+    }
+
+    fn to_ss58check_with_version(&self, version: &[u8]) -> String {
+        let derivation_info = DerivationInfo::from(self.0);
+        derivation_info.encode_with_network(&version)
+    }
+}
 
 pub struct Pair(pub ExtendedPrivKey);
 

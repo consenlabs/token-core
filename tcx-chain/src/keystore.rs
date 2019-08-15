@@ -8,7 +8,6 @@ use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::key::{DerivePath, Pair};
 
 use crate::bips;
-use crate::bips::DerivationInfo;
 use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
 use crate::Result;
 use std::str::FromStr;
@@ -76,13 +75,13 @@ pub trait Address {
         [0x04, 0x88, 0xad, 0xe4]
     }
 
-    fn extended_public_key(derivation_info: &DerivationInfo) -> String {
-        derivation_info.encode_with_network(Self::extended_public_key_version())
-    }
-
-    fn extended_private_key(derivation_info: &DerivationInfo) -> String {
-        derivation_info.encode_with_network(Self::extended_private_key_version())
-    }
+    //    fn extended_public_key(derivation_info: &DerivationInfo) -> String {
+    //        derivation_info.encode_with_network(Self::extended_public_key_version())
+    //    }
+    //
+    //    fn extended_private_key(derivation_info: &DerivationInfo) -> String {
+    //        derivation_info.encode_with_network(Self::extended_private_key_version())
+    //    }
 }
 
 /// Blockchain basic config

@@ -23,10 +23,16 @@ pub type Result<T> = result::Result<T, failure::Error>;
 
 pub use address::{BchAddress, BchTestNetAddress};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
+use bitcoin::Network::Bitcoin;
 use secp256k1::Secp256k1;
 use serde_json::Value;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::aes::ctr::encrypt_nopadding;
+use tcx_primitive::key::derive::Derive;
+use tcx_primitive::key::derive::Ss58Codec;
+use tcx_primitive::key::secp256k1::Pair as Secp256k1Pair;
+use tcx_primitive::key::{DerivePath, Pair};
+
 pub use transaction::{BitcoinCashTransaction, Utxo};
 
 const SYMBOL: &'static str = "BCH";
@@ -53,8 +59,20 @@ impl Extra for ExtendedPubKeyExtra {
             coin_info.curve == CurveType::SECP256k1,
             "BCH must be at secp256k1"
         );
-        let derivation_info = Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)?;
-        let xpub = address::BchAddress::extended_public_key(&derivation_info);
+        let pair = Secp256k1Pair::new_pair(Bitcoin, seed.as_bytes())
+            .map_err(|_| format_err!("create pair failed"))?;
+        let path = DerivePath::from_str(&coin_info.derivation_path)
+            .map_err(|_| format_err!("create path error"))?;
+        let child_pair = pair
+            .derive(path.into_iter())
+            .map_err(|_| format_err!("derive failed"))?;
+        //        let epk = pair.public();
+        let xpub = pair
+            .public()
+            .to_ss58check_with_version(&address::BchAddress::extended_public_key_version());
+
+        //        let derivation_info = Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)?;
+        //        let xpub = address::BchAddress::extended_public_key(&derivation_info);
         Ok(ExtendedPubKeyExtra { xpub })
     }
 }

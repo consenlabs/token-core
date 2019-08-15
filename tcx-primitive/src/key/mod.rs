@@ -1,4 +1,4 @@
-mod derive;
+pub mod derive;
 pub mod secp256k1;
 
 use crate::Error;
@@ -7,6 +7,7 @@ use ::secp256k1::{RecoverableSignature, Signature};
 use core::result::Result;
 use std::str::FromStr;
 
+use crate::key::derive::Ss58Codec;
 pub use derive::{Derive, DeriveJunction, DerivePath};
 
 /// An identifier for a type of cryptographic key.
@@ -57,7 +58,7 @@ pub trait TypedKey {
     const KEY_TYPE: KeyTypeId;
 }
 
-pub trait Public: AsRef<[u8]> + TypedKey + Sized + FromStr + Derive {
+pub trait Public: AsRef<[u8]> + TypedKey + Sized + FromStr + Derive + Ss58Codec {
     fn from_slice(data: &[u8]) -> Result<Self, Self::Error>;
 
     fn as_slice(&self) -> &[u8];

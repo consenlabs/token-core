@@ -1,12 +1,15 @@
 use bitcoin::network::constants::Network;
 use secp256k1::{Message, Secp256k1, SecretKey};
 
-use crate::bips::DerivationInfo;
 use crate::Result;
 use bip39::Seed;
 use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use tcx_primitive::key::derive::Derive;
+use tcx_primitive::key::derive::Ss58Codec;
+use tcx_primitive::key::secp256k1::{Pair, Public};
+use tcx_primitive::key::DerivePath;
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum CurveType {
@@ -95,36 +98,46 @@ impl Secp256k1Curve {
         seed: &Seed,
     ) -> Result<Vec<impl PrivateKey>> {
         let s = Secp256k1::new();
-        let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
+        let pair = Pair::new_pair(Network::Bitcoin, seed.as_bytes())
+            .map_err(|_| format_err!("create pair error"))?;
+        //        let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
         let pks: Result<Vec<Secp256k1PrivateKey>> = paths
             .iter()
             .map(|path| {
-                let path = DerivationPath::from_str(path.as_ref())?;
-                let prv_key = sk.derive_priv(&s, &path)?;
-                Ok(prv_key.private_key)
+                let path =
+                    DerivePath::from_str(path.as_ref()).map_err(|_| format_err!("invalid path"))?;
+                let prv_key = pair
+                    .derive(path.into_iter())
+                    .map_err(|_| format_err!("derive failed"))?;
+                Ok(prv_key.0.private_key)
             })
             .collect();
         pks
     }
-
-    pub fn extended_prv_key(path: &str, seed: &Seed) -> Result<DerivationInfo> {
-        let xprv = Self::_extended_pri_key(path, seed)?;
-
-        Ok(DerivationInfo::from(xprv))
-    }
-
-    pub fn extended_pub_key(path: &str, seed: &Seed) -> Result<DerivationInfo> {
-        let s = Secp256k1::new();
-        let xprv = Self::_extended_pri_key(path, seed)?;
-        let xpub = ExtendedPubKey::from_private(&s, &xprv);
-        Ok(DerivationInfo::from(xpub))
-    }
+    //
+    //    pub fn extended_prv_key(path: &str, seed: &Seed) -> Result<DerivationInfo> {
+    //        let xprv = Self::_extended_pri_key(path, seed)?;
+    //
+    //        Ok(DerivationInfo::from(xprv))
+    //    }
+    //
+    //    pub fn extended_pub_key(path: &str, seed: &Seed) -> Result<DerivationInfo> {
+    //        let s = Secp256k1::new();
+    //        let xprv = Self::_extended_pri_key(path, seed)?;
+    //        let xpub = ExtendedPubKey::from_private(&s, &xprv);
+    //        Ok(DerivationInfo::from(xpub))
+    //    }
 
     pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
-        let ext_pub_key = ExtendedPubKey::from_str(xpub)?;
-        let s = Secp256k1::new();
-        let child_nums = crate::bips::relative_path_to_child_nums(child_path)?;
-        let index_ext_pub_key = ext_pub_key.derive_pub(&s, &child_nums)?;
-        Ok(index_ext_pub_key.public_key)
+        let public = Public::from_ss58check(xpub).map_err(|_| format_err!("invalid xpub"))?;
+        //        let ext_pub_key = ExtendedPubKey::from_str(xpub)?;
+        //        let s = Secp256k1::new();
+        let path = DerivePath::from_str(child_path).map_err(|_| format_err!("invalid path"))?;
+        let child_public = public
+            .derive(path.into_iter())
+            .map_err(|_| format_err!("derive failed"))?;
+        //        let child_nums = crate::bips::relative_path_to_child_nums(child_path)?;
+        //        let index_ext_pub_key = ext_pub_key.derive_pub(&s, &child_nums)?;
+        Ok(child_public.0.public_key)
     }
 }
