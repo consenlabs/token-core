@@ -67,7 +67,7 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
             derivation_path: "m/44'/145'/0'".to_string(),
             curve: CurveType::SECP256k1,
         }),
-        _ => Err(format_err!("unsupptored_chain")),
+        _ => Err(format_err!("unsupported_chain")),
     }
 }
 
