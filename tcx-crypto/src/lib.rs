@@ -12,7 +12,7 @@ extern crate hex_literal;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
-#[derive(Fail, Debug)]
+#[derive(Fail, Debug, PartialOrd, PartialEq)]
 pub enum Error {
     #[fail(display = "kdf_params_invalid")]
     KdfParamsInvalid,
