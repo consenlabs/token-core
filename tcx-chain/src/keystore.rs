@@ -10,6 +10,7 @@ use tcx_primitive::key::{DerivePath, Pair};
 use crate::bips;
 use crate::bips::DerivationInfo;
 use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
+use crate::Error;
 use crate::Result;
 use std::str::FromStr;
 
@@ -152,7 +153,7 @@ impl HdKeystore {
         mnemonic: &str,
     ) -> Result<(Account, E)> {
         let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English)
-            .map_err(|_| format_err!("invalid_mnemonic"))?;
+            .map_err(|_| Error::InvalidMnemonic)?;
         let seed = bip39::Seed::new(&mnemonic, &"");
         Self::derive_account_from_coin::<A, E>(coin_info, &seed)
     }
@@ -218,8 +219,9 @@ impl HdKeystore {
 
     pub fn mnemonic(&self, password: &str) -> Result<String> {
         if self.key_type != KeyType::Mnemonic {
-            return Err(format_err!("{}", "invalid_key_type"));
+            return Err(Error::InvalidKeyType.into());
         }
+        tcx_ensure!(self.key_type != KeyType::Mnemonic, Error::InvalidKeyType);
         let mnemonic_bytes = self.crypto.decrypt(password)?;
         let mnemonic = String::from_utf8(mnemonic_bytes)?;
         Ok(mnemonic)
@@ -228,7 +230,7 @@ impl HdKeystore {
     pub fn seed(&self, password: &str) -> Result<Seed> {
         let mnemonic_str = self.mnemonic(password)?;
         let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English)
-            .map_err(|_| format_err!("invalid_mnemonic"))?;
+            .map_err(|_| Error::InvalidMnemonic)?;
         Ok(bip39::Seed::new(&mnemonic, &""))
     }
 
@@ -239,7 +241,7 @@ impl HdKeystore {
     ) -> Result<Vec<impl PrivateKey>> {
         match curve {
             CurveType::SECP256k1 => Secp256k1Curve::key_at_paths_with_seed(paths, seed),
-            _ => Err(format_err!("{}", "unsupport_curve")),
+            _ => Err(Error::UnsupportedCurve.into()),
         }
     }
 
@@ -254,9 +256,9 @@ impl HdKeystore {
                     }
                 }
 
-                Err(format_err!("{}", "can_not_derive_pair_from_seed"))
+                Err(Error::CanNotDerivePairFromSeed.into())
             }
-            _ => Err(format_err!("{}", "can_not_derive_pair_from_seed")),
+            _ => Err(Error::CanNotDerivePairFromSeed.into()),
         }
     }
 
@@ -267,9 +269,7 @@ impl HdKeystore {
         paths: &[impl AsRef<str>],
         password: &str,
     ) -> Result<Vec<impl PrivateKey>> {
-        let acc = self
-            .account(symbol)
-            .ok_or(format_err!("{}", "account_not_found"))?;
+        let acc = self.account(symbol).ok_or(Error::AccountNotFound)?;
         let seed = self.seed(password)?;
         Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)
     }

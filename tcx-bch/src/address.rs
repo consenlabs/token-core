@@ -1,5 +1,6 @@
 use tcx_chain::curve::{PublicKey, Secp256k1PublicKey};
 
+use crate::Error;
 use crate::Result;
 use bch_addr::Converter;
 use bitcoin::network::constants::Network;
@@ -22,7 +23,7 @@ impl BchAddress {
         if !convert.is_legacy_addr(&addr) {
             convert
                 .to_legacy_addr(&addr)
-                .map_err(|_| format_err!("convert failed"))
+                .map_err(|_| Error::ConvertToLegacyAddressFailed(addr.to_string()).into())
         } else {
             Ok(addr.to_string())
         }
@@ -41,7 +42,7 @@ impl Address for BchAddress {
         let convert = Converter::new();
         convert
             .to_cash_addr(&legacy.to_string())
-            .map_err(|_err| format_err!("{}", "generate_address_failed"))
+            .map_err(|_| Error::ConvertToCashAddressFailed(legacy.to_string()).into())
     }
 }
 
@@ -64,7 +65,7 @@ impl Address for BchTestNetAddress {
         let convert = Converter::new();
         convert
             .to_cash_addr(&legacy.to_string())
-            .map_err(|_err| format_err!("{}", "generate_address_failed"))
+            .map_err(|_| Error::ConvertToCashAddressFailed(legacy.to_string()).into())
     }
 
     fn extended_public_key_version() -> [u8; 4] {

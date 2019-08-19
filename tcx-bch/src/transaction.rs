@@ -18,6 +18,7 @@ use std::str::FromStr;
 use crate::address::BchAddress;
 use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
 
+use crate::Error;
 use bitcoin::util::bip32::ExtendedPubKey;
 use tcx_chain::bips::get_account_path;
 use tcx_chain::curve::PublicKey;
@@ -73,7 +74,7 @@ impl BitcoinCashTransaction {
     fn receive_addr(&self) -> Result<BtcAddress> {
         let legacy_to = BchAddress::convert_to_legacy_if_need(&self.to)?;
         BtcAddress::from_str(&legacy_to)
-            .map_err(|_| format_err!("create bch address failed: {}", legacy_to))
+            .map_err(|_| Error::ConstructBchAddressFailed(legacy_to.to_string()).into())
     }
 
     fn sign_hash(&self, pri_key: &impl PrivateKey, hash: &[u8]) -> Result<Script> {

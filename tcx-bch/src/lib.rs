@@ -29,6 +29,16 @@ use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::aes::ctr::encrypt_nopadding;
 pub use transaction::{BitcoinCashTransaction, Utxo};
 
+#[derive(Fail, Debug)]
+pub enum Error {
+    #[fail(display = "bch_convert_to_legacy_address_failed# address: {}", _0)]
+    ConvertToLegacyAddressFailed(String),
+    #[fail(display = "bch_convert_to_cash_address_failed# address: {}", _0)]
+    ConvertToCashAddressFailed(String),
+    #[fail(display = "construct_bch_address_failed# address: {}", _0)]
+    ConstructBchAddressFailed(String),
+}
+
 const SYMBOL: &'static str = "BCH";
 const PATH: &'static str = "m/44'/145'/0'/0/0";
 
