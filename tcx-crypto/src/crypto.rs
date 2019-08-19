@@ -26,7 +26,7 @@ pub trait KdfParams {
     fn generate_derived_key(&self, password: &[u8], out: &mut [u8]);
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Pbkdf2Params {
     c: u32,
@@ -115,13 +115,13 @@ impl Crypto<Pbkdf2Params> {
             .expect("encrypt_nopadding key or iv's length must be 16")
     }
 
-    pub fn derive_enc_pair(&self, password: &str, origin: &[u8]) -> EncPair {
+    pub fn derive_enc_pair(&self, password: &str, origin: &[u8]) -> Result<EncPair> {
         let iv = numberic_util::random_iv(16);
-        let encrypted_data = self.encrypt_data(password, origin, &iv);
-        EncPair {
+        let encrypted_data = self.encrypt_data(password, origin, &iv)?;
+        Ok(EncPair {
             enc_str: encrypted_data.to_hex(),
             nonce: iv.to_hex(),
-        }
+        })
     }
 
     pub fn decrypt_enc_pair(&self, password: &str, enc_pair: &EncPair) -> Result<Vec<u8>> {
@@ -130,13 +130,17 @@ impl Crypto<Pbkdf2Params> {
         self.decrypt_data(password, &encrypted, &iv)
     }
 
-    fn encrypt_data(&self, password: &str, origin: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn encrypt_data(&self, password: &str, origin: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
         let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
         self.kdfparams
             .generate_derived_key(password.as_bytes(), &mut derived_key);
+
+        if !self.verify_derived_key(&derived_key) {
+            return Err(Error::InvalidPassword.into());
+        }
+
         let key = &derived_key[0..16];
         super::aes::ctr::encrypt_nopadding(origin, key, &iv)
-            .expect("encrypt_nopadding or iv's length must be 16")
     }
 
     fn decrypt_data(&self, password: &str, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
@@ -144,13 +148,18 @@ impl Crypto<Pbkdf2Params> {
         self.kdfparams
             .generate_derived_key(password.as_bytes(), &mut derived_key);
 
-        let mac = Self::generate_mac(&derived_key, encrypted);
-        if self.mac != mac.to_hex() {
+        if !self.verify_derived_key(&derived_key) {
             return Err(Error::InvalidPassword.into());
         }
 
         let key = &derived_key[0..16];
         super::aes::ctr::decrypt_nopadding(encrypted, key, &iv)
+    }
+
+    fn verify_derived_key(&self, dk: &[u8]) -> bool {
+        let cipher_bytes = Vec::from_hex(&self.ciphertext).expect("vec::from_hex");
+        let mac = Self::generate_mac(&dk, &cipher_bytes);
+        self.mac == mac.to_hex()
     }
 
     fn generate_mac(derived_key: &[u8], ciphertext: &[u8]) -> Vec<u8> {
@@ -163,6 +172,96 @@ impl Crypto<Pbkdf2Params> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const PASSWORD: &str = "Insecure Password";
+    #[test]
+    pub fn pbkdf2_params_default_test() {
+        let param = Pbkdf2Params::default();
+        let default = Pbkdf2Params {
+            c: 10240,
+            prf: "hmac-sha256".to_owned(),
+            dklen: 32,
+            salt: "".to_owned(),
+        };
+        assert_eq!(default, param);
+    }
+
+    #[test]
+    pub fn new_crypto() {
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(PASSWORD, "TokenCoreX".as_bytes());
+        assert_ne!("", crypto.ciphertext);
+        assert_ne!("", crypto.cipher);
+        assert_ne!("", crypto.mac);
+        assert_ne!("", crypto.cipherparams.iv);
+        assert_ne!("", crypto.kdfparams.salt);
+        assert_eq!("pbkdf2", crypto.kdf)
+    }
+
+    #[test]
+    pub fn decrypt_crypto() {
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(PASSWORD, "TokenCoreX".as_bytes());
+        let cipher_bytes = crypto.decrypt(PASSWORD).expect("cipher bytes");
+        assert_eq!("TokenCoreX", String::from_utf8(cipher_bytes).unwrap());
+
+        let ret = crypto.decrypt("WrongPassword");
+        assert!(ret.is_err());
+        let err = ret.err().unwrap();
+        assert_eq!(
+            Error::InvalidPassword,
+            err.downcast::<crate::Error>().unwrap()
+        );
+    }
+
+    #[test]
+    pub fn enc_pair_test() {
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(PASSWORD, "TokenCoreX".as_bytes());
+        let enc_pair = crypto
+            .derive_enc_pair(PASSWORD, "TokenCoreX".as_bytes())
+            .unwrap();
+
+        assert_ne!("", enc_pair.nonce);
+        assert_ne!("", enc_pair.enc_str);
+
+        let decrypted_bytes = crypto.decrypt_enc_pair(PASSWORD, &enc_pair).unwrap();
+        let decrypted = String::from_utf8(decrypted_bytes).unwrap();
+
+        assert_eq!("TokenCoreX", decrypted);
+
+        let ret = crypto.decrypt_enc_pair("WrongPassword", &enc_pair);
+        assert!(ret.is_err());
+        let err = ret.err().unwrap();
+        assert_eq!(
+            Error::InvalidPassword,
+            err.downcast::<crate::Error>().unwrap()
+        );
+
+        let ret = crypto.derive_enc_pair("WrongPassword", &hex!("01020304"));
+        assert!(ret.is_err());
+        let err = ret.err().unwrap();
+        assert_eq!(
+            Error::InvalidPassword,
+            err.downcast::<crate::Error>().unwrap()
+        );
+    }
+
+    #[test]
+    pub fn kdfparams_trait_validate_test() {
+        let err = Pbkdf2Params::default().validate().err().unwrap();
+        assert_eq!(
+            Error::KdfParamsInvalid,
+            err.downcast::<crate::Error>().unwrap()
+        )
+    }
+
+    #[test]
+    pub fn generate_derived_key_pbkdf2_test() {
+        let mut pbkdf2_param = Pbkdf2Params::default();
+        pbkdf2_param.salt = "01020304010203040102030401020304".to_string();
+        let mut derived_key = [0; CREDENTIAL_LEN];
+        pbkdf2_param.generate_derived_key(PASSWORD.as_bytes(), &mut derived_key);
+        let dk_hex = derived_key.to_hex();
+        assert_eq!("5c8764983679d5b1362ef992f764e772b84901060dcf2077c41d336feb29c8afcaf05e9e8be6f8e420b9b662411e5b7ba78541bcdd898683ccf686b424aa7951", dk_hex);
+    }
 
     #[test]
     pub fn json_serial() {
@@ -193,4 +292,5 @@ mod tests {
         );
         assert_eq!(crypto.ciphertext, "17ff4858e697455f4966c6072473f3501534bc20deb339b58aeb8db0bd9fe91777148d0a909f679fb6e3a7a64609034afeb72a");
     }
+
 }
