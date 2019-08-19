@@ -1,3 +1,4 @@
+use crate::Error;
 use bitcoin_hashes::hex::{FromHex, ToHex};
 use serde::{Deserialize, Serialize};
 
@@ -48,7 +49,7 @@ impl Pbkdf2Params {
 impl KdfParams for Pbkdf2Params {
     fn validate(&self) -> Result<()> {
         if self.dklen == 0 || self.c == 0 || self.salt.len() <= 0 || self.prf.len() <= 0 {
-            Err(format_err!("kdf_params_invalid"))
+            Err(Error::KdfParamsInvalid.into())
         } else {
             Ok(())
         }
@@ -143,7 +144,7 @@ impl Crypto<Pbkdf2Params> {
 
         let mac = Self::generate_mac(&derived_key, encrypted);
         if self.mac != mac.to_hex() {
-            return Err(format_err!("invalid_password"));
+            return Err(Error::InvalidPassword.into());
         }
 
         let key = &derived_key[0..16];

@@ -10,6 +10,14 @@ extern crate failure;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
+#[derive(Fail, Debug)]
+pub enum Error {
+    #[fail(display = "kdf_params_invalid")]
+    KdfParamsInvalid,
+    #[fail(display = "invalid_password")]
+    InvalidPassword,
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

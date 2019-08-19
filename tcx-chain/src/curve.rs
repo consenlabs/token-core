@@ -2,6 +2,7 @@ use bitcoin::network::constants::Network;
 use secp256k1::{Message, Secp256k1, SecretKey};
 
 use crate::bips::DerivationInfo;
+use crate::Error;
 use crate::Result;
 use bip39::Seed;
 use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey};
@@ -52,7 +53,7 @@ impl PublicKey for bitcoin::PublicKey {
         if let Ok(key) = bitcoin::PublicKey::from_slice(data) {
             Ok(key)
         } else {
-            Err(format_err!("invalid_secp256k1_public_key"))
+            Err(Error::InvalidSecp256k1PublicKey.into())
         }
     }
 }
