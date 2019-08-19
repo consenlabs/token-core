@@ -112,6 +112,7 @@ impl Crypto<Pbkdf2Params> {
         let key = &derived_key[0..16];
         let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).unwrap();
         super::aes::ctr::encrypt_nopadding(origin, key, &iv)
+            .expect("encrypt_nopadding key or iv's length must be 16")
     }
 
     pub fn derive_enc_pair(&self, password: &str, origin: &[u8]) -> EncPair {
@@ -135,6 +136,7 @@ impl Crypto<Pbkdf2Params> {
             .generate_derived_key(password.as_bytes(), &mut derived_key);
         let key = &derived_key[0..16];
         super::aes::ctr::encrypt_nopadding(origin, key, &iv)
+            .expect("encrypt_nopadding or iv's length must be 16")
     }
 
     fn decrypt_data(&self, password: &str, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
@@ -148,8 +150,7 @@ impl Crypto<Pbkdf2Params> {
         }
 
         let key = &derived_key[0..16];
-        let ret = super::aes::ctr::decrypt_nopadding(encrypted, key, &iv);
-        Ok(ret)
+        super::aes::ctr::decrypt_nopadding(encrypted, key, &iv)
     }
 
     fn generate_mac(derived_key: &[u8], ciphertext: &[u8]) -> Vec<u8> {

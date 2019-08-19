@@ -7,6 +7,8 @@ pub use crypto::{Crypto, EncPair, Pbkdf2Params};
 
 #[macro_use]
 extern crate failure;
+#[macro_use]
+extern crate hex_literal;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
@@ -16,6 +18,8 @@ pub enum Error {
     KdfParamsInvalid,
     #[fail(display = "invalid_password")]
     InvalidPassword,
+    #[fail(display = "invalid_key_iv_length")]
+    InvalidKeyIvLength,
 }
 
 #[cfg(test)]
