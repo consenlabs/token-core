@@ -73,7 +73,7 @@ impl ExtendedPubKeyExtra {
     pub fn enc_xpub(&self, key: &str, iv: &str) -> Result<String> {
         let key_bytes = hex::decode(key)?;
         let iv_bytes = hex::decode(iv)?;
-        let encrypted = encrypt_pkcs7(&self.xpub.as_bytes(), &key_bytes, &iv_bytes);
+        let encrypted = encrypt_pkcs7(&self.xpub.as_bytes(), &key_bytes, &iv_bytes)?;
         Ok(base64::encode(&encrypted))
     }
 
