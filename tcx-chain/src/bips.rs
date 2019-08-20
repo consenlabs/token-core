@@ -38,6 +38,7 @@ pub fn relative_path_to_child_nums(path: &str) -> Result<Vec<ChildNumber>> {
     let childs: Vec<&str> = path.split("/").collect();
     childs
         .iter()
+        .filter(|child| **child != "")
         .map(|child| {
             if child.ends_with("'") {
                 let idx = child
@@ -107,7 +108,19 @@ impl From<ExtendedPrivKey> for DerivationInfo {
 
 #[cfg(test)]
 mod tests {
-    use crate::bips::get_account_path;
+    use crate::bips::{generate_mnemonic, get_account_path, relative_path_to_child_nums};
+    use crate::{DerivationInfo, Error};
+    use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey};
+    use std::str::FromStr;
+
+    #[test]
+    fn test_generate_mnemonic() {
+        let mnemonic_str = generate_mnemonic();
+        assert_eq!(12, mnemonic_str.len());
+        let second_mnemonic = generate_mnemonic();
+        assert_ne!(mnemonic_str, second_mnemonic);
+    }
+
     #[test]
     fn account_path() {
         let path = "m/44'/60'/0'/0/0";
@@ -119,5 +132,49 @@ mod tests {
             short_error.err().unwrap().to_string(),
             "m/44\' path is too short"
         );
+
+        let invalid_path = get_account_path("m/44/a");
+        let err = invalid_path.expect_err("should throw invalid path");
+        assert_eq!("invalid child number format", format!("{}", err));
+    }
+
+    #[test]
+    fn test_relative_path() {
+        let derive_path = "0/1";
+        let child_nums = relative_path_to_child_nums(derive_path).unwrap();
+        assert_eq!(2, child_nums.len());
+        assert_eq!(&ChildNumber::from_normal_idx(0).unwrap(), &child_nums[0]);
+        assert_eq!(&ChildNumber::from_normal_idx(1).unwrap(), &child_nums[1]);
+
+        let derive_path = "/0/1";
+        let child_nums = relative_path_to_child_nums(derive_path).unwrap();
+        assert_eq!(2, child_nums.len());
+        assert_eq!(&ChildNumber::from_normal_idx(0).unwrap(), &child_nums[0]);
+        assert_eq!(&ChildNumber::from_normal_idx(1).unwrap(), &child_nums[1]);
+
+        let derive_path = "0'/1/2";
+        let child_nums = relative_path_to_child_nums(derive_path).unwrap();
+        assert_eq!(3, child_nums.len());
+        assert_eq!(&ChildNumber::from_hardened_idx(0).unwrap(), &child_nums[0]);
+        assert_eq!(&ChildNumber::from_normal_idx(1).unwrap(), &child_nums[1]);
+        assert_eq!(&ChildNumber::from_normal_idx(2).unwrap(), &child_nums[2]);
+    }
+
+    #[test]
+    fn test_encode_with_network() {
+        let main_network_xpub_version: [u8; 4] = [0x04, 0x88, 0xb2, 0x1e];
+        let main_network_xprv_version: [u8; 4] = [0x04, 0x88, 0xad, 0xe4];
+
+        let xpub = "tpubDDDcs8o1LaKXKXaPTEVBUZJYTgNAte4xj24MtFCMsfrHku93ZZjy87CGyz93dcocR6x6JHdusHodD9EVcSQuDbmkAWznWZtvyqyMDqS6VK4";
+        let epk = ExtendedPubKey::from_str(xpub).unwrap();
+        let derivation_info = DerivationInfo::from(epk);
+        let ret = derivation_info.encode_with_network(main_network_xpub_version);
+        assert_eq!("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8", ret);
+
+        let xprv = "tprv8g8UWPRHxaNWXZN3uoaiNpyYyaDr2j5Dvcj1vxLxKcEF653k7xcN9wq9eT73wBM1HzE9hmWJbAPXvDvaMXqGWm81UcVpHnmATfH2JJrfhGg";
+        let epk = ExtendedPrivKey::from_str(xprv).unwrap();
+        let derivation_info = DerivationInfo::from(epk);
+        let ret = derivation_info.encode_with_network(main_network_xprv_version);
+        assert_eq!("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS", ret);
     }
 }

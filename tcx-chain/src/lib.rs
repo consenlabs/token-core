@@ -43,7 +43,7 @@ pub trait Address1: Sized {
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
-#[derive(Fail, Debug)]
+#[derive(Fail, Debug, PartialEq)]
 pub enum Error {
     #[fail(display = "invalid_mnemonic")]
     InvalidMnemonic,
