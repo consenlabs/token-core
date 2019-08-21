@@ -18,6 +18,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::RwLock;
 use tcx_bch::{BchAddress, BitcoinCashTransaction, ExtendedPubKeyExtra, Utxo};
+use tcx_chain::signer::TransactionSigner;
 use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source};
 // #[link(name = "TrezorCrypto")]
 // extern {
@@ -331,11 +332,6 @@ fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
         .parse::<i64>()
         .unwrap();
     let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
-    let account = keystore
-        .account(&"BCH")
-        .ok_or(format_err!("account_not_found"))?;
-    let path = &account.derivation_path;
-    let extra = ExtendedPubKeyExtra::from(account.extra.clone());
     let bch_tran = BitcoinCashTransaction {
         to: to.to_owned(),
         amount,
@@ -343,11 +339,9 @@ fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
         memo: "".to_string(),
         fee,
         change_idx: change_idx as u32,
+        password: password.to_string(),
     };
-    let paths = bch_tran.collect_prv_keys_paths(path)?;
-    let priv_keys = &keystore.key_at_paths("BCH", &paths, password)?;
-
-    let ret = bch_tran.sign_transaction(&priv_keys, &extra.xpub)?;
+    let ret = keystore.sign(&bch_tran)?;
     Ok(serde_json::to_string(&ret)?)
 }
 

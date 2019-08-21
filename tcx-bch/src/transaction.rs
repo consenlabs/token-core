@@ -1,11 +1,11 @@
-use tcx_chain::{Secp256k1Curve, TxSignResult};
+use tcx_chain::{HdKeystore, Secp256k1Curve, TransactionSigner, TxSignResult};
 
+use bitcoin::network::constants::Network;
 use bitcoin::{Address as BtcAddress, OutPoint, Script, Transaction, TxIn, TxOut};
 use bitcoin_hashes::hex::FromHex;
 use bitcoin_hashes::sha256d::Hash as Hash256;
 use bitcoin_hashes::Hash;
-
-use bitcoin::network::constants::Network;
+use tcx_chain::Transaction as TraitTransaction;
 
 use crate::bip143_with_forkid::SighashComponentsWithForkId;
 use crate::Result;
@@ -19,6 +19,7 @@ use crate::address::BchAddress;
 use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
 
 use crate::Error;
+use crate::ExtendedPubKeyExtra;
 use bitcoin::util::bip32::ExtendedPubKey;
 use tcx_chain::bips::get_account_path;
 use tcx_chain::curve::PublicKey;
@@ -44,10 +45,28 @@ pub struct BitcoinCashTransaction {
     pub memo: String,
     pub fee: i64,
     pub change_idx: u32,
+    pub password: String,
+}
+
+impl TraitTransaction for BitcoinCashTransaction {}
+
+impl TransactionSigner<BitcoinCashTransaction, TxSignResult> for HdKeystore {
+    fn sign(&self, tx: &BitcoinCashTransaction) -> Result<TxSignResult> {
+        let account = self
+            .account(&"BCH")
+            .ok_or(format_err!("account_not_found"))?;
+        let path = &account.derivation_path;
+        let extra = ExtendedPubKeyExtra::from(account.extra.clone());
+
+        let paths = tx.collect_prv_keys_paths(path)?;
+        let priv_keys = &self.key_at_paths("BCH", &paths, &tx.password)?;
+
+        tx.sign_transaction(&priv_keys, &extra.xpub)
+    }
 }
 
 impl BitcoinCashTransaction {
-    pub fn collect_prv_keys_paths(&self, path: &str) -> Result<Vec<String>> {
+    fn collect_prv_keys_paths(&self, path: &str) -> Result<Vec<String>> {
         let mut paths: Vec<String> = vec![];
         let account_path = get_account_path(path)?;
 
@@ -169,11 +188,7 @@ impl BitcoinCashTransaction {
         Ok(script_sigs)
     }
 
-    pub fn sign_transaction(
-        &self,
-        prv_keys: &[impl PrivateKey],
-        xpub: &str,
-    ) -> Result<TxSignResult> {
+    fn sign_transaction(&self, prv_keys: &[impl PrivateKey], xpub: &str) -> Result<TxSignResult> {
         let change_addr = self.change_addr(xpub)?;
         let tx_outs = self.tx_outs(&change_addr)?;
         let tx_inputs = self.tx_inputs();
@@ -256,16 +271,17 @@ mod tests {
             memo: "".to_string(),
             fee: 35000,
             change_idx: 0,
+            password: PASSWORD.to_string(),
         };
 
-        let paths = tran
-            .collect_prv_keys_paths(&coin_info.derivation_path)
-            .unwrap();
-        let priv_keys = keystore.key_at_paths("BCH", &paths, &PASSWORD).unwrap();
-        let acc = keystore.account("BCH").unwrap();
-        let extra = ExtendedPubKeyExtra::from(acc.extra.clone());
+        //        let paths = tran
+        //            .collect_prv_keys_paths(&coin_info.derivation_path)
+        //            .unwrap();
+        //        let priv_keys = keystore.key_at_paths("BCH", &paths, &PASSWORD).unwrap();
+        //        let acc = keystore.account("BCH").unwrap();
+        //        let extra = ExtendedPubKeyExtra::from(acc.extra.clone());
 
-        let sign_ret = tran.sign_transaction(&priv_keys, &extra.xpub).unwrap();
+        let sign_ret = keystore.sign(&tran).unwrap();
         // todo: not a real test data, it's works at WIF: L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy
         assert_eq!(sign_ret.signature, "01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100be283eb3c936fbdc9159d7067cf3bf44b40c5fc790e6f06368c404a6c1962ebb022071741ed6e1d034f300d177582c870934d4b155d0eb40e6eda99b3e95323a4666412102cc987e200a13c771d9c840cd08db93debf4d4443cec3e084a4cde2aad4cfa77dffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000");
     }

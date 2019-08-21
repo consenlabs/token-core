@@ -11,6 +11,8 @@ pub struct TxSignResult {
     pub tx_hash: String,
     pub wtx_id: String,
 }
+
+impl SignedTransaction for TxSignResult {}
 /*
 pub trait TransactionSinger {
     fn sign_transaction(
@@ -27,5 +29,5 @@ pub trait Transaction: Sized {}
 pub trait SignedTransaction: Sized {}
 
 pub trait TransactionSigner<Input: Transaction, Output: SignedTransaction> {
-    fn sign(&self, tx: &Input) -> Output;
+    fn sign(&self, tx: &Input) -> Result<Output>;
 }

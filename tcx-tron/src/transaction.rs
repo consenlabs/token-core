@@ -15,8 +15,8 @@ pub struct SignedTransaction {}
 impl TraitSignedTransaction for SignedTransaction {}
 
 impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
-    fn sign(&self, tx: &Transaction) -> SignedTransaction {
-        SignedTransaction {}
+    fn sign(&self, tx: &Transaction) -> Result<SignedTransaction, failure::Error> {
+        Ok(SignedTransaction {})
     }
 }
 
