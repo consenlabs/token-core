@@ -42,7 +42,7 @@ pub enum Error {
 const SYMBOL: &'static str = "BCH";
 const PATH: &'static str = "m/44'/145'/0'/0/0";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalAddress {
     pub address: String,
@@ -105,8 +105,10 @@ impl From<Value> for ExtendedPubKeyExtra {
 #[cfg(test)]
 mod tests {
     use crate::address::BchAddress;
-    use crate::ExtendedPubKeyExtra;
+    use crate::{ExtendedPubKeyExtra, ExternalAddress};
+    use bitcoin::util::misc::hex_bytes;
     use serde_json::Value;
+    use std::str::FromStr;
     use tcx_chain::curve::CurveType;
     use tcx_chain::keystore::CoinInfo;
     use tcx_chain::{HdKeystore, Metadata};
@@ -183,5 +185,35 @@ mod tests {
         let extra = account["extra"].as_object().expect("extra");
         let xpub = extra["xpub"].as_str().expect("xpub");
         assert_eq!("xpub6Bmkv3mmRZZWoFSBdj9vDMqR2PCPSP6DEj8u3bBuv44g3Ncnro6cPVqZAw6wTEcxHQuodkuJG4EmAinqrrRXGsN3HHnRRMtAvzfYTiBATV1", xpub)
+    }
+
+    #[test]
+    fn extra_test() {
+        let ex = ExtendedPubKeyExtra {
+            xpub: "tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R".to_string()
+        };
+        let key = hex_bytes("B888D25EC8C12BD5043777B1AC49F872").unwrap();
+        let iv = hex_bytes("9C0C30889CBCC5E01AB5B2BB88715799").unwrap();
+        let enc_xpub = ex
+            .enc_xpub(
+                "B888D25EC8C12BD5043777B1AC49F872",
+                "9C0C30889CBCC5E01AB5B2BB88715799",
+            )
+            .unwrap();
+        assert_eq!(enc_xpub, "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==");
+
+        let addr = ex.calc_external_address::<BchAddress>(1i64).unwrap();
+        let expected = r#"
+        {
+            "address": "bitcoincash:qqn4as4zx0jmy02rlgv700umavxt8xtpzu5gcetg92",
+            "type": "EXTERNAL",
+            "derivedPath": "0/1"
+        }
+        "#;
+
+        assert_eq!(
+            serde_json::to_value(addr).unwrap(),
+            serde_json::Value::from_str(expected).unwrap()
+        );
     }
 }
