@@ -45,8 +45,8 @@ impl TryInto<Value> for SignedTransaction {
 impl TraitSignedTransaction for SignedTransaction {}
 
 impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
-    fn sign_transaction(&self, tx: Transaction, password: &str) -> Result<SignedTransaction> {
-        unimplemented!()
+    fn sign_transaction(&self, tx: &Transaction) -> Result<SignedTransaction, failure::Error> {
+        Ok(SignedTransaction {})
     }
 }
 
