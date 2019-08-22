@@ -2,16 +2,16 @@ use std::ffi::{CStr, CString};
 
 use std::os::raw::c_char;
 
+use crate::error_handle::landingpad;
+use crate::error_handle::Result;
+use crate::error_handle::LAST_BACKTRACE;
+use crate::error_handle::LAST_ERROR;
 use std::fs::File;
 use std::io::{Read, Write};
-use utils::Result;
-use utils::LAST_BACKTRACE;
-use utils::LAST_ERROR;
 
-use crate::utils::landingpad;
-
-use crate::utils::set_panic_hook;
+use crate::error_handle::set_panic_hook;
 use core::borrow::Borrow;
+use presenter::Presenter;
 use serde_json::json;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
@@ -29,7 +29,8 @@ use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source};
 extern crate failure;
 
 #[macro_use]
-pub mod utils;
+pub mod presenter;
+pub mod error_handle;
 
 #[macro_use]
 extern crate lazy_static;
@@ -37,8 +38,10 @@ extern crate lazy_static;
 lazy_static! {
     static ref KEYSTORE_MAP: RwLock<HashMap<String, HdKeystore>> = RwLock::new(HashMap::new());
     static ref WALLET_FILE_DIR: RwLock<String> = RwLock::new("../test-data".to_string());
-    static ref XPubCommonKey128: RwLock<String> = RwLock::new(String::new());
-    static ref XPubCommonIv: RwLock<String> = RwLock::new(String::new());
+    static ref XPUB_COMMON_KEY_128: RwLock<String> =
+        RwLock::new("B888D25EC8C12BD5043777B1AC49F872".to_string());
+    static ref XPUB_COMMON_IV: RwLock<String> =
+        RwLock::new("9C0C30889CBCC5E01AB5B2BB88715799".to_string());
 }
 
 fn cache_keystore(keystore: HdKeystore) {
@@ -112,8 +115,9 @@ fn _create_wallet(v: &Value) -> Result<String> {
     let keystore = HdKeystore::new(password, meta);
     let json = keystore.json();
     _flush_keystore(&keystore);
+    let ret = keystore.present();
     cache_keystore(keystore);
-    Ok(json)
+    ret
 }
 
 #[no_mangle]
@@ -121,7 +125,7 @@ pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
     let v = parse_arguments(json_str);
     // !!! warning !!! just set_panic_hook when debug
     // set_panic_hook();
-    crate::utils::landingpad(|| _init_token_core_x(&v));
+    landingpad(|| _init_token_core_x(&v));
     ()
 }
 
@@ -130,8 +134,8 @@ fn _init_token_core_x(v: &Value) -> Result<()> {
     let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
     let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
     *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
-    *XPubCommonKey128.write().unwrap() = xpub_common_key.to_string();
-    *XPubCommonIv.write().unwrap() = xpub_common_iv.to_string();
+    *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
+    *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
 
     let p = Path::new(file_dir);
     let walk_dir = std::fs::read_dir(p).unwrap();
@@ -157,7 +161,7 @@ fn _init_token_core_x(v: &Value) -> Result<()> {
 #[no_mangle]
 pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
-    let json = crate::utils::landingpad(|| _find_wallet_by_mnemonic(&v));
+    let json = landingpad(|| _find_wallet_by_mnemonic(&v));
     CString::new(json).unwrap().into_raw()
 }
 
@@ -178,8 +182,10 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let kid = find_keystore_id_by_address(&address);
     if let Some(id) = kid {
         let map = KEYSTORE_MAP.read().unwrap();
-        let ks = map.get(&id).unwrap();
-        Ok(ks.json())
+        let ks: &HdKeystore = map.get(&id).unwrap();
+        //        let pw = _presented_wallet(&ks, None);
+        //        serde_json::to_string(pw).map_err(|_| format_err!("to json error"))
+        ks.present()
     } else {
         Ok("{}".to_owned())
     }
@@ -188,7 +194,7 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
 #[no_mangle]
 pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
-    let json = crate::utils::landingpad(|| _import_wallet_from_mnemonic(&v));
+    let json = landingpad(|| _import_wallet_from_mnemonic(&v));
     CString::new(json).unwrap().into_raw()
 }
 
@@ -221,45 +227,38 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     }
 
     _flush_keystore(&ks)?;
-    let account = &ks.account(chain_type).expect("account");
-    let mut pw = _presented_wallet(&ks, &account)?;
+    //    let account = &ks.account(chain_type).expect("account");
+    //    let mut pw = _presented_wallet(&ks, &account);
 
-    match chain_type {
-        "BCH" => {
-            let key = XPubCommonKey128.read().unwrap();
-            let iv = XPubCommonIv.read().unwrap();
-            let enc_xpub = extra.enc_xpub(&*key, &*iv)?;
-            pw.insert("encXPub".to_string(), json!(enc_xpub));
+    //    match chain_type {
+    //        "BCH" => {
+    //            let key = XPUB_COMMON_KEY_128.read().unwrap();
+    //            let iv = XPUB_COMMON_IV.read().unwrap();
+    //            let enc_xpub = extra.enc_xpub(&*key, &*iv)?;
+    //            pw.insert("encXPub".to_string(), json!(enc_xpub));
+    //
+    //            let external_address = extra.calc_external_address::<BchAddress>(0)?;
+    //            pw.insert("externalAddress".to_string(), json!(external_address));
+    //        }
+    //        _ => {}
+    //    }
 
-            let external_address = extra.calc_external_address::<BchAddress>(0)?;
-            pw.insert("externalAddress".to_string(), json!(external_address));
-        }
-        _ => {}
-    }
-
-    let json = serde_json::to_string(&pw)?;
+    let json = ks.present();
     cache_keystore(ks);
 
-    Ok(json)
+    json
 }
 
-struct PresentedWallet {
-    id: String,
-    address: String,
-    created_at: i64,
-    source: Source,
-    chain_type: String,
-}
-
-fn _presented_wallet(keystore: &HdKeystore, acc: &Account) -> Result<Map<String, Value>> {
+fn _presented_wallet(keystore: &HdKeystore, acc: Option<&Account>) -> Map<String, Value> {
     let mut pw = Map::new();
     pw.insert("id".to_string(), json!(keystore.id.to_string()));
-    pw.insert("address".to_string(), json!(acc.address.to_string()));
     pw.insert("createdAt".to_string(), json!(keystore.meta.timestamp));
     pw.insert("source".to_string(), json!(keystore.meta.source));
-    pw.insert("chainType".to_string(), json!(acc.coin.to_string()));
-
-    Ok(pw)
+    if let Some(acc) = acc {
+        pw.insert("address".to_string(), json!(acc.address.to_string()));
+        pw.insert("chainType".to_string(), json!(acc.coin.to_string()));
+    }
+    pw
 }
 
 fn _flush_keystore(ks: &HdKeystore) -> Result<()> {
@@ -276,7 +275,7 @@ fn _flush_keystore(ks: &HdKeystore) -> Result<()> {
 #[no_mangle]
 pub unsafe extern "C" fn export_mnemonic(json_str: *const c_char) -> *const c_char {
     let v: Value = parse_arguments(json_str);
-    let json = crate::utils::landingpad(|| _export_mnemonic(&v));
+    let json = landingpad(|| _export_mnemonic(&v));
     CString::new(json).unwrap().into_raw()
 }
 
@@ -298,7 +297,7 @@ pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_c
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
 
-    let json = crate::utils::landingpad(|| _sign_transaction(json_str));
+    let json = landingpad(|| _sign_transaction(json_str));
     CString::new(json).unwrap().into_raw()
 }
 
@@ -348,7 +347,7 @@ fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
 #[no_mangle]
 pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
-    let json = crate::utils::landingpad(|| _calc_external_address(&v));
+    let json = landingpad(|| _calc_external_address(&v));
     CString::new(json).unwrap().into_raw()
 }
 
@@ -403,19 +402,64 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::LAST_ERROR;
-    use crate::XPubCommonIv;
-    use crate::XPubCommonKey128;
-    use crate::WALLET_FILE_DIR;
+    use crate::error_handle::LAST_ERROR;
     use crate::{_find_wallet_by_mnemonic, _import_wallet_from_mnemonic};
+    use crate::{
+        create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
+        XPUB_COMMON_IV, XPUB_COMMON_KEY_128,
+    };
+    use crate::{KEYSTORE_MAP, WALLET_FILE_DIR};
     use serde_json::Value;
+    use std::ffi::{CStr, CString};
+    use std::fs::remove_file;
+    use std::os::raw::c_char;
+    use std::panic;
+    use std::path::Path;
     use std::str::FromStr;
     use std::sync::RwLock;
+    use tcx_chain::HdKeystore;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
+
+    fn _to_c_char(str: &str) -> *const c_char {
+        CString::new(str).unwrap().into_raw()
+    }
+
+    fn _to_str(json_str: *const c_char) -> &'static str {
+        let json_c_str = unsafe { CStr::from_ptr(json_str) };
+        json_c_str.to_str().unwrap()
+    }
+
+    fn teardown() {
+        let file_dir = WALLET_FILE_DIR.read().unwrap();
+        let file_dir_str = file_dir.to_string();
+        let p = Path::new(&file_dir_str);
+        let walk_dir = std::fs::read_dir(p).unwrap();
+        for entry in walk_dir {
+            let entry = entry.unwrap();
+            let fp = entry.path();
+            let file_name = fp.file_name().unwrap();
+            if file_name != ".gitignore" && file_name != "default_keystore.json" {
+                remove_file(fp);
+            }
+        }
+    }
+
+    fn run_test<T>(test: T) -> ()
+    where
+        T: FnOnce() -> () + panic::UnwindSafe,
+    {
+        //        setup();
+
+        let result = panic::catch_unwind(|| test());
+
+        teardown();
+
+        assert!(result.is_ok())
+    }
 
     #[test]
     fn it_works() {
@@ -423,40 +467,75 @@ mod tests {
     }
 
     #[test]
-    fn path() {
-        let file_dir = "/Users/xyz/Library/Developer/CoreSimulator/Devices/1C6326AE-C550-43D5-A1A7-CF791B4A04CA/data/Containers/Data/Application/BC076852-DF07-42EA-82B1-2FA8C5CEE9EE/Documents/wallets/";
-        let id = "ec9298f7-7f2b-4483-90af-cc440a411d82";
+    fn init_token_core_x_test() {
+        run_test(|| {
+            let init_params = r#"
+        {
+            "fileDir": "../test-data",
+            "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
+            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
+        }
+        "#;
+            // todo: add the default keystores
+            unsafe {
+                init_token_core_x(_to_c_char(init_params));
+            }
 
-        let ks_path = format!("{}{}.json", file_dir, id);
-        assert_eq!("/Users/xyz/Library/Developer/CoreSimulator/Devices/1C6326AE-C550-43D5-A1A7-CF791B4A04CA/data/Containers/Data/Application/BC076852-DF07-42EA-82B1-2FA8C5CEE9EE/Documents/wallets/ec9298f7-7f2b-4483-90af-cc440a411d82.json", ks_path);
+            let map = KEYSTORE_MAP.read().unwrap();
+            let ks: &HdKeystore = map.get("302e8e20-8e1c-4c45-9aaf-15195c7f9822").unwrap();
+            assert_eq!(ks.id, "302e8e20-8e1c-4c45-9aaf-15195c7f9822");
+        });
     }
 
     #[test]
-    fn find_wallet_by_mnemonic() {
-        let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH"}"#;
-        let v = Value::from_str(param).expect("param");
-        let wallet = _find_wallet_by_mnemonic(&v);
-        assert!(wallet.is_ok());
-        assert_eq!("{}", wallet.unwrap_or_default());
+    fn create_wallet_test() {
+        run_test(|| {
+            let params = r#"
+        {
+            "name": "createWalletTest",
+            "password": "Insecure Password",
+            "passwordHint": "Insecure Password",
+            "source": "MNEMONIC"
+        }
+        "#;
+            let json = unsafe { _to_str(create_wallet(_to_c_char(params))) };
+            let v = Value::from_str(json).unwrap();
+            let expected = Value::from_str(params).unwrap();
+            let id = v["id"].as_str().unwrap();
+            assert_ne!(id, "");
+            assert_eq!(v["source"].as_str().unwrap(), "MNEMONIC");
+            assert_eq!(json, "");
+            let map = KEYSTORE_MAP.read().unwrap();
+            assert!(map.get(id).is_some());
+        })
     }
 
     #[test]
-    fn import_wallet_from_mnemonic() {
-        *XPubCommonKey128.write().unwrap() = "B888D25EC8C12BD5043777B1AC49F872".to_string();
-        *XPubCommonIv.write().unwrap() = "9C0C30889CBCC5E01AB5B2BB88715799".to_string();
-        let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"imtoken1","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
-        let v = Value::from_str(param).expect("param");
-        let wallet = _import_wallet_from_mnemonic(&v);
-        let expected = r#"{"address":"bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885","chainType":"BCH","createdAt":1565689742,"encXPub":"wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==","externalAddress":{"type":"EXTERNAL","address":"bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r","derivedPath":"0/0"},"id":"0e85b1ea-91f5-4389-aec4-f6706493cc80","source":"MNEMONIC"}"#;
-        let expected_v = Value::from_str(expected).expect("from expected");
+    fn find_wallet_by_mnemonic_test() {
+        run_test(|| {
+            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"imtoken1","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
-        assert!(wallet.is_ok());
-        let ret_v =
-            Value::from_str(&wallet.unwrap_or_default()).expect("from import_wallet_by_mnemonic");
-        assert_eq!(expected_v["address"], ret_v["address"]);
-        assert_eq!(expected_v["chainType"], ret_v["chainType"]);
-        assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
-        assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH"}"#;
+            let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
+        })
     }
 
+    #[test]
+    fn import_wallet_from_mnemonic_test() {
+        run_test(|| {
+            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"imtoken1","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+
+            let expected = r#"{"address":"bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885","chainType":"BCH","createdAt":1565689742,"encXPub":"wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==","externalAddress":{"type":"EXTERNAL","address":"bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r","derivedPath":"0/0"},"id":"0e85b1ea-91f5-4389-aec4-f6706493cc80","source":"MNEMONIC"}"#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+
+            let ret_v = Value::from_str(ret).unwrap();
+            assert_eq!(ret, "");
+            assert_eq!(expected_v["address"], ret_v["address"]);
+            assert_eq!(expected_v["chainType"], ret_v["chainType"]);
+            assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
+            assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+        });
+    }
 }

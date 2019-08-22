@@ -37,6 +37,7 @@ pub mod ctr {
 pub mod cbc {
     extern crate aes_soft;
     extern crate block_modes;
+    use crate::Error;
     use crate::Result;
     use aes_soft::Aes128;
     use block_modes::block_padding::Pkcs7;
@@ -48,6 +49,13 @@ pub mod cbc {
         let cipher = Aes128Cbc::new_var(key, iv)?;
         Ok(cipher.encrypt_vec(data))
     }
+
+    pub fn decrypt_pkcs7(encrypted: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
+        let cipher = Aes128Cbc::new_var(key, iv)?;
+        cipher
+            .decrypt_vec(encrypted)
+            .map_err(|_| Error::InvalidCiphertext.into())
+    }
 }
 
 #[cfg(test)]
@@ -55,6 +63,7 @@ mod tests {
 
     use crate::aes::cbc::encrypt_pkcs7;
     use crate::aes::ctr::{decrypt_nopadding, encrypt_nopadding};
+    use crate::Error;
     use bitcoin_hashes::hex::ToHex;
 
     #[test]
