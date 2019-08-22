@@ -214,22 +214,14 @@ mod tests {
         assert_eq!("BCH", coin);
 
         let extra = account["extra"].as_object().expect("extra");
-        let xpub = extra["xpub"].as_str().expect("xpub");
-        assert_eq!("xpub6Bmkv3mmRZZWoFSBdj9vDMqR2PCPSP6DEj8u3bBuv44g3Ncnro6cPVqZAw6wTEcxHQuodkuJG4EmAinqrrRXGsN3HHnRRMtAvzfYTiBATV1", xpub)
+        let enc_xpub = extra["encXPub"].as_str().expect("enc_xpub");
+        assert_eq!(enc_xpub, "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==")
     }
 
     #[test]
     fn extra_test() {
         let ex = ExtendedPubKeyExtra::from_xpub("tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R").unwrap();
-        //
-        //        let key = hex_bytes("B888D25EC8C12BD5043777B1AC49F872").unwrap();
-        //        let iv = hex_bytes("9C0C30889CBCC5E01AB5B2BB88715799").unwrap();
-        //        let enc_xpub = ex
-        //            .enc_xpub(
-        //                "B888D25EC8C12BD5043777B1AC49F872",
-        //                "9C0C30889CBCC5E01AB5B2BB88715799",
-        //            )
-        //            .unwrap();
+
         assert_eq!(ex.enc_xpub, "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==");
 
         //        let addr = ex.calc_external_address::<BchAddress>(1i64).unwrap();

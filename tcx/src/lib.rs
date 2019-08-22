@@ -20,6 +20,7 @@ use std::sync::RwLock;
 use tcx_bch::{BchAddress, BitcoinCashTransaction, ExtendedPubKeyExtra, Utxo};
 use tcx_chain::signer::TransactionSigner;
 use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source};
+use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 // #[link(name = "TrezorCrypto")]
 // extern {
 //     fn mnemonic_generate(strength: c_int, mnemonic: *mut c_char) -> c_int;
@@ -38,10 +39,6 @@ extern crate lazy_static;
 lazy_static! {
     static ref KEYSTORE_MAP: RwLock<HashMap<String, HdKeystore>> = RwLock::new(HashMap::new());
     static ref WALLET_FILE_DIR: RwLock<String> = RwLock::new("../test-data".to_string());
-    static ref XPUB_COMMON_KEY_128: RwLock<String> =
-        RwLock::new("B888D25EC8C12BD5043777B1AC49F872".to_string());
-    static ref XPUB_COMMON_IV: RwLock<String> =
-        RwLock::new("9C0C30889CBCC5E01AB5B2BB88715799".to_string());
 }
 
 fn cache_keystore(keystore: HdKeystore) {
@@ -130,7 +127,7 @@ pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
 }
 
 fn _init_token_core_x(v: &Value) -> Result<()> {
-    let file_dir = v["fileDir"].as_str().unwrap();
+    let file_dir = v["fileDir"].as_str().expect("fileDir");
     let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
     let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
     *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
@@ -138,14 +135,14 @@ fn _init_token_core_x(v: &Value) -> Result<()> {
     *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
 
     let p = Path::new(file_dir);
-    let walk_dir = std::fs::read_dir(p).unwrap();
+    let walk_dir = std::fs::read_dir(p).expect("read dir");
     for entry in walk_dir {
         let entry = entry.unwrap();
         let fp = entry.path();
-        let mut f = File::open(fp).unwrap();
+        let mut f = File::open(fp).expect("open file");
         let mut contents = String::new();
         f.read_to_string(&mut contents);
-        let v: Value = serde_json::from_str(&contents).unwrap();
+        let v: Value = serde_json::from_str(&contents).expect("read json from content");
 
         let version = v["version"].as_i64().unwrap();
         if version != HdKeystore::VERSION as i64 {
@@ -183,8 +180,6 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     if let Some(id) = kid {
         let map = KEYSTORE_MAP.read().unwrap();
         let ks: &HdKeystore = map.get(&id).unwrap();
-        //        let pw = _presented_wallet(&ks, None);
-        //        serde_json::to_string(pw).map_err(|_| format_err!("to json error"))
         ks.present()
     } else {
         Ok("{}".to_owned())
@@ -227,38 +222,10 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     }
 
     _flush_keystore(&ks)?;
-    //    let account = &ks.account(chain_type).expect("account");
-    //    let mut pw = _presented_wallet(&ks, &account);
-
-    //    match chain_type {
-    //        "BCH" => {
-    //            let key = XPUB_COMMON_KEY_128.read().unwrap();
-    //            let iv = XPUB_COMMON_IV.read().unwrap();
-    //            let enc_xpub = extra.enc_xpub(&*key, &*iv)?;
-    //            pw.insert("encXPub".to_string(), json!(enc_xpub));
-    //
-    //            let external_address = extra.calc_external_address::<BchAddress>(0)?;
-    //            pw.insert("externalAddress".to_string(), json!(external_address));
-    //        }
-    //        _ => {}
-    //    }
-
     let json = ks.present();
     cache_keystore(ks);
 
     json
-}
-
-fn _presented_wallet(keystore: &HdKeystore, acc: Option<&Account>) -> Map<String, Value> {
-    let mut pw = Map::new();
-    pw.insert("id".to_string(), json!(keystore.id.to_string()));
-    pw.insert("createdAt".to_string(), json!(keystore.meta.timestamp));
-    pw.insert("source".to_string(), json!(keystore.meta.source));
-    if let Some(acc) = acc {
-        pw.insert("address".to_string(), json!(acc.address.to_string()));
-        pw.insert("chainType".to_string(), json!(acc.coin.to_string()));
-    }
-    pw
 }
 
 fn _flush_keystore(ks: &HdKeystore) -> Result<()> {
@@ -482,8 +449,8 @@ mod tests {
             }
 
             let map = KEYSTORE_MAP.read().unwrap();
-            let ks: &HdKeystore = map.get("302e8e20-8e1c-4c45-9aaf-15195c7f9822").unwrap();
-            assert_eq!(ks.id, "302e8e20-8e1c-4c45-9aaf-15195c7f9822");
+            let ks: &HdKeystore = map.get("9c6cbc21-1c43-4c8b-bb7a-5e538f908819").unwrap();
+            assert_eq!(ks.id, "9c6cbc21-1c43-4c8b-bb7a-5e538f908819");
         });
     }
 
@@ -502,9 +469,7 @@ mod tests {
             let v = Value::from_str(json).unwrap();
             let expected = Value::from_str(params).unwrap();
             let id = v["id"].as_str().unwrap();
-            assert_ne!(id, "");
             assert_eq!(v["source"].as_str().unwrap(), "MNEMONIC");
-            assert_eq!(json, "");
             let map = KEYSTORE_MAP.read().unwrap();
             assert!(map.get(id).is_some());
         })
@@ -527,11 +492,26 @@ mod tests {
             let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"imtoken1","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
-            let expected = r#"{"address":"bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885","chainType":"BCH","createdAt":1565689742,"encXPub":"wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==","externalAddress":{"type":"EXTERNAL","address":"bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r","derivedPath":"0/0"},"id":"0e85b1ea-91f5-4389-aec4-f6706493cc80","source":"MNEMONIC"}"#;
+            let expected = r#"
+            {
+                "address": "bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885",
+                "chainType": "BCH",
+                "createdAt": 1566455834,
+                "encXPub": "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==",
+                "externalAddress": {
+                    "address": "bitcoincash:qzyrtfn4a7cdkn7sp60tw7hl8zndt0tk0sst3p6qr5",
+                    "derivedPath": "0/1",
+                    "type": "EXTERNAL"
+                },
+                "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
+                "name": "BCH-Wallet-1",
+                "passwordHint": "",
+                "source": "MNEMONIC"
+            }
+            "#;
             let expected_v = Value::from_str(expected).expect("from expected");
-
             let ret_v = Value::from_str(ret).unwrap();
-            assert_eq!(ret, "");
+
             assert_eq!(expected_v["address"], ret_v["address"]);
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);

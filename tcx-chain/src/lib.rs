@@ -74,7 +74,7 @@ mod tests {
 
     #[test]
     fn test_macro() {
-        let a = throw_err();
-        assert_eq!("", a.err().unwrap().to_string())
+        let err = throw_err();
+        assert_eq!(format!("{}", err.err().unwrap()), "invalid_mnemonic")
     }
 }
