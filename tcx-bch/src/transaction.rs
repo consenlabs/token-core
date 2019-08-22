@@ -60,8 +60,8 @@ impl TransactionSigner<BitcoinCashTransaction, TxSignResult> for HdKeystore {
 
         let paths = tx.collect_prv_keys_paths(path)?;
         let priv_keys = &self.key_at_paths("BCH", &paths, &tx.password)?;
-
-        tx.sign_transaction(&priv_keys, &extra.xpub)
+        let xpub = extra.xpub()?;
+        tx.sign_transaction(&priv_keys, &xpub)
     }
 }
 
@@ -273,13 +273,6 @@ mod tests {
             change_idx: 0,
             password: PASSWORD.to_string(),
         };
-
-        //        let paths = tran
-        //            .collect_prv_keys_paths(&coin_info.derivation_path)
-        //            .unwrap();
-        //        let priv_keys = keystore.key_at_paths("BCH", &paths, &PASSWORD).unwrap();
-        //        let acc = keystore.account("BCH").unwrap();
-        //        let extra = ExtendedPubKeyExtra::from(acc.extra.clone());
 
         let sign_ret = keystore.sign(&tran).unwrap();
         // todo: not a real test data, it's works at WIF: L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy
