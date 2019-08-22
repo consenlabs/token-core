@@ -116,7 +116,10 @@ mod tests {
     #[test]
     fn test_generate_mnemonic() {
         let mnemonic_str = generate_mnemonic();
-        assert_eq!(12, mnemonic_str.len());
+        assert_eq!(
+            12,
+            mnemonic_str.split_whitespace().collect::<Vec<&str>>().len()
+        );
         let second_mnemonic = generate_mnemonic();
         assert_ne!(mnemonic_str, second_mnemonic);
     }

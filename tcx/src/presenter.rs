@@ -64,17 +64,19 @@ impl Presenter for HdKeystore {
                 return Err(format_err!("Only one account in token 2.5"));
             }
             let acc = &self.active_accounts.first().unwrap();
+            println!("has account");
             pw.insert("address".to_string(), json!(acc.address.to_string()));
             pw.insert("chainType".to_string(), json!(acc.coin.to_string()));
             let mut obj = Value::Object(pw);
             if let Some(extra) = acc.extra.as_object() {
+                println!("try to merge");
                 merge(&mut obj, &Value::Object(extra.clone()))
             }
             return serde_json::to_string(&obj)
-                .map_err(|_| format_err!("present err when conver to json"));
+                .map_err(|_| format_err!("present err when convert to json"));
         } else {
             return serde_json::to_string(&pw)
-                .map_err(|_| format_err!("present err when conver to json"));
+                .map_err(|_| format_err!("present err when convert to json"));
         }
     }
 }
