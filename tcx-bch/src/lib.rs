@@ -19,6 +19,9 @@ extern crate num_bigint;
 extern crate num_integer;
 extern crate num_traits;
 
+#[macro_use]
+extern crate tcx_chain;
+
 pub type Result<T> = result::Result<T, failure::Error>;
 
 pub use address::{BchAddress, BchTestNetAddress};

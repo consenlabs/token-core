@@ -305,9 +305,8 @@ fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
         memo: "".to_string(),
         fee,
         change_idx: change_idx as u32,
-        password: password.to_string(),
     };
-    let ret = keystore.sign(&bch_tran)?;
+    let ret = keystore.sign_transaction(&bch_tran, Some(&password))?;
     Ok(serde_json::to_string(&ret)?)
 }
 

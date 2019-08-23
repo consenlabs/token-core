@@ -45,13 +45,16 @@ pub struct BitcoinCashTransaction {
     pub memo: String,
     pub fee: i64,
     pub change_idx: u32,
-    pub password: String,
 }
 
 impl TraitTransaction for BitcoinCashTransaction {}
 
 impl TransactionSigner<BitcoinCashTransaction, TxSignResult> for HdKeystore {
-    fn sign(&self, tx: &BitcoinCashTransaction) -> Result<TxSignResult> {
+    fn sign_transaction(
+        &self,
+        tx: &BitcoinCashTransaction,
+        password: Option<&str>,
+    ) -> Result<TxSignResult> {
         let account = self
             .account(&"BCH")
             .ok_or(format_err!("account_not_found"))?;
@@ -59,7 +62,9 @@ impl TransactionSigner<BitcoinCashTransaction, TxSignResult> for HdKeystore {
         let extra = ExtendedPubKeyExtra::from(account.extra.clone());
 
         let paths = tx.collect_prv_keys_paths(path)?;
-        let priv_keys = &self.key_at_paths("BCH", &paths, &tx.password)?;
+
+        tcx_ensure!(password.is_some(), tcx_crypto::Error::InvalidPassword);
+        let priv_keys = &self.key_at_paths("BCH", &paths, password.unwrap())?;
         let xpub = extra.xpub()?;
         tx.sign_transaction(&priv_keys, &xpub)
     }
@@ -271,10 +276,9 @@ mod tests {
             memo: "".to_string(),
             fee: 35000,
             change_idx: 0,
-            password: PASSWORD.to_string(),
         };
 
-        let sign_ret = keystore.sign(&tran).unwrap();
+        let sign_ret = keystore.sign_transaction(&tran, Some(&PASSWORD)).unwrap();
         // todo: not a real test data, it's works at WIF: L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy
         assert_eq!(sign_ret.signature, "01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100be283eb3c936fbdc9159d7067cf3bf44b40c5fc790e6f06368c404a6c1962ebb022071741ed6e1d034f300d177582c870934d4b155d0eb40e6eda99b3e95323a4666412102cc987e200a13c771d9c840cd08db93debf4d4443cec3e084a4cde2aad4cfa77dffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000");
     }

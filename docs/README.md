@@ -104,7 +104,7 @@ fn derive_account_from_coin<A: Address, E: Extra>(
 对于部分没有额外信息的链，我们提供了EmptyExtra，开发者可直接使用该结构体。    
 
 #### Curve
-在tcx中提供了PrivateKey和PublicKey两个trait，PrivateKey提供了推导同曲线的公钥和所在曲线的签名实现。每条曲线的公私钥都应该实现这些trait。HdKeystore部分接口会返回这些Trait，直接使用Trait在部分情况下可以避免你转换成具体的类型。例如在签名时通过调用`key_at_paths(&self, symbol: &str, paths: &[impl AsRef<str>], password: &str) -> Result<Vec<impl PrivateKey>>`该方法会根据symbol找到相应的Account并确定其所在的曲线。最终返回的私钥可以直接调用其sign方法而不需要考虑曲线，私钥转换等问题。     
+在tcx中提供了PrivateKey和PublicKey两个trait，PrivateKey提供了推导同曲线的公钥和所在曲线的签名实现。每条曲线的公私钥都应该实现这些trait。HdKeystore部分接口会返回这些Trait，直接使用Trait在部分情况下可以避免你转换成具体的类型。例如在签名时通过调用`key_at_paths(&self, symbol: &str, paths: &[impl AsRef<str>], password: &str) -> Result<Vec<impl PrivateKey>>`该方法会根据symbol找到相应的Account并确定其所在的曲线。最终返回的私钥可以直接调用其sign方法而不需要考虑曲线，私钥转换等问题。(目前正在讨论一种更高抽象的一种方案，可以参见tcx-primitive包，不过暂未确定具体思路暂不讨论)     
 由于曲线的设计不会暴露给普通的链的开发者，并且每条链的特性不尽相同。所以tcx在内部提供了多个具体的结构体来实现曲线相关的算法，例如`Secp256k1Curve`，其内部除了提供了根据seed和path派生相应私钥的方法。并且在HdKeystore内部根据传入的CoinInfo来调用相关方法，如下所示    
 ```rust
 fn key_at_paths_with_seed(
@@ -132,7 +132,6 @@ pub struct BitcoinCashTransaction {
     pub memo: String,
     pub fee: i64,
     pub change_idx: u32,
-    pub password: String,
 }
 
 impl TraitTransaction for BitcoinCashTransaction {}
@@ -141,7 +140,7 @@ TransactionSigner提供了签名接口的约束。开发者需要实现该Trait�
 ```rust
 // 感谢@孙哥提到 impl ... for HdKeystore 思路，可以对于硬件特定的实现可以使用impl ... for HdWallet,你会看到tcx中的Presenter使用了同样的思路。但是该方案同时限制死了软件钱包和硬件钱包必须使用相同的接口，导致Extra暂时不行能用该方案    
 impl TransactionSigner<BitcoinCashTransaction, TxSignResult> for HdKeystore {
-    fn sign(&self, tx: &BitcoinCashTransaction) -> Result<TxSignResult> {
+    fn sign(&self, tx: &BitcoinCashTransaction, password: Option<&str>) -> Result<TxSignResult> {
         let account = self
             .account(&"BCH")
             .ok_or(format_err!("account_not_found"))?;
@@ -149,7 +148,8 @@ impl TransactionSigner<BitcoinCashTransaction, TxSignResult> for HdKeystore {
         let extra = ExtendedPubKeyExtra::from(account.extra.clone());
 
         let paths = tx.collect_prv_keys_paths(path)?;
-        let priv_keys = &self.key_at_paths("BCH", &paths, &tx.password)?;
+        tcx_ensure!(password.is_some(), tcx_crypto::Error::InvalidPassword);
+        let priv_keys = &self.key_at_paths("BCH", &paths, password.unwrap())?;
         let xpub = extra.xpub()?;
         tx.sign_transaction(&priv_keys, &xpub)
     }

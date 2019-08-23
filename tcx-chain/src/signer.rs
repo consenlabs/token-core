@@ -29,5 +29,5 @@ pub trait Transaction: Sized {}
 pub trait SignedTransaction: Sized {}
 
 pub trait TransactionSigner<Input: Transaction, Output: SignedTransaction> {
-    fn sign_transaction(&self, tx: Input, password: &str) -> Result<Output>;
+    fn sign_transaction(&self, tx: &Input, password: Option<&str>) -> Result<Output>;
 }

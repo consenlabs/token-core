@@ -1,6 +1,7 @@
 use bitcoin::util::base58;
 use std::str::FromStr;
-use tcx_chain::{Address1 as TraitAddress, PublicKey};
+use tcx_chain::keystore::Address as TraitAddress;
+use tcx_chain::PublicKey;
 use tcx_primitive::key::secp256k1::Public;
 
 pub struct Address(String);
@@ -9,15 +10,27 @@ pub enum Error {
     InvalidBase58,
 }
 
+//impl TraitAddress for Address {
+//    type Error = Error;
+//    type Public = Public;
+//
+//    fn from_public(public: &Self::Public) -> core::result::Result<Address, Self::Error> {
+//        let bytes = public.public_key().to_uncompressed();
+//        let hash = keccak_hash::keccak(&bytes[1..]);
+//        let hex: Vec<u8> = [vec![0x41], hash[12..32].to_vec()].concat();
+//        Ok(Address(base58::check_encode_slice(&hex)))
+//    }
+//}
 impl TraitAddress for Address {
-    type Error = Error;
-    type Public = Public;
+    fn is_valid(address: &str) -> bool {
+        unimplemented!()
+    }
 
-    fn from_public(public: &Self::Public) -> core::result::Result<Address, Self::Error> {
-        let bytes = public.public_key().to_uncompressed();
+    fn from_public_key(public_key: &impl PublicKey) -> Result<String, failure::Error> {
+        let bytes = public_key.to_uncompressed();
         let hash = keccak_hash::keccak(&bytes[1..]);
         let hex: Vec<u8> = [vec![0x41], hash[12..32].to_vec()].concat();
-        Ok(Address(base58::check_encode_slice(&hex)))
+        Ok(base58::check_encode_slice(&hex))
     }
 }
 

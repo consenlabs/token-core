@@ -45,19 +45,21 @@ impl TryInto<Value> for SignedTransaction {
 impl TraitSignedTransaction for SignedTransaction {}
 
 impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
-    fn sign_transaction(&self, tx: &Transaction) -> Result<SignedTransaction, failure::Error> {
-        Ok(SignedTransaction {})
-    }
-}
-
-impl TraitTransactionSigner<Transaction, SignedTransaction> for Pair {
-    fn sign_transaction(&self, tx: Transaction, password: &str) -> Result<SignedTransaction> {
-        let mut raw = tx.raw;
-
+    fn sign_transaction(
+        &self,
+        tx: &Transaction,
+        password: Option<&str>,
+    ) -> Result<SignedTransaction> {
+        let mut raw = tx.raw.clone();
+        tcx_ensure!(password.is_some(), tcx_crypto::Error::InvalidPassword);
         let hash = Hash::hash(&hex::decode(raw["raw_data_hex"].as_str().unwrap())?);
-
+        let account = self
+            .account(&"TRON")
+            .ok_or(format_err!("account_not_found"))?;
+        let path = &account.derivation_path;
+        let pair = &self.get_pair::<Pair>(path, password.unwrap())?;
         let sign_result: core::result::Result<RecoverableSignature, KeyError> =
-            self.sign(&hash[..]);
+            pair.sign(&hash[..]);
 
         match sign_result {
             Ok(r) => {
@@ -70,21 +72,54 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for Pair {
                     .unwrap()
                     .insert("signature".to_owned(), json!([hex::encode(&bs.to_bytes())]));
 
-                Ok(SignedTransaction { raw })
+                Ok(SignedTransaction { raw: raw.clone() })
             }
             Err(e) => Err(format_err!("{}", "can not format error")),
         }
     }
 }
+//
+//impl TraitTransactionSigner<Transaction, SignedTransaction> for Pair {
+//    fn sign_transaction(&self, tx: Transaction, password: &str) -> Result<SignedTransaction> {
+//        let mut raw = tx.raw;
+//
+//        let hash = Hash::hash(&hex::decode(raw["raw_data_hex"].as_str().unwrap())?);
+//
+//        let sign_result: core::result::Result<RecoverableSignature, KeyError> =
+//            self.sign(&hash[..]);
+//
+//        match sign_result {
+//            Ok(r) => {
+//                let (recover_id, sign) = r.serialize_compact();
+//                let mut bs = bytebuffer::ByteBuffer::new();
+//                bs.write_bytes(&sign);
+//                bs.write_u8(recover_id.to_i32() as u8);
+//
+//                raw.as_object_mut()
+//                    .unwrap()
+//                    .insert("signature".to_owned(), json!([hex::encode(&bs.to_bytes())]));
+//
+//                Ok(SignedTransaction { raw })
+//            }
+//            Err(e) => Err(format_err!("{}", "can not format error")),
+//        }
+//    }
+//}
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::Value;
     use std::convert::TryFrom;
-    use tcx_chain::TransactionSigner;
+    use tcx_chain::keystore::EmptyExtra;
+    use tcx_chain::{CoinInfo, CurveType, Metadata, TransactionSigner};
     use tcx_primitive::key::secp256k1::Pair;
     use tcx_primitive::key::Pair as TraitPair;
+
+    static PASSWORD: &'static str = "Insecure Pa55w0rd";
+    static MNEMONIC: &'static str =
+        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+    static BCH_MAIN_PATH: &'static str = "m/44'/145'/0'";
 
     #[test]
     fn sign_transaction() -> core::result::Result<(), failure::Error> {
@@ -115,13 +150,23 @@ mod tests {
 
         let tx = Transaction::try_from(json)?;
 
-        let pair = Pair::from_slice(&hex::decode(
-            "1111111111111311111111111111111111111111111111111111111111111111",
-        )?)
-        .map_err(|_| format_err!("{}", "can not sign"))?;
-        let signed_tx = pair.sign_transaction(tx, "")?;
+        let meta = Metadata::default();
+        let mut keystore = HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta);
 
-        assert_eq!("2c6656633c2ac6663339d33f0ca3af3849c718b79534428a30095b0ab4a4df5f11636c49e8f0969586014267270b7a347da18764da45b9754b2ca98e093f735e00", signed_tx.raw["signature"][0].as_str().unwrap(), "signature must be correct");
+        let coin_info = CoinInfo {
+            symbol: "TRON".to_string(),
+            derivation_path: "m/44'/145'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        };
+        let _ = keystore.derive_coin::<crate::Address, EmptyExtra>(&coin_info, &PASSWORD);
+
+        //        let pair = Pair::from_slice(&hex::decode(
+        //            "1111111111111311111111111111111111111111111111111111111111111111",
+        //        )?)
+        //        .map_err(|_| format_err!("{}", "can not sign"))?;
+        let signed_tx = keystore.sign_transaction(&tx, Some(&PASSWORD))?;
+
+        assert_eq!(signed_tx.raw["signature"][0].as_str().unwrap(), "beac4045c3ea5136b541a3d5ec2a3e5836d94f28a1371440a01258808612bc161b5417e6f5a342451303cda840f7e21bfaba1011fad5f63538cb8cc132a9768800", "signature must be correct");
 
         Ok(())
     }
