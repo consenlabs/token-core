@@ -28,6 +28,7 @@ pub use address::{BchAddress, BchTestNetAddress};
 use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
 use secp256k1::Secp256k1;
 use serde_json::Value;
+use tcx_chain::bips::get_account_path;
 use tcx_crypto::aes::cbc::{decrypt_pkcs7, encrypt_pkcs7};
 use tcx_crypto::aes::ctr::encrypt_nopadding;
 pub use transaction::{BitcoinCashTransaction, Utxo};
@@ -70,7 +71,8 @@ impl Extra for ExtendedPubKeyExtra {
             coin_info.curve == CurveType::SECP256k1,
             "BCH must be at secp256k1"
         );
-        let derivation_info = Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)?;
+        let account_path = get_account_path(&coin_info.derivation_path)?;
+        let derivation_info = Secp256k1Curve::extended_pub_key(&account_path, &seed)?;
         let xpub = address::BchAddress::extended_public_key(&derivation_info);
         ExtendedPubKeyExtra::from_xpub(&xpub)
     }
@@ -140,6 +142,7 @@ impl From<Value> for ExtendedPubKeyExtra {
 mod tests {
     use crate::address::BchAddress;
     use crate::{ExtendedPubKeyExtra, ExternalAddress};
+    use bch_addr::Converter;
     use bitcoin::util::misc::hex_bytes;
     use serde_json::Value;
     use std::str::FromStr;
@@ -240,5 +243,14 @@ mod tests {
             serde_json::to_value(ex.external_address).unwrap(),
             serde_json::Value::from_str(expected).unwrap()
         );
+    }
+
+    #[test]
+    fn address_converter() {
+        let converter = Converter::new();
+        let ret = converter
+            .to_legacy_addr("bitcoincash:qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy")
+            .unwrap();
+        assert_eq!(ret, "12z6UzsA3tjpaeuvA2Zr9jwx19Azz74D6g")
     }
 }

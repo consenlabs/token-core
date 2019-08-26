@@ -64,12 +64,10 @@ impl Presenter for HdKeystore {
                 return Err(format_err!("Only one account in token 2.5"));
             }
             let acc = &self.active_accounts.first().unwrap();
-            println!("has account");
             pw.insert("address".to_string(), json!(acc.address.to_string()));
             pw.insert("chainType".to_string(), json!(acc.coin.to_string()));
             let mut obj = Value::Object(pw);
             if let Some(extra) = acc.extra.as_object() {
-                println!("try to merge");
                 merge(&mut obj, &Value::Object(extra.clone()))
             }
             return serde_json::to_string(&obj)

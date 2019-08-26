@@ -65,7 +65,7 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
     match symbol {
         "BCH" => Ok(CoinInfo {
             symbol: "BCH".to_string(),
-            derivation_path: "m/44'/145'/0'".to_string(),
+            derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
         _ => Err(format_err!("unsupported_chain")),
@@ -94,8 +94,8 @@ pub extern "C" fn free_const_string(s: *const c_char) {
 
 fn parse_arguments(json_str: *const c_char) -> Value {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
-    let json_str = json_c_str.to_str().unwrap();
-    serde_json::from_str(json_str).unwrap()
+    let json_str = json_c_str.to_str().expect("parse_arguments to_str");
+    serde_json::from_str(json_str).expect("parse_arguments serde_json")
 }
 
 pub unsafe extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
@@ -137,14 +137,24 @@ fn _init_token_core_x(v: &Value) -> Result<()> {
     let p = Path::new(file_dir);
     let walk_dir = std::fs::read_dir(p).expect("read dir");
     for entry in walk_dir {
-        let entry = entry.unwrap();
+        let entry = entry.expect("DirEntry");
         let fp = entry.path();
+        if !fp
+            .file_name()
+            .expect("file_name")
+            .to_str()
+            .expect("file_name str")
+            .ends_with(".json")
+        {
+            continue;
+        }
+
         let mut f = File::open(fp).expect("open file");
         let mut contents = String::new();
         f.read_to_string(&mut contents);
         let v: Value = serde_json::from_str(&contents).expect("read json from content");
 
-        let version = v["version"].as_i64().unwrap();
+        let version = v["version"].as_i64().expect("version");
         if version != HdKeystore::VERSION as i64 {
             continue;
         }
@@ -196,7 +206,7 @@ pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) ->
 fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let password = v["password"].as_str().unwrap();
     let mnemonic = v["mnemonic"].as_str().unwrap();
-    let _path = v["path"].as_str().unwrap();
+    let path = v["path"].as_str().unwrap();
     let overwrite = v["overwrite"].as_bool().unwrap();
 
     let chain_type = v["chainType"].as_str().unwrap();
@@ -206,7 +216,9 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
 
     let (account, extra) = match chain_type {
         "BCH" => {
-            let coin_info = _coin_info_from_symbol("BCH")?;
+            let mut coin_info = _coin_info_from_symbol("BCH")?;
+            coin_info.derivation_path = path.to_string();
+
             ks.derive_coin::<BchAddress, ExtendedPubKeyExtra>(&coin_info, password)
         }
         _ => Err(format_err!("{}", "chain_type_not_support")),
@@ -247,8 +259,8 @@ pub unsafe extern "C" fn export_mnemonic(json_str: *const c_char) -> *const c_ch
 }
 
 fn _export_mnemonic(v: &Value) -> Result<String> {
-    let wid = v["id"].as_str().unwrap();
-    let password = v["password"].as_str().unwrap();
+    let wid = v["id"].as_str().expect("id");
+    let password = v["password"].as_str().expect("password");
 
     let map = KEYSTORE_MAP.read().unwrap();
     let keystore = match map.get(wid) {
@@ -369,7 +381,10 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 #[cfg(test)]
 mod tests {
     use crate::error_handle::LAST_ERROR;
-    use crate::{_find_wallet_by_mnemonic, _import_wallet_from_mnemonic};
+    use crate::{
+        _find_wallet_by_mnemonic, _import_wallet_from_mnemonic, clear_err, export_mnemonic,
+        get_last_err_message, sign_transaction,
+    };
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
         XPUB_COMMON_IV, XPUB_COMMON_KEY_128,
@@ -385,10 +400,11 @@ mod tests {
     use std::sync::RwLock;
     use tcx_chain::HdKeystore;
 
-    static PASSWORD: &'static str = "Insecure Pa55w0rd";
+    static PASSWORD: &'static str = "Insecure Password";
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
+    static WALLET_ID: &'static str = "9c6cbc21-1c43-4c8b-bb7a-5e538f908819";
 
     fn _to_c_char(str: &str) -> *const c_char {
         CString::new(str).unwrap().into_raw()
@@ -397,6 +413,19 @@ mod tests {
     fn _to_str(json_str: *const c_char) -> &'static str {
         let json_c_str = unsafe { CStr::from_ptr(json_str) };
         json_c_str.to_str().unwrap()
+    }
+
+    fn setup() {
+        let init_params = r#"
+        {
+            "fileDir": "../test-data",
+            "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
+            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
+        }
+        "#;
+        unsafe {
+            init_token_core_x(_to_c_char(init_params));
+        }
     }
 
     fn teardown() {
@@ -418,11 +447,11 @@ mod tests {
     where
         T: FnOnce() -> () + panic::UnwindSafe,
     {
-        //        setup();
+        setup();
 
         let result = panic::catch_unwind(|| test());
 
-        teardown();
+        //        teardown();
 
         assert!(result.is_ok())
     }
@@ -442,14 +471,13 @@ mod tests {
             "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
         }
         "#;
-            // todo: add the default keystores
             unsafe {
                 init_token_core_x(_to_c_char(init_params));
             }
 
             let map = KEYSTORE_MAP.read().unwrap();
-            let ks: &HdKeystore = map.get("9c6cbc21-1c43-4c8b-bb7a-5e538f908819").unwrap();
-            assert_eq!(ks.id, "9c6cbc21-1c43-4c8b-bb7a-5e538f908819");
+            let ks: &HdKeystore = map.get(WALLET_ID).unwrap();
+            assert_eq!(ks.id, WALLET_ID);
         });
     }
 
@@ -477,7 +505,7 @@ mod tests {
     #[test]
     fn find_wallet_by_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"imtoken1","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
             unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH"}"#;
@@ -488,12 +516,12 @@ mod tests {
     #[test]
     fn import_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"imtoken1","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
             {
-                "address": "bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885",
+                "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
                 "chainType": "BCH",
                 "createdAt": 1566455834,
                 "encXPub": "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==",
@@ -516,5 +544,77 @@ mod tests {
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
         });
+    }
+
+    #[test]
+    fn export_mnemonic_test() {
+        //        let init_params = r#"
+        //        {
+        //            "fileDir": "../test-data",
+        //            "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
+        //            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
+        //        }
+        //        "#;
+        //        unsafe {
+        //            init_token_core_x(_to_c_char(init_params));
+        //        }
+
+        run_test(|| {
+            let param = r#"
+        {
+            "id": "9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
+            "password": "Insecure Password"
+        }
+        "#;
+            unsafe { clear_err() }
+            let exported_mnemonic = unsafe { _to_str(export_mnemonic(_to_c_char(param))) };
+            let err = unsafe { _to_str(get_last_err_message()) };
+            assert_eq!(exported_mnemonic, MNEMONIC);
+
+            let param = r#"
+        {
+            "id": "9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
+            "password": "Wrong Password"
+        }
+        "#;
+            unsafe { clear_err() }
+            let exported_mnemonic = unsafe { _to_str(export_mnemonic(_to_c_char(param))) };
+            let err = unsafe { _to_str(get_last_err_message()) };
+            assert_eq!(err, "invalid_password");
+        })
+    }
+
+    #[test]
+    fn sign_transaction_test() {
+        run_test(|| {
+            let param = r#"
+            {
+                "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
+                "password": "Insecure Password",
+                "to": "1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK",
+                "amount": "15000",
+                "fee": "35000",
+                "internalUsed": 0,
+                "chainType": "BCH",
+                "outputs": [
+                    {
+                        "txHash": "115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986",
+                        "vout": 0,
+                        "amount": "50000",
+                        "address": "17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV",
+                        "scriptPubKey": "76a91447862fe165e6121af80d5dde1ecb478ed170565b88ac",
+                        "derivedPath": "0/1"
+                    }
+                ]
+            }
+            "#;
+
+            unsafe { clear_err() }
+            let ret = unsafe { _to_str(sign_transaction(_to_c_char(param))) };
+            let ret_v = Value::from_str(ret).unwrap();
+            let expected = r#"{"signature":"01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100be283eb3c936fbdc9159d7067cf3bf44b40c5fc790e6f06368c404a6c1962ebb022071741ed6e1d034f300d177582c870934d4b155d0eb40e6eda99b3e95323a4666412102cc987e200a13c771d9c840cd08db93debf4d4443cec3e084a4cde2aad4cfa77dffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000","txHash":"06b6056c80f94d7720deed273a2387b0cd21221f5405c3096328b6874cf9657d","wtxId":""}"#;
+            let expected_v = Value::from_str(expected).unwrap();
+            assert_eq!(ret_v, expected_v);
+        })
     }
 }

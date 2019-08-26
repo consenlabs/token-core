@@ -218,9 +218,6 @@ impl HdKeystore {
     }
 
     pub fn mnemonic(&self, password: &str) -> Result<String> {
-        if self.key_type != KeyType::Mnemonic {
-            return Err(Error::InvalidKeyType.into());
-        }
         tcx_ensure!(self.key_type == KeyType::Mnemonic, Error::InvalidKeyType);
         let mnemonic_bytes = self.crypto.decrypt(password)?;
         let mnemonic = String::from_utf8(mnemonic_bytes)?;

@@ -144,7 +144,7 @@ impl HardWalletKeystore {
         let parent_pub_hex = xpub_hexs[0];
         let compressed_parent_pub_key = compress_pub_key(parent_pub_hex);
         //        let parent_pub_hex = format!("{}{}", prefix, &parent_pub_hex[2..130]);
-        println!("{}", compressed_parent_pub_key);
+
         let parent_pub_bytes = <[u8; 33]>::from_hex(&compressed_parent_pub_key)?;
         let parent_pub_key = PublicKey::from_slice(&parent_pub_bytes)?;
         let pub_key_hex = xpub_hexs[1];

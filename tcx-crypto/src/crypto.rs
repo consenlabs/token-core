@@ -100,8 +100,8 @@ impl Crypto<Pbkdf2Params> {
     }
 
     pub fn decrypt(&self, password: &str) -> Result<Vec<u8>> {
-        let encrypted: Vec<u8> = FromHex::from_hex(&self.ciphertext).unwrap();
-        let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).unwrap();
+        let encrypted: Vec<u8> = FromHex::from_hex(&self.ciphertext).expect("ciphertext");
+        let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).expect("iv");
         self.decrypt_data(password, &encrypted, &iv)
     }
 
@@ -285,7 +285,6 @@ mod tests {
         let crypto: Crypto<Pbkdf2Params> = serde_json::from_str(data).unwrap();
         let result = crypto.decrypt("aaa");
         assert!(result.is_err());
-        println!("{:?}", result.err());
         assert_eq!(
             crypto.mac,
             "4906577f075ad714f328e7b33829fdccfa8cd22eab2c0a8bc4f577824188ed16"
