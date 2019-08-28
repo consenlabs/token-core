@@ -13,7 +13,7 @@ use tcx_primitive::key::secp256k1::Pair;
 use tcx_primitive::key::{KeyError, Signer};
 
 use failure::format_err;
-use secp256k1::{RecoverableSignature, Signature};
+use secp256k1::{recovery::RecoverableSignature, Signature};
 use serde_json::json;
 
 pub struct Transaction {
