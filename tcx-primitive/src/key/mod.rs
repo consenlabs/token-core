@@ -3,7 +3,7 @@ pub mod secp256k1;
 
 use crate::Error;
 
-use ::secp256k1::{RecoverableSignature, Signature};
+use ::secp256k1::{recovery::RecoverableSignature, Signature};
 use core::result::Result;
 use std::str::FromStr;
 
@@ -40,6 +40,7 @@ pub enum KeyError {
     InvalidMessage,
     InvalidRecoveryId,
     InvalidTweak,
+    NotEnoughMemory,
     Unknown,
 }
 

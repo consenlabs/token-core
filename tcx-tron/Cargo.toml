@@ -11,10 +11,10 @@ tcx-primitive = { path = "../tcx-primitive" }
 
 hex-literal = "0.1.4"
 keccak-hash = "0.2.0"
-bitcoin = "0.18.0"
-secp256k1 = "0.12"
+bitcoin = "0.20.0"
+secp256k1 = {version ="0.15", features = ["recovery"] }
 tiny-bip39 = "0.6.0"
-bitcoin_hashes = "0.3.2"
+bitcoin_hashes = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.39"
 uuid = { version = "0.7", features = ["serde", "v4"] }

@@ -4,7 +4,8 @@ use super::{
 
 use bitcoin::network::constants::Network;
 use bitcoin::util::bip32::{Error as Bip32Error, ExtendedPrivKey, ExtendedPubKey};
-use secp256k1::{Message, RecoverableSignature, Secp256k1, SecretKey, Signature};
+use secp256k1::recovery::RecoverableSignature;
+use secp256k1::{Message, Secp256k1, SecretKey, Signature};
 use std::convert::TryInto;
 use std::fmt;
 use std::str::FromStr;
@@ -38,6 +39,7 @@ fn transform_secp256k1_error(err: secp256k1::Error) -> KeyError {
         secp256k1::Error::InvalidSecretKey => KeyError::InvalidPrivateKey,
         secp256k1::Error::InvalidRecoveryId => KeyError::InvalidRecoveryId,
         secp256k1::Error::InvalidTweak => KeyError::InvalidTweak,
+        secp256k1::Error::NotEnoughMemory => KeyError::NotEnoughMemory,
     }
 }
 
