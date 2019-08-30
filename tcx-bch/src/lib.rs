@@ -24,7 +24,7 @@ extern crate tcx_chain;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
-pub use address::{BchAddress, BchTestNetAddress};
+use crate::address::BtcForkAddress;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
 use secp256k1::Secp256k1;
 use serde_json::Value;
@@ -43,6 +43,8 @@ pub enum Error {
     ConstructBchAddressFailed(String),
     #[fail(display = "decrypt_xpub_error")]
     DecryptXPubError,
+    #[fail(display = "unsupported_chain")]
+    UnsupportedChain,
 }
 
 const SYMBOL: &'static str = "BCH";
@@ -73,8 +75,8 @@ impl Extra for ExtendedPubKeyExtra {
         );
         let account_path = get_account_path(&coin_info.derivation_path)?;
         let derivation_info = Secp256k1Curve::extended_pub_key(&account_path, &seed)?;
-        let xpub = address::BchAddress::extended_public_key(&derivation_info);
-        ExtendedPubKeyExtra::from_xpub(&xpub)
+        let xpub = BtcForkAddress::extended_public_key(&derivation_info, coin_info)?;
+        ExtendedPubKeyExtra::from_xpub(&xpub, &coin_info.symbol)
     }
 }
 
@@ -86,7 +88,11 @@ impl ExtendedPubKeyExtra {
         Ok(base64::encode(&encrypted))
     }
 
-    fn _calc_external_address<A: Address>(xpub: &str, idx: i64) -> Result<ExternalAddress> {
+    fn _calc_external_address<A: Address>(
+        xpub: &str,
+        idx: i64,
+        coin: &str,
+    ) -> Result<ExternalAddress> {
         let extended_pub_key = ExtendedPubKey::from_str(&xpub)?;
         let s = Secp256k1::new();
         let index_pub = extended_pub_key.derive_pub(
@@ -96,7 +102,7 @@ impl ExtendedPubKeyExtra {
                 ChildNumber::from_normal_idx(idx as u32).unwrap(),
             ],
         )?;
-        let address = A::from_public_key(&index_pub.public_key)?;
+        let address = A::from_public_key(&index_pub.public_key, Some(coin))?;
         Ok(ExternalAddress {
             address,
             addr_type: "EXTERNAL".to_string(),
@@ -104,17 +110,21 @@ impl ExtendedPubKeyExtra {
         })
     }
 
-    pub fn calc_external_address<A: Address>(&self, idx: i64) -> Result<ExternalAddress> {
+    pub fn calc_external_address<A: Address>(
+        &self,
+        idx: i64,
+        coin: &str,
+    ) -> Result<ExternalAddress> {
         let xpub = self.xpub()?;
-        Self::_calc_external_address::<A>(&xpub, idx)
+        Self::_calc_external_address::<A>(&xpub, idx, coin)
     }
 
-    pub fn from_xpub(xpub: &str) -> Result<Self> {
+    pub fn from_xpub(xpub: &str, coin: &str) -> Result<Self> {
         let key = tcx_crypto::XPUB_COMMON_KEY_128.read().unwrap();
         let iv = tcx_crypto::XPUB_COMMON_IV.read().unwrap();
         let enc_xpub = ExtendedPubKeyExtra::enc_xpub(&xpub, &*key, &*iv)?;
         let external_address =
-            ExtendedPubKeyExtra::_calc_external_address::<BchAddress>(&xpub, 1i64)?;
+            ExtendedPubKeyExtra::_calc_external_address::<BtcForkAddress>(&xpub, 1i64, coin)?;
         Ok(ExtendedPubKeyExtra {
             enc_xpub,
             external_address,
@@ -140,7 +150,7 @@ impl From<Value> for ExtendedPubKeyExtra {
 
 #[cfg(test)]
 mod tests {
-    use crate::address::BchAddress;
+    use crate::address::BtcForkAddress;
     use crate::{ExtendedPubKeyExtra, ExternalAddress};
     use bch_addr::Converter;
     use bitcoin::util::misc::hex_bytes;
@@ -169,7 +179,7 @@ mod tests {
             curve: CurveType::SECP256k1,
         };
         let _ = keystore
-            .derive_coin::<BchAddress, ExtendedPubKeyExtra>(&bch_coin, PASSWORD)
+            .derive_coin::<BtcForkAddress, ExtendedPubKeyExtra>(&bch_coin, PASSWORD)
             .unwrap();
         let json_str = keystore.json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
@@ -199,7 +209,7 @@ mod tests {
         };
 
         let _ = keystore
-            .derive_coin::<BchAddress, ExtendedPubKeyExtra>(&bch_coin, PASSWORD)
+            .derive_coin::<BtcForkAddress, ExtendedPubKeyExtra>(&bch_coin, PASSWORD)
             .unwrap();
         let json_str = keystore.json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
@@ -226,7 +236,7 @@ mod tests {
 
     #[test]
     fn extra_test() {
-        let ex = ExtendedPubKeyExtra::from_xpub("tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R").unwrap();
+        let ex = ExtendedPubKeyExtra::from_xpub("tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R", "bch").unwrap();
 
         assert_eq!(ex.enc_xpub, "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==");
 

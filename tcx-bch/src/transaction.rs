@@ -15,7 +15,7 @@ use bitcoin_hashes::hex::ToHex;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::str::FromStr;
 
-use crate::address::BchAddress;
+use crate::address::BtcForkAddress;
 use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
 
 use crate::Error;
@@ -73,6 +73,8 @@ pub struct BitcoinCashTransaction {
     pub memo: String,
     pub fee: i64,
     pub change_idx: u32,
+    pub fork_id: u32,
+    pub coin: &'static str,
 }
 
 impl TraitTransaction for BitcoinCashTransaction {}
@@ -84,7 +86,7 @@ impl TransactionSigner<BitcoinCashTransaction, TxSignResult> for HdKeystore {
         password: Option<&str>,
     ) -> Result<TxSignResult> {
         let account = self
-            .account(&"BCH")
+            .account(tx.coin.to_uppercase().as_str())
             .ok_or(format_err!("account_not_found"))?;
         let path = &account.derivation_path;
         let extra = ExtendedPubKeyExtra::from(account.extra.clone());
@@ -115,18 +117,22 @@ impl BitcoinCashTransaction {
         Ok(paths)
     }
 
-    fn network(&self) -> Network {
-        let unspent = self.unspents.first().expect("empty_unspents");
-        match BchAddress::is_main_net(&unspent.address) {
-            true => Network::Bitcoin,
-            _ => Network::Testnet,
-        }
-    }
+    //    fn network(&self) -> Network {
+    //        let unspent = self.unspents.first().expect("empty_unspents");
+    //        match BchAddress::is_main_net(&unspent.address) {
+    //            true => Network::Bitcoin,
+    //            _ => Network::Testnet,
+    //        }
+    //    }
 
-    fn receive_addr(&self) -> Result<BtcAddress> {
-        let legacy_to = BchAddress::convert_to_legacy_if_need(&self.to)?;
-        BtcAddress::from_str(&legacy_to)
-            .map_err(|_| Error::ConstructBchAddressFailed(legacy_to.to_string()).into())
+    fn receive_script_pubkey(&self) -> Result<Script> {
+        // check is bch first
+        //        let legacy_to = BchAddress::convert_to_legacy_if_need(&self.to)?;
+        let addr = BtcForkAddress::from_str(&self.to)?;
+        Ok(addr.script_pubkey())
+        //
+        //        BtcAddress::from_str(&legacy_to)
+        //            .map_err(|_| Error::ConstructBchAddressFailed(legacy_to.to_string()).into())
     }
 
     fn sign_hash(&self, pri_key: &impl PrivateKey, hash: &[u8]) -> Result<Script> {
@@ -139,21 +145,27 @@ impl BitcoinCashTransaction {
             .push_slice(&pub_key_bytes)
             .into_script())
     }
+    //
+    //    fn address_from_priv_key(&self, priv_key: &impl PrivateKey) -> Result<BtcAddress> {
+    //        let pub_key = priv_key.public_key();
+    //        let secp_pub_key = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
+    //        let change_addr = BtcAddress::p2pkh(&secp_pub_key, self.network());
+    //        Ok(change_addr)
+    //    }
 
-    fn address_from_priv_key(&self, priv_key: &impl PrivateKey) -> Result<BtcAddress> {
-        let pub_key = priv_key.public_key();
-        let secp_pub_key = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
-        let change_addr = BtcAddress::p2pkh(&secp_pub_key, self.network());
-        Ok(change_addr)
-    }
+    fn change_script_pubkey(&self, xpub: &str) -> Result<Script> {
+        let from = BtcForkAddress::convert_to_legacy_if_need(
+            &self.unspents.first().expect("first_utxo").address,
+        )?;
+        //        let from_addr = BtcForkAddress::from_str(&from)?;
 
-    fn change_addr(&self, xpub: &str) -> Result<BtcAddress> {
         let change_path = format!("0/{}", &self.change_idx);
         let pub_key = Secp256k1Curve::derive_pub_key_at_path(&xpub, &change_path)?;
-        Ok(BtcAddress::p2pkh(&pub_key, self.network()))
+        let change_addr = BtcForkAddress::address_like(&from, &pub_key)?;
+        Ok(change_addr.script_pubkey())
     }
 
-    fn tx_outs(&self, change_addr: &BtcAddress) -> Result<Vec<TxOut>> {
+    fn tx_outs(&self, change_script_pubkey: Script) -> Result<Vec<TxOut>> {
         let mut total_amount = 0;
 
         for unspent in &self.unspents {
@@ -167,10 +179,10 @@ impl BitcoinCashTransaction {
 
         let mut tx_outs: Vec<TxOut> = vec![];
 
-        let receiver_addr = self.receive_addr()?;
+        let receive_script_pubkey = self.receive_script_pubkey()?;
         let receiver_tx_out = TxOut {
             value: self.amount as u64,
-            script_pubkey: receiver_addr.script_pubkey(),
+            script_pubkey: receive_script_pubkey,
         };
         tx_outs.push(receiver_tx_out);
         let change_amount = total_amount - self.amount - self.fee;
@@ -178,7 +190,7 @@ impl BitcoinCashTransaction {
         if change_amount > DUST as i64 {
             let change_tx_out = TxOut {
                 value: change_amount as u64,
-                script_pubkey: change_addr.script_pubkey(),
+                script_pubkey: change_script_pubkey,
             };
             tx_outs.push(change_tx_out);
         }
@@ -214,7 +226,8 @@ impl BitcoinCashTransaction {
             let unspent = &self.unspents[i];
             let script_bytes: Vec<u8> = FromHex::from_hex(&unspent.script_pub_key).unwrap();
             let script = Builder::from(script_bytes).into_script();
-            let shc_hash = shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | 0x40);
+            let shc_hash =
+                shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | self.fork_id);
             let prv_key = &prv_keys[i];
             script_sigs.push(self.sign_hash(prv_key, &shc_hash.into_inner())?);
         }
@@ -222,8 +235,8 @@ impl BitcoinCashTransaction {
     }
 
     fn sign_transaction(&self, prv_keys: &[impl PrivateKey], xpub: &str) -> Result<TxSignResult> {
-        let change_addr = self.change_addr(xpub)?;
-        let tx_outs = self.tx_outs(&change_addr)?;
+        let change_script_pubkey = self.change_script_pubkey(xpub)?;
+        let tx_outs = self.tx_outs(change_script_pubkey)?;
         let tx_inputs = self.tx_inputs();
 
         let tx = Transaction {
@@ -287,7 +300,7 @@ mod tests {
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
-        let _ = keystore.derive_coin::<BchAddress, ExtendedPubKeyExtra>(&coin_info, &PASSWORD);
+        let _ = keystore.derive_coin::<BtcForkAddress, ExtendedPubKeyExtra>(&coin_info, &PASSWORD);
         let unspents = vec![Utxo {
             tx_hash: "115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986".to_string(),
             vout: 0,
@@ -304,6 +317,8 @@ mod tests {
             memo: "".to_string(),
             fee: 35000,
             change_idx: 0,
+            fork_id: 0x40,
+            coin: "BCH",
         };
 
         let sign_ret = keystore.sign_transaction(&tran, Some(&PASSWORD)).unwrap();

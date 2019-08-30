@@ -17,7 +17,8 @@ use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::RwLock;
-use tcx_bch::{BchAddress, BitcoinCashTransaction, ExtendedPubKeyExtra, Utxo};
+use tcx_bch::address::BtcForkAddress;
+use tcx_bch::{BitcoinCashTransaction, ExtendedPubKeyExtra, Utxo};
 use tcx_chain::signer::TransactionSigner;
 use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
@@ -181,7 +182,9 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
         "BCH" => {
             let mut coin_info = _coin_info_from_symbol("BCH")?;
             coin_info.derivation_path = path.to_string();
-            HdKeystore::mnemonic_to_account::<BchAddress, ExtendedPubKeyExtra>(&coin_info, mnemonic)
+            HdKeystore::mnemonic_to_account::<BtcForkAddress, ExtendedPubKeyExtra>(
+                &coin_info, mnemonic,
+            )
         }
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
@@ -219,7 +222,7 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
             let mut coin_info = _coin_info_from_symbol("BCH")?;
             coin_info.derivation_path = path.to_string();
 
-            ks.derive_coin::<BchAddress, ExtendedPubKeyExtra>(&coin_info, password)
+            ks.derive_coin::<BtcForkAddress, ExtendedPubKeyExtra>(&coin_info, password)
         }
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
@@ -317,6 +320,8 @@ fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
         memo: "".to_string(),
         fee,
         change_idx: change_idx as u32,
+        fork_id: 0x40,
+        coin: "BCH",
     };
     let ret = keystore.sign_transaction(&bch_tran, Some(&password))?;
     Ok(serde_json::to_string(&ret)?)
@@ -346,7 +351,7 @@ fn _calc_external_address(v: &Value) -> Result<String> {
         .ok_or(format_err!("account_not_found, chainType: {}", &chain_type))?;
 
     let extra = ExtendedPubKeyExtra::from(account.extra.clone());
-    let external_addr = extra.calc_external_address::<BchAddress>(external_id)?;
+    let external_addr = extra.calc_external_address::<BtcForkAddress>(external_id, &chain_type)?;
     Ok(serde_json::to_string(&external_addr)?)
 }
 
