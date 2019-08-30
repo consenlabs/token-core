@@ -5,7 +5,6 @@ pub mod ctr {
     use aes_ctr::stream_cipher::generic_array::GenericArray;
     use aes_ctr::stream_cipher::{NewStreamCipher, SyncStreamCipher};
 
-    // todo: GenericArray must be 16
     pub fn encrypt_nopadding(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
         if key.len() != 16 || iv.len() != 16 {
             return Err(Error::InvalidKeyIvLength.into());
