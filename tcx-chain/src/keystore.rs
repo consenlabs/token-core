@@ -65,25 +65,10 @@ impl Default for Metadata {
 pub trait Address {
     fn is_valid(address: &str) -> bool;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
-    fn from_public_key(public_key: &impl PublicKey) -> Result<String>;
+    fn from_public_key(public_key: &impl PublicKey, coin: Option<&str>) -> Result<String>;
+
+    //    fn from_public_key_with(public_key: &impl PublicKey, coin: &CoinInfo) -> Result<String>;
     // fn from_data(data: &[u8]) -> Box<dyn Address>;
-
-    fn extended_public_key_version() -> [u8; 4] {
-        // default use btc mainnet
-        [0x04, 0x88, 0xb2, 0x1e]
-    }
-    fn extended_private_key_version() -> [u8; 4] {
-        // default use btc mainnet
-        [0x04, 0x88, 0xad, 0xe4]
-    }
-
-    fn extended_public_key(derivation_info: &DerivationInfo) -> String {
-        derivation_info.encode_with_network(Self::extended_public_key_version())
-    }
-
-    fn extended_private_key(derivation_info: &DerivationInfo) -> String {
-        derivation_info.encode_with_network(Self::extended_private_key_version())
-    }
 }
 
 /// Blockchain basic config
@@ -166,7 +151,7 @@ impl HdKeystore {
         let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
         let pub_key = key.public_key();
-        let address = A::from_public_key(&pub_key)?;
+        let address = A::from_public_key(&pub_key, Some(&coin_info.symbol))?;
 
         let extra = E::from(coin_info, seed)?;
         let acc = Account {
@@ -394,7 +379,7 @@ mod tests {
             unimplemented!()
         }
 
-        fn from_public_key(public_key: &impl PublicKey) -> Result<String> {
+        fn from_public_key(public_key: &impl PublicKey, coin: Option<&str>) -> Result<String> {
             Ok("mock_address".to_string())
         }
     }

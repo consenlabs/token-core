@@ -26,7 +26,10 @@ impl TraitAddress for Address {
         unimplemented!()
     }
 
-    fn from_public_key(public_key: &impl PublicKey) -> Result<String, failure::Error> {
+    fn from_public_key(
+        public_key: &impl PublicKey,
+        coin: Option<&str>,
+    ) -> Result<String, failure::Error> {
         let bytes = public_key.to_uncompressed();
         let hash = keccak_hash::keccak(&bytes[1..]);
         let hex: Vec<u8> = [vec![0x41], hash[12..32].to_vec()].concat();
