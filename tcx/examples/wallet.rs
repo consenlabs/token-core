@@ -1,6 +1,6 @@
 extern crate serde_json;
 extern crate tcx;
-extern crate tcx_bch;
+extern crate tcx_btc_fork;
 extern crate tcx_chain;
 
 use serde_json::Value;
@@ -8,7 +8,7 @@ use std::ffi::{CStr, CString};
 use std::fs::{create_dir, remove_dir};
 use std::path::Path;
 use tcx::*;
-use tcx_bch::transaction::Utxo;
+use tcx_btc_fork::transaction::Utxo;
 fn main() {
     // 1) scan_wallets
     // 必须先调用scan_wallets, 设置wallet_dir

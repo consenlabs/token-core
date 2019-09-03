@@ -17,8 +17,8 @@ use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::RwLock;
-use tcx_bch::address::BtcForkAddress;
-use tcx_bch::{BitcoinCashTransaction, ExtendedPubKeyExtra, Utxo};
+use tcx_btc_fork::address::BtcForkAddress;
+use tcx_btc_fork::{BitcoinForkTransaction, ExtendedPubKeyExtra, Utxo};
 use tcx_chain::signer::TransactionSigner;
 use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
@@ -305,12 +305,12 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
     }?;
 
     match chain_type {
-        "BCH" | "LTC" | "LTC-TESTNET" => _sign_bch_transaction(json_str, keystore, password),
+        "BCH" | "LTC" | "LTC-TESTNET" => _sign_btc_fork_transaction(json_str, keystore, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }
 }
 
-fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
     let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
     let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).expect("outputs");
     let internal_used = v["internalUsed"].as_i64().expect("internalUsed");
@@ -325,7 +325,7 @@ fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
         .parse::<i64>()
         .unwrap();
     let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
-    let bch_tran = BitcoinCashTransaction {
+    let tran = BitcoinForkTransaction {
         to: to.to_owned(),
         amount,
         unspents,
@@ -335,7 +335,7 @@ fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
         coin: chain_type,
         is_seg_wit,
     };
-    let ret = keystore.sign_transaction(&bch_tran, Some(&password))?;
+    let ret = keystore.sign_transaction(&tran, Some(&password))?;
     Ok(serde_json::to_string(&ret)?)
 }
 
@@ -468,7 +468,7 @@ mod tests {
 
         let result = panic::catch_unwind(|| test());
 
-        //        teardown();
+        teardown();
 
         assert!(result.is_ok())
     }
@@ -522,11 +522,17 @@ mod tests {
     #[test]
     fn find_wallet_by_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
-            unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+            let param = r#"{"chainType":"BCH","mnemonic":"blind gravity card grunt basket expect garment tilt organ concert great critic","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH"}"#;
+            let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
+            assert_eq!("{}", ret);
 
             let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH"}"#;
             let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
+            let v = Value::from_str(ret).expect("find wallet");
+            assert_eq!(
+                v["address"],
+                "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r"
+            );
         })
     }
 

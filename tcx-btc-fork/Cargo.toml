@@ -1,5 +1,5 @@
 [package]
-name = "tcx-bch"
+name = "tcx-btc-fork"
 version = "0.1.0"
 authors = ["Neal Xu <imxuneal@gmail.com>"]
 edition = "2018"
