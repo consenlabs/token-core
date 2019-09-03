@@ -4,6 +4,6 @@ members = [
     "tcx-crypto",
     "tcx-chain",
     "tcx-tron",
-    "tcx-bch",
+    "tcx-btc-fork",
     "tcx",
 ]

@@ -66,7 +66,7 @@ mod string {
     }
 }
 
-pub struct BitcoinCashTransaction {
+pub struct BitcoinForkTransaction {
     pub to: String,
     pub amount: i64,
     pub unspents: Vec<Utxo>,
@@ -77,12 +77,12 @@ pub struct BitcoinCashTransaction {
     pub is_seg_wit: bool,
 }
 
-impl TraitTransaction for BitcoinCashTransaction {}
+impl TraitTransaction for BitcoinForkTransaction {}
 
-impl TransactionSigner<BitcoinCashTransaction, TxSignResult> for HdKeystore {
+impl TransactionSigner<BitcoinForkTransaction, TxSignResult> for HdKeystore {
     fn sign_transaction(
         &self,
-        tx: &BitcoinCashTransaction,
+        tx: &BitcoinForkTransaction,
         password: Option<&str>,
     ) -> Result<TxSignResult> {
         let account = self
@@ -103,7 +103,7 @@ impl TransactionSigner<BitcoinCashTransaction, TxSignResult> for HdKeystore {
     }
 }
 
-impl BitcoinCashTransaction {
+impl BitcoinForkTransaction {
     fn collect_prv_keys_paths(&self, path: &str) -> Result<Vec<String>> {
         let mut paths: Vec<String> = vec![];
         let account_path = get_account_path(path)?;
@@ -308,7 +308,7 @@ mod tests {
             derived_path: "0/1".to_string(),
             sequence: 0,
         }];
-        let tran = BitcoinCashTransaction {
+        let tran = BitcoinForkTransaction {
             to: "1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK".to_string(),
             amount: 15000,
             unspents,
@@ -335,7 +335,7 @@ mod tests {
             derived_path: "0/0".to_string(),
             sequence: 0,
         }];
-        let tran = BitcoinCashTransaction {
+        let tran = BitcoinForkTransaction {
             to: "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc".to_string(),
             amount: 500000,
             unspents,
