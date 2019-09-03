@@ -69,6 +69,16 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
+        "LTC" => Ok(CoinInfo {
+            symbol: "LTC".to_string(),
+            derivation_path: "m/44'/2'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        }),
+        "LTC-TESTNET" => Ok(CoinInfo {
+            symbol: "LTC-TESTNET".to_string(),
+            derivation_path: "m/44'/1'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        }),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -179,8 +189,8 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let chain_type = v["chainType"].as_str().unwrap();
 
     let (acc, _) = match chain_type {
-        "BCH" => {
-            let mut coin_info = _coin_info_from_symbol("BCH")?;
+        "BCH" | "LTC" | "LTC-TESTNET" => {
+            let mut coin_info = _coin_info_from_symbol(chain_type)?;
             coin_info.derivation_path = path.to_string();
             HdKeystore::mnemonic_to_account::<BtcForkAddress, ExtendedPubKeyExtra>(
                 &coin_info, mnemonic,
@@ -218,10 +228,9 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let mut pw = Map::new();
 
     let (account, extra) = match chain_type {
-        "BCH" => {
-            let mut coin_info = _coin_info_from_symbol("BCH")?;
+        "BCH" | "LTC" | "LTC-TESTNET" => {
+            let mut coin_info = _coin_info_from_symbol(chain_type)?;
             coin_info.derivation_path = path.to_string();
-
             ks.derive_coin::<BtcForkAddress, ExtendedPubKeyExtra>(&coin_info, password)
         }
         _ => Err(format_err!("{}", "chain_type_not_support")),
@@ -296,7 +305,7 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
     }?;
 
     match chain_type {
-        "BCH" => _sign_bch_transaction(json_str, keystore, password),
+        "BCH" | "LTC" | "LTC-TESTNET" => _sign_bch_transaction(json_str, keystore, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }
 }
@@ -306,7 +315,10 @@ fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
     let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).expect("outputs");
     let internal_used = v["internalUsed"].as_i64().expect("internalUsed");
     let change_idx = internal_used + 1;
+    let chain_type = v["chainType"].as_str().expect("chainType").to_string();
     let to = v["to"].as_str().expect("to");
+    let seg_wit = v["segWit"].as_str().expect("segWit");
+    let is_seg_wit = seg_wit == "P2WPKH";
     let amount = v["amount"]
         .as_str()
         .expect("amount")
@@ -320,8 +332,8 @@ fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
         memo: "".to_string(),
         fee,
         change_idx: change_idx as u32,
-        fork_id: 0x40,
-        coin: "BCH",
+        coin: chain_type,
+        is_seg_wit,
     };
     let ret = keystore.sign_transaction(&bch_tran, Some(&password))?;
     Ok(serde_json::to_string(&ret)?)
@@ -552,6 +564,39 @@ mod tests {
     }
 
     #[test]
+    fn import_ltc_wallet_from_mnemonic_test() {
+        run_test(|| {
+            let param = r#"{"chainType":"LTC","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/2'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+
+            let expected = r#"
+            {
+                "address": "M7xo1Mi1gULZSwgvu7VVEvrwMRqngmFkVd",
+                "chainType": "LTC",
+                "createdAt": 1566455834,
+                "encXPub": "MwDMFXVWDEuWvBogeW1v/MOMFDnGnnflm2JAPvJaJZO4HXp8fCsWETA7u8MzOW3KaPksglpUHLN3xkDr2QWMEQq0TewFZoZ3KsjmLW0KGMRN7XQKqo/omkSEsPfalVnp9Zxm2lpxVmIacqvlernVSg==",
+                "externalAddress": {
+                    "address": "MBDVivYGGiXzn2dP9Js3xtVViuQS3dyDwM",
+                    "derivedPath": "0/1",
+                    "type": "EXTERNAL"
+                },
+                "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
+                "name": "LTC-Wallet-1",
+                "passwordHint": "",
+                "source": "MNEMONIC"
+            }
+            "#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+            let ret_v = Value::from_str(ret).unwrap();
+
+            assert_eq!(expected_v["address"], ret_v["address"]);
+            assert_eq!(expected_v["chainType"], ret_v["chainType"]);
+            assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
+            assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+        });
+    }
+
+    #[test]
     fn export_mnemonic_test() {
         //        let init_params = r#"
         //        {
@@ -601,6 +646,7 @@ mod tests {
                 "fee": "35000",
                 "internalUsed": 0,
                 "chainType": "BCH",
+                "segWit":"P2WPKH",
                 "outputs": [
                     {
                         "txHash": "115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986",

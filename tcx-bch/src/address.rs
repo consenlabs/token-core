@@ -38,7 +38,7 @@ pub struct BtcForkNetwork {
 // hrp: https://github.com/satoshilabs/slips/blob/master/slip-0173.md
 // BTC https://en.bitcoin.it/wiki/List_of_address_prefixes
 
-fn _network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
+pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
     match coin.to_lowercase().as_str() {
         "ltc" => Some(BtcForkNetwork {
             coin: "LTC",
@@ -97,7 +97,7 @@ impl Address for BtcForkAddress {
     fn from_public_key(public_key: &impl PublicKey, coin: Option<&str>) -> Result<String> {
         let pub_key = Secp256k1PublicKey::from_slice(&public_key.to_bytes())?;
         let coin = coin.expect("coin from address_pub_key");
-        let network = _network_from_coin(&coin);
+        let network = network_from_coin(&coin);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         let network = network.expect("network");
         let addr = match coin.to_lowercase().as_str() {
@@ -108,7 +108,9 @@ impl Address for BtcForkAddress {
                     .to_cash_addr(&legacy.to_string())
                     .map_err(|_| Error::ConvertToCashAddressFailed(legacy.to_string()))
             }
-            "ltc" | "btc" => Ok(BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string()),
+            "ltc" | "btc" | "ltc-testnet" => {
+                Ok(BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string())
+            }
             _ => Err(Error::UnsupportedChain),
         }?;
         Ok(addr.to_string())
@@ -163,7 +165,7 @@ impl BtcForkAddress {
         derivation_info: &DerivationInfo,
         coin_info: &CoinInfo,
     ) -> Result<String> {
-        let network = _network_from_coin(&coin_info.symbol);
+        let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         Ok(derivation_info.encode_with_network(network.expect("network").xpub_prefix))
     }
@@ -172,7 +174,7 @@ impl BtcForkAddress {
         derivation_info: &DerivationInfo,
         coin_info: &CoinInfo,
     ) -> Result<String> {
-        let network = _network_from_coin(&coin_info.symbol);
+        let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         Ok(derivation_info.encode_with_network(network.expect("network").xprv_prefix))
     }
@@ -223,7 +225,7 @@ fn bech32_network(bech32: &str) -> Option<BtcForkNetwork> {
         Some(sep) => Some(bech32.split_at(sep).0),
     };
     match bech32_prefix {
-        Some(prefix) => _network_from_coin(prefix),
+        Some(prefix) => network_from_coin(prefix),
         None => None,
     }
 }
@@ -299,23 +301,27 @@ impl FromStr for BtcForkAddress {
         let data = _decode_base58(s)?;
         let (network, payload) = match data[0] {
             0 => (
-                bech32_network.unwrap_or(_network_from_coin("btc").expect("btc")),
+                bech32_network.unwrap_or(network_from_coin("btc").expect("btc")),
                 Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             5 => (
-                bech32_network.unwrap_or(_network_from_coin("btc").expect("btc")),
+                bech32_network.unwrap_or(network_from_coin("btc").expect("btc")),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             0x32 => (
-                _network_from_coin("ltc").expect("ltc"),
+                network_from_coin("ltc").expect("ltc"),
+                Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+            ),
+            0x3a => (
+                network_from_coin("ltc-testnet").expect("ltc-testnet"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             111 => (
-                bech32_network.unwrap_or(_network_from_coin("btc-testnet").expect("btc-testnet")),
+                bech32_network.unwrap_or(network_from_coin("btc-testnet").expect("btc-testnet")),
                 Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             196 => (
-                bech32_network.unwrap_or(_network_from_coin("btc-testnet").expect("btc-testnet")),
+                bech32_network.unwrap_or(network_from_coin("btc-testnet").expect("btc-testnet")),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             x => {
@@ -366,7 +372,7 @@ impl Display for BtcForkAddress {
 
 #[cfg(test)]
 mod tests {
-    use crate::address::{BtcForkAddress, _network_from_coin};
+    use crate::address::{network_from_coin, BtcForkAddress};
     use bitcoin::consensus::encode::Error::Secp256k1;
     use bitcoin::util::misc::hex_bytes;
     use bitcoin_hashes::hex::ToHex;
@@ -424,7 +430,7 @@ mod tests {
         )
         .unwrap();
 
-        let network = _network_from_coin("ltc").unwrap();
+        let network = network_from_coin("ltc").unwrap();
         let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)
             .unwrap()
             .to_string();
@@ -434,7 +440,7 @@ mod tests {
             .to_string();
         assert_eq!(addr, "ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf");
 
-        let network = _network_from_coin("bch").unwrap();
+        let network = network_from_coin("bch").unwrap();
         let addr = BtcForkAddress::p2pkh(&pub_key, &network)
             .unwrap()
             .to_string();
@@ -443,7 +449,7 @@ mod tests {
             "bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr"
         );
 
-        let network = _network_from_coin("btc").unwrap();
+        let network = network_from_coin("btc").unwrap();
         let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)
             .unwrap()
             .to_string();

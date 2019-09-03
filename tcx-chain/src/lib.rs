@@ -29,6 +29,15 @@ pub use curve::{
     CurveType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey, Secp256k1PublicKey,
 };
 pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
+
+//cfg_if! {
+//    if #[cfg(test)] {
+//        pub use crate::keystore::MockHdKeystore as HdKeystore;
+//    } else {
+//        pub use crate::keystore::HdKeystore;
+//    }
+//}
+
 pub use signer::{SignedTransaction, Transaction, TransactionSigner, TxSignResult};
 use std::str::FromStr;
 
