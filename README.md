@@ -8,6 +8,17 @@ TODO. add architeture image here.
 
 TODO. list components
 
+## Test Coverage
+We can use [tarpaulin](https://github.com/xd009642/tarpaulin) to know the coverage rate.
+
+The easy way to run coverage test is using docker,
+
+```
+docker run --security-opt seccomp=unconfined -v "${PWD}:/volume" xd009642/tarpaulin sh -c "cargo tarpaulin --out Html"
+```
+
+After couple minutes, it will generate html report of project root directory named `tarpaulin-report.html`. 
+
 ## Auto Formatting
 This project is using pre-commit. Please run `cargo clean && cargo test` to install the git pre-commit hooks on you clone.
 
