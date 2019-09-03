@@ -52,19 +52,70 @@ tcx 提供了`Address`这个trait，链开发者可以实现这个`Address::from
     ) -> Result<(Account, E)> {
         ...
         let pub_key = key.public_key();
-        let address = A::from_public_key(&pub_key)?;
+        let address = A::from_public_key(&pub_key, Some(&coin_info.coin))?;
         ...
     }
 ```    
-因为该函数只接受pub_key一个参数，无法在参数上区分是测试网还是主网，如需Address由外界因素需要有不同的实现，请提供多个AddressTrait的实现，例如Bch提供了BchAddress以及BchTestnetAddress，HdKeystore::derive_coin时根据配置不同，泛型会使用不同的具体实现。如下所示    
+因为该函数只接受pub_key和可选Coin参数，方便区分一条链上fork出的多个币种，例如btc系列会在不同的币种区分p2pkh header及p2sh header等，BtcForkAddress根据Coin不同会有不同的配置。如下所示    
 ```rust
-// Mainnet
-let coin_info = CoinInfo { coin: "BCH".to_string(), derivation_path: "mainnet path" ...};
-keystore.derive_coin::<BchAddress, ExtendedPubKeyExtra>(coinInfo, password);
 
-// Testnet
-let coin_info = CoinInfo { coin: "BCHTestnet".to_string(), derivation_path: "testnet path" ...};
-keystore.derive_coin::<BchTestnetAddress, ExtendedPubKeyExtra>(coinInfo, password);
+pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
+    match coin.to_lowercase().as_str() {
+        "ltc" => Some(BtcForkNetwork {
+            coin: "LTC",
+            hrp: "ltc",
+            p2pkh_prefix: 0x30,
+            p2sh_prefix: 0x32,
+            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
+            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+            fork_id: 0,
+        }),
+        "ltc-testnet" => Some(BtcForkNetwork {
+            coin: "LTC-TESTNET",
+            hrp: "ltc",
+            p2pkh_prefix: 0x6f,
+            p2sh_prefix: 0x3a,
+            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
+            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+            fork_id: 0,
+        }),
+        ...
+        "bitcoincash" | "bch" => Some(BtcForkNetwork {
+            coin: "BCH",
+            hrp: "bitcoincash",
+            p2pkh_prefix: 0x0,
+            p2sh_prefix: 0x05,
+            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
+            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+            fork_id: 0x40,
+        }),
+        _ => None,
+    }
+}
+...
+impl Address for BtcForkAddress {
+    fn from_public_key(public_key: &impl PublicKey, coin: Option<&str>) -> Result<String> {
+        let pub_key = Secp256k1PublicKey::from_slice(&public_key.to_bytes())?;
+        let coin = coin.expect("coin from address_pub_key");
+        let network = network_from_coin(&coin);
+        tcx_ensure!(network.is_some(), Error::UnsupportedChain);
+        let network = network.expect("network");
+        let addr = match coin.to_lowercase().as_str() {
+            "bch" => {
+                let legacy = BtcForkAddress::p2pkh(&pub_key, &network)?;
+                let converter = Converter::new();
+                converter
+                    .to_cash_addr(&legacy.to_string())
+                    .map_err(|_| Error::ConvertToCashAddressFailed(legacy.to_string()))
+            }
+            "ltc" | "btc" | "ltc-testnet" => {
+                Ok(BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string())
+            }
+            _ => Err(Error::UnsupportedChain),
+        }?;
+        Ok(addr.to_string())
+    }
+}
 ```
 
 #### Extra    
@@ -80,7 +131,7 @@ impl Extra for ExtendedPubKeyExtra {
     fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self> {
         ...
         let derivation_info = Secp256k1Curve::extended_pub_key(&coin_info.derivation_path, &seed)?;
-        let xpub = address::BchAddress::extended_public_key(&derivation_info);
+        let xpub = address::BtcForkAddress::extended_public_key(&derivation_info);
         calc_external_address
         ...
     }
@@ -123,9 +174,9 @@ fn key_at_paths_with_seed(
 
 #### Transaction
 tcx提供了`TransactionSigner<Input: Transaction, Output: SignedTransaction>`每条链可实现该trait添加自己的签名实现。    
-其中`Transaction`和`SignedTransaction`属于Maker Trait, 你可以实现包含任意字段的结构体并标明他实现了Transaction，即可用来作为签名输入输入束。对于bch链，在其内部定义了`BitcoinCashTransaction`,其中包含了bch转账所签名所需的输入信息, 如下所示：    
+其中`Transaction`和`SignedTransaction`属于Maker Trait, 你可以实现包含任意字段的结构体并标明他实现了Transaction，即可用来作为签名输入输入束。对于btc家族的链，在其内部定义了`BitcoinForkTransaction`,其中包含了btc系列转账所签名所需的输入信息, 如下所示：    
 ```rust
-pub struct BitcoinCashTransaction {
+pub struct BitcoinForkTransaction {
     pub to: String,
     pub amount: i64,
     pub unspents: Vec<Utxo>,
@@ -134,13 +185,13 @@ pub struct BitcoinCashTransaction {
     pub change_idx: u32,
 }
 
-impl TraitTransaction for BitcoinCashTransaction {}
+impl TraitTransaction for BitcoinForkTransaction {}
 ```
 TransactionSigner提供了签名接口的约束。开发者需要实现该Trait并加入自己所在链的签名实现。参见bch的实现：    
 ```rust
 // 感谢@孙哥提到 impl ... for HdKeystore 思路，可以对于硬件特定的实现可以使用impl ... for HdWallet,你会看到tcx中的Presenter使用了同样的思路。但是该方案同时限制死了软件钱包和硬件钱包必须使用相同的接口，导致Extra暂时不行能用该方案    
-impl TransactionSigner<BitcoinCashTransaction, TxSignResult> for HdKeystore {
-    fn sign(&self, tx: &BitcoinCashTransaction, password: Option<&str>) -> Result<TxSignResult> {
+impl TransactionSigner<BitcoinForkTransaction, TxSignResult> for HdKeystore {
+    fn sign(&self, tx: &BitcoinForkTransaction, password: Option<&str>) -> Result<TxSignResult> {
         let account = self
             .account(&"BCH")
             .ok_or(format_err!("account_not_found"))?;
@@ -167,13 +218,13 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let mut pw = Map::new();
 
     let (account, extra) = match chain_type {
-        "BCH" => {
-            // derive bch from keystore
-            let coin_info = _coin_info_from_symbol("BCH")?;
-            ks.derive_coin::<BchAddress, ExtendedPubKeyExtra>(&coin_info, password)
-        }
-        _ => Err(format_err!("{}", "chain_type_not_support")),
-    }?;
+            "BCH" | "LTC" | "LTC-TESTNET" => {
+                let mut coin_info = _coin_info_from_symbol(chain_type)?;
+                coin_info.derivation_path = path.to_string();
+                ks.derive_coin::<BtcForkAddress, ExtendedPubKeyExtra>(&coin_info, password)
+            }
+            _ => Err(format_err!("{}", "chain_type_not_support")),
+        }?;
 
     // check exists
     ...
@@ -188,31 +239,28 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
 
 ```rust
 fn _sign_transaction(json_str: &str) -> Result<String> {
-    // parse arguments
-    let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore = match map.get_mut(w_id) {
-        Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found")),
-    }?;
-
+    let v: Value = serde_json::from_str(json_str).unwrap();
+    // parse arguments and get keystore
     match chain_type {
-        "BCH" => _sign_bch_transaction(json_str, keystore, password),
+        "BCH" | "LTC" | "LTC-TESTNET" => _sign_btc_fork_transaction(json_str, keystore, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }
 }
 
-fn _sign_bch_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+    let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
     // parse arguments
-    let bch_tran = BitcoinCashTransaction {
+    let tran = BitcoinForkTransaction {
         to: to.to_owned(),
         amount,
         unspents,
         memo: "".to_string(),
         fee,
         change_idx: change_idx as u32,
-        password: password.to_string(),
+        coin: chain_type,
+        is_seg_wit,
     };
-    let ret = keystore.sign(&bch_tran)?;
+    let ret = keystore.sign_transaction(&tran, Some(&password))?;
     Ok(serde_json::to_string(&ret)?)
 }
 ```
