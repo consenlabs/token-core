@@ -308,6 +308,10 @@ impl FromStr for BtcForkAddress {
                 bech32_network.unwrap_or(network_from_coin("btc").expect("btc")),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
+            0x30 => (
+                network_from_coin("ltc").expect("ltc-L"),
+                Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+            ),
             0x32 => (
                 network_from_coin("ltc").expect("ltc"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
