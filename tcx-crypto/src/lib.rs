@@ -33,11 +33,3 @@ lazy_static! {
     pub static ref XPUB_COMMON_IV: RwLock<String> =
         RwLock::new("9C0C30889CBCC5E01AB5B2BB88715799".to_string());
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
