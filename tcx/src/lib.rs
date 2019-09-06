@@ -647,19 +647,19 @@ mod tests {
             {
                 "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
                 "password": "Insecure Password",
-                "to": "1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK",
-                "amount": "15000",
-                "fee": "35000",
+                "to": "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
+                "amount": "93454",
+                "fee": "6000",
                 "internalUsed": 0,
                 "chainType": "BCH",
-                "segWit":"P2WPKH",
+                "segWit":"NONE",
                 "outputs": [
                     {
-                        "txHash": "115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986",
+                        "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
                         "vout": 0,
-                        "amount": "50000",
-                        "address": "17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV",
-                        "scriptPubKey": "76a91447862fe165e6121af80d5dde1ecb478ed170565b88ac",
+                        "amount": "100000",
+                        "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                        "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
                         "derivedPath": "0/1"
                     }
                 ]
@@ -669,7 +669,7 @@ mod tests {
             unsafe { clear_err() }
             let ret = unsafe { _to_str(sign_transaction(_to_c_char(param))) };
             let ret_v = Value::from_str(ret).unwrap();
-            let expected = r#"{"signature":"01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100be283eb3c936fbdc9159d7067cf3bf44b40c5fc790e6f06368c404a6c1962ebb022071741ed6e1d034f300d177582c870934d4b155d0eb40e6eda99b3e95323a4666412102cc987e200a13c771d9c840cd08db93debf4d4443cec3e084a4cde2aad4cfa77dffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000","txHash":"06b6056c80f94d7720deed273a2387b0cd21221f5405c3096328b6874cf9657d","wtxId":""}"#;
+            let expected = r#"{"signature":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006a473044022029e0587ff0bf4a55d8fccc81ede4c394e32348a18e45acee4fb5c5bc6ebc1af002202b2a8b1117d5c19b9296c4be9fe4a9e9b816361cea8ef7fafdde70cd2a2014a3412102cc987e200a13c771d9c840cd08db93debf4d4443cec3e084a4cde2aad4cfa77dffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","txHash":"827e1e7c9d45ac891c437a0600d446cc63075fb3acde6e55e0e8c524930568bc","wtxId":""}"#;
             let expected_v = Value::from_str(expected).unwrap();
             assert_eq!(ret_v, expected_v);
         })
