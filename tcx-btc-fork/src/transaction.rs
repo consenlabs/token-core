@@ -171,7 +171,7 @@ impl BitcoinForkTransaction {
         tx_outs.push(receiver_tx_out);
         let change_amount = total_amount - self.amount - self.fee;
 
-        if change_amount > DUST as i64 {
+        if change_amount >= DUST as i64 {
             let change_tx_out = TxOut {
                 value: change_amount as u64,
                 script_pubkey: change_script_pubkey,
@@ -187,7 +187,7 @@ impl BitcoinForkTransaction {
         for unspent in &self.unspents {
             tx_inputs.push(TxIn {
                 previous_output: OutPoint {
-                    txid: Hash256::from_hex(&unspent.tx_hash).unwrap(),
+                    txid: Hash256::from_hex(&unspent.tx_hash).expect("tx_hash"),
                     vout: unspent.vout as u32,
                 },
                 script_sig: Script::new(),
@@ -201,6 +201,10 @@ impl BitcoinForkTransaction {
     fn fork_id(&self) -> Result<u8> {
         let network = network_from_coin(&self.coin).ok_or(Error::UnsupportedChain)?;
         Ok(network.fork_id)
+    }
+
+    fn is_bch(&self) -> bool {
+        self.coin.to_uppercase().starts_with("BCH")
     }
 
     fn script_sigs_sign(
@@ -218,7 +222,16 @@ impl BitcoinForkTransaction {
             let network = network_from_coin(&self.coin).ok_or(Error::UnsupportedChain)?;
             let from_addr = BtcForkAddress::p2pkh(&pub_key, &network)?;
             let script = from_addr.script_pubkey();
-            let hash = tx.signature_hash(i, &script, 0x01 | fork_id as u32);
+            let hash: sha256d::Hash;
+            // todo: BCH and BTC are very different, Split it.
+            if self.is_bch() {
+                let shc = SighashComponentsWithForkId::new(&tx);
+                hash =
+                    shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | fork_id as u32);
+            } else {
+                hash = tx.signature_hash(i, &script, 0x01 | fork_id as u32);
+            }
+
             let prv_key = &prv_keys[i];
             let script_sig_and_pub_key = self.sign_hash_and_pub_key(prv_key, &hash.into_inner())?;
             let script = Builder::new()
@@ -285,7 +298,7 @@ impl BitcoinForkTransaction {
                     let hex = format!("160014{}", hex::encode(&hash));
 
                     TxIn {
-                        script_sig: Script::from(hex::decode(hex).unwrap()),
+                        script_sig: Script::from(hex::decode(hex).expect("script_sig")),
                         witness: vec![witnesses[i].0.clone(), witnesses[i].1.clone()],
                         ..*txin
                     }
@@ -338,38 +351,40 @@ mod tests {
     //
     #[test]
     pub fn bch_signer() {
-        let meta = Metadata::default();
-        let mut keystore = HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta);
-
-        let coin_info = CoinInfo {
-            symbol: "BCH".to_string(),
-            derivation_path: "m/44'/145'/0'/0/0".to_string(),
-            curve: CurveType::SECP256k1,
-        };
-        let _ = keystore.derive_coin::<BtcForkAddress, ExtendedPubKeyExtra>(&coin_info, &PASSWORD);
         let unspents = vec![Utxo {
-            tx_hash: "115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986".to_string(),
+            tx_hash: "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2".to_string(),
             vout: 0,
-            amount: 50000,
-            address: "17XBj6iFEsf8kzDMGQk5ghZipxX49VXuaV".to_string(),
-            script_pub_key: "76a91447862fe165e6121af80d5dde1ecb478ed170565b88ac".to_string(),
-            derived_path: "0/1".to_string(),
+            amount: 100000,
+            address: "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r".to_string(),
+            script_pub_key: "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac".to_string(),
+            derived_path: "1/0".to_string(),
             sequence: 0,
         }];
         let tran = BitcoinForkTransaction {
-            to: "1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK".to_string(),
-            amount: 15000,
+            to: "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s".to_string(),
+            amount: 93454,
             unspents,
             memo: "".to_string(),
-            fee: 35000,
-            change_idx: 0,
+            fee: 6000,
+            change_idx: 1,
             coin: "BCH".to_string(),
             is_seg_wit: false,
         };
-
-        let sign_ret = keystore.sign_transaction(&tran, Some(&PASSWORD)).unwrap();
-        // todo: not a real test data, it's works at WIF: L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy
-        assert_eq!(sign_ret.signature, "01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100be283eb3c936fbdc9159d7067cf3bf44b40c5fc790e6f06368c404a6c1962ebb022071741ed6e1d034f300d177582c870934d4b155d0eb40e6eda99b3e95323a4666412102cc987e200a13c771d9c840cd08db93debf4d4443cec3e084a4cde2aad4cfa77dffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000");
+        //
+        let prv_key = Secp256k1PrivateKey {
+            compressed: true,
+            network: Network::Bitcoin,
+            key: SecretKey::from_slice(
+                &hex::decode("b0dabbf9ffed224fbca3b41a9e446b3d0b6240c6d2957197a8ab75bbf2e1a5d4")
+                    .unwrap(),
+            )
+            .unwrap(),
+        };
+        let change_addr =
+            BtcForkAddress::from_str("bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r")
+                .unwrap();
+        let expected = tran.sign_transaction(&vec![prv_key], &change_addr).unwrap();
+        assert_eq!(expected.signature, "0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006a473044022064fb81c11181e6604aa56b29ed65e31680fc1203f5afb6f67c5437f2d68192d9022022282d6c3c35ffdf64a427df5e134aa0edb8528efb6151cb1c3b21422fdfd6e041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a914bedf37acf35504c9bfd18b09d989d0fb23fd269688ac00000000");
     }
 
     #[test]
