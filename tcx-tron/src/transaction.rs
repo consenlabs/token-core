@@ -3,7 +3,7 @@ use tcx_chain::{
     Transaction as TraitTransaction, TransactionSigner as TraitTransactionSigner,
 };
 
-use super::Address;
+use crate::address::Address;
 use bitcoin_hashes::sha256::Hash;
 use bitcoin_hashes::Hash as TraitHash;
 use failure::Error;

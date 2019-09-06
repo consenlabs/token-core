@@ -68,7 +68,7 @@ pub struct ExtendedPubKeyExtra {
 }
 
 impl Extra for ExtendedPubKeyExtra {
-    fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self> {
+    fn new(coin_info: &CoinInfo, seed: &Seed) -> Result<Self> {
         ensure!(
             coin_info.curve == CurveType::SECP256k1,
             "BCH must be at secp256k1"

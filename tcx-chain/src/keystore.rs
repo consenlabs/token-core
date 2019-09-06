@@ -93,7 +93,7 @@ pub struct Account {
 
 /// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
 pub trait Extra: Sized + serde::Serialize + Clone {
-    fn from(coin_info: &CoinInfo, seed: &Seed) -> Result<Self>;
+    fn new(coin_info: &CoinInfo, seed: &Seed) -> Result<Self>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -101,7 +101,7 @@ pub trait Extra: Sized + serde::Serialize + Clone {
 pub struct EmptyExtra {}
 
 impl Extra for EmptyExtra {
-    fn from(_coin_info: &CoinInfo, _seed: &Seed) -> Result<Self> {
+    fn new(_coin_info: &CoinInfo, _seed: &Seed) -> Result<Self> {
         Ok(EmptyExtra {})
     }
 }
@@ -136,7 +136,7 @@ impl HdKeystore {
     pub fn mnemonic_to_account<A: Address, E: Extra>(
         coin_info: &CoinInfo,
         mnemonic: &str,
-    ) -> Result<(Account, E)> {
+    ) -> Result<Account> {
         let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English)
             .map_err(|_| Error::InvalidMnemonic)?;
         let seed = bip39::Seed::new(&mnemonic, &"");
@@ -146,14 +146,14 @@ impl HdKeystore {
     fn derive_account_from_coin<A: Address, E: Extra>(
         coin_info: &CoinInfo,
         seed: &Seed,
-    ) -> Result<(Account, E)> {
+    ) -> Result<Account> {
         let paths = vec![coin_info.derivation_path.clone()];
         let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
         let pub_key = key.public_key();
         let address = A::from_public_key(&pub_key, Some(&coin_info.symbol))?;
 
-        let extra = E::from(coin_info, seed)?;
+        let extra = E::new(coin_info, seed)?;
         let acc = Account {
             address,
             derivation_path: coin_info.derivation_path.to_string(),
@@ -161,7 +161,7 @@ impl HdKeystore {
             coin: coin_info.symbol.to_string(),
             extra: serde_json::to_value(extra.clone()).expect("extra_error"),
         };
-        Ok((acc, extra))
+        Ok(acc)
     }
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
@@ -261,11 +261,11 @@ impl HdKeystore {
         &mut self,
         coin_info: &CoinInfo,
         password: &str,
-    ) -> Result<(&Account, E)> {
+    ) -> Result<&Account> {
         let seed = self.seed(password)?;
-        let (account, extra) = Self::derive_account_from_coin::<A, E>(coin_info, &seed)?;
+        let account = Self::derive_account_from_coin::<A, E>(coin_info, &seed)?;
         self.active_accounts.push(account);
-        Ok((self.active_accounts.last().unwrap(), extra))
+        Ok(self.active_accounts.last().unwrap())
     }
 
     /// Find an account by coin symbol

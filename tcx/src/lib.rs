@@ -15,13 +15,20 @@ use presenter::Presenter;
 use serde_json::json;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::path::Path;
+use std::str::FromStr;
 use std::sync::RwLock;
 use tcx_btc_fork::address::BtcForkAddress;
 use tcx_btc_fork::{BitcoinForkTransaction, ExtendedPubKeyExtra, Utxo};
+use tcx_chain::keystore::{EmptyExtra, Extra};
 use tcx_chain::signer::TransactionSigner;
 use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
+use tcx_tron::{TrxAddress, TrxSignedTransaction, TrxTransaction};
+
+use std::convert::TryFrom;
+
 // #[link(name = "TrezorCrypto")]
 // extern {
 //     fn mnemonic_generate(strength: c_int, mnemonic: *mut c_char) -> c_int;
@@ -77,6 +84,11 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
         "LTC-TESTNET" => Ok(CoinInfo {
             symbol: "LTC-TESTNET".to_string(),
             derivation_path: "m/44'/1'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        }),
+        "TRX" => Ok(CoinInfo {
+            symbol: "TRX".to_string(),
+            derivation_path: "m/44'/195'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
         _ => Err(format_err!("unsupported_chain")),
@@ -188,14 +200,17 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let path = v["path"].as_str().unwrap();
     let chain_type = v["chainType"].as_str().unwrap();
 
-    let (acc, _) = match chain_type {
+    let mut coin_info = _coin_info_from_symbol(chain_type)?;
+    coin_info.derivation_path = path.to_string();
+    let acc = match chain_type {
         "BCH" | "LTC" | "LTC-TESTNET" => {
-            let mut coin_info = _coin_info_from_symbol(chain_type)?;
-            coin_info.derivation_path = path.to_string();
+            //            let mut coin_info = _coin_info_from_symbol(chain_type)?;
+            //            coin_info.derivation_path = path.to_string();
             HdKeystore::mnemonic_to_account::<BtcForkAddress, ExtendedPubKeyExtra>(
                 &coin_info, mnemonic,
             )
         }
+        "TRX" => HdKeystore::mnemonic_to_account::<TrxAddress, EmptyExtra>(&coin_info, mnemonic),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
     let address = acc.address;
@@ -227,12 +242,13 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
     let mut pw = Map::new();
 
-    let (account, extra) = match chain_type {
+    let mut coin_info = _coin_info_from_symbol(chain_type)?;
+    coin_info.derivation_path = path.to_string();
+    let account = match chain_type {
         "BCH" | "LTC" | "LTC-TESTNET" => {
-            let mut coin_info = _coin_info_from_symbol(chain_type)?;
-            coin_info.derivation_path = path.to_string();
             ks.derive_coin::<BtcForkAddress, ExtendedPubKeyExtra>(&coin_info, password)
         }
+        "TRX" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
 
@@ -306,6 +322,7 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
 
     match chain_type {
         "BCH" | "LTC" | "LTC-TESTNET" => _sign_btc_fork_transaction(json_str, keystore, password),
+        "TRX" => _sign_trx_transaction(json_str, keystore, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }
 }
@@ -339,6 +356,14 @@ fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str)
     Ok(serde_json::to_string(&ret)?)
 }
 
+fn _sign_trx_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+    let v = Value::from_str(json)?;
+    let tx = TrxTransaction::try_from(v)?;
+    let signed: TrxSignedTransaction = keystore.sign_transaction(&tx, Some(password))?;
+    let signed_v: Value = signed.try_into()?;
+    Ok(signed_v.to_string())
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
@@ -362,7 +387,7 @@ fn _calc_external_address(v: &Value) -> Result<String> {
         .account(&chain_type)
         .ok_or(format_err!("account_not_found, chainType: {}", &chain_type))?;
 
-    let extra = ExtendedPubKeyExtra::from(account.extra.clone());
+    let extra: ExtendedPubKeyExtra = ExtendedPubKeyExtra::from(account.extra.clone());
     let external_addr = extra.calc_external_address::<BtcForkAddress>(external_id, &chain_type)?;
     Ok(serde_json::to_string(&external_addr)?)
 }
@@ -599,6 +624,31 @@ mod tests {
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+        });
+    }
+
+    #[test]
+    fn import_trx_wallet_from_mnemonic_test() {
+        run_test(|| {
+            let param = r#"{"chainType":"TRX","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"TRX-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/195'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+
+            let expected = r#"
+            {
+                "address": "TY2uroBeZ5trA9QT96aEWj32XLkAAhQ9R2",
+                "chainType": "TRX",
+                "createdAt": 1566455834,
+                "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
+                "name": "LTC-Wallet-1",
+                "passwordHint": "",
+                "source": "MNEMONIC"
+            }
+            "#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+            let ret_v = Value::from_str(ret).unwrap();
+
+            assert_eq!(expected_v["address"], ret_v["address"]);
+            assert_eq!(expected_v["chainType"], ret_v["chainType"]);
         });
     }
 
