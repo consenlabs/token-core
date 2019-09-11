@@ -1,5 +1,6 @@
 use tcx_chain::curve::{PublicKey, Secp256k1PublicKey};
 
+use crate::transaction::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
 use bch_addr::Converter;
@@ -7,10 +8,9 @@ use bitcoin::network::constants::Network;
 use bitcoin::util::address::Error as BtcAddressError;
 use bitcoin::util::address::Payload;
 use bitcoin::util::base58;
-use bitcoin::{Address as BtcAddress, AddressType, Script};
+use bitcoin::{Address as BtcAddress, Script};
 use bitcoin_hashes::hash160;
 use bitcoin_hashes::Hash;
-use core::fmt::Debug;
 use core::result;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -178,18 +178,11 @@ impl BtcForkAddress {
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         Ok(derivation_info.encode_with_network(network.expect("network").xprv_prefix))
     }
-
-    pub fn is_main_net(addr: &str) -> bool {
-        let convert = Converter::new();
-        convert.is_mainnet_addr(addr)
-    }
-
-    pub fn convert_to_legacy_if_need(addr: &str) -> Result<String> {
-        if None == addr.rfind("bitcoincash:") {
-            return Ok(addr.to_string());
-        }
-        _bch_to_legacy(addr)
-    }
+    //
+    //    pub fn is_main_net(addr: &str) -> bool {
+    //        let convert = Converter::new();
+    //        convert.is_mainnet_addr(addr)
+    //    }
 }
 
 fn _legacy_to_bch(addr: &str) -> Result<String> {
@@ -217,11 +210,8 @@ fn _bch_to_legacy(addr: &str) -> Result<String> {
 /// Extract the bech32 prefix.
 /// Returns the same slice when no prefix is found.
 fn bech32_network(bech32: &str) -> Option<BtcForkNetwork> {
-    let bech32_prefix = match bech32.rfind(":") {
-        None => match bech32.rfind("1") {
-            None => None,
-            Some(sep) => Some(bech32.split_at(sep).0),
-        },
+    let bech32_prefix = match bech32.rfind("1") {
+        None => None,
         Some(sep) => Some(bech32.split_at(sep).0),
     };
     match bech32_prefix {
@@ -254,58 +244,48 @@ impl FromStr for BtcForkAddress {
         // try bech32
         let bech32_network = bech32_network(s);
         if let Some(network) = bech32_network {
-            // try bch first
-            if network.coin.starts_with("BCH") {
-                let addr = _bch_to_legacy(s).expect("bch_to_legacy");
-                let data = _decode_base58(&addr)?;
-                return Ok(BtcForkAddress {
-                    network,
-                    payload: Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
-                });
-            } else {
-                // decode as bech32
-                let (_, payload) = bech32::decode(s)?;
-                if payload.len() == 0 {
-                    return Err(BtcAddressError::EmptyBech32Payload);
-                }
-
-                // Get the script version and program (converted from 5-bit to 8-bit)
-                let (version, program): (bech32::u5, Vec<u8>) = {
-                    let (v, p5) = payload.split_at(1);
-                    (v[0], bech32::FromBase32::from_base32(p5)?)
-                };
-
-                // Generic segwit checks.
-                if version.to_u8() > 16 {
-                    return Err(BtcAddressError::InvalidWitnessVersion(version.to_u8()));
-                }
-                if program.len() < 2 || program.len() > 40 {
-                    return Err(BtcAddressError::InvalidWitnessProgramLength(program.len()));
-                }
-
-                // Specific segwit v0 check.
-                if version.to_u8() == 0 && (program.len() != 20 && program.len() != 32) {
-                    return Err(BtcAddressError::InvalidSegwitV0ProgramLength(program.len()));
-                }
-
-                return Ok(BtcForkAddress {
-                    payload: Payload::WitnessProgram {
-                        version: version,
-                        program: program,
-                    },
-                    network: network,
-                });
+            // decode as bech32
+            let (_, payload) = bech32::decode(s)?;
+            if payload.len() == 0 {
+                return Err(BtcAddressError::EmptyBech32Payload);
             }
+
+            // Get the script version and program (converted from 5-bit to 8-bit)
+            let (version, program): (bech32::u5, Vec<u8>) = {
+                let (v, p5) = payload.split_at(1);
+                (v[0], bech32::FromBase32::from_base32(p5)?)
+            };
+
+            // Generic segwit checks.
+            if version.to_u8() > 16 {
+                return Err(BtcAddressError::InvalidWitnessVersion(version.to_u8()));
+            }
+            if program.len() < 2 || program.len() > 40 {
+                return Err(BtcAddressError::InvalidWitnessProgramLength(program.len()));
+            }
+
+            // Specific segwit v0 check.
+            if version.to_u8() == 0 && (program.len() != 20 && program.len() != 32) {
+                return Err(BtcAddressError::InvalidSegwitV0ProgramLength(program.len()));
+            }
+
+            return Ok(BtcForkAddress {
+                payload: Payload::WitnessProgram {
+                    version: version,
+                    program: program,
+                },
+                network: network,
+            });
         }
 
         let data = _decode_base58(s)?;
         let (network, payload) = match data[0] {
             0 => (
-                bech32_network.unwrap_or(network_from_coin("btc").expect("btc")),
+                network_from_coin("btc").expect("btc"),
                 Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             5 => (
-                bech32_network.unwrap_or(network_from_coin("btc").expect("btc")),
+                network_from_coin("btc").expect("btc"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             0x30 => (
@@ -321,11 +301,11 @@ impl FromStr for BtcForkAddress {
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             111 => (
-                bech32_network.unwrap_or(network_from_coin("btc-testnet").expect("btc-testnet")),
+                network_from_coin("btc-testnet").expect("btc-testnet"),
                 Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             196 => (
-                bech32_network.unwrap_or(network_from_coin("btc-testnet").expect("btc-testnet")),
+                network_from_coin("btc-testnet").expect("btc-testnet"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             x => {
@@ -346,14 +326,7 @@ impl Display for BtcForkAddress {
                 let mut prefixed = [0; 21];
                 prefixed[0] = self.network.p2pkh_prefix;
                 prefixed[1..].copy_from_slice(&hash[..]);
-                if self.network.coin.to_lowercase() == "bch" {
-                    let legacy = base58::check_encode_slice(&prefixed[..]);
-                    let baddr = _legacy_to_bch(&legacy).expect("legacy_to_bch");
-                    std::fmt::Display::fmt(&baddr, fmt)
-                //                    baddr.fmt(fmt)
-                } else {
-                    base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
-                }
+                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
             }
             Payload::ScriptHash(ref hash) => {
                 let mut prefixed = [0; 21];
@@ -374,26 +347,93 @@ impl Display for BtcForkAddress {
     }
 }
 
+impl FromStr for BchAddress {
+    type Err = BtcAddressError;
+
+    fn from_str(s: &str) -> result::Result<BchAddress, BtcAddressError> {
+        let legacy = _bch_to_legacy(s).expect("_bch_to_legacy");
+        let btc_addr = BtcAddress::from_str(&legacy)?;
+        Ok(BchAddress(btc_addr))
+    }
+}
+
+pub struct BchAddress(pub BtcAddress);
+
+impl BchAddress {
+    pub fn convert_to_legacy_if_need(addr: &str) -> Result<String> {
+        if None == addr.rfind("bitcoincash:") {
+            return Ok(addr.to_string());
+        }
+        _bch_to_legacy(addr)
+    }
+}
+
+impl Display for BchAddress {
+    fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
+        let legacy = self.0.to_string();
+        let baddr = _legacy_to_bch(&legacy).expect("legacy_to_bch");
+        std::fmt::Display::fmt(&baddr, f)
+    }
+}
+
+pub trait PubKeyScript: Sized {
+    fn script_pub_key(&self) -> Script;
+}
+
+impl PubKeyScript for BtcForkAddress {
+    fn script_pub_key(&self) -> Script {
+        self.script_pubkey()
+    }
+}
+
+impl PubKeyScript for BchAddress {
+    fn script_pub_key(&self) -> Script {
+        self.0.script_pubkey()
+    }
+}
+
+impl ScriptPubKeyComponent for BtcForkAddress {
+    fn address_like(target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
+        let addr = BtcForkAddress::address_like(target_addr, pub_key)?;
+        Ok(addr.script_pubkey())
+    }
+
+    fn address_script_pub_key(target_addr: &str) -> Result<Script> {
+        let addr = BtcForkAddress::from_str(target_addr)?;
+        Ok(addr.script_pubkey())
+    }
+}
+
+impl ScriptPubKeyComponent for BchAddress {
+    fn address_like(target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
+        //        let target_addr = BchAddress::convert_to_legacy_if_need(target_addr)?;
+        Ok(BtcAddress::p2pkh(&pub_key, Network::Bitcoin).script_pubkey())
+    }
+
+    fn address_script_pub_key(target_addr: &str) -> Result<Script> {
+        let target_addr = BchAddress::convert_to_legacy_if_need(target_addr)?;
+        let addr = BtcAddress::from_str(&target_addr)?;
+        Ok(addr.script_pubkey())
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::address::{network_from_coin, BtcForkAddress};
-    use bitcoin::consensus::encode::Error::Secp256k1;
+    use crate::address::{network_from_coin, BchAddress, BtcForkAddress};
     use bitcoin::util::misc::hex_bytes;
-    use bitcoin_hashes::hex::ToHex;
     use std::str::FromStr;
     use tcx_chain::keystore::Address;
+    use tcx_chain::PublicKey;
     use tcx_chain::Secp256k1PublicKey;
-    use tcx_chain::{PublicKey, Secp256k1PrivateKey};
 
     #[test]
     pub fn test_convert() {
         assert_eq!(
-            BtcForkAddress::convert_to_legacy_if_need("2N54wJxopnWTvBfqgAPVWqXVEdaqoH7Suvf")
-                .unwrap(),
+            BchAddress::convert_to_legacy_if_need("2N54wJxopnWTvBfqgAPVWqXVEdaqoH7Suvf").unwrap(),
             "2N54wJxopnWTvBfqgAPVWqXVEdaqoH7Suvf"
         );
         assert_eq!(
-            BtcForkAddress::convert_to_legacy_if_need(
+            BchAddress::convert_to_legacy_if_need(
                 "bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885"
             )
             .unwrap(),
@@ -403,7 +443,7 @@ mod tests {
         assert_eq!(
             format!(
                 "{}",
-                BtcForkAddress::convert_to_legacy_if_need("bitcoincash:")
+                BchAddress::convert_to_legacy_if_need("bitcoincash:")
                     .err()
                     .unwrap()
             ),
@@ -482,5 +522,4 @@ mod tests {
         let addr = BtcForkAddress::from_str("bc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdntm7f4e").unwrap();
         assert_eq!(addr.network.coin, "BTC");
     }
-
 }

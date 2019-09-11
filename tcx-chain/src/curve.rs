@@ -26,7 +26,7 @@ pub trait PublicKey: Sized {
     fn from_slice(data: &[u8]) -> Result<Self>;
 }
 
-pub trait PrivateKey {
+pub trait PrivateKey: Sized {
     type PublicKey: PublicKey;
 
     fn is_valid(data: &[u8]) -> bool;

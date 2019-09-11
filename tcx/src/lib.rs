@@ -27,6 +27,7 @@ use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::{TrxAddress, TrxSignedTransaction, TrxTransaction};
 
+use serde::export::PhantomData;
 use std::convert::TryFrom;
 
 // #[link(name = "TrezorCrypto")]
@@ -342,7 +343,7 @@ fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str)
         .parse::<i64>()
         .unwrap();
     let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
-    let tran = BitcoinForkTransaction {
+    let tran = BitcoinForkTransaction::<BtcForkAddress> {
         to: to.to_owned(),
         amount,
         unspents,
@@ -351,6 +352,7 @@ fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str)
         change_idx: change_idx as u32,
         coin: chain_type,
         is_seg_wit,
+        _generic_s: PhantomData,
     };
     let ret = keystore.sign_transaction(&tran, Some(&password))?;
     Ok(serde_json::to_string(&ret)?)

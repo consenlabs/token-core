@@ -21,6 +21,8 @@ extern crate num_traits;
 
 #[macro_use]
 extern crate tcx_chain;
+#[macro_use]
+extern crate serde;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
