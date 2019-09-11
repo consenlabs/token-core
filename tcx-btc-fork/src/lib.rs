@@ -33,7 +33,9 @@ use serde_json::Value;
 use tcx_chain::bips::get_account_path;
 use tcx_crypto::aes::cbc::{decrypt_pkcs7, encrypt_pkcs7};
 use tcx_crypto::aes::ctr::encrypt_nopadding;
-pub use transaction::{BitcoinForkTransaction, Utxo};
+pub use transaction::{
+    BchTransaction, BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkTransaction, Utxo,
+};
 
 #[derive(Fail, Debug)]
 pub enum Error {

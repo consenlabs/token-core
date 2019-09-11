@@ -92,10 +92,6 @@ pub struct BitcoinForkTransaction<S: ScriptPubKeyComponent, T: BitcoinTransactio
     #[serde(skip_serializing)]
     pub _marker_t: PhantomData<T>,
 }
-//
-//trait BitcoinForkTransactionTrait {
-//    type ScriptPubKeyComponent: ScriptPubKeyComponent;
-//}
 
 impl<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent> TraitTransaction
     for BitcoinForkTransaction<S, T>
@@ -398,7 +394,6 @@ impl SegWitTransactionSignComponent {
             let tx_in = &tx.input[i];
             let unspent = &unspents[i];
             let pub_key = &prv_keys[i].public_key();
-            //            let fork_id = self.fork_id()?;
             let pub_key_hash = hash160::Hash::hash(&pub_key.to_bytes()).into_inner();
             let script_hex = format!("76a914{}88ac", hex::encode(pub_key_hash));
             let script = Script::from(hex::decode(script_hex)?);
@@ -453,36 +448,16 @@ struct LegacyTransactionSignComponent<H: SignHasher> {
 }
 
 trait SignHasher {
-    fn sign_hash(
-        tx: &Transaction,
-        index: usize,
-        unspent: &Utxo,
-        pub_key: &impl PublicKey,
-    ) -> Result<(sha256d::Hash, u32)>;
+    fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)>;
 }
 
 struct LegacySignHasher {}
 
 impl SignHasher for LegacySignHasher {
-    fn sign_hash(
-        tx: &Transaction,
-        index: usize,
-        unspent: &Utxo,
-        pub_key: &impl PublicKey,
-    ) -> Result<(sha256d::Hash, u32)> {
+    fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
         let addr = BtcForkAddress::from_str(&unspent.address)?;
-        //        let network = addr.network;
-        //        let tx_in = &tx.input[index];
-        //        let from_addr = BtcForkAddress::p2pkh(&pub_key, &network)?;
         let script = addr.script_pubkey();
-        let hash: sha256d::Hash;
-        //            // todo: BCH and BTC are very different, Split it.
-        //            if self.is_bch() {
-        //                let shc = SighashComponentsWithForkId::new(&tx);
-        //                hash =
-        //                    shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | fork_id as u32);
-        //            } else {
-        hash = tx.signature_hash(index, &script, 0x01);
+        let hash = tx.signature_hash(index, &script, 0x01);
         Ok((hash, 0x01))
     }
 }
@@ -490,26 +465,10 @@ impl SignHasher for LegacySignHasher {
 struct BchSignHasher {}
 
 impl SignHasher for BchSignHasher {
-    fn sign_hash(
-        tx: &Transaction,
-        index: usize,
-        unspent: &Utxo,
-        pub_key: &impl PublicKey,
-    ) -> Result<(sha256d::Hash, u32)> {
+    fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
         let addr = BchAddress::from_str(&unspent.address)?;
-        //        let network = addr.0.network;
         let tx_in = &tx.input[index];
-        //        let pub_key = bitcoin::PublicKey::from_slice(&pub_key.to_bytes())?;
-        //        let from_addr = BtcAddress::p2pkh(&pub_key, network);
         let script = addr.script_pub_key();
-        let hash: sha256d::Hash;
-        //            // todo: BCH and BTC are very different, Split it.
-        //            if self.is_bch() {
-        //                let shc = SighashComponentsWithForkId::new(&tx);
-        //                hash =
-        //                    shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | fork_id as u32);
-        //            } else {
-        //        hash = tx.signature_hash(i, &script, 0x01);
         let shc = SighashComponentsWithForkId::new(&tx);
         let hash = shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x41);
         Ok((hash, 0x41))
@@ -525,22 +484,8 @@ impl<H: SignHasher> LegacyTransactionSignComponent<H> {
         let mut script_sigs: Vec<Script> = vec![];
 
         for i in 0..tx.input.len() {
-            //            let tx_in = &tx.input[i];
             let unspent = &unspents[i];
-            let pub_key = prv_keys[i].public_key();
-
-            //            let from_addr = BtcForkAddress::p2pkh(&pub_key, &network)?;
-            //            let script = from_addr.script_pubkey();
-            //            let hash: sha256d::Hash;
-            ////            // todo: BCH and BTC are very different, Split it.
-            ////            if self.is_bch() {
-            ////                let shc = SighashComponentsWithForkId::new(&tx);
-            ////                hash =
-            ////                    shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | fork_id as u32);
-            ////            } else {
-            //            hash = tx.signature_hash(i, &script, 0x01);
-            ////            }
-            let (hash, hash_type) = H::sign_hash(&tx, i, &unspent, &pub_key)?;
+            let (hash, hash_type) = H::sign_hash(&tx, i, &unspent)?;
             let prv_key = &prv_keys[i];
             let script_sig_and_pub_key =
                 Self::sign_hash_and_pub_key(prv_key, &hash.into_inner(), hash_type as u8)?;
@@ -571,7 +516,6 @@ impl<H: SignHasher> BitcoinTransactionSignComponent for LegacyTransactionSignCom
                 ..*txin
             })
             .collect();
-        //        }
         Ok(Transaction {
             version: Self::tx_version(),
             lock_time: tx.lock_time,
@@ -586,6 +530,15 @@ impl<H: SignHasher> BitcoinTransactionSignComponent for LegacyTransactionSignCom
 }
 
 struct BchTransactionSignComponent {}
+
+pub type BtcForkTransaction =
+    BitcoinForkTransaction<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>>;
+
+pub type BchTransaction =
+    BitcoinForkTransaction<BchAddress, LegacyTransactionSignComponent<BchSignHasher>>;
+
+pub type BtcForkSegWitTransaction =
+    BitcoinForkTransaction<BtcForkAddress, SegWitTransactionSignComponent>;
 
 #[cfg(test)]
 mod tests {
