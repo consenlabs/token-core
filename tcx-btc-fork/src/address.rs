@@ -3,7 +3,6 @@ use tcx_chain::curve::{PublicKey, Secp256k1PublicKey};
 use crate::transaction::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
-use bch_addr::Converter;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Error as BtcAddressError;
 use bitcoin::util::address::Payload;
@@ -31,7 +30,6 @@ pub struct BtcForkNetwork {
     pub p2sh_prefix: u8,
     pub xpub_prefix: [u8; 4],
     pub xprv_prefix: [u8; 4],
-    pub fork_id: u8,
 }
 
 // LTC address prefix: https://bitcoin.stackexchange.com/questions/62781/litecoin-constants-and-prefixes
@@ -47,7 +45,6 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             p2sh_prefix: 0x32,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-            fork_id: 0,
         }),
         "ltc-testnet" => Some(BtcForkNetwork {
             coin: "LTC-TESTNET",
@@ -56,7 +53,6 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             p2sh_prefix: 0x3a,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-            fork_id: 0,
         }),
         "btc" | "bc" => Some(BtcForkNetwork {
             coin: "BTC",
@@ -65,7 +61,6 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             p2sh_prefix: 0x05,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-            fork_id: 0,
         }),
         "btc-testnet" => Some(BtcForkNetwork {
             coin: "BTC-TESTNET",
@@ -74,7 +69,6 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             p2sh_prefix: 0xc4,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-            fork_id: 0,
         }),
         "bitcoincash" | "bch" => Some(BtcForkNetwork {
             coin: "BCH",
@@ -83,7 +77,6 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             p2sh_prefix: 0x05,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-            fork_id: 0x40,
         }),
         _ => None,
     }
@@ -100,19 +93,7 @@ impl Address for BtcForkAddress {
         let network = network_from_coin(&coin);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         let network = network.expect("network");
-        let addr = match coin.to_lowercase().as_str() {
-            "bch" => {
-                let legacy = BtcForkAddress::p2pkh(&pub_key, &network)?;
-                let converter = Converter::new();
-                converter
-                    .to_cash_addr(&legacy.to_string())
-                    .map_err(|_| Error::ConvertToCashAddressFailed(legacy.to_string()))
-            }
-            "ltc" | "btc" | "ltc-testnet" => {
-                Ok(BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string())
-            }
-            _ => Err(Error::UnsupportedChain),
-        }?;
+        let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string();
         Ok(addr.to_string())
     }
 }
@@ -177,33 +158,6 @@ impl BtcForkAddress {
         let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         Ok(derivation_info.encode_with_network(network.expect("network").xprv_prefix))
-    }
-    //
-    //    pub fn is_main_net(addr: &str) -> bool {
-    //        let convert = Converter::new();
-    //        convert.is_mainnet_addr(addr)
-    //    }
-}
-
-fn _legacy_to_bch(addr: &str) -> Result<String> {
-    let convert = Converter::new();
-    if convert.is_legacy_addr(&addr) {
-        convert
-            .to_cash_addr(&addr)
-            .map_err(|_| Error::ConvertToCashAddressFailed(addr.to_string()).into())
-    } else {
-        Ok(addr.to_string())
-    }
-}
-
-fn _bch_to_legacy(addr: &str) -> Result<String> {
-    let convert = Converter::new();
-    if !convert.is_legacy_addr(&addr) {
-        convert
-            .to_legacy_addr(&addr)
-            .map_err(|_| Error::ConvertToLegacyAddressFailed(addr.to_string()).into())
-    } else {
-        Ok(addr.to_string())
     }
 }
 
@@ -347,35 +301,6 @@ impl Display for BtcForkAddress {
     }
 }
 
-impl FromStr for BchAddress {
-    type Err = BtcAddressError;
-
-    fn from_str(s: &str) -> result::Result<BchAddress, BtcAddressError> {
-        let legacy = _bch_to_legacy(s).expect("_bch_to_legacy");
-        let btc_addr = BtcAddress::from_str(&legacy)?;
-        Ok(BchAddress(btc_addr))
-    }
-}
-
-pub struct BchAddress(pub BtcAddress);
-
-impl BchAddress {
-    pub fn convert_to_legacy_if_need(addr: &str) -> Result<String> {
-        if None == addr.rfind("bitcoincash:") {
-            return Ok(addr.to_string());
-        }
-        _bch_to_legacy(addr)
-    }
-}
-
-impl Display for BchAddress {
-    fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
-        let legacy = self.0.to_string();
-        let baddr = _legacy_to_bch(&legacy).expect("legacy_to_bch");
-        std::fmt::Display::fmt(&baddr, f)
-    }
-}
-
 pub trait PubKeyScript: Sized {
     fn script_pub_key(&self) -> Script;
 }
@@ -383,12 +308,6 @@ pub trait PubKeyScript: Sized {
 impl PubKeyScript for BtcForkAddress {
     fn script_pub_key(&self) -> Script {
         self.script_pubkey()
-    }
-}
-
-impl PubKeyScript for BchAddress {
-    fn script_pub_key(&self) -> Script {
-        self.0.script_pubkey()
     }
 }
 
@@ -404,68 +323,14 @@ impl ScriptPubKeyComponent for BtcForkAddress {
     }
 }
 
-impl ScriptPubKeyComponent for BchAddress {
-    fn address_like(target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
-        //        let target_addr = BchAddress::convert_to_legacy_if_need(target_addr)?;
-        Ok(BtcAddress::p2pkh(&pub_key, Network::Bitcoin).script_pubkey())
-    }
-
-    fn address_script_pub_key(target_addr: &str) -> Result<Script> {
-        let target_addr = BchAddress::convert_to_legacy_if_need(target_addr)?;
-        let addr = BtcAddress::from_str(&target_addr)?;
-        Ok(addr.script_pubkey())
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::address::{network_from_coin, BchAddress, BtcForkAddress};
+    use crate::address::{network_from_coin, BtcForkAddress};
     use bitcoin::util::misc::hex_bytes;
     use std::str::FromStr;
     use tcx_chain::keystore::Address;
     use tcx_chain::PublicKey;
     use tcx_chain::Secp256k1PublicKey;
-
-    #[test]
-    pub fn test_convert() {
-        assert_eq!(
-            BchAddress::convert_to_legacy_if_need("2N54wJxopnWTvBfqgAPVWqXVEdaqoH7Suvf").unwrap(),
-            "2N54wJxopnWTvBfqgAPVWqXVEdaqoH7Suvf"
-        );
-        assert_eq!(
-            BchAddress::convert_to_legacy_if_need(
-                "bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885"
-            )
-            .unwrap(),
-            "1oEx5Ztg2DUDYJDxb1AeaiG5TYesikMVU"
-        );
-
-        assert_eq!(
-            format!(
-                "{}",
-                BchAddress::convert_to_legacy_if_need("bitcoincash:")
-                    .err()
-                    .unwrap()
-            ),
-            "bch_convert_to_legacy_address_failed# address: bitcoincash:"
-        );
-    }
-
-    #[test]
-    pub fn test_from_pub_key() {
-        let pub_key =
-            hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
-                .unwrap();
-        let addr = BtcForkAddress::from_public_key(
-            &Secp256k1PublicKey::from_slice(&pub_key).unwrap(),
-            Some("bch"),
-        )
-        .unwrap();
-        assert_eq!(
-            addr,
-            "bitcoincash:qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
-        );
-    }
 
     #[test]
     pub fn test_btc_fork_address() {
@@ -483,15 +348,6 @@ mod tests {
             .unwrap()
             .to_string();
         assert_eq!(addr, "ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf");
-
-        let network = network_from_coin("bch").unwrap();
-        let addr = BtcForkAddress::p2pkh(&pub_key, &network)
-            .unwrap()
-            .to_string();
-        assert_eq!(
-            addr,
-            "bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr"
-        );
 
         let network = network_from_coin("btc").unwrap();
         let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)
@@ -511,11 +367,6 @@ mod tests {
         assert_eq!(addr.network.coin, "LTC");
         let addr = BtcForkAddress::from_str("ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf").unwrap();
         assert_eq!(addr.network.coin, "LTC");
-
-        let addr =
-            BtcForkAddress::from_str("bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr")
-                .unwrap();
-        assert_eq!(addr.network.coin, "BCH");
 
         let addr = BtcForkAddress::from_str("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG").unwrap();
         assert_eq!(addr.network.coin, "BTC");

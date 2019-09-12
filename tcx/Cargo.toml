@@ -8,6 +8,7 @@ edition = "2018"
 tcx-crypto = { path = "../tcx-crypto" }
 tcx-chain = { path = "../tcx-chain" }
 tcx-btc-fork = {path = "../tcx-btc-fork"}
+tcx-bch = {path = "../tcx-bch"}
 tcx-tron = {path = "../tcx-tron"}
 libc = "0.2.0"
 log = "0.4.6"

@@ -158,7 +158,7 @@ mod tests {
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
-        let _ = keystore.derive_coin::<crate::Address, EmptyExtra>(&coin_info, &PASSWORD);
+        let _ = keystore.derive_coin::<Address, EmptyExtra>(&coin_info, &PASSWORD);
 
         //        let pair = Pair::from_slice(&hex::decode(
         //            "1111111111111311111111111111111111111111111111111111111111111111",

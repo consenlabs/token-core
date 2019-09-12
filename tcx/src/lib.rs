@@ -19,10 +19,11 @@ use std::convert::TryInto;
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::RwLock;
+use tcx_bch::{BchAddress, BchExtra, BchTransaction};
 use tcx_btc_fork::address::BtcForkAddress;
 use tcx_btc_fork::{
-    BchTransaction, BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkTransaction,
-    ExtendedPubKeyExtra, Utxo,
+    BitcoinForkTransaction, BtcForkExtra, BtcForkSegWitTransaction, BtcForkTransaction,
+    ExtendedPubKeyExtra, ExternalAddress, Utxo,
 };
 use tcx_chain::keystore::{EmptyExtra, Extra};
 use tcx_chain::signer::TransactionSigner;
@@ -207,12 +208,9 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let mut coin_info = _coin_info_from_symbol(chain_type)?;
     coin_info.derivation_path = path.to_string();
     let acc = match chain_type {
-        "BCH" | "LTC" | "LTC-TESTNET" => {
-            //            let mut coin_info = _coin_info_from_symbol(chain_type)?;
-            //            coin_info.derivation_path = path.to_string();
-            HdKeystore::mnemonic_to_account::<BtcForkAddress, ExtendedPubKeyExtra>(
-                &coin_info, mnemonic,
-            )
+        "BCH" => HdKeystore::mnemonic_to_account::<BchAddress, BchExtra>(&coin_info, mnemonic),
+        "LTC" | "LTC-TESTNET" => {
+            HdKeystore::mnemonic_to_account::<BtcForkAddress, BtcForkExtra>(&coin_info, mnemonic)
         }
         "TRX" => HdKeystore::mnemonic_to_account::<TrxAddress, EmptyExtra>(&coin_info, mnemonic),
         _ => Err(format_err!("{}", "chain_type_not_support")),
@@ -249,8 +247,9 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let mut coin_info = _coin_info_from_symbol(chain_type)?;
     coin_info.derivation_path = path.to_string();
     let account = match chain_type {
-        "BCH" | "LTC" | "LTC-TESTNET" => {
-            ks.derive_coin::<BtcForkAddress, ExtendedPubKeyExtra>(&coin_info, password)
+        "BCH" => ks.derive_coin::<BchAddress, BchExtra>(&coin_info, password),
+        "LTC" | "LTC-TESTNET" => {
+            ks.derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info, password)
         }
         "TRX" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
@@ -348,44 +347,34 @@ fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str)
     let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
     let ret: TxSignResult;
     if chain_type.starts_with("BCH") {
-        println!("sign bch");
-        let tran = BchTransaction {
-            to: to.to_owned(),
+        let tran = BchTransaction::new(
+            to.to_owned(),
             amount,
             unspents,
-            memo: "".to_string(),
             fee,
-            change_idx: change_idx as u32,
-            coin: chain_type,
-            _marker_s: PhantomData,
-            _marker_t: PhantomData,
-        };
+            change_idx as u32,
+            chain_type,
+        );
         ret = keystore.sign_transaction(&tran, Some(&password))?;
     } else if is_seg_wit {
-        let tran = BtcForkSegWitTransaction {
-            to: to.to_owned(),
+        let tran = BtcForkSegWitTransaction::new(
+            to.to_owned(),
             amount,
             unspents,
-            memo: "".to_string(),
             fee,
-            change_idx: change_idx as u32,
-            coin: chain_type,
-            _marker_s: PhantomData,
-            _marker_t: PhantomData,
-        };
+            change_idx as u32,
+            chain_type,
+        );
         ret = keystore.sign_transaction(&tran, Some(&password))?;
     } else {
-        let tran = BtcForkTransaction {
-            to: to.to_owned(),
+        let tran = BtcForkTransaction::new(
+            to.to_owned(),
             amount,
             unspents,
-            memo: "".to_string(),
             fee,
-            change_idx: change_idx as u32,
-            coin: chain_type,
-            _marker_s: PhantomData,
-            _marker_t: PhantomData,
-        };
+            change_idx as u32,
+            chain_type,
+        );
         ret = keystore.sign_transaction(&tran, Some(&password))?;
     }
 
@@ -422,9 +411,15 @@ fn _calc_external_address(v: &Value) -> Result<String> {
     let account = keystore
         .account(&chain_type)
         .ok_or(format_err!("account_not_found, chainType: {}", &chain_type))?;
+    let external_addr: ExternalAddress;
+    if chain_type.starts_with("BCH") {
+        let extra = BchExtra::from(account.extra.clone());
+        external_addr = extra.calc_external_address(external_id, &chain_type)?;
+    } else {
+        let extra = BtcForkExtra::from(account.extra.clone());
+        external_addr = extra.calc_external_address(external_id, &chain_type)?;
+    }
 
-    let extra: ExtendedPubKeyExtra = ExtendedPubKeyExtra::from(account.extra.clone());
-    let external_addr = extra.calc_external_address::<BtcForkAddress>(external_id, &chain_type)?;
     Ok(serde_json::to_string(&external_addr)?)
 }
 

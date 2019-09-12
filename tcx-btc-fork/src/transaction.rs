@@ -1,33 +1,30 @@
 use tcx_chain::{HdKeystore, Secp256k1Curve, TransactionSigner, TxSignResult};
 
-use bitcoin::network::constants::Network;
-use bitcoin::{Address as BtcAddress, OutPoint, Script, Transaction, TxIn, TxOut};
+use bitcoin::{OutPoint, Script, Transaction, TxIn, TxOut};
 use bitcoin_hashes::hex::FromHex;
 use bitcoin_hashes::sha256d::Hash as Hash256;
 use bitcoin_hashes::{sha256d, Hash};
 use tcx_chain::Transaction as TraitTransaction;
 
-use crate::address::{BchAddress, BtcForkNetwork, PubKeyScript};
+use crate::address::PubKeyScript;
 use crate::bip143_with_forkid::SighashComponentsWithForkId;
 use crate::Result;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::consensus::serialize;
 use bitcoin_hashes::hex::ToHex;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use crate::address::{network_from_coin, BtcForkAddress};
-use tcx_chain::curve::{PrivateKey, Secp256k1PublicKey};
+use crate::address::BtcForkAddress;
+use tcx_chain::curve::PrivateKey;
 
-use crate::Error;
 use crate::ExtendedPubKeyExtra;
-use bitcoin::util::base58::from;
 use bitcoin::util::bip143::SighashComponents;
-use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin_hashes::hash160;
 use std::marker::PhantomData;
 use tcx_chain::bips::get_account_path;
 use tcx_chain::curve::PublicKey;
+use tcx_chain::keystore::Address;
 //use serde::
 
 const DUST: u64 = 546;
@@ -78,7 +75,10 @@ pub trait ScriptPubKeyComponent {
 }
 
 #[derive(Serialize)]
-pub struct BitcoinForkTransaction<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent> {
+pub struct BitcoinForkTransaction<
+    S: ScriptPubKeyComponent + Address,
+    T: BitcoinTransactionSignComponent,
+> {
     pub to: String,
     pub amount: i64,
     pub unspents: Vec<Utxo>,
@@ -92,12 +92,12 @@ pub struct BitcoinForkTransaction<S: ScriptPubKeyComponent, T: BitcoinTransactio
     pub _marker_t: PhantomData<T>,
 }
 
-impl<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent> TraitTransaction
+impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent> TraitTransaction
     for BitcoinForkTransaction<S, T>
 {
 }
 
-impl<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent>
+impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     TransactionSigner<BitcoinForkTransaction<S, T>, TxSignResult> for HdKeystore
 {
     fn sign_transaction(
@@ -109,7 +109,7 @@ impl<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent>
             .account(tx.coin.to_uppercase().as_str())
             .ok_or(format_err!("account_not_found"))?;
         let path = &account.derivation_path;
-        let extra = ExtendedPubKeyExtra::from(account.extra.clone());
+        let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
 
         let paths = tx.collect_prv_keys_paths(path)?;
 
@@ -123,7 +123,30 @@ impl<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent>
     }
 }
 
-impl<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent> BitcoinForkTransaction<S, T> {
+impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
+    BitcoinForkTransaction<S, T>
+{
+    pub fn new(
+        to: String,
+        amount: i64,
+        unspents: Vec<Utxo>,
+        fee: i64,
+        change_idx: u32,
+        coin: String,
+    ) -> Self {
+        BitcoinForkTransaction::<S, T> {
+            to,
+            amount,
+            unspents,
+            memo: "".to_string(),
+            fee,
+            change_idx,
+            coin,
+            _marker_s: PhantomData,
+            _marker_t: PhantomData,
+        }
+    }
+
     fn collect_prv_keys_paths(&self, path: &str) -> Result<Vec<String>> {
         let mut paths: Vec<String> = vec![];
         let account_path = get_account_path(path)?;
@@ -200,7 +223,7 @@ impl<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent> BitcoinForkTr
         tx_inputs
     }
 
-    fn sign_transaction(
+    pub fn sign_transaction(
         &self,
         prv_keys: &[impl PrivateKey],
         change_addr_pubkey: Script,
@@ -328,19 +351,6 @@ impl SignHasher for LegacySignHasher {
     }
 }
 
-pub struct BchSignHasher {}
-
-impl SignHasher for BchSignHasher {
-    fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
-        let addr = BchAddress::from_str(&unspent.address)?;
-        let tx_in = &tx.input[index];
-        let script = addr.script_pub_key();
-        let shc = SighashComponentsWithForkId::new(&tx);
-        let hash = shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x41);
-        Ok((hash, 0x41))
-    }
-}
-
 impl<H: SignHasher> LegacyTransactionSignComponent<H> {
     fn script_sigs_sign(
         tx: &Transaction,
@@ -395,13 +405,8 @@ impl<H: SignHasher> BitcoinTransactionSignComponent for LegacyTransactionSignCom
     }
 }
 
-struct BchTransactionSignComponent {}
-
 pub type BtcForkTransaction =
     BitcoinForkTransaction<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>>;
-
-pub type BchTransaction =
-    BitcoinForkTransaction<BchAddress, LegacyTransactionSignComponent<BchSignHasher>>;
 
 pub type BtcForkSegWitTransaction =
     BitcoinForkTransaction<BtcForkAddress, SegWitTransactionSignComponent>;
@@ -409,8 +414,8 @@ pub type BtcForkSegWitTransaction =
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::address::BchAddress;
     use crate::ExtendedPubKeyExtra;
+    use bitcoin::network::constants::Network;
     use secp256k1::SecretKey;
     use tcx_chain::curve::CurveType;
     use tcx_chain::keystore::CoinInfo;
@@ -419,49 +424,6 @@ mod tests {
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
-    static BCH_MAIN_PATH: &'static str = "m/44'/145'/0'";
-
-    //
-    #[test]
-    pub fn bch_signer() {
-        let unspents = vec![Utxo {
-            tx_hash: "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2".to_string(),
-            vout: 0,
-            amount: 100000,
-            address: "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r".to_string(),
-            script_pub_key: "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac".to_string(),
-            derived_path: "1/0".to_string(),
-            sequence: 0,
-        }];
-        let tran =
-            BitcoinForkTransaction::<BchAddress, LegacyTransactionSignComponent<BchSignHasher>> {
-                to: "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s".to_string(),
-                amount: 93454,
-                unspents,
-                memo: "".to_string(),
-                fee: 6000,
-                change_idx: 1,
-                coin: "BCH".to_string(),
-                _marker_s: PhantomData,
-                _marker_t: PhantomData,
-            };
-        //
-        let prv_key = Secp256k1PrivateKey {
-            compressed: true,
-            network: Network::Bitcoin,
-            key: SecretKey::from_slice(
-                &hex::decode("b0dabbf9ffed224fbca3b41a9e446b3d0b6240c6d2957197a8ab75bbf2e1a5d4")
-                    .unwrap(),
-            )
-            .unwrap(),
-        };
-        let change_addr =
-            BchAddress::from_str("bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r").unwrap();
-        let expected = tran
-            .sign_transaction(&vec![prv_key], change_addr.script_pub_key())
-            .unwrap();
-        assert_eq!(expected.signature, "0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006a473044022064fb81c11181e6604aa56b29ed65e31680fc1203f5afb6f67c5437f2d68192d9022022282d6c3c35ffdf64a427df5e134aa0edb8528efb6151cb1c3b21422fdfd6e041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a914bedf37acf35504c9bfd18b09d989d0fb23fd269688ac00000000");
-    }
 
     #[test]
     fn test_sign_ltc() {

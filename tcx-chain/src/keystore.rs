@@ -391,7 +391,7 @@ mod tests {
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
-        let (account, _) =
+        let account =
             HdKeystore::mnemonic_to_account::<MockAddress, EmptyExtra>(&coin_info, MNEMONIC)
                 .unwrap();
         let expected = Account {
@@ -476,7 +476,7 @@ mod tests {
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
-        let (acc, _) = keystore
+        let acc = keystore
             .derive_coin::<MockAddress, EmptyExtra>(&coin_info, PASSWORD)
             .unwrap();
         let expected = Account {
