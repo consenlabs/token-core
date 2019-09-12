@@ -32,7 +32,7 @@ use secp256k1::Secp256k1;
 use serde_json::Value;
 use tcx_chain::bips::get_account_path;
 use tcx_crypto::aes::cbc::{decrypt_pkcs7, encrypt_pkcs7};
-use tcx_crypto::aes::ctr::encrypt_nopadding;
+
 pub use transaction::{BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkTransaction, Utxo};
 
 pub use address::PubKeyScript;

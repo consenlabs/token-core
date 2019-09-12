@@ -62,7 +62,7 @@ mod tests {
 
     use crate::aes::cbc::encrypt_pkcs7;
     use crate::aes::ctr::{decrypt_nopadding, encrypt_nopadding};
-    use crate::Error;
+
     use bitcoin_hashes::hex::ToHex;
 
     #[test]

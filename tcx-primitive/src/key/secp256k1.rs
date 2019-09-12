@@ -5,9 +5,9 @@ use super::{
 use bitcoin::network::constants::Network;
 use bitcoin::util::bip32::{Error as Bip32Error, ExtendedPrivKey, ExtendedPubKey};
 use secp256k1::recovery::RecoverableSignature;
-use secp256k1::{Message, Secp256k1, SecretKey, Signature};
+use secp256k1::{Message, Signature};
 use std::convert::TryInto;
-use std::fmt;
+
 use std::str::FromStr;
 
 use crate::key::derive::*;
@@ -138,7 +138,7 @@ impl FromStr for Pair {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match ExtendedPrivKey::from_str(s) {
             Ok(r) => Ok(Pair(PrivateType::ExtendedPrivKey(r))),
-            Err(e) => Err(KeyError::InvalidBase58),
+            Err(_e) => Err(KeyError::InvalidBase58),
         }
     }
 }
@@ -202,7 +202,7 @@ impl std::fmt::Debug for Public {
 }
 
 impl TraitPublic for Public {
-    fn from_slice(data: &[u8]) -> Result<Self, Self::Error> {
+    fn from_slice(_data: &[u8]) -> Result<Self, Self::Error> {
         //TODO from
         unimplemented!()
     }
@@ -219,7 +219,7 @@ impl FromStr for Public {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match ExtendedPubKey::from_str(s) {
             Ok(r) => Ok(Public(PublicType::ExtendedPubKey(r))),
-            Err(e) => Err(KeyError::InvalidBase58),
+            Err(_e) => Err(KeyError::InvalidBase58),
         }
     }
 }

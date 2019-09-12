@@ -8,7 +8,7 @@ use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::key::{DerivePath, Pair};
 
 use crate::bips;
-use crate::bips::DerivationInfo;
+
 use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
 use crate::Error;
 use crate::Result;
@@ -290,7 +290,6 @@ mod tests {
     use crate::curve::{PrivateKey, PublicKey};
     use bitcoin_hashes::hex::ToHex;
     use serde_json::Map;
-    use std::collections::HashMap;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
@@ -375,11 +374,11 @@ mod tests {
 
     struct MockAddress {}
     impl Address for MockAddress {
-        fn is_valid(address: &str) -> bool {
+        fn is_valid(_address: &str) -> bool {
             unimplemented!()
         }
 
-        fn from_public_key(public_key: &impl PublicKey, coin: Option<&str>) -> Result<String> {
+        fn from_public_key(_public_key: &impl PublicKey, _coin: Option<&str>) -> Result<String> {
             Ok("mock_address".to_string())
         }
     }

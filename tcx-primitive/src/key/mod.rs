@@ -1,9 +1,6 @@
 mod derive;
 pub mod secp256k1;
 
-use crate::Error;
-
-use ::secp256k1::{recovery::RecoverableSignature, Signature};
 use core::result::Result;
 use std::str::FromStr;
 

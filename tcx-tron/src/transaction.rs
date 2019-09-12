@@ -3,17 +3,16 @@ use tcx_chain::{
     Transaction as TraitTransaction, TransactionSigner as TraitTransactionSigner,
 };
 
-use crate::address::Address;
 use bitcoin_hashes::sha256::Hash;
 use bitcoin_hashes::Hash as TraitHash;
-use failure::Error;
+
 use serde_json::Value;
 use std::convert::{TryFrom, TryInto};
 use tcx_primitive::key::secp256k1::Pair;
 use tcx_primitive::key::{KeyError, Signer};
 
 use failure::format_err;
-use secp256k1::{recovery::RecoverableSignature, Signature};
+use secp256k1::recovery::RecoverableSignature;
 use serde_json::json;
 
 pub struct Transaction {
@@ -74,7 +73,7 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
 
                 Ok(SignedTransaction { raw: raw.clone() })
             }
-            Err(e) => Err(format_err!("{}", "can not format error")),
+            Err(_e) => Err(format_err!("{}", "can not format error")),
         }
     }
 }
@@ -109,6 +108,7 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::address::Address;
     use serde_json::Value;
     use std::convert::TryFrom;
     use tcx_chain::keystore::EmptyExtra;

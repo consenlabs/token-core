@@ -83,7 +83,7 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
 }
 
 impl Address for BtcForkAddress {
-    fn is_valid(address: &str) -> bool {
+    fn is_valid(_address: &str) -> bool {
         unimplemented!()
     }
 
@@ -136,8 +136,8 @@ impl BtcForkAddress {
             Payload::PubkeyHash(_) => BtcForkAddress::p2pkh(pub_key, &target.network),
             Payload::ScriptHash(_) => BtcForkAddress::p2shwpkh(pub_key, &target.network),
             Payload::WitnessProgram {
-                version: ver,
-                program: ref prog,
+                version: _ver,
+                program: ref _prog,
             } => BtcForkAddress::p2wpkh(pub_key, &target.network),
         }
     }
@@ -326,10 +326,9 @@ impl ScriptPubKeyComponent for BtcForkAddress {
 #[cfg(test)]
 mod tests {
     use crate::address::{network_from_coin, BtcForkAddress};
-    use bitcoin::util::misc::hex_bytes;
+
     use std::str::FromStr;
-    use tcx_chain::keystore::Address;
-    use tcx_chain::PublicKey;
+
     use tcx_chain::Secp256k1PublicKey;
 
     #[test]

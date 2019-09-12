@@ -109,7 +109,7 @@ impl From<ExtendedPrivKey> for DerivationInfo {
 #[cfg(test)]
 mod tests {
     use crate::bips::{generate_mnemonic, get_account_path, relative_path_to_child_nums};
-    use crate::{DerivationInfo, Error};
+    use crate::DerivationInfo;
     use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey};
     use std::str::FromStr;
 

@@ -39,7 +39,6 @@ pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
 //}
 
 pub use signer::{SignedTransaction, Transaction, TransactionSigner, TxSignResult};
-use std::str::FromStr;
 
 use tcx_primitive::key::Public;
 
@@ -79,7 +78,7 @@ fn throw_err() -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{throw_err, Error};
+    use crate::throw_err;
 
     #[test]
     fn test_macro() {

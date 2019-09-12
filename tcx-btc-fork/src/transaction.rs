@@ -289,7 +289,11 @@ impl SegWitTransactionSignComponent {
             let hash = shc.sighash_all(tx_in, &script, unspent.amount as u64);
 
             let prv_key = &prv_keys[i];
-            witnesses.push((Self::sign_hash_and_pub_key(prv_key, &hash.into_inner(), 0x01)?));
+            witnesses.push(Self::sign_hash_and_pub_key(
+                prv_key,
+                &hash.into_inner(),
+                0x01,
+            )?);
         }
         Ok(witnesses)
     }
@@ -301,7 +305,7 @@ impl BitcoinTransactionSignComponent for SegWitTransactionSignComponent {
         unspents: &[Utxo],
         prv_keys: &[impl PrivateKey],
     ) -> Result<Transaction> {
-        let sig_hash_components = SighashComponentsWithForkId::new(&tx);
+        let _sig_hash_components = SighashComponentsWithForkId::new(&tx);
         let witnesses: Vec<(Vec<u8>, Vec<u8>)> = Self::witness_sign(tx, unspents, prv_keys)?;
         let input_with_sigs = tx
             .input
@@ -414,12 +418,11 @@ pub type BtcForkSegWitTransaction =
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ExtendedPubKeyExtra;
+
     use bitcoin::network::constants::Network;
     use secp256k1::SecretKey;
-    use tcx_chain::curve::CurveType;
-    use tcx_chain::keystore::CoinInfo;
-    use tcx_chain::{HdKeystore, Metadata, Secp256k1PrivateKey};
+
+    use tcx_chain::Secp256k1PrivateKey;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =

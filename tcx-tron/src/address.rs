@@ -1,8 +1,7 @@
 use bitcoin::util::base58;
-use std::str::FromStr;
+
 use tcx_chain::keystore::Address as TraitAddress;
 use tcx_chain::PublicKey;
-use tcx_primitive::key::secp256k1::Public;
 
 pub struct Address(pub String);
 
@@ -22,13 +21,13 @@ pub enum Error {
 //    }
 //}
 impl TraitAddress for Address {
-    fn is_valid(address: &str) -> bool {
+    fn is_valid(_address: &str) -> bool {
         unimplemented!()
     }
 
     fn from_public_key(
         public_key: &impl PublicKey,
-        coin: Option<&str>,
+        _coin: Option<&str>,
     ) -> Result<String, failure::Error> {
         let bytes = public_key.to_uncompressed();
         let hash = keccak_hash::keccak(&bytes[1..]);

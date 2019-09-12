@@ -1,7 +1,7 @@
 //use crate::keystore::V3MnemonicKeystore;
 
 //use crate::keystore::Keystore;
-use crate::{HdKeystore, Result};
+use crate::Result;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

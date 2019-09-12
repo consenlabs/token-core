@@ -130,14 +130,13 @@ impl Secp256k1Curve {
 
 #[cfg(test)]
 mod tests {
-    use crate::{throw_err, Error, Secp256k1Curve, Secp256k1PrivateKey};
     use crate::{PrivateKey, PublicKey};
+    use crate::{Secp256k1Curve, Secp256k1PrivateKey};
     use bip39::{Language, Mnemonic, Seed};
     use bitcoin::util::misc::hex_bytes;
     use bitcoin::PublicKey as Secp256k1PubKey;
     use bitcoin_hashes::hex::ToHex;
     use bitcoin_hashes::Hash;
-    use secp256k1::SecretKey;
 
     #[test]
     fn test_secp256k1_pub_key() {
@@ -186,7 +185,7 @@ mod tests {
         let prv_key =
             Secp256k1PrivateKey::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
                 .unwrap();
-        let expected_pub_key_bytes = hex_bytes("00").unwrap();
+        let _expected_pub_key_bytes = hex_bytes("00").unwrap();
         let pub_key = PrivateKey::public_key(&prv_key);
         assert_eq!(
             "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
