@@ -86,7 +86,6 @@ pub struct BitcoinForkTransaction<S: ScriptPubKeyComponent, T: BitcoinTransactio
     pub fee: i64,
     pub change_idx: u32,
     pub coin: String,
-    pub is_seg_wit: bool,
     #[serde(skip_serializing)]
     pub _marker_s: PhantomData<S>,
     #[serde(skip_serializing)]
@@ -143,35 +142,14 @@ impl<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent> BitcoinForkTr
 
     fn receive_script_pubkey(&self) -> Result<Script> {
         S::address_script_pub_key(&self.to)
-        //        let addr = BtcForkAddress::from_str(&self.to)?;
-        //        Ok(addr.script_pubkey())
     }
 
-    //    fn sign_hash_and_pub_key(
-    //        &self,
-    //        pri_key: &impl PrivateKey,
-    //        hash: &[u8],
-    //    ) -> Result<(Vec<u8>, Vec<u8>)> {
-    //        let signature_bytes = pri_key.sign(&hash)?;
-    //        let fork_id = self.fork_id()?;
-    //        let raw_bytes: Vec<u8> = vec![0x01 | fork_id];
-    //        let sig_bytes: Vec<u8> = [signature_bytes, raw_bytes].concat();
-    //        let pub_key_bytes = pri_key.public_key().to_bytes();
-    //        Ok((sig_bytes, pub_key_bytes))
-    //    }
-
     fn change_address(&self, xpub: &str) -> Result<Script> {
-        //        let from = BtcForkAddress::convert_to_legacy_if_need(
-        //            &self.unspents.first().expect("first_utxo").address,
-        //        )?;
         let from = &self.unspents.first().expect("first_utxo").address;
         let change_path = format!("0/{}", &self.change_idx);
         let pub_key = Secp256k1Curve::derive_pub_key_at_path(&xpub, &change_path)?;
         S::address_like(&from, &pub_key)
-        //        BtcForkAddress::address_like(&from, &pub_key)
     }
-
-    //    fn change_script
 
     fn tx_outs(&self, change_script_pubkey: Script) -> Result<Vec<TxOut>> {
         let mut total_amount = 0;
@@ -222,84 +200,13 @@ impl<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent> BitcoinForkTr
         tx_inputs
     }
 
-    fn fork_id(&self) -> Result<u8> {
-        let network = network_from_coin(&self.coin).ok_or(Error::UnsupportedChain)?;
-        Ok(network.fork_id)
-    }
-
-    fn is_bch(&self) -> bool {
-        self.coin.to_uppercase().starts_with("BCH")
-    }
-
-    //    fn script_sigs_sign(
-    //        &self,
-    //        tx: &Transaction,
-    //        prv_keys: &[impl PrivateKey],
-    //    ) -> Result<Vec<Script>> {
-    //        let mut script_sigs: Vec<Script> = vec![];
-    //        for i in 0..tx.input.len() {
-    //            let tx_in = &tx.input[i];
-    //            let unspent = &self.unspents[i];
-    //            let pub_key = prv_keys[i].public_key();
-    //            let fork_id = self.fork_id()?;
-    //
-    //            let network = network_from_coin(&self.coin).ok_or(Error::UnsupportedChain)?;
-    //            let from_addr = BtcForkAddress::p2pkh(&pub_key, &network)?;
-    //            let script = from_addr.script_pubkey();
-    //            let hash: sha256d::Hash;
-    //            // todo: BCH and BTC are very different, Split it.
-    //            if self.is_bch() {
-    //                let shc = SighashComponentsWithForkId::new(&tx);
-    //                hash =
-    //                    shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | fork_id as u32);
-    //            } else {
-    //                hash = tx.signature_hash(i, &script, 0x01 | fork_id as u32);
-    //            }
-    //
-    //            let prv_key = &prv_keys[i];
-    //            let script_sig_and_pub_key = self.sign_hash_and_pub_key(prv_key, &hash.into_inner())?;
-    //            let script = Builder::new()
-    //                .push_slice(&script_sig_and_pub_key.0)
-    //                .push_slice(&script_sig_and_pub_key.1)
-    //                .into_script();
-    //            script_sigs.push(script);
-    //        }
-    //        Ok(script_sigs)
-    //    }
-
-    //    fn witness_sign(
-    //        &self,
-    //        tx: &Transaction,
-    //        shc: &SighashComponentsWithForkId,
-    //        prv_keys: &[impl PrivateKey],
-    //    ) -> Result<Vec<(Vec<u8>, Vec<u8>)>> {
-    //        let mut witnesses: Vec<(Vec<u8>, Vec<u8>)> = vec![];
-    //        for i in 0..tx.input.len() {
-    //            let tx_in = &tx.input[i];
-    //            let unspent = &self.unspents[i];
-    //            let pub_key = prv_keys[i].public_key();
-    //            let fork_id = self.fork_id()?;
-    //            let pub_key_hash = hash160::Hash::hash(&pub_key.to_bytes()).into_inner();
-    //            let script_hex = format!("76a914{}88ac", hex::encode(pub_key_hash));
-    //            let script = Script::from(hex::decode(script_hex)?);
-    //            let hash =
-    //                shc.sighash_all(tx_in, &script, unspent.amount as u64, 0x01 | fork_id as u32);
-    //
-    //            let prv_key = &prv_keys[i];
-    //            witnesses.push((self.sign_hash_and_pub_key(prv_key, &hash.into_inner())?));
-    //        }
-    //        Ok(witnesses)
-    //    }
-
     fn sign_transaction(
         &self,
         prv_keys: &[impl PrivateKey],
         change_addr_pubkey: Script,
     ) -> Result<TxSignResult> {
-        //        let change_script_pubkey = change_addr.script_pubkey();
         let tx_outs = self.tx_outs(change_addr_pubkey)?;
         let tx_inputs = self.tx_inputs();
-        let version = if self.is_seg_wit { 2 } else { 1 };
         let tx = Transaction {
             version: T::tx_version(),
             lock_time: 0,
@@ -307,47 +214,6 @@ impl<S: ScriptPubKeyComponent, T: BitcoinTransactionSignComponent> BitcoinForkTr
             output: tx_outs,
         };
 
-        //        let input_with_sigs: Vec<TxIn>;
-        //        if self.is_seg_wit {
-        //            let sig_hash_components = SighashComponentsWithForkId::new(&tx);
-        //            let witnesses: Vec<(Vec<u8>, Vec<u8>)> =
-        //                self.witness_sign(&tx, &sig_hash_components, &prv_keys)?;
-        //            input_with_sigs = tx
-        //                .input
-        //                .iter()
-        //                .enumerate()
-        //                .map(|(i, txin)| {
-        //                    let pub_key = prv_keys[i].public_key();
-        //                    let hash = hash160::Hash::hash(&pub_key.to_bytes()).into_inner();
-        //                    let hex = format!("160014{}", hex::encode(&hash));
-        //
-        //                    TxIn {
-        //                        script_sig: Script::from(hex::decode(hex).expect("script_sig")),
-        //                        witness: vec![witnesses[i].0.clone(), witnesses[i].1.clone()],
-        //                        ..*txin
-        //                    }
-        //                })
-        //                .collect();
-        //        } else {
-        //            let sign_scripts = self.script_sigs_sign(&tx, &prv_keys)?;
-        //            input_with_sigs = tx
-        //                .input
-        //                .iter()
-        //                .enumerate()
-        //                .map(|(i, txin)| TxIn {
-        //                    script_sig: sign_scripts[i].clone(),
-        //                    witness: vec![],
-        //                    ..*txin
-        //                })
-        //                .collect();
-        //        }
-        //        let signed_tx = Transaction {
-        //            version: tx.version,
-        //            lock_time: tx.lock_time,
-        //            input: input_with_sigs,
-        //            output: tx.output.clone(),
-        //        };
-        //        let sign_com = T::new(&tx, &self.unspents);
         let signed_tx = T::sign_inputs(&tx, &self.unspents, &prv_keys)?;
         let tx_bytes = serialize(&signed_tx);
 
@@ -380,7 +246,7 @@ pub trait BitcoinTransactionSignComponent {
     }
 }
 
-struct SegWitTransactionSignComponent {}
+pub struct SegWitTransactionSignComponent {}
 
 impl SegWitTransactionSignComponent {
     fn witness_sign(
@@ -443,15 +309,15 @@ impl BitcoinTransactionSignComponent for SegWitTransactionSignComponent {
     }
 }
 
-struct LegacyTransactionSignComponent<H: SignHasher> {
+pub struct LegacyTransactionSignComponent<H: SignHasher> {
     _maker: PhantomData<H>,
 }
 
-trait SignHasher {
+pub trait SignHasher {
     fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)>;
 }
 
-struct LegacySignHasher {}
+pub struct LegacySignHasher {}
 
 impl SignHasher for LegacySignHasher {
     fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
@@ -462,7 +328,7 @@ impl SignHasher for LegacySignHasher {
     }
 }
 
-struct BchSignHasher {}
+pub struct BchSignHasher {}
 
 impl SignHasher for BchSignHasher {
     fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
@@ -576,7 +442,6 @@ mod tests {
                 fee: 6000,
                 change_idx: 1,
                 coin: "BCH".to_string(),
-                is_seg_wit: false,
                 _marker_s: PhantomData,
                 _marker_t: PhantomData,
             };
@@ -620,7 +485,6 @@ mod tests {
             fee: 100000,
             change_idx: 1,
             coin: "LTC-TESTNET".to_string(),
-            is_seg_wit: false,
             _marker_s: PhantomData,
             _marker_t: PhantomData,
         };
@@ -655,7 +519,6 @@ mod tests {
             fee: 50000,
             change_idx: 1,
             coin: "LTC".to_string(),
-            is_seg_wit: true,
             _marker_s: PhantomData,
             _marker_t: PhantomData,
         };

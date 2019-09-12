@@ -20,10 +20,13 @@ use std::path::Path;
 use std::str::FromStr;
 use std::sync::RwLock;
 use tcx_btc_fork::address::BtcForkAddress;
-use tcx_btc_fork::{BitcoinForkTransaction, ExtendedPubKeyExtra, Utxo};
+use tcx_btc_fork::{
+    BchTransaction, BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkTransaction,
+    ExtendedPubKeyExtra, Utxo,
+};
 use tcx_chain::keystore::{EmptyExtra, Extra};
 use tcx_chain::signer::TransactionSigner;
-use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source};
+use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source, TxSignResult};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::{TrxAddress, TrxSignedTransaction, TrxTransaction};
 
@@ -343,18 +346,49 @@ fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str)
         .parse::<i64>()
         .unwrap();
     let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
-    let tran = BitcoinForkTransaction::<BtcForkAddress> {
-        to: to.to_owned(),
-        amount,
-        unspents,
-        memo: "".to_string(),
-        fee,
-        change_idx: change_idx as u32,
-        coin: chain_type,
-        is_seg_wit,
-        _generic_s: PhantomData,
-    };
-    let ret = keystore.sign_transaction(&tran, Some(&password))?;
+    let ret: TxSignResult;
+    if chain_type.starts_with("BCH") {
+        println!("sign bch");
+        let tran = BchTransaction {
+            to: to.to_owned(),
+            amount,
+            unspents,
+            memo: "".to_string(),
+            fee,
+            change_idx: change_idx as u32,
+            coin: chain_type,
+            _marker_s: PhantomData,
+            _marker_t: PhantomData,
+        };
+        ret = keystore.sign_transaction(&tran, Some(&password))?;
+    } else if is_seg_wit {
+        let tran = BtcForkSegWitTransaction {
+            to: to.to_owned(),
+            amount,
+            unspents,
+            memo: "".to_string(),
+            fee,
+            change_idx: change_idx as u32,
+            coin: chain_type,
+            _marker_s: PhantomData,
+            _marker_t: PhantomData,
+        };
+        ret = keystore.sign_transaction(&tran, Some(&password))?;
+    } else {
+        let tran = BtcForkTransaction {
+            to: to.to_owned(),
+            amount,
+            unspents,
+            memo: "".to_string(),
+            fee,
+            change_idx: change_idx as u32,
+            coin: chain_type,
+            _marker_s: PhantomData,
+            _marker_t: PhantomData,
+        };
+        ret = keystore.sign_transaction(&tran, Some(&password))?;
+    }
+
     Ok(serde_json::to_string(&ret)?)
 }
 
@@ -712,7 +746,7 @@ mod tests {
                         "amount": "100000",
                         "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
                         "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
-                        "derivedPath": "0/1"
+                        "derivedPath": "0/0"
                     }
                 ]
             }
@@ -721,7 +755,7 @@ mod tests {
             unsafe { clear_err() }
             let ret = unsafe { _to_str(sign_transaction(_to_c_char(param))) };
             let ret_v = Value::from_str(ret).unwrap();
-            let expected = r#"{"signature":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006a473044022029e0587ff0bf4a55d8fccc81ede4c394e32348a18e45acee4fb5c5bc6ebc1af002202b2a8b1117d5c19b9296c4be9fe4a9e9b816361cea8ef7fafdde70cd2a2014a3412102cc987e200a13c771d9c840cd08db93debf4d4443cec3e084a4cde2aad4cfa77dffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","txHash":"827e1e7c9d45ac891c437a0600d446cc63075fb3acde6e55e0e8c524930568bc","wtxId":""}"#;
+            let expected = r#"{"signature":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","txHash":"4d43cc66e9763a4e263fdb592591b9f19a6915ac821c92896d13f95beaca3b28","wtxId":""}"#;
             let expected_v = Value::from_str(expected).unwrap();
             assert_eq!(ret_v, expected_v);
         })
