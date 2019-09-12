@@ -35,11 +35,6 @@ mod tests {
 
     use tcx_chain::Secp256k1PrivateKey;
 
-    static PASSWORD: &'static str = "Insecure Pa55w0rd";
-    static MNEMONIC: &'static str =
-        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
-
-    //
     #[test]
     pub fn bch_signer() {
         let unspents = vec![Utxo {

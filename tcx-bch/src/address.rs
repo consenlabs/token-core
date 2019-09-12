@@ -101,7 +101,6 @@ mod tests {
     use bitcoin::util::misc::hex_bytes;
 
     use tcx_chain::keystore::Address;
-    use tcx_chain::PublicKey;
     use tcx_chain::Secp256k1PublicKey;
 
     #[test]

@@ -180,7 +180,6 @@ impl HardWalletKeystore {
 mod tests {
     use super::*;
 
-    static BCH_PATH: &'static str = "m/44'/145'/0'";
     static BTC_PATH: &'static str = "m/49'/0'/0'";
 
     #[test]

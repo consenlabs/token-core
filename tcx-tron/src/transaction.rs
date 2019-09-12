@@ -117,7 +117,6 @@ mod tests {
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
-    static BCH_MAIN_PATH: &'static str = "m/44'/145'/0'";
 
     #[test]
     fn sign_transaction() -> core::result::Result<(), failure::Error> {

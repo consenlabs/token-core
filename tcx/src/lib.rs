@@ -466,10 +466,8 @@ mod tests {
 
     use tcx_chain::HdKeystore;
 
-    static PASSWORD: &'static str = "Insecure Password";
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
-    static ETHEREUM_PATH: &'static str = "m/44'/60'/0'/0/0";
     static WALLET_ID: &'static str = "9c6cbc21-1c43-4c8b-bb7a-5e538f908819";
 
     fn _to_c_char(str: &str) -> *const c_char {
@@ -504,7 +502,7 @@ mod tests {
             let fp = entry.path();
             let file_name = fp.file_name().unwrap();
             if file_name != ".gitignore" && file_name != "default_keystore.json" {
-                remove_file(fp);
+                let _ = remove_file(fp);
             }
         }
     }
@@ -558,7 +556,7 @@ mod tests {
             "source": "MNEMONIC"
         }
         "#;
-            let json = unsafe { _to_str(create_wallet(_to_c_char(params))) };
+            let json = _to_str(create_wallet(_to_c_char(params)));
             let v = Value::from_str(json).unwrap();
             let _expected = Value::from_str(params).unwrap();
             let id = v["id"].as_str().unwrap();
@@ -741,7 +739,7 @@ mod tests {
             "#;
 
             unsafe { clear_err() }
-            let ret = unsafe { _to_str(sign_transaction(_to_c_char(param))) };
+            let ret = _to_str(sign_transaction(_to_c_char(param)));
             let ret_v = Value::from_str(ret).unwrap();
             let expected = r#"{"signature":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","txHash":"4d43cc66e9763a4e263fdb592591b9f19a6915ac821c92896d13f95beaca3b28","wtxId":""}"#;
             let expected_v = Value::from_str(expected).unwrap();

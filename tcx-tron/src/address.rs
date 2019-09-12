@@ -40,7 +40,6 @@ impl TraitAddress for Address {
 mod tests {
     use super::Address;
     use tcx_chain::keystore::Address as TraitAddress;
-    use tcx_chain::PublicKey;
     use tcx_chain::Secp256k1PublicKey;
 
     #[test]
