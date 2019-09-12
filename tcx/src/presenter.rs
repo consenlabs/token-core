@@ -1,6 +1,6 @@
 use serde_json::json;
 use serde_json::{Map, Value};
-use tcx_chain::{Account, HdKeystore};
+use tcx_chain::HdKeystore;
 
 use crate::Result;
 

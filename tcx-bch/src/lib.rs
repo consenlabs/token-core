@@ -7,8 +7,6 @@ pub type Result<T> = result::Result<T, failure::Error>;
 
 #[macro_use]
 extern crate failure;
-#[macro_use]
-extern crate serde_json;
 
 pub use address::BchAddress;
 use tcx_btc_fork::ExtendedPubKeyExtra;
@@ -32,8 +30,8 @@ pub enum Error {
 
 #[cfg(test)]
 mod tests {
-    use crate::{BchAddress, BchExtra, ExtendedPubKeyExtra};
-    use bitcoin::util::misc::hex_bytes;
+    use crate::{BchAddress, BchExtra};
+
     use serde_json::Value;
     use std::str::FromStr;
     use tcx_chain::curve::CurveType;

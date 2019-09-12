@@ -1,8 +1,6 @@
-use core::borrow::BorrowMut;
 use core::result;
 use failure::Backtrace;
 use failure::Error;
-use failure::Fail;
 use std::cell::RefCell;
 use std::mem;
 use std::panic;
@@ -15,6 +13,7 @@ thread_local! {
     pub static LAST_BACKTRACE: RefCell<Option<(Option<String>, Backtrace)>> = RefCell::new(None);
 }
 
+#[allow(irrefutable_let_patterns)]
 fn notify_err(err: Error) {
     if let _backtrace = err.backtrace() {
         LAST_BACKTRACE.with(|e| {
@@ -76,6 +75,7 @@ pub unsafe fn landingpad<F: FnOnce() -> Result<T> + panic::UnwindSafe, T>(f: F) 
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! ffi_fn (
     // a function that catches patnics and returns a result (err goes to tls)
     (

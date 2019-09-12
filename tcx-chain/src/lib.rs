@@ -66,23 +66,3 @@ pub enum Error {
     #[fail(display = "can_not_derive_pair_from_seed")]
     CanNotDerivePairFromSeed,
 }
-
-fn fail(err: impl failure::Fail) -> failure::Error {
-    failure::Error::from(err)
-}
-
-fn throw_err() -> Result<String> {
-    tcx_ensure!(1 != 1, Error::InvalidMnemonic);
-    Ok("aaa".to_string())
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::throw_err;
-
-    #[test]
-    fn test_macro() {
-        let err = throw_err();
-        assert_eq!(format!("{}", err.err().unwrap()), "invalid_mnemonic")
-    }
-}

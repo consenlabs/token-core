@@ -6,7 +6,6 @@ use bitcoin_hashes::sha256d::Hash as Hash256;
 use bitcoin_hashes::{sha256d, Hash};
 use tcx_chain::Transaction as TraitTransaction;
 
-use crate::address::PubKeyScript;
 use crate::bip143_with_forkid::SighashComponentsWithForkId;
 use crate::Result;
 use bitcoin::blockdata::script::Builder;

@@ -8,10 +8,6 @@ use tcx_btc_fork::transaction::{LegacyTransactionSignComponent, SignHasher};
 use tcx_btc_fork::PubKeyScript;
 use tcx_btc_fork::{BitcoinForkTransaction, Utxo};
 
-//use hex
-
-struct BchTransactionSignComponent {}
-
 pub struct BchSignHasher {}
 
 impl SignHasher for BchSignHasher {
@@ -36,9 +32,8 @@ mod tests {
     use secp256k1::SecretKey;
     use std::marker::PhantomData;
     use std::str::FromStr;
-    use tcx_chain::curve::CurveType;
-    use tcx_chain::keystore::CoinInfo;
-    use tcx_chain::{HdKeystore, Metadata, Secp256k1PrivateKey};
+
+    use tcx_chain::Secp256k1PrivateKey;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =

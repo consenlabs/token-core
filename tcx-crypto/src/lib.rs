@@ -9,8 +9,6 @@ use std::sync::RwLock;
 #[macro_use]
 extern crate failure;
 #[macro_use]
-extern crate hex_literal;
-#[macro_use]
 extern crate lazy_static;
 
 pub type Result<T> = result::Result<T, failure::Error>;

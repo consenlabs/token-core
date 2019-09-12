@@ -1,4 +1,3 @@
-use std::convert::AsMut;
 use std::str::FromStr;
 
 use bip39::{Language, Mnemonic, MnemonicType};
@@ -7,16 +6,6 @@ use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey};
 use byteorder::{BigEndian, ByteOrder};
 
 use crate::Result;
-
-fn clone_into_array<A, T>(slice: &[T]) -> A
-where
-    A: Sized + Default + AsMut<[T]>,
-    T: Clone,
-{
-    let mut a = Default::default();
-    <A as AsMut<[T]>>::as_mut(&mut a).clone_from_slice(slice);
-    a
-}
 
 pub fn generate_mnemonic() -> String {
     Mnemonic::new(MnemonicType::Words12, Language::English).to_string()

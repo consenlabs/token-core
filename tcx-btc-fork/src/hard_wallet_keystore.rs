@@ -127,6 +127,7 @@ impl HardWalletKeystore {
             .collect()
     }
 
+    #[allow(unused_must_use)]
     pub fn apdu_to_xpub(apdus: &[&str], _path: &str, _network: &str) -> Result<String> {
         apdus.iter().for_each(|apdu| {
             valid_response(apdu);

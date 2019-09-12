@@ -113,8 +113,6 @@ mod tests {
     use std::convert::TryFrom;
     use tcx_chain::keystore::EmptyExtra;
     use tcx_chain::{CoinInfo, CurveType, Metadata, TransactionSigner};
-    use tcx_primitive::key::secp256k1::Pair;
-    use tcx_primitive::key::Pair as TraitPair;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =

@@ -21,8 +21,6 @@ extern crate num_traits;
 
 #[macro_use]
 extern crate tcx_chain;
-#[macro_use]
-extern crate serde;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
@@ -52,9 +50,6 @@ pub enum Error {
     #[fail(display = "unsupported_chain")]
     UnsupportedChain,
 }
-
-const SYMBOL: &'static str = "BCH";
-const PATH: &'static str = "m/44'/145'/0'/0/0";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]

@@ -9,10 +9,9 @@ use crate::error_handle::LAST_ERROR;
 use std::fs::File;
 use std::io::{Read, Write};
 
-use crate::error_handle::set_panic_hook;
 use core::borrow::Borrow;
 use presenter::Presenter;
-use serde_json::json;
+
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::convert::TryInto;
@@ -22,16 +21,14 @@ use std::sync::RwLock;
 use tcx_bch::{BchAddress, BchExtra, BchTransaction};
 use tcx_btc_fork::address::BtcForkAddress;
 use tcx_btc_fork::{
-    BitcoinForkTransaction, BtcForkExtra, BtcForkSegWitTransaction, BtcForkTransaction,
-    ExtendedPubKeyExtra, ExternalAddress, Utxo,
+    BtcForkExtra, BtcForkSegWitTransaction, BtcForkTransaction, ExternalAddress, Utxo,
 };
-use tcx_chain::keystore::{EmptyExtra, Extra};
+use tcx_chain::keystore::EmptyExtra;
 use tcx_chain::signer::TransactionSigner;
-use tcx_chain::{Account, CoinInfo, CurveType, HdKeystore, Metadata, Source, TxSignResult};
+use tcx_chain::{CoinInfo, CurveType, HdKeystore, Metadata, TxSignResult};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::{TrxAddress, TrxSignedTransaction, TrxTransaction};
 
-use serde::export::PhantomData;
 use std::convert::TryFrom;
 
 // #[link(name = "TrezorCrypto")]
@@ -126,11 +123,11 @@ fn parse_arguments(json_str: *const c_char) -> Value {
     serde_json::from_str(json_str).expect("parse_arguments serde_json")
 }
 
-pub unsafe extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
+pub extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
     let v: Value = serde_json::from_str(json_str).unwrap();
-    let json = landingpad(|| _create_wallet(&v));
+    let json = unsafe { landingpad(|| _create_wallet(&v)) };
     CString::new(json).unwrap().into_raw()
 }
 
@@ -138,8 +135,8 @@ fn _create_wallet(v: &Value) -> Result<String> {
     let meta: Metadata = serde_json::from_value(v.clone())?;
     let password = v["password"].as_str().unwrap();
     let keystore = HdKeystore::new(password, meta);
-    let json = keystore.json();
-    _flush_keystore(&keystore);
+    let _json = keystore.json();
+    let _ = _flush_keystore(&keystore);
     let ret = keystore.present();
     cache_keystore(keystore);
     ret
@@ -179,7 +176,7 @@ fn _init_token_core_x(v: &Value) -> Result<()> {
 
         let mut f = File::open(fp).expect("open file");
         let mut contents = String::new();
-        f.read_to_string(&mut contents);
+        let _ = f.read_to_string(&mut contents);
         let v: Value = serde_json::from_str(&contents).expect("read json from content");
 
         let version = v["version"].as_i64().expect("version");
@@ -242,7 +239,7 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let chain_type = v["chainType"].as_str().unwrap();
     let meta: Metadata = serde_json::from_value(v.clone())?;
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
-    let mut pw = Map::new();
+    let _pw = Map::new();
 
     let mut coin_info = _coin_info_from_symbol(chain_type)?;
     coin_info.derivation_path = path.to_string();
@@ -278,7 +275,7 @@ fn _flush_keystore(ks: &HdKeystore) -> Result<()> {
     let ks_path = format!("{}/{}.json", file_dir, ks.id);
     let path = Path::new(&ks_path);
     let mut file = File::create(path)?;
-    file.write_all(&json.as_bytes());
+    let _ = file.write_all(&json.as_bytes());
     Ok(())
 }
 
@@ -303,11 +300,11 @@ fn _export_mnemonic(v: &Value) -> Result<String> {
 
 //
 #[no_mangle]
-pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
+pub extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
 
-    let json = landingpad(|| _sign_transaction(json_str));
+    let json = unsafe { landingpad(|| _sign_transaction(json_str)) };
     CString::new(json).unwrap().into_raw()
 }
 
@@ -399,7 +396,7 @@ pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *cons
 fn _calc_external_address(v: &Value) -> Result<String> {
     let w_id = v["id"].as_str().unwrap();
     let external_id = v["externalIdx"].as_i64().expect("external_id");
-    let network = v["network"].as_str().unwrap();
+    let _network = v["network"].as_str().unwrap();
     let chain_type = v["chainType"].as_str().unwrap();
 
     let mut map = KEYSTORE_MAP.write().unwrap();
@@ -453,14 +450,10 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 
 #[cfg(test)]
 mod tests {
-    use crate::error_handle::LAST_ERROR;
-    use crate::{
-        _find_wallet_by_mnemonic, _import_wallet_from_mnemonic, clear_err, export_mnemonic,
-        get_last_err_message, sign_transaction,
-    };
+
+    use crate::{clear_err, export_mnemonic, get_last_err_message, sign_transaction};
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
-        XPUB_COMMON_IV, XPUB_COMMON_KEY_128,
     };
     use crate::{KEYSTORE_MAP, WALLET_FILE_DIR};
     use serde_json::Value;
@@ -470,7 +463,7 @@ mod tests {
     use std::panic;
     use std::path::Path;
     use std::str::FromStr;
-    use std::sync::RwLock;
+
     use tcx_chain::HdKeystore;
 
     static PASSWORD: &'static str = "Insecure Password";
@@ -567,7 +560,7 @@ mod tests {
         "#;
             let json = unsafe { _to_str(create_wallet(_to_c_char(params))) };
             let v = Value::from_str(json).unwrap();
-            let expected = Value::from_str(params).unwrap();
+            let _expected = Value::from_str(params).unwrap();
             let id = v["id"].as_str().unwrap();
             assert_eq!(v["source"].as_str().unwrap(), "MNEMONIC");
             let map = KEYSTORE_MAP.read().unwrap();
@@ -705,7 +698,7 @@ mod tests {
         "#;
             unsafe { clear_err() }
             let exported_mnemonic = unsafe { _to_str(export_mnemonic(_to_c_char(param))) };
-            let err = unsafe { _to_str(get_last_err_message()) };
+            let _err = unsafe { _to_str(get_last_err_message()) };
             assert_eq!(exported_mnemonic, MNEMONIC);
 
             let param = r#"
@@ -715,7 +708,7 @@ mod tests {
         }
         "#;
             unsafe { clear_err() }
-            let exported_mnemonic = unsafe { _to_str(export_mnemonic(_to_c_char(param))) };
+            let _exported_mnemonic = unsafe { _to_str(export_mnemonic(_to_c_char(param))) };
             let err = unsafe { _to_str(get_last_err_message()) };
             assert_eq!(err, "invalid_password");
         })
