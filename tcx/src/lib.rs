@@ -30,6 +30,7 @@ use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::{TrxAddress, TrxSignedTransaction, TrxTransaction};
 
 use std::convert::TryFrom;
+use std::fs;
 
 // #[link(name = "TrezorCrypto")]
 // extern {
@@ -45,6 +46,8 @@ pub mod error_handle;
 
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate serde_json;
 
 lazy_static! {
     static ref KEYSTORE_MAP: RwLock<HashMap<String, HdKeystore>> = RwLock::new(HashMap::new());
@@ -317,6 +320,14 @@ fn _flush_keystore(ks: &HdKeystore) -> Result<()> {
     Ok(())
 }
 
+fn _delete_keystore_file(wid: &str) -> Result<()> {
+    let file_dir = WALLET_FILE_DIR.read().unwrap();
+    let ks_path = format!("{}/{}.json", file_dir, wid);
+    let path = Path::new(&ks_path);
+    let _ = fs::remove_file(path)?;
+    Ok(())
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn export_mnemonic(json_str: *const c_char) -> *const c_char {
     let v: Value = parse_arguments(json_str);
@@ -472,6 +483,30 @@ fn _calc_external_address(v: &Value) -> Result<String> {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn remove_wallet(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = landingpad(|| _remove_wallet(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _remove_wallet(v: &Value) -> Result<String> {
+    let w_id = v["id"].as_str().unwrap();
+    let password = v["password"].as_str().expect("password");
+
+    let mut map = KEYSTORE_MAP.write().unwrap();
+    let keystore: &HdKeystore = match map.get(w_id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    if keystore.verify_password(password) {
+        _delete_keystore_file(w_id)?;
+        map.remove(w_id);
+    }
+    Ok(serde_json::to_string(&json!({ "id": w_id }))?)
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn clear_err() {
     LAST_ERROR.with(|e| {
         *e.borrow_mut() = None;
@@ -501,7 +536,9 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 
 #[cfg(test)]
 mod tests {
-    use crate::{clear_err, export_mnemonic, get_last_err_message, sign_transaction};
+    use crate::{
+        clear_err, export_mnemonic, get_last_err_message, remove_wallet, sign_transaction,
+    };
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
     };
@@ -728,6 +765,26 @@ mod tests {
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+        });
+    }
+
+    #[test]
+    fn remove_wallet_test() {
+        run_test(|| {
+            let param = r#"{"chainType":"LTC","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+
+            let ret_v = Value::from_str(ret).unwrap();
+            let imported_id = ret_v["id"].as_str().unwrap();
+            let param = json!({
+                "id": imported_id,
+                "password": "Insecure Password"
+            });
+            let param = serde_json::to_string(&param).unwrap();
+            let ret = unsafe { _to_str(remove_wallet(_to_c_char(&param))) };
+            let ret_v = Value::from_str(ret).unwrap();
+            //            let param = r#"{"id":
+            assert_eq!(ret_v["id"], imported_id);
         });
     }
 

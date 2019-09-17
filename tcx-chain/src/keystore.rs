@@ -273,6 +273,10 @@ impl HdKeystore {
         self.active_accounts.iter().find(|acc| acc.coin == symbol)
     }
 
+    pub fn verify_password(&self, password: &str) -> bool {
+        self.crypto.verify_password(password)
+    }
+
     pub fn json(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }

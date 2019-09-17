@@ -21,4 +21,6 @@ const char *import_wallet_from_mnemonic(const char *json_str);
 
 void init_token_core_x(const char *json_str);
 
+const char *remove_wallet(const char *json_str);
+
 const char *sign_transaction(const char *json_str);

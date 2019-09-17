@@ -130,6 +130,14 @@ impl Crypto<Pbkdf2Params> {
         self.decrypt_data(password, &encrypted, &iv)
     }
 
+    pub fn verify_password(&self, password: &str) -> bool {
+        let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
+        self.kdfparams
+            .generate_derived_key(password.as_bytes(), &mut derived_key);
+
+        self.verify_derived_key(&derived_key)
+    }
+
     fn encrypt_data(&self, password: &str, origin: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
         let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
         self.kdfparams
