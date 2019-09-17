@@ -83,7 +83,8 @@ pub struct BitcoinForkTransaction<
     pub unspents: Vec<Utxo>,
     pub memo: String,
     pub fee: i64,
-    pub change_idx: u32,
+    pub change_idx: Option<u32>,
+    pub change_address: Option<String>,
     pub coin: String,
     #[serde(skip_serializing)]
     pub _marker_s: PhantomData<S>,
@@ -130,7 +131,8 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         amount: i64,
         unspents: Vec<Utxo>,
         fee: i64,
-        change_idx: u32,
+        change_idx: Option<u32>,
+        change_address: Option<String>,
         coin: String,
     ) -> Self {
         BitcoinForkTransaction::<S, T> {
@@ -140,6 +142,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             memo: "".to_string(),
             fee,
             change_idx,
+            change_address,
             coin,
             _marker_s: PhantomData,
             _marker_t: PhantomData,
@@ -167,10 +170,14 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     }
 
     fn change_address(&self, xpub: &str) -> Result<Script> {
-        let from = &self.unspents.first().expect("first_utxo").address;
-        let change_path = format!("0/{}", &self.change_idx);
-        let pub_key = Secp256k1Curve::derive_pub_key_at_path(&xpub, &change_path)?;
-        S::address_like(&from, &pub_key)
+        if let Some(change_addr) = &self.change_address {
+            S::address_script_pub_key(change_addr)
+        } else {
+            let from = &self.unspents.first().expect("first_utxo").address;
+            let change_path = format!("0/{}", &self.change_idx.expect("change_idx"));
+            let pub_key = Secp256k1Curve::derive_pub_key_at_path(&xpub, &change_path)?;
+            S::address_like(&from, &pub_key)
+        }
     }
 
     fn tx_outs(&self, change_script_pubkey: Script) -> Result<Vec<TxOut>> {
@@ -443,7 +450,8 @@ mod tests {
             unspents,
             memo: "".to_string(),
             fee: 100000,
-            change_idx: 1,
+            change_idx: Some(1u32),
+            change_address: None,
             coin: "LTC-TESTNET".to_string(),
             _marker_s: PhantomData,
             _marker_t: PhantomData,
@@ -458,6 +466,44 @@ mod tests {
             .sign_transaction(&vec![prv_key], change_addr.script_pubkey())
             .unwrap();
         assert_eq!(expected.signature, "01000000015884e5db9de218238671572340b207ee85b628074e7e467096c267266baf77a4000000006a473044022029063983b2537e4aa15ee838874269a6ba6f5280297f92deb5cd56d2b2db7e8202207e1581f73024a48fce1100ed36a1a48f6783026736de39a4dd40a1ccc75f651101210223078d2942df62c45621d209fab84ea9a7a23346201b7727b9b45a29c4e76f5effffffff0220a10700000000001976a9147821c0a3768aa9d1a37e16cf76002aef5373f1a888ac801a0600000000001976a914073b7eae2823efa349e3b9155b8a735526463a0f88ac00000000");
+    }
+
+    #[test]
+    fn test_sign_ltc_change_address() {
+        let unspents = vec![Utxo {
+            tx_hash: "a477af6b2667c29670467e4e0728b685ee07b240235771862318e29ddbe58458".to_string(),
+            vout: 0,
+            amount: 1000000,
+            address: "mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1".to_string(),
+            script_pub_key: "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac".to_string(),
+            derived_path: "0/0".to_string(),
+            sequence: 0,
+        }];
+        let tran = BitcoinForkTransaction::<
+            BtcForkAddress,
+            LegacyTransactionSignComponent<LegacySignHasher>,
+        > {
+            to: "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc".to_string(),
+            amount: 500000,
+            unspents,
+            memo: "".to_string(),
+            fee: 100000,
+            change_idx: None,
+            change_address: Some("mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1".to_string()),
+            coin: "LTC-TESTNET".to_string(),
+            _marker_s: PhantomData,
+            _marker_t: PhantomData,
+        };
+
+        let prv_key =
+            Secp256k1PrivateKey::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
+                .unwrap();
+        let change_addr = BtcForkAddress::from_str("mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1").unwrap();
+        //        let sign_ret = keystore.sign_transaction(&tran, Some(&PASSWORD)).unwrap();
+        let actual = tran
+            .sign_transaction(&vec![prv_key], change_addr.script_pubkey())
+            .unwrap();
+        assert_eq!(actual.signature, "01000000015884e5db9de218238671572340b207ee85b628074e7e467096c267266baf77a4000000006b483045022100eefdd6cace70ee64d6a29bca5f52c338b2b3ecf6e6c7b222818c9bba60f094fb022053535e23a77afc7255c18ae8c6e6bf0f8b6e3f552d08519455714cbe59e489cf01210223078d2942df62c45621d209fab84ea9a7a23346201b7727b9b45a29c4e76f5effffffff0220a10700000000001976a9147821c0a3768aa9d1a37e16cf76002aef5373f1a888ac801a0600000000001976a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac00000000");
     }
 
     #[test]
@@ -477,7 +523,8 @@ mod tests {
             unspents,
             memo: "".to_string(),
             fee: 50000,
-            change_idx: 1,
+            change_idx: Some(1u32),
+            change_address: None,
             coin: "LTC".to_string(),
             _marker_s: PhantomData,
             _marker_t: PhantomData,

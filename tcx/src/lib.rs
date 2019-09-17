@@ -107,6 +107,34 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
     }
 }
 
+const NETWORK_COINS: [&'static str; 3] = ["BCH", "LTC", "BTC"];
+
+fn _coin_symbol_with_network(v: &Value) -> String {
+    let chain_type = v["chainType"].as_str().expect("chainType");
+    if !NETWORK_COINS.contains(&chain_type) {
+        return chain_type.to_string();
+    }
+    let mut symbol = chain_type.to_string();
+
+    if let Some(network) = v["network"].as_str() {
+        if network.to_uppercase() != "MAINNET" {
+            symbol = format!("{}-{}", symbol, network);
+        }
+    }
+    if let Some(chain_id) = v["chainId"].as_str() {
+        if chain_id == "1" {
+            symbol = format!("{}-TESTNET", symbol);
+        }
+    }
+
+    if let Some(seg_wit) = v["segWit"].as_str() {
+        if seg_wit.to_uppercase() != "NONE" {
+            symbol = format!("{}-{}", symbol, seg_wit);
+        }
+    }
+    symbol
+}
+
 #[no_mangle]
 pub extern "C" fn free_string(s: *mut c_char) {
     unsafe {
@@ -210,22 +238,11 @@ pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *co
 fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let path = v["path"].as_str().unwrap();
-    let chain_type = v["chainType"].as_str().unwrap();
-    let mut symbol = chain_type.to_string();
-    if let Some(network) = v["network"].as_str() {
-        if network.to_uppercase() != "MAINNET" {
-            symbol = format!("{}-{}", symbol, network);
-        }
-    }
-    if let Some(seg_wit) = v["segWit"].as_str() {
-        if seg_wit.to_uppercase() != "NONE" {
-            symbol = format!("{}-{}", symbol, seg_wit);
-        }
-    }
+    let symbol = _coin_symbol_with_network(v);
 
     let mut coin_info = _coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
-    let acc = match chain_type {
+    let acc = match symbol.as_str() {
         "BCH" => HdKeystore::mnemonic_to_account::<BchAddress, BchExtra>(&coin_info, mnemonic),
         "LTC" | "LTC-P2WPKH" | "LTC-TESTNET" | "LTC-TESTNET-P2WPKH" => {
             HdKeystore::mnemonic_to_account::<BtcForkAddress, BtcForkExtra>(&coin_info, mnemonic)
@@ -256,19 +273,7 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let path = v["path"].as_str().unwrap();
     let overwrite = v["overwrite"].as_bool().unwrap();
-    let chain_type = v["chainType"].as_str().unwrap();
-    let mut symbol = chain_type.to_string();
-    if let Some(network) = v["network"].as_str() {
-        if network.to_uppercase() != "MAINNET" {
-            symbol = format!("{}-{}", symbol, network);
-        }
-    }
-
-    if let Some(seg_wit) = v["segWit"].as_str() {
-        if seg_wit.to_uppercase() != "NONE" {
-            symbol = format!("{}-{}", symbol, seg_wit);
-        }
-    }
+    let symbol = _coin_symbol_with_network(v);
 
     let meta: Metadata = serde_json::from_value(v.clone())?;
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
@@ -276,7 +281,7 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
 
     let mut coin_info = _coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
-    let account = match chain_type {
+    let account = match symbol.as_str() {
         "BCH" => ks.derive_coin::<BchAddress, BchExtra>(&coin_info, password),
         "LTC" | "LTC-P2WPKH" | "LTC-TESTNET" | "LTC-TESTNET-P2WPKH" => {
             ks.derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info, password)
@@ -344,21 +349,8 @@ pub extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
 fn _sign_transaction(json_str: &str) -> Result<String> {
     let v: Value = serde_json::from_str(json_str).unwrap();
     let w_id = v["id"].as_str().expect("wid");
-    let chain_type = v["chainType"].as_str().expect("chainType");
     let password = v["password"].as_str().expect("password");
-
-    let mut symbol = chain_type.to_string();
-    if let Some(network) = v["network"].as_str() {
-        if network.to_uppercase() != "MAINNET" {
-            symbol = format!("{}-{}", symbol, network);
-        }
-    }
-
-    if let Some(seg_wit) = v["segWit"].as_str() {
-        if seg_wit.to_uppercase() != "NONE" {
-            symbol = format!("{}-{}", symbol, seg_wit);
-        }
-    }
+    let symbol = _coin_symbol_with_network(&v);
 
     let mut map = KEYSTORE_MAP.write().unwrap();
     let keystore = match map.get_mut(w_id) {
@@ -383,9 +375,8 @@ fn _sign_btc_fork_transaction(
 ) -> Result<String> {
     let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
     let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).expect("outputs");
-    let internal_used = v["internalUsed"].as_i64().expect("internalUsed");
-    let change_idx = internal_used + 1;
-    //    let chain_type = v["chainType"].as_str().expect("chainType").to_string();
+    let internal_used = v["internalUsed"].as_i64();
+    let change_address = v["changeAddress"].as_str();
     let to = v["to"].as_str().expect("to");
     let seg_wit = v["segWit"].as_str().expect("segWit");
     let is_seg_wit = seg_wit == "P2WPKH";
@@ -402,7 +393,8 @@ fn _sign_btc_fork_transaction(
             amount,
             unspents,
             fee,
-            change_idx as u32,
+            internal_used.map(|x| (x + 1) as u32),
+            change_address.map(str::to_string),
             coin.to_string(),
         );
         ret = keystore.sign_transaction(&tran, Some(&password))?;
@@ -412,7 +404,8 @@ fn _sign_btc_fork_transaction(
             amount,
             unspents,
             fee,
-            change_idx as u32,
+            internal_used.map(|x| (x + 1) as u32),
+            change_address.map(str::to_string),
             coin.to_string(),
         );
         ret = keystore.sign_transaction(&tran, Some(&password))?;
@@ -422,8 +415,13 @@ fn _sign_btc_fork_transaction(
             amount,
             unspents,
             fee,
-            change_idx as u32,
+            internal_used.map(|x| (x + 1) as u32),
+            change_address.map(str::to_string),
             coin.to_string(),
+        );
+        println!(
+            "Change Idx: {:?}, Change Address: {:?}",
+            tran.change_idx, tran.change_address
         );
         ret = keystore.sign_transaction(&tran, Some(&password))?;
     }
@@ -808,8 +806,8 @@ mod tests {
                 "fee": "6000",
                 "internalUsed": 0,
                 "chainType": "BCH",
+                "chainId": "145",
                 "segWit":"NONE",
-                "changeAddress": "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
                 "outputs": [
                     {
                         "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
@@ -829,6 +827,46 @@ mod tests {
             let expected = r#"{"signature":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","txHash":"4d43cc66e9763a4e263fdb592591b9f19a6915ac821c92896d13f95beaca3b28","wtxId":""}"#;
             let expected_v = Value::from_str(expected).unwrap();
             assert_eq!(ret_v, expected_v);
+        })
+    }
+
+    #[test]
+    fn sign_tansaction_ltc_legacy_change_address() {
+        run_test(|| {
+            //            let param = r#"{"chainType":"LTC","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            //            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+
+            let param = r#"
+            {
+                "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
+                "password": "Insecure Password",
+                "to": "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc",
+                "amount": "500000",
+                "fee": "100000",
+                "chainType": "LTC",
+                "chainId": "1",
+                "segWit":"NONE",
+                "changeAddress": "mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1",
+                "outputs": [
+                    {
+                        "txHash": "a477af6b2667c29670467e4e0728b685ee07b240235771862318e29ddbe58458",
+                        "vout": 0,
+                        "amount": "1000000",
+                        "address": "mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1",
+                        "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
+                        "derivedPath": "0/0"
+                    }
+                ]
+            }
+            "#;
+
+            unsafe { clear_err() }
+            let ret = _to_str(sign_transaction(_to_c_char(param)));
+            assert_eq!("", ret);
+            //            let ret_v = Value::from_str(ret).unwrap();
+            //            let expected = r#"{"signature":"01000000015884e5db9de218238671572340b207ee85b628074e7e467096c267266baf77a4000000006b483045022100eefdd6cace70ee64d6a29bca5f52c338b2b3ecf6e6c7b222818c9bba60f094fb022053535e23a77afc7255c18ae8c6e6bf0f8b6e3f552d08519455714cbe59e489cf01210223078d2942df62c45621d209fab84ea9a7a23346201b7727b9b45a29c4e76f5effffffff0220a10700000000001976a9147821c0a3768aa9d1a37e16cf76002aef5373f1a888ac801a0600000000001976a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac00000000","txHash":"4d43cc66e9763a4e263fdb592591b9f19a6915ac821c92896d13f95beaca3b28","wtxId":""}"#;
+            //            let expected_v = Value::from_str(expected).unwrap();
+            //            assert_eq!(ret_v, expected_v);
         })
     }
 }
