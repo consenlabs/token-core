@@ -37,8 +37,8 @@ pub struct BtcForkNetwork {
 // BTC https://en.bitcoin.it/wiki/List_of_address_prefixes
 
 pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
-    match coin.to_lowercase().as_str() {
-        "ltc" => Some(BtcForkNetwork {
+    match coin.to_uppercase().as_str() {
+        "LTC" => Some(BtcForkNetwork {
             coin: "LTC",
             hrp: "ltc",
             p2pkh_prefix: 0x30,
@@ -46,7 +46,15 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "ltc-testnet" => Some(BtcForkNetwork {
+        "LTC-P2WPKH" => Some(BtcForkNetwork {
+            coin: "LTC-P2WPKH",
+            hrp: "ltc",
+            p2pkh_prefix: 0x30,
+            p2sh_prefix: 0x32,
+            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
+            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+        }),
+        "LTC-TESTNET" => Some(BtcForkNetwork {
             coin: "LTC-TESTNET",
             hrp: "ltc",
             p2pkh_prefix: 0x6f,
@@ -54,7 +62,15 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "btc" | "bc" => Some(BtcForkNetwork {
+        "LTC-TESTNET-P2WPKH" => Some(BtcForkNetwork {
+            coin: "LTC-TESTNET-P2WPKH",
+            hrp: "ltc",
+            p2pkh_prefix: 0x6f,
+            p2sh_prefix: 0x3a,
+            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
+            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+        }),
+        "BTC" | "BC" => Some(BtcForkNetwork {
             coin: "BTC",
             hrp: "bc",
             p2pkh_prefix: 0x0,
@@ -62,7 +78,15 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "btc-testnet" => Some(BtcForkNetwork {
+        "BTC-P2WPKH" => Some(BtcForkNetwork {
+            coin: "BTC-P2WPKH",
+            hrp: "bc",
+            p2pkh_prefix: 0x0,
+            p2sh_prefix: 0x05,
+            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
+            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+        }),
+        "BTC-TESTNET" => Some(BtcForkNetwork {
             coin: "BTC-TESTNET",
             hrp: "bc",
             p2pkh_prefix: 0x6f,
@@ -70,7 +94,7 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "bitcoincash" | "bch" => Some(BtcForkNetwork {
+        "BITCOINCASH" | "BCH" => Some(BtcForkNetwork {
             coin: "BCH",
             hrp: "bitcoincash",
             p2pkh_prefix: 0x0,
@@ -93,7 +117,13 @@ impl Address for BtcForkAddress {
         let network = network_from_coin(&coin);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         let network = network.expect("network");
-        let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string();
+        let addr: String;
+        if coin.to_uppercase().contains("P2WPKH") {
+            addr = BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string();
+        } else {
+            addr = BtcForkAddress::p2pkh(&pub_key, &network)?.to_string();
+        }
+        //        let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string();
         Ok(addr.to_string())
     }
 }
@@ -163,6 +193,7 @@ impl BtcForkAddress {
 
 /// Extract the bech32 prefix.
 /// Returns the same slice when no prefix is found.
+// todo: can't distinguish Native SegWit
 fn bech32_network(bech32: &str) -> Option<BtcForkNetwork> {
     let bech32_prefix = match bech32.rfind("1") {
         None => None,
@@ -235,31 +266,31 @@ impl FromStr for BtcForkAddress {
         let data = _decode_base58(s)?;
         let (network, payload) = match data[0] {
             0 => (
-                network_from_coin("btc").expect("btc"),
+                network_from_coin("BTC").expect("btc"),
                 Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             5 => (
-                network_from_coin("btc").expect("btc"),
+                network_from_coin("BTC-P2WPKH").expect("btc"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             0x30 => (
-                network_from_coin("ltc").expect("ltc-L"),
+                network_from_coin("LTC").expect("ltc-L"),
                 Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             0x32 => (
-                network_from_coin("ltc").expect("ltc"),
+                network_from_coin("LTC-P2WPKH").expect("ltc"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             0x3a => (
-                network_from_coin("ltc-testnet").expect("ltc-testnet"),
+                network_from_coin("LTC-TESTNET-P2WPKH").expect("ltc-testnet"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             111 => (
-                network_from_coin("btc-testnet").expect("btc-testnet"),
+                network_from_coin("BTC-TESTNET").expect("btc-testnet"),
                 Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             196 => (
-                network_from_coin("btc-testnet").expect("btc-testnet"),
+                network_from_coin("BTC-TESTNET-P2WPKH").expect("btc-testnet"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             x => {
@@ -363,12 +394,12 @@ mod tests {
     #[test]
     pub fn test_btc_fork_address_from_str() {
         let addr = BtcForkAddress::from_str("MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW").unwrap();
-        assert_eq!(addr.network.coin, "LTC");
+        assert_eq!(addr.network.coin, "LTC-P2WPKH");
         let addr = BtcForkAddress::from_str("ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf").unwrap();
         assert_eq!(addr.network.coin, "LTC");
 
         let addr = BtcForkAddress::from_str("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG").unwrap();
-        assert_eq!(addr.network.coin, "BTC");
+        assert_eq!(addr.network.coin, "BTC-P2WPKH");
         let addr = BtcForkAddress::from_str("bc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdntm7f4e").unwrap();
         assert_eq!(addr.network.coin, "BTC");
     }

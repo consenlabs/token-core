@@ -72,7 +72,7 @@ fn find_keystore_id_by_address(address: &str) -> Option<String> {
 }
 
 fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
-    match symbol {
+    match symbol.to_uppercase().as_str() {
         "BCH" => Ok(CoinInfo {
             symbol: "BCH".to_string(),
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
@@ -83,8 +83,18 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
             derivation_path: "m/44'/2'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
+        "LTC-P2WPKH" => Ok(CoinInfo {
+            symbol: "LTC-P2WPKH".to_string(),
+            derivation_path: "m/44'/2'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        }),
         "LTC-TESTNET" => Ok(CoinInfo {
             symbol: "LTC-TESTNET".to_string(),
+            derivation_path: "m/44'/1'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        }),
+        "LTC-TESTNET-P2WPKH" => Ok(CoinInfo {
+            symbol: "LTC-TESTNET-P2WPKH".to_string(),
             derivation_path: "m/44'/1'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
@@ -201,12 +211,23 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let path = v["path"].as_str().unwrap();
     let chain_type = v["chainType"].as_str().unwrap();
+    let mut symbol = chain_type.to_string();
+    if let Some(network) = v["network"].as_str() {
+        if network.to_uppercase() != "MAINNET" {
+            symbol = format!("{}-{}", symbol, network);
+        }
+    }
+    if let Some(seg_wit) = v["segWit"].as_str() {
+        if seg_wit.to_uppercase() != "NONE" {
+            symbol = format!("{}-{}", symbol, seg_wit);
+        }
+    }
 
-    let mut coin_info = _coin_info_from_symbol(chain_type)?;
+    let mut coin_info = _coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
     let acc = match chain_type {
         "BCH" => HdKeystore::mnemonic_to_account::<BchAddress, BchExtra>(&coin_info, mnemonic),
-        "LTC" | "LTC-TESTNET" => {
+        "LTC" | "LTC-P2WPKH" | "LTC-TESTNET" | "LTC-TESTNET-P2WPKH" => {
             HdKeystore::mnemonic_to_account::<BtcForkAddress, BtcForkExtra>(&coin_info, mnemonic)
         }
         "TRX" => HdKeystore::mnemonic_to_account::<TrxAddress, EmptyExtra>(&coin_info, mnemonic),
@@ -235,17 +256,29 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let path = v["path"].as_str().unwrap();
     let overwrite = v["overwrite"].as_bool().unwrap();
-
     let chain_type = v["chainType"].as_str().unwrap();
+    let mut symbol = chain_type.to_string();
+    if let Some(network) = v["network"].as_str() {
+        if network.to_uppercase() != "MAINNET" {
+            symbol = format!("{}-{}", symbol, network);
+        }
+    }
+
+    if let Some(seg_wit) = v["segWit"].as_str() {
+        if seg_wit.to_uppercase() != "NONE" {
+            symbol = format!("{}-{}", symbol, seg_wit);
+        }
+    }
+
     let meta: Metadata = serde_json::from_value(v.clone())?;
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
     let _pw = Map::new();
 
-    let mut coin_info = _coin_info_from_symbol(chain_type)?;
+    let mut coin_info = _coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
     let account = match chain_type {
         "BCH" => ks.derive_coin::<BchAddress, BchExtra>(&coin_info, password),
-        "LTC" | "LTC-TESTNET" => {
+        "LTC" | "LTC-P2WPKH" | "LTC-TESTNET" | "LTC-TESTNET-P2WPKH" => {
             ks.derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info, password)
         }
         "TRX" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info, password),
@@ -314,25 +347,45 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
     let chain_type = v["chainType"].as_str().expect("chainType");
     let password = v["password"].as_str().expect("password");
 
+    let mut symbol = chain_type.to_string();
+    if let Some(network) = v["network"].as_str() {
+        if network.to_uppercase() != "MAINNET" {
+            symbol = format!("{}-{}", symbol, network);
+        }
+    }
+
+    if let Some(seg_wit) = v["segWit"].as_str() {
+        if seg_wit.to_uppercase() != "NONE" {
+            symbol = format!("{}-{}", symbol, seg_wit);
+        }
+    }
+
     let mut map = KEYSTORE_MAP.write().unwrap();
     let keystore = match map.get_mut(w_id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    match chain_type {
-        "BCH" | "LTC" | "LTC-TESTNET" => _sign_btc_fork_transaction(json_str, keystore, password),
+    match symbol.as_str() {
+        "BCH" | "LTC" | "LTC-P2WPKH" | "LTC-TESTNET" | "LTC-TESTNET-P2WPKH" => {
+            _sign_btc_fork_transaction(json_str, &symbol, keystore, password)
+        }
         "TRX" => _sign_trx_transaction(json_str, keystore, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }
 }
 
-fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+fn _sign_btc_fork_transaction(
+    json: &str,
+    coin: &str,
+    keystore: &HdKeystore,
+    password: &str,
+) -> Result<String> {
     let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
     let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).expect("outputs");
     let internal_used = v["internalUsed"].as_i64().expect("internalUsed");
     let change_idx = internal_used + 1;
-    let chain_type = v["chainType"].as_str().expect("chainType").to_string();
+    //    let chain_type = v["chainType"].as_str().expect("chainType").to_string();
     let to = v["to"].as_str().expect("to");
     let seg_wit = v["segWit"].as_str().expect("segWit");
     let is_seg_wit = seg_wit == "P2WPKH";
@@ -343,14 +396,14 @@ fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str)
         .unwrap();
     let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
     let ret: TxSignResult;
-    if chain_type.starts_with("BCH") {
+    if coin.starts_with("BCH") {
         let tran = BchTransaction::new(
             to.to_owned(),
             amount,
             unspents,
             fee,
             change_idx as u32,
-            chain_type,
+            coin.to_string(),
         );
         ret = keystore.sign_transaction(&tran, Some(&password))?;
     } else if is_seg_wit {
@@ -360,7 +413,7 @@ fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str)
             unspents,
             fee,
             change_idx as u32,
-            chain_type,
+            coin.to_string(),
         );
         ret = keystore.sign_transaction(&tran, Some(&password))?;
     } else {
@@ -370,7 +423,7 @@ fn _sign_btc_fork_transaction(json: &str, keystore: &HdKeystore, password: &str)
             unspents,
             fee,
             change_idx as u32,
-            chain_type,
+            coin.to_string(),
         );
         ret = keystore.sign_transaction(&tran, Some(&password))?;
     }
@@ -450,7 +503,6 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 
 #[cfg(test)]
 mod tests {
-
     use crate::{clear_err, export_mnemonic, get_last_err_message, sign_transaction};
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
@@ -569,11 +621,11 @@ mod tests {
     #[test]
     fn find_wallet_by_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"BCH","mnemonic":"blind gravity card grunt basket expect garment tilt organ concert great critic","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH"}"#;
+            let param = r#"{"chainType":"BCH","mnemonic":"blind gravity card grunt basket expect garment tilt organ concert great critic","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"NONE"}"#;
             let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
             assert_eq!("{}", ret);
 
-            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH"}"#;
+            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"NONE"}"#;
             let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
             let v = Value::from_str(ret).expect("find wallet");
             assert_eq!(
@@ -586,7 +638,7 @@ mod tests {
     #[test]
     fn import_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
@@ -608,7 +660,6 @@ mod tests {
             "#;
             let expected_v = Value::from_str(expected).expect("from expected");
             let ret_v = Value::from_str(ret).unwrap();
-
             assert_eq!(expected_v["address"], ret_v["address"]);
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
@@ -650,9 +701,42 @@ mod tests {
     }
 
     #[test]
+    fn import_legacy_ltc_wallet_from_mnemonic_test() {
+        run_test(|| {
+            let param = r#"{"chainType":"LTC","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+
+            let expected = r#"
+            {
+                "address": "LQMNSF1M4So7CGNjfoMFeyLuxMHY5g7pmn",
+                "chainType": "LTC",
+                "createdAt": 1566455834,
+                "encXPub": "aZQFapKlNXVFODnqcTrkYcUdEBOJng0detiaBwO/7yNBWxxukf9/GJOn1dUh4oumFTtHoNNsBxYjYXpMdO7HMksOlOOJUCFNGRvVkiS5W83nAMTTDDbJGlC9ZB0lbm6wC4RYP3uGlg1anIl2BOW+mg==",
+                "externalAddress": {
+                    "address": "LNp88kijfnFKGcp1aPdnMkpfMycw1v7KdQ",
+                    "derivedPath": "0/1",
+                    "type": "EXTERNAL"
+                },
+                "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
+                "name": "LTC-Wallet-1",
+                "passwordHint": "",
+                "source": "MNEMONIC"
+            }
+            "#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+            let ret_v = Value::from_str(ret).unwrap();
+
+            assert_eq!(expected_v["address"], ret_v["address"]);
+            assert_eq!(expected_v["chainType"], ret_v["chainType"]);
+            assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
+            assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+        });
+    }
+
+    #[test]
     fn import_trx_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"TRX","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"TRX-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/195'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"TRX","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"TRX-Wallet-1","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/195'/0'/0/0","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
@@ -725,6 +809,7 @@ mod tests {
                 "internalUsed": 0,
                 "chainType": "BCH",
                 "segWit":"NONE",
+                "changeAddress": "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
                 "outputs": [
                     {
                         "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",

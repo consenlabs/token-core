@@ -22,34 +22,6 @@ fn merge(a: &mut Value, b: &Value) {
     }
 }
 
-fn _presented_wallet(keystore: &HdKeystore) -> Value {
-    let mut pw = Map::new();
-    pw.insert("id".to_string(), json!(keystore.id.to_string()));
-    pw.insert("name".to_string(), json!(keystore.meta.name));
-    pw.insert(
-        "passwordHint".to_string(),
-        json!(keystore.meta.password_hint),
-    );
-    pw.insert("createdAt".to_string(), json!(keystore.meta.timestamp));
-    pw.insert("source".to_string(), json!(keystore.meta.source));
-
-    if !keystore.active_accounts.is_empty() {
-        if keystore.active_accounts.len() > 1 {
-            panic!("Only one accounts in token 2.5")
-        }
-        let acc = keystore.active_accounts.first().unwrap();
-        pw.insert("address".to_string(), json!(acc.address.to_string()));
-        pw.insert("chainType".to_string(), json!(acc.coin.to_string()));
-        let mut obj = Value::Object(pw);
-        if let Some(extra) = acc.extra.as_object() {
-            merge(&mut obj, &Value::Object(extra.clone()))
-        }
-        obj
-    } else {
-        Value::Object(pw)
-    }
-}
-
 impl Presenter for HdKeystore {
     fn present(&self) -> Result<String> {
         let mut pw = Map::new();
@@ -65,7 +37,14 @@ impl Presenter for HdKeystore {
             }
             let acc = &self.active_accounts.first().unwrap();
             pw.insert("address".to_string(), json!(acc.address.to_string()));
-            pw.insert("chainType".to_string(), json!(acc.coin.to_string()));
+            let coin_split: Vec<&str> = acc.coin.split("-").collect();
+            coin_split.iter().enumerate().for_each(|(i, s)| {
+                if i == 0 {
+                    pw.insert("chainType".to_string(), json!(s));
+                } else if vec!["NONE", "P2WPKH"].contains(s) {
+                    pw.insert("segWit".to_string(), json!(s));
+                }
+            });
             let mut obj = Value::Object(pw);
             if let Some(extra) = acc.extra.as_object() {
                 merge(&mut obj, &Value::Object(extra.clone()))

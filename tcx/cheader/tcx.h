@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+const char *calc_external_address(const char *json_str);
+
 void clear_err(void);
 
 const char *export_mnemonic(const char *json_str);
