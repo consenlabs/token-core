@@ -58,7 +58,7 @@ class ViewController: UIViewController {
       "overwrite": true,
       "name": "bch-ios",
       "passwordHint": "",
-      "chainType": "BCH",
+      "chainType": "BITCOINCASH",
       "network": "MAINNET",
       "source": "MNEMONIC",
       "fileDir": fileDir
@@ -96,7 +96,7 @@ class ViewController: UIViewController {
       "fee": "35000",
       "internalUsed": 0,
       "chainId": "0",
-      "chainType": "BCH",
+      "chainType": "BITCOINCASH",
       "outputs": unspents
       
     ];
@@ -143,7 +143,7 @@ class ViewController: UIViewController {
 //      "overwrite": true,
 //      "name": "bch-ios",
 //      "passwordHint": "",
-//      "chainType": "BCH",
+//      "chainType": "BITCOINCASH",
 //      "network": "MAINNET",
 //      "fileDir": fileDir
 //    ];

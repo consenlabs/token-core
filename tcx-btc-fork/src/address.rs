@@ -38,70 +38,95 @@ pub struct BtcForkNetwork {
 
 pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
     match coin.to_uppercase().as_str() {
-        "LTC" => Some(BtcForkNetwork {
-            coin: "LTC",
+        "LITECOIN" => Some(BtcForkNetwork {
+            coin: "LITECOIN",
             hrp: "ltc",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "LTC-P2WPKH" => Some(BtcForkNetwork {
-            coin: "LTC-P2WPKH",
+        "LITECOIN-P2WPKH" => Some(BtcForkNetwork {
+            coin: "LITECOIN-P2WPKH",
             hrp: "ltc",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "LTC-TESTNET" => Some(BtcForkNetwork {
-            coin: "LTC-TESTNET",
+        "LITECOIN-SEGWIT" => Some(BtcForkNetwork {
+            coin: "LITECOIN-SEGWIT",
+            hrp: "ltc",
+            p2pkh_prefix: 0x30,
+            p2sh_prefix: 0x32,
+            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
+            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+        }),
+        "LITECOIN-TESTNET" => Some(BtcForkNetwork {
+            coin: "LITECOIN-TESTNET",
             hrp: "ltc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "LTC-TESTNET-P2WPKH" => Some(BtcForkNetwork {
-            coin: "LTC-TESTNET-P2WPKH",
+        "LITECOIN-TESTNET-P2WPKH" => Some(BtcForkNetwork {
+            coin: "LITECOIN-TESTNET-P2WPKH",
             hrp: "ltc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "BTC" | "BC" => Some(BtcForkNetwork {
-            coin: "BTC",
+        "BITCOIN" => Some(BtcForkNetwork {
+            coin: "BITCOIN",
             hrp: "bc",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "BTC-P2WPKH" => Some(BtcForkNetwork {
-            coin: "BTC-P2WPKH",
+        "BITCOIN-P2WPKH" => Some(BtcForkNetwork {
+            coin: "BITCOIN-P2WPKH",
             hrp: "bc",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "BTC-TESTNET" => Some(BtcForkNetwork {
-            coin: "BTC-TESTNET",
+        "BITCOIN-SEGWIT" => Some(BtcForkNetwork {
+            coin: "BITCOIN-SEGWIT",
+            hrp: "bc",
+            p2pkh_prefix: 0x0,
+            p2sh_prefix: 0x05,
+            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
+            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+        }),
+        "BITCOIN-TESTNET" => Some(BtcForkNetwork {
+            coin: "BITCOIN-TESTNET",
             hrp: "bc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0xc4,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
-        "BITCOINCASH" | "BCH" => Some(BtcForkNetwork {
-            coin: "BCH",
+        "BITCOINCASH" => Some(BtcForkNetwork {
+            coin: "BITCOINCASH",
             hrp: "bitcoincash",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         }),
+        _ => None,
+    }
+}
+
+pub fn network_form_hrp(hrp: &str) -> Option<BtcForkNetwork> {
+    match hrp {
+        "bitcoincash" => network_from_coin("BITCOINCASH"),
+        "ltc" => network_from_coin("LITECOIN-SEGWIT"),
+        "bc" => network_from_coin("BITCOIN-SEGWIT"),
         _ => None,
     }
 }
@@ -193,14 +218,13 @@ impl BtcForkAddress {
 
 /// Extract the bech32 prefix.
 /// Returns the same slice when no prefix is found.
-// todo: can't distinguish Native SegWit
 fn bech32_network(bech32: &str) -> Option<BtcForkNetwork> {
     let bech32_prefix = match bech32.rfind("1") {
         None => None,
         Some(sep) => Some(bech32.split_at(sep).0),
     };
     match bech32_prefix {
-        Some(prefix) => network_from_coin(prefix),
+        Some(prefix) => network_form_hrp(prefix),
         None => None,
     }
 }
@@ -266,31 +290,31 @@ impl FromStr for BtcForkAddress {
         let data = _decode_base58(s)?;
         let (network, payload) = match data[0] {
             0 => (
-                network_from_coin("BTC").expect("btc"),
+                network_from_coin("BITCOIN").expect("btc"),
                 Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             5 => (
-                network_from_coin("BTC-P2WPKH").expect("btc"),
+                network_from_coin("BITCOIN-P2WPKH").expect("btc"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             0x30 => (
-                network_from_coin("LTC").expect("ltc-L"),
+                network_from_coin("LITECOIN").expect("ltc-L"),
                 Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             0x32 => (
-                network_from_coin("LTC-P2WPKH").expect("ltc"),
+                network_from_coin("LITECOIN-P2WPKH").expect("ltc"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             0x3a => (
-                network_from_coin("LTC-TESTNET-P2WPKH").expect("ltc-testnet"),
+                network_from_coin("LITECOIN-TESTNET-P2WPKH").expect("ltc-testnet"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             111 => (
-                network_from_coin("BTC-TESTNET").expect("btc-testnet"),
+                network_from_coin("BITCOIN-TESTNET").expect("btc-testnet"),
                 Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             196 => (
-                network_from_coin("BTC-TESTNET-P2WPKH").expect("btc-testnet"),
+                network_from_coin("BITCOIN-TESTNET-P2WPKH").expect("btc-testnet"),
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
             ),
             x => {
@@ -369,7 +393,7 @@ mod tests {
         )
         .unwrap();
 
-        let network = network_from_coin("ltc").unwrap();
+        let network = network_from_coin("LITECOIN").unwrap();
         let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)
             .unwrap()
             .to_string();
@@ -379,7 +403,7 @@ mod tests {
             .to_string();
         assert_eq!(addr, "ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf");
 
-        let network = network_from_coin("btc").unwrap();
+        let network = network_from_coin("BITCOIN").unwrap();
         let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)
             .unwrap()
             .to_string();
@@ -394,13 +418,13 @@ mod tests {
     #[test]
     pub fn test_btc_fork_address_from_str() {
         let addr = BtcForkAddress::from_str("MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW").unwrap();
-        assert_eq!(addr.network.coin, "LTC-P2WPKH");
+        assert_eq!(addr.network.coin, "LITECOIN-P2WPKH");
         let addr = BtcForkAddress::from_str("ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf").unwrap();
-        assert_eq!(addr.network.coin, "LTC");
+        assert_eq!(addr.network.coin, "LITECOIN-SEGWIT");
 
         let addr = BtcForkAddress::from_str("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG").unwrap();
-        assert_eq!(addr.network.coin, "BTC-P2WPKH");
+        assert_eq!(addr.network.coin, "BITCOIN-P2WPKH");
         let addr = BtcForkAddress::from_str("bc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdntm7f4e").unwrap();
-        assert_eq!(addr.network.coin, "BTC");
+        assert_eq!(addr.network.coin, "BITCOIN-SEGWIT");
     }
 }

@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
 //            "overwrite": true,
 //            "name": "bch-ios",
 //            "passwordHint": "",
-//            "chainType": "BCH",
+//            "chainType": "BITCOINCASH",
 //            "network": "MAINNET",
 //            "source": "MNEMONIC",
 //            "fileDir": fileDir
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
           param.put("overwrite", true);
           param.put("name", "bch-ios");
           param.put("passwordHint", "");
-          param.put("chainType", "BCH");
+          param.put("chainType", "BITCOINCASH");
           param.put("network", "MAINNET");
           param.put("source", "MNEMONIC");
 //          String response = TokenCore.INSTANCE.hello("World");

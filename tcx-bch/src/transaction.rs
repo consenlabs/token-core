@@ -55,7 +55,7 @@ mod tests {
                 fee: 6000,
                 change_idx: Some(1u32),
                 change_address: None,
-                coin: "BCH".to_string(),
+                coin: "BITCOINCASH".to_string(),
                 _marker_s: PhantomData,
                 _marker_t: PhantomData,
             };

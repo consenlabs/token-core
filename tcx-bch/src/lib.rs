@@ -52,7 +52,7 @@ mod tests {
 
         //        let coin = BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut keystore, PASSWORD, BIP_PATH);
         let bch_coin = CoinInfo {
-            symbol: "BCH".to_string(),
+            symbol: "BITCOINCASH".to_string(),
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
         };
@@ -70,7 +70,7 @@ mod tests {
         let path = account["derivationPath"].as_str().unwrap();
         assert_eq!(BIP_PATH, path);
         let coin = account["coin"].as_str().unwrap();
-        assert_eq!("BCH", coin);
+        assert_eq!("BITCOINCASH", coin);
     }
 
     #[test]
@@ -81,7 +81,7 @@ mod tests {
         let mut keystore = HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta);
 
         let bch_coin = CoinInfo {
-            symbol: "BCH".to_string(),
+            symbol: "BITCOINCASH".to_string(),
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
         };
@@ -105,7 +105,7 @@ mod tests {
         let path = account["derivationPath"].as_str().unwrap();
         assert_eq!(BIP_PATH, path);
         let coin = account["coin"].as_str().unwrap();
-        assert_eq!("BCH", coin);
+        assert_eq!("BITCOINCASH", coin);
 
         let extra = account["extra"].as_object().expect("extra");
         let enc_xpub = extra["encXPub"].as_str().expect("enc_xpub");

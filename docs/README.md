@@ -28,7 +28,7 @@ Account结构体用来存储和链常用的信息，例如地址，所在曲线�
     "address": "bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885",
     "derivationPath": "m/44'/145'/0'",
     "curve": "SECP256k1",
-    "coin": "BCH",
+    "coin": "BITCOINCASH",
     "extra": {
         "encXPub": "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==",
         "externalAddress": {
@@ -62,7 +62,7 @@ tcx 提供了`Address`这个trait，链开发者可以实现这个`Address::from
 pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
     match coin.to_lowercase().as_str() {
         "ltc" => Some(BtcForkNetwork {
-            coin: "LTC",
+            coin: "LITECOIN",
             hrp: "ltc",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
@@ -71,7 +71,7 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             fork_id: 0,
         }),
         "ltc-testnet" => Some(BtcForkNetwork {
-            coin: "LTC-TESTNET",
+            coin: "LITECOIN-TESTNET",
             hrp: "ltc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
@@ -81,7 +81,7 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
         }),
         ...
         "bitcoincash" | "bch" => Some(BtcForkNetwork {
-            coin: "BCH",
+            coin: "BITCOINCASH",
             hrp: "bitcoincash",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
@@ -193,14 +193,14 @@ TransactionSigner提供了签名接口的约束。开发者需要实现该Trait�
 impl TransactionSigner<BitcoinForkTransaction, TxSignResult> for HdKeystore {
     fn sign(&self, tx: &BitcoinForkTransaction, password: Option<&str>) -> Result<TxSignResult> {
         let account = self
-            .account(&"BCH")
+            .account(&"BITCOINCASH")
             .ok_or(format_err!("account_not_found"))?;
         let path = &account.derivation_path;
         let extra = ExtendedPubKeyExtra::from(account.extra.clone());
 
         let paths = tx.collect_prv_keys_paths(path)?;
         tcx_ensure!(password.is_some(), tcx_crypto::Error::InvalidPassword);
-        let priv_keys = &self.key_at_paths("BCH", &paths, password.unwrap())?;
+        let priv_keys = &self.key_at_paths("BITCOINCASH", &paths, password.unwrap())?;
         let xpub = extra.xpub()?;
         tx.sign_transaction(&priv_keys, &xpub)
     }
@@ -218,7 +218,7 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let mut pw = Map::new();
 
     let (account, extra) = match chain_type {
-            "BCH" | "LTC" | "LTC-TESTNET" => {
+            "BITCOINCASH" | "LITECOIN" | "LITECOIN-TESTNET" => {
                 let mut coin_info = _coin_info_from_symbol(chain_type)?;
                 coin_info.derivation_path = path.to_string();
                 ks.derive_coin::<BtcForkAddress, ExtendedPubKeyExtra>(&coin_info, password)
@@ -242,7 +242,7 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
     let v: Value = serde_json::from_str(json_str).unwrap();
     // parse arguments and get keystore
     match chain_type {
-        "BCH" | "LTC" | "LTC-TESTNET" => _sign_btc_fork_transaction(json_str, keystore, password),
+        "BITCOINCASH" | "LITECOIN" | "LITECOIN-TESTNET" => _sign_btc_fork_transaction(json_str, keystore, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }
 }

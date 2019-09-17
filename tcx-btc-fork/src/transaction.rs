@@ -452,7 +452,7 @@ mod tests {
             fee: 100000,
             change_idx: Some(1u32),
             change_address: None,
-            coin: "LTC-TESTNET".to_string(),
+            coin: "LITECOIN-TESTNET".to_string(),
             _marker_s: PhantomData,
             _marker_t: PhantomData,
         };
@@ -490,7 +490,7 @@ mod tests {
             fee: 100000,
             change_idx: None,
             change_address: Some("mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1".to_string()),
-            coin: "LTC-TESTNET".to_string(),
+            coin: "LITECOIN-TESTNET".to_string(),
             _marker_s: PhantomData,
             _marker_t: PhantomData,
         };
@@ -525,7 +525,7 @@ mod tests {
             fee: 50000,
             change_idx: Some(1u32),
             change_address: None,
-            coin: "LTC".to_string(),
+            coin: "LITECOIN".to_string(),
             _marker_s: PhantomData,
             _marker_t: PhantomData,
         };

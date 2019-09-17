@@ -326,7 +326,7 @@ mod tests {
             "address": "bc1q32nssyaw5ph0skae5nja0asmw2y2a6qw8f0p38",
             "derivationPath": "m/84'/0'/0'/0/0",
             "curve": "SECP256k1",
-            "coin": "BTC",
+            "coin": "BITCOIN",
             "extra": {}
         },
         {
@@ -390,7 +390,7 @@ mod tests {
     #[test]
     pub fn mnemonic_to_account_test() {
         let coin_info = CoinInfo {
-            symbol: "BCH".to_string(),
+            symbol: "BITCOINCASH".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
@@ -401,7 +401,7 @@ mod tests {
             address: "mock_address".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
-            coin: "BCH".to_string(),
+            coin: "BITCOINCASH".to_string(),
             extra: Value::Object(Map::new()),
         };
         assert_eq!(account, expected);
@@ -475,7 +475,7 @@ mod tests {
     pub fn derive_key_at_paths_test() {
         let mut keystore = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default());
         let coin_info = CoinInfo {
-            symbol: "BTC".to_string(),
+            symbol: "BITCOIN".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
@@ -486,12 +486,12 @@ mod tests {
             address: "mock_address".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
-            coin: "BTC".to_string(),
+            coin: "BITCOIN".to_string(),
             extra: Value::Object(Map::new()),
         };
 
         assert_eq!(acc, &expected);
-        assert_eq!(keystore.account("BTC").unwrap(), &expected);
+        assert_eq!(keystore.account("BITCOIN").unwrap(), &expected);
         assert_eq!(keystore.active_accounts.len(), 1);
 
         let paths = vec![
@@ -500,7 +500,7 @@ mod tests {
             "m/44'/0'/0'/1/0",
             "m/44'/0'/0'/1/1",
         ];
-        let prv_keys = keystore.key_at_paths("BTC", &paths, PASSWORD).unwrap();
+        let prv_keys = keystore.key_at_paths("BITCOIN", &paths, PASSWORD).unwrap();
         let pub_keys = prv_keys
             .iter()
             .map(|prv| prv.public_key().to_bytes().to_hex())

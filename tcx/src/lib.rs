@@ -76,33 +76,38 @@ fn find_keystore_id_by_address(address: &str) -> Option<String> {
 
 fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
     match symbol.to_uppercase().as_str() {
-        "BCH" => Ok(CoinInfo {
-            symbol: "BCH".to_string(),
+        "BITCOINCASH" => Ok(CoinInfo {
+            symbol: "BITCOINCASH".to_string(),
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
-        "LTC" => Ok(CoinInfo {
-            symbol: "LTC".to_string(),
-            derivation_path: "m/44'/2'/0'/0/0".to_string(),
-            curve: CurveType::SECP256k1,
-        }),
-        "LTC-P2WPKH" => Ok(CoinInfo {
-            symbol: "LTC-P2WPKH".to_string(),
-            derivation_path: "m/44'/2'/0'/0/0".to_string(),
-            curve: CurveType::SECP256k1,
-        }),
-        "LTC-TESTNET" => Ok(CoinInfo {
-            symbol: "LTC-TESTNET".to_string(),
+        "BITCOINCASH-TESTNET" => Ok(CoinInfo {
+            symbol: "BITCOINCASH".to_string(),
             derivation_path: "m/44'/1'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
-        "LTC-TESTNET-P2WPKH" => Ok(CoinInfo {
-            symbol: "LTC-TESTNET-P2WPKH".to_string(),
+        "LITECOIN" => Ok(CoinInfo {
+            symbol: "LITECOIN".to_string(),
+            derivation_path: "m/44'/2'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        }),
+        "LITECOIN-P2WPKH" => Ok(CoinInfo {
+            symbol: "LITECOIN-P2WPKH".to_string(),
+            derivation_path: "m/44'/2'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        }),
+        "LITECOIN-TESTNET" => Ok(CoinInfo {
+            symbol: "LITECOIN-TESTNET".to_string(),
             derivation_path: "m/44'/1'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
-        "TRX" => Ok(CoinInfo {
-            symbol: "TRX".to_string(),
+        "LITECOIN-TESTNET-P2WPKH" => Ok(CoinInfo {
+            symbol: "LITECOIN-TESTNET-P2WPKH".to_string(),
+            derivation_path: "m/44'/1'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        }),
+        "TRON" => Ok(CoinInfo {
+            symbol: "TRON".to_string(),
             derivation_path: "m/44'/195'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
@@ -110,7 +115,7 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
     }
 }
 
-const NETWORK_COINS: [&'static str; 3] = ["BCH", "LTC", "BTC"];
+const NETWORK_COINS: [&'static str; 3] = ["BITCOINCASH", "LITECOIN", "BITCOIN"];
 
 fn _coin_symbol_with_network(v: &Value) -> String {
     let chain_type = v["chainType"].as_str().expect("chainType");
@@ -246,11 +251,13 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
     let mut coin_info = _coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
     let acc = match symbol.as_str() {
-        "BCH" => HdKeystore::mnemonic_to_account::<BchAddress, BchExtra>(&coin_info, mnemonic),
-        "LTC" | "LTC-P2WPKH" | "LTC-TESTNET" | "LTC-TESTNET-P2WPKH" => {
+        "BITCOINCASH" => {
+            HdKeystore::mnemonic_to_account::<BchAddress, BchExtra>(&coin_info, mnemonic)
+        }
+        "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
             HdKeystore::mnemonic_to_account::<BtcForkAddress, BtcForkExtra>(&coin_info, mnemonic)
         }
-        "TRX" => HdKeystore::mnemonic_to_account::<TrxAddress, EmptyExtra>(&coin_info, mnemonic),
+        "TRON" => HdKeystore::mnemonic_to_account::<TrxAddress, EmptyExtra>(&coin_info, mnemonic),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
     let address = acc.address;
@@ -285,11 +292,11 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     let mut coin_info = _coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
     let account = match symbol.as_str() {
-        "BCH" => ks.derive_coin::<BchAddress, BchExtra>(&coin_info, password),
-        "LTC" | "LTC-P2WPKH" | "LTC-TESTNET" | "LTC-TESTNET-P2WPKH" => {
+        "BITCOINCASH" => ks.derive_coin::<BchAddress, BchExtra>(&coin_info, password),
+        "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
             ks.derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info, password)
         }
-        "TRX" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info, password),
+        "TRON" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
 
@@ -398,10 +405,14 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
     }?;
 
     match symbol.as_str() {
-        "BCH" | "LTC" | "LTC-P2WPKH" | "LTC-TESTNET" | "LTC-TESTNET-P2WPKH" => {
+        "BITCOINCASH"
+        | "LITECOIN"
+        | "LITECOIN-P2WPKH"
+        | "LITECOIN-TESTNET"
+        | "LITECOIN-TESTNET-P2WPKH" => {
             _sign_btc_fork_transaction(json_str, &symbol, keystore, password)
         }
-        "TRX" => _sign_trx_transaction(json_str, keystore, password),
+        "TRON" => _sign_trx_transaction(json_str, keystore, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }
 }
@@ -426,7 +437,7 @@ fn _sign_btc_fork_transaction(
         .unwrap();
     let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
     let ret: TxSignResult;
-    if coin.starts_with("BCH") {
+    if coin.starts_with("BITCOINCASH") {
         let tran = BchTransaction::new(
             to.to_owned(),
             amount,
@@ -499,7 +510,7 @@ fn _calc_external_address(v: &Value) -> Result<String> {
         .account(&chain_type)
         .ok_or(format_err!("account_not_found, chainType: {}", &chain_type))?;
     let external_addr: ExternalAddress;
-    if chain_type.starts_with("BCH") {
+    if chain_type.starts_with("BITCOINCASH") {
         let extra = BchExtra::from(account.extra.clone());
         external_addr = extra.calc_external_address(external_id, &chain_type)?;
     } else {
@@ -581,8 +592,6 @@ mod tests {
 
     use tcx_chain::HdKeystore;
 
-    static MNEMONIC: &'static str =
-        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
     static WALLET_ID: &'static str = "9c6cbc21-1c43-4c8b-bb7a-5e538f908819";
 
     fn _to_c_char(str: &str) -> *const c_char {
@@ -684,11 +693,11 @@ mod tests {
     #[test]
     fn find_wallet_by_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"BCH","mnemonic":"blind gravity card grunt basket expect garment tilt organ concert great critic","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"NONE"}"#;
+            let param = r#"{"chainType":"BITCOINCASH","mnemonic":"blind gravity card grunt basket expect garment tilt organ concert great critic","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"NONE"}"#;
             let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
             assert_eq!("{}", ret);
 
-            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"NONE"}"#;
+            let param = r#"{"chainType":"BITCOINCASH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"NONE"}"#;
             let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
             let v = Value::from_str(ret).expect("find wallet");
             assert_eq!(
@@ -701,13 +710,13 @@ mod tests {
     #[test]
     fn import_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"BCH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"BITCOINCASH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
             {
                 "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
-                "chainType": "BCH",
+                "chainType": "BITCOINCASH",
                 "createdAt": 1566455834,
                 "encXPub": "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==",
                 "externalAddress": {
@@ -733,13 +742,13 @@ mod tests {
     #[test]
     fn import_ltc_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"LTC","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/2'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/2'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
             {
                 "address": "M7xo1Mi1gULZSwgvu7VVEvrwMRqngmFkVd",
-                "chainType": "LTC",
+                "chainType": "LITECOIN",
                 "createdAt": 1566455834,
                 "encXPub": "MwDMFXVWDEuWvBogeW1v/MOMFDnGnnflm2JAPvJaJZO4HXp8fCsWETA7u8MzOW3KaPksglpUHLN3xkDr2QWMEQq0TewFZoZ3KsjmLW0KGMRN7XQKqo/omkSEsPfalVnp9Zxm2lpxVmIacqvlernVSg==",
                 "externalAddress": {
@@ -766,13 +775,13 @@ mod tests {
     #[test]
     fn import_legacy_ltc_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"LTC","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
             {
                 "address": "LQMNSF1M4So7CGNjfoMFeyLuxMHY5g7pmn",
-                "chainType": "LTC",
+                "chainType": "LITECOIN",
                 "createdAt": 1566455834,
                 "encXPub": "aZQFapKlNXVFODnqcTrkYcUdEBOJng0detiaBwO/7yNBWxxukf9/GJOn1dUh4oumFTtHoNNsBxYjYXpMdO7HMksOlOOJUCFNGRvVkiS5W83nAMTTDDbJGlC9ZB0lbm6wC4RYP3uGlg1anIl2BOW+mg==",
                 "externalAddress": {
@@ -799,7 +808,7 @@ mod tests {
     #[test]
     fn remove_wallet_test() {
         run_test(|| {
-            let param = r#"{"chainType":"LTC","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let ret_v = Value::from_str(ret).unwrap();
@@ -811,7 +820,6 @@ mod tests {
             let param = serde_json::to_string(&param).unwrap();
             let ret = unsafe { _to_str(remove_wallet(_to_c_char(&param))) };
             let ret_v = Value::from_str(ret).unwrap();
-            //            let param = r#"{"id":
             assert_eq!(ret_v["id"], imported_id);
         });
     }
@@ -819,13 +827,13 @@ mod tests {
     #[test]
     fn import_trx_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"TRX","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"TRX-Wallet-1","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/195'/0'/0/0","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"TRON","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"TRX-Wallet-1","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/195'/0'/0/0","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
             {
                 "address": "TY2uroBeZ5trA9QT96aEWj32XLkAAhQ9R2",
-                "chainType": "TRX",
+                "chainType": "TRON",
                 "createdAt": 1566455834,
                 "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
                 "name": "LTC-Wallet-1",
@@ -864,7 +872,9 @@ mod tests {
             unsafe { clear_err() }
             let exported_mnemonic = unsafe { _to_str(export_mnemonic(_to_c_char(param))) };
             let _err = unsafe { _to_str(get_last_err_message()) };
-            assert_eq!(exported_mnemonic, MNEMONIC);
+            let expected_v = Value::from_str(r#"{"mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","ok":true}"#).unwrap();
+            let actual_v = Value::from_str(exported_mnemonic).unwrap();
+            assert_eq!(actual_v, expected_v);
 
             let param = r#"
         {
@@ -890,7 +900,7 @@ mod tests {
                 "amount": "93454",
                 "fee": "6000",
                 "internalUsed": 0,
-                "chainType": "BCH",
+                "chainType": "BITCOINCASH",
                 "chainId": "145",
                 "segWit":"NONE",
                 "outputs": [
@@ -918,7 +928,7 @@ mod tests {
     #[test]
     fn sign_tansaction_ltc_legacy_change_address() {
         run_test(|| {
-            //            let param = r#"{"chainType":"LTC","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            //            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
             //            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let param = r#"
@@ -928,7 +938,7 @@ mod tests {
                 "to": "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc",
                 "amount": "500000",
                 "fee": "100000",
-                "chainType": "LTC",
+                "chainType": "LITECOIN",
                 "chainId": "1",
                 "segWit":"NONE",
                 "changeAddress": "mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1",
