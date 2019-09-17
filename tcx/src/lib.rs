@@ -344,7 +344,10 @@ fn _export_mnemonic(v: &Value) -> Result<String> {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
-    keystore.mnemonic(password)
+    let mnemonic = keystore.mnemonic(password)?;
+    Ok(serde_json::to_string(
+        &json!({"ok": true, "mnemonic": mnemonic}),
+    )?)
 }
 
 //
