@@ -350,6 +350,31 @@ fn _export_mnemonic(v: &Value) -> Result<String> {
     )?)
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn verify_password(json_str: *const c_char) -> *const c_char {
+    let v: Value = parse_arguments(json_str);
+    let json = landingpad(|| _verify_password(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _verify_password(v: &Value) -> Result<String> {
+    let wid = v["id"].as_str().expect("id");
+    let password = v["password"].as_str().expect("password");
+
+    let map = KEYSTORE_MAP.read().unwrap();
+    let keystore: &HdKeystore = match map.get(wid) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+    if !keystore.verify_password(password) {
+        Err(format_err!("{}", "password_incorrect"))
+    } else {
+        Ok(serde_json::to_string(
+            &json!({"ok": true, "id": wid.to_string()}),
+        )?)
+    }
+}
+
 //
 #[no_mangle]
 pub extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {

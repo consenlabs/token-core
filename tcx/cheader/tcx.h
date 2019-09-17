@@ -24,3 +24,5 @@ void init_token_core_x(const char *json_str);
 const char *remove_wallet(const char *json_str);
 
 const char *sign_transaction(const char *json_str);
+
+const char *verify_password(const char *json_str);
