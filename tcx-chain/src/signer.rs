@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TxSignResult {
+    #[serde(rename = "sign")]
     pub signature: String,
+    #[serde(rename = "hash")]
     pub tx_hash: String,
     pub wtx_id: String,
 }
