@@ -67,16 +67,18 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             hrp: "ltc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
-            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
-            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+            //            043587CF
+            //            04358394
+            xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
+            xprv_prefix: [0x04, 0x35, 0x83, 0x94],
         }),
         "LITECOIN-TESTNET-P2WPKH" => Some(BtcForkNetwork {
             coin: "LITECOIN-TESTNET-P2WPKH",
             hrp: "ltc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
-            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
-            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+            xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
+            xprv_prefix: [0x04, 0x35, 0x83, 0x94],
         }),
         "BITCOIN" => Some(BtcForkNetwork {
             coin: "BITCOIN",
@@ -107,8 +109,8 @@ pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
             hrp: "bc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0xc4,
-            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
-            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
+            xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
+            xprv_prefix: [0x04, 0x35, 0x83, 0x94],
         }),
         "BITCOINCASH" => Some(BtcForkNetwork {
             coin: "BITCOINCASH",

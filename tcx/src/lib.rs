@@ -742,17 +742,50 @@ mod tests {
     #[test]
     fn import_ltc_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/2'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"TESTNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/2'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
             {
-                "address": "M7xo1Mi1gULZSwgvu7VVEvrwMRqngmFkVd",
+                "address": "QLfctE6KMv3ZzQod6UA37w3EPTuLS4tg1T",
+                "chainType": "LITECOIN",
+                "createdAt": 1566455834,
+                "encXPub": "k4GbrxWCcsrGokCos50O69Wg9reixsDqPHkciU4xeUi9dpICotcOMQSgTgRd7XtGXXjdV/SUuTBkPXNQikqORvvW2CnHNe7+iJsTdHebynq2Y3ZXMFUWt8WJkgB5NotqkjOik89LvJBKYKvnon2B0g==",
+                "externalAddress": {
+                    "address": "QPvKbnvZxAF1KVk5LfXbqtfnkwTymMf2Xu",
+                    "derivedPath": "0/1",
+                    "type": "EXTERNAL"
+                },
+                "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
+                "name": "LTC-Wallet-1",
+                "passwordHint": "",
+                "source": "MNEMONIC"
+            }
+            "#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+            let ret_v = Value::from_str(ret).unwrap();
+
+            assert_eq!(expected_v["address"], ret_v["address"]);
+            assert_eq!(expected_v["chainType"], ret_v["chainType"]);
+            assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
+            assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+        });
+    }
+
+    #[test]
+    fn import_legacy_ltc_wallet_from_mnemonic_mainnet() {
+        run_test(|| {
+            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/2'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+
+            let expected = r#"
+            {
+                "address": "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP",
                 "chainType": "LITECOIN",
                 "createdAt": 1566455834,
                 "encXPub": "MwDMFXVWDEuWvBogeW1v/MOMFDnGnnflm2JAPvJaJZO4HXp8fCsWETA7u8MzOW3KaPksglpUHLN3xkDr2QWMEQq0TewFZoZ3KsjmLW0KGMRN7XQKqo/omkSEsPfalVnp9Zxm2lpxVmIacqvlernVSg==",
                 "externalAddress": {
-                    "address": "MBDVivYGGiXzn2dP9Js3xtVViuQS3dyDwM",
+                    "address": "LavE5eHDvw9VDiNifbraR7GyY8MRvcQSLQ",
                     "derivedPath": "0/1",
                     "type": "EXTERNAL"
                 },
@@ -775,17 +808,17 @@ mod tests {
     #[test]
     fn import_legacy_ltc_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"TESTNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
             {
-                "address": "LQMNSF1M4So7CGNjfoMFeyLuxMHY5g7pmn",
+                "address": "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN",
                 "chainType": "LITECOIN",
                 "createdAt": 1566455834,
-                "encXPub": "aZQFapKlNXVFODnqcTrkYcUdEBOJng0detiaBwO/7yNBWxxukf9/GJOn1dUh4oumFTtHoNNsBxYjYXpMdO7HMksOlOOJUCFNGRvVkiS5W83nAMTTDDbJGlC9ZB0lbm6wC4RYP3uGlg1anIl2BOW+mg==",
+                "encXPub": "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==",
                 "externalAddress": {
-                    "address": "LNp88kijfnFKGcp1aPdnMkpfMycw1v7KdQ",
+                    "address": "mj78AbVtQ9SWnvbU7pcrueyE1krMmZtoUU",
                     "derivedPath": "0/1",
                     "type": "EXTERNAL"
                 },
@@ -926,7 +959,7 @@ mod tests {
     }
 
     #[test]
-    fn sign_tansaction_ltc_legacy_change_address() {
+    fn sign_transaction_ltc_legacy_change_address() {
         run_test(|| {
             //            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
             //            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
