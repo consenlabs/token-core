@@ -562,8 +562,10 @@ fn _remove_wallet(v: &Value) -> Result<String> {
     if keystore.verify_password(password) {
         _delete_keystore_file(w_id)?;
         map.remove(w_id);
+        Ok(serde_json::to_string(&json!({ "id": w_id }))?)
+    } else {
+        Err(format_err!("{}", "password_incorrect"))
     }
-    Ok(serde_json::to_string(&json!({ "id": w_id }))?)
 }
 
 #[no_mangle]
