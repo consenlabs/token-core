@@ -1,9 +1,11 @@
-use crate::Error;
-use bitcoin_hashes::hex::{FromHex, ToHex};
-use serde::{Deserialize, Serialize};
-
 use crate::numberic_util;
+use crate::Error;
 use crate::Result;
+use bitcoin_hashes::hex::{FromHex, ToHex};
+use digest::Digest;
+use serde::{Deserialize, Serialize};
+use sha2::Sha256;
+
 const CREDENTIAL_LEN: usize = 64usize;
 
 pub type Credential = [u8; CREDENTIAL_LEN];
@@ -61,7 +63,35 @@ impl KdfParams for Pbkdf2Params {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct CacheDerivedKey {
+    hashed_key: String,
+    derived_key: Vec<u8>,
+}
+
+impl CacheDerivedKey {
+    pub fn new(key: &str, derived_key: &[u8]) -> CacheDerivedKey {
+        CacheDerivedKey {
+            hashed_key: Self::hash(key),
+            derived_key: derived_key.to_vec(),
+        }
+    }
+
+    fn hash(key: &str) -> String {
+        let key_data: Vec<u8> = FromHex::from_hex(key).expect("cache derived key from key");
+        Sha256::digest(&Sha256::digest(&key_data)).to_hex()
+    }
+
+    pub fn get_derived_key(&self, key: &str) -> Result<Vec<u8>> {
+        if self.hashed_key == Self::hash(key) {
+            Ok(self.derived_key.clone())
+        } else {
+            Err(Error::InvalidPassword.into())
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Crypto<T: KdfParams> {
     cipher: String,
@@ -70,6 +100,8 @@ pub struct Crypto<T: KdfParams> {
     kdf: String,
     kdfparams: T,
     mac: String,
+    #[serde(skip)]
+    cached_derived_key: Option<CacheDerivedKey>,
 }
 
 impl Crypto<Pbkdf2Params> {
@@ -85,18 +117,29 @@ impl Crypto<Pbkdf2Params> {
             kdf: "pbkdf2".to_owned(),
             kdfparams: param,
             mac: String::from(""),
+            cached_derived_key: None,
         };
 
-        let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
-        crypto
-            .kdfparams
-            .generate_derived_key(password.as_bytes(), &mut derived_key);
+        let derived_key = crypto
+            .generate_derived_key(password)
+            .expect("new crypto generate_derived_key");
 
         let ciphertext = crypto.encrypt(password, origin);
         crypto.ciphertext = ciphertext.to_hex();
         let mac = Self::generate_mac(&derived_key, &ciphertext);
         crypto.mac = mac.to_hex();
         crypto
+    }
+
+    pub fn generate_derived_key(&self, key: &str) -> Result<Vec<u8>> {
+        if let Some(ckd) = &self.cached_derived_key {
+            ckd.get_derived_key(key)
+        } else {
+            let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
+            self.kdfparams
+                .generate_derived_key(key.as_bytes(), &mut derived_key);
+            Ok(derived_key.to_vec())
+        }
     }
 
     pub fn decrypt(&self, password: &str) -> Result<Vec<u8>> {
@@ -106,9 +149,9 @@ impl Crypto<Pbkdf2Params> {
     }
 
     fn encrypt(&self, password: &str, origin: &[u8]) -> Vec<u8> {
-        let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
-        self.kdfparams
-            .generate_derived_key(password.as_bytes(), &mut derived_key);
+        let derived_key = self
+            .generate_derived_key(password)
+            .expect("crypto::encrypt must no error");
         let key = &derived_key[0..16];
         let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).unwrap();
         super::aes::ctr::encrypt_nopadding(origin, key, &iv)
@@ -131,17 +174,13 @@ impl Crypto<Pbkdf2Params> {
     }
 
     pub fn verify_password(&self, password: &str) -> bool {
-        let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
-        self.kdfparams
-            .generate_derived_key(password.as_bytes(), &mut derived_key);
+        let derived_key = self.generate_derived_key(password).unwrap_or_default();
 
         self.verify_derived_key(&derived_key)
     }
 
     fn encrypt_data(&self, password: &str, origin: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
-        let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
-        self.kdfparams
-            .generate_derived_key(password.as_bytes(), &mut derived_key);
+        let derived_key = self.generate_derived_key(password).unwrap_or_default();
 
         if !self.verify_derived_key(&derived_key) {
             return Err(Error::InvalidPassword.into());
@@ -152,9 +191,7 @@ impl Crypto<Pbkdf2Params> {
     }
 
     fn decrypt_data(&self, password: &str, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
-        let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
-        self.kdfparams
-            .generate_derived_key(password.as_bytes(), &mut derived_key);
+        let derived_key = self.generate_derived_key(password).unwrap_or_default();
 
         if !self.verify_derived_key(&derived_key) {
             return Err(Error::InvalidPassword.into());
@@ -174,6 +211,15 @@ impl Crypto<Pbkdf2Params> {
         let result = [&derived_key[16..32], ciphertext].concat();
         let keccak256 = tiny_keccak::keccak256(&result);
         keccak256.to_vec()
+    }
+
+    pub fn cache_derived_key(&mut self, key: &str, derived_key: &[u8]) {
+        let cdk = CacheDerivedKey::new(key, derived_key);
+        self.cached_derived_key = Some(cdk);
+    }
+
+    pub fn clear_cache_derived_key(&mut self) {
+        self.cached_derived_key = None;
     }
 }
 
