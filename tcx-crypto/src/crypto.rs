@@ -138,6 +138,9 @@ impl Crypto<Pbkdf2Params> {
             let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
             self.kdfparams
                 .generate_derived_key(key.as_bytes(), &mut derived_key);
+            if self.mac != "" && !self.verify_derived_key(&derived_key) {
+                return Err(Error::InvalidPassword.into());
+            }
             Ok(derived_key.to_vec())
         }
     }
@@ -175,7 +178,6 @@ impl Crypto<Pbkdf2Params> {
 
     pub fn verify_password(&self, password: &str) -> bool {
         let derived_key = self.generate_derived_key(password).unwrap_or_default();
-
         self.verify_derived_key(&derived_key)
     }
 
@@ -201,7 +203,7 @@ impl Crypto<Pbkdf2Params> {
         super::aes::ctr::decrypt_nopadding(encrypted, key, &iv)
     }
 
-    fn verify_derived_key(&self, dk: &[u8]) -> bool {
+    pub fn verify_derived_key(&self, dk: &[u8]) -> bool {
         let cipher_bytes = Vec::from_hex(&self.ciphertext).expect("vec::from_hex");
         let mac = Self::generate_mac(&dk, &cipher_bytes);
         self.mac == mac.to_hex()

@@ -543,6 +543,102 @@ fn _remove_wallet(v: &Value) -> Result<String> {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn get_derived_key(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = landingpad(|| _get_derived_key(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _get_derived_key(v: &Value) -> Result<String> {
+    let w_id = v["id"].as_str().unwrap();
+    let password = v["password"].as_str().expect("password");
+
+    let map = KEYSTORE_MAP.read().unwrap();
+    let keystore: &HdKeystore = match map.get(w_id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let derived_key = keystore.crypto.generate_derived_key(password)?;
+
+    Ok(hex::encode(derived_key))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn verify_derived_key(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = landingpad(|| _verify_derived_key(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _verify_derived_key(v: &Value) -> Result<String> {
+    let w_id = v["id"].as_str().unwrap();
+    let derived_key = v["derivedKey"].as_str().expect("derivedKey");
+
+    let map = KEYSTORE_MAP.read().unwrap();
+    let keystore: &HdKeystore = match map.get(w_id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+    let derived_key_bytes: Vec<u8> = hex::decode(derived_key)?;
+    if !keystore.crypto.verify_derived_key(&derived_key_bytes) {
+        Err(format_err!("{}", "invalid_cached_derived_key"))
+    } else {
+        Ok(serde_json::to_string(
+            &json!({ "id": w_id, "derivedKey": derived_key }),
+        )?)
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn cache_derived_key(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = landingpad(|| _cache_derived_key(&v));
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _cache_derived_key(v: &Value) -> Result<String> {
+    let w_id = v["id"].as_str().unwrap();
+    let derived_key = v["derivedKey"].as_str().expect("derivedKey");
+    let tmp_password = v["tempPassword"].as_str().expect("tempPassword");
+
+    let mut map = KEYSTORE_MAP.write().unwrap();
+    let keystore: &mut HdKeystore = match map.get_mut(w_id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+    let derived_key_bytes: Vec<u8> = hex::decode(derived_key)?;
+    if !keystore.crypto.verify_derived_key(&derived_key_bytes) {
+        Err(format_err!("{}", "invalid_cached_derived_key"))
+    } else {
+        keystore
+            .crypto
+            .cache_derived_key(tmp_password, &derived_key_bytes);
+        Ok(serde_json::to_string(
+            &json!({ "id": w_id, "derivedKey": derived_key }),
+        )?)
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn clear_derived_key() -> *const c_char {
+    //    let v = parse_arguments(json_str);
+    let json = landingpad(|| _clear_derived_key());
+    CString::new(json).unwrap().into_raw()
+}
+
+fn _clear_derived_key() -> Result<String> {
+    let map: &mut HashMap<String, HdKeystore> = &mut KEYSTORE_MAP.write().unwrap();
+    let _ = map
+        .values_mut()
+        .map(|keystore| {
+            keystore.crypto.clear_cache_derived_key();
+        })
+        .collect::<()>();
+    Ok(serde_json::to_string(&json!({ "ok": true }))?)
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn clear_err() {
     LAST_ERROR.with(|e| {
         *e.borrow_mut() = None;
@@ -573,7 +669,8 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 #[cfg(test)]
 mod tests {
     use crate::{
-        clear_err, export_mnemonic, get_last_err_message, remove_wallet, sign_transaction,
+        clear_derived_key, clear_err, export_mnemonic, get_last_err_message, remove_wallet,
+        sign_transaction,
     };
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
@@ -994,5 +1091,13 @@ mod tests {
             //            let expected_v = Value::from_str(expected).unwrap();
             //            assert_eq!(ret_v, expected_v);
         })
+    }
+
+    #[test]
+    fn run_without_collect() {
+        run_test(|| {
+            unsafe { clear_derived_key() };
+            assert_eq!("", "")
+        });
     }
 }
