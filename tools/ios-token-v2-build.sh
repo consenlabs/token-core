@@ -9,7 +9,7 @@
 
 pushd ../tcx
 RUST_BACKTRACE=1 cbindgen src/lib.rs -l c > cheader/tcx.h
-cargo lipo --release
+cargo lipo --release --targets aarch64-apple-ios,armv7-apple-ios,armv7s-apple-ios,x86_64-apple-ios,i386-apple-ios
 
 #mkdir -p ../examples/iOSExample/TokenCoreX/Include
 #mkdir -p ../examples/iOSExample/TokenCoreX/Libs

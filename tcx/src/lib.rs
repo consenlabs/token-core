@@ -424,7 +424,31 @@ fn _sign_btc_fork_transaction(
     password: &str,
 ) -> Result<String> {
     let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
-    let unspents: Vec<Utxo> = serde_json::from_value(v["outputs"].clone()).expect("outputs");
+    let utxos = v["outputs"].as_array().expect("expect outputs");
+
+    let unspents: Vec<Utxo> = utxos
+        .iter()
+        .map(|v| Utxo {
+            tx_hash: v["txHash"].as_str().expect("utxo txHash").to_string(),
+            vout: v["vout"].as_f64().expect("utxo vout") as i32,
+            amount: v["amount"]
+                .as_str()
+                .expect("utxo amount")
+                .to_string()
+                .parse::<i64>()
+                .expect("converter amount to i64"),
+            address: v["address"].as_str().expect("utxo address").to_string(),
+            script_pub_key: v["scriptPubKey"]
+                .as_str()
+                .expect("utxo scriptPubKey")
+                .to_string(),
+            derived_path: v["derivedPath"]
+                .as_str()
+                .expect("utxo derivedPath")
+                .to_string(),
+            sequence: 0,
+        })
+        .collect();
     let internal_used = v["internalUsed"].as_i64();
     let change_address = v["changeAddress"].as_str();
     let to = v["to"].as_str().expect("to");
@@ -538,8 +562,10 @@ fn _remove_wallet(v: &Value) -> Result<String> {
     if keystore.verify_password(password) {
         _delete_keystore_file(w_id)?;
         map.remove(w_id);
+        Ok(serde_json::to_string(&json!({ "id": w_id }))?)
+    } else {
+        Err(format_err!("{}", "password_incorrect"))
     }
-    Ok(serde_json::to_string(&json!({ "id": w_id }))?)
 }
 
 #[no_mangle]
