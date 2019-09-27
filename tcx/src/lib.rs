@@ -695,8 +695,8 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 #[cfg(test)]
 mod tests {
     use crate::{
-        clear_derived_key, clear_err, export_mnemonic, get_last_err_message, remove_wallet,
-        sign_transaction,
+        cache_derived_key, clear_derived_key, clear_err, export_mnemonic, get_derived_key,
+        get_last_err_message, remove_wallet, sign_transaction,
     };
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
@@ -1071,6 +1071,84 @@ mod tests {
 
             unsafe { clear_err() }
             let ret = _to_str(sign_transaction(_to_c_char(param)));
+            let ret_v = Value::from_str(ret).unwrap();
+            let expected = r#"{"sign":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","hash":"4d43cc66e9763a4e263fdb592591b9f19a6915ac821c92896d13f95beaca3b28","wtxId":""}"#;
+            let expected_v = Value::from_str(expected).unwrap();
+            assert_eq!(ret_v, expected_v);
+        })
+    }
+
+    #[test]
+    fn cache_derived_key_test() {
+        run_test(|| {
+            let param = r#"
+            {
+                "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
+                "password": "Insecure Password"
+            }
+            "#;
+            unsafe { clear_err() }
+            let derived_key = unsafe { _to_str(get_derived_key(_to_c_char(param))) };
+
+            let param: Value = json!({"id": "9c6cbc21-1c43-4c8b-bb7a-5e538f908819", "tempPassword": "88888888", "derivedKey": derived_key});
+            unsafe { clear_err() }
+            unsafe { _to_str(cache_derived_key(_to_c_char(param.to_string().as_str()))) };
+
+            let param = r#"
+            {
+                "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
+                "password": "888888",
+                "to": "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
+                "amount": "93454",
+                "fee": "6000",
+                "internalUsed": 0,
+                "chainType": "BITCOINCASH",
+                "chainId": "145",
+                "segWit":"NONE",
+                "outputs": [
+                    {
+                        "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
+                        "vout": 0,
+                        "amount": "100000",
+                        "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                        "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
+                        "derivedPath": "0/0"
+                    }
+                ]
+            }
+            "#;
+
+            unsafe { clear_err() }
+            let error = unsafe { _to_str(get_last_err_message()) };
+            assert_eq!(error, "invalid_password");
+
+            unsafe { clear_err() }
+            let param = r#"
+            {
+                "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
+                "password": "88888888",
+                "to": "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
+                "amount": "93454",
+                "fee": "6000",
+                "internalUsed": 0,
+                "chainType": "BITCOINCASH",
+                "chainId": "145",
+                "segWit":"NONE",
+                "outputs": [
+                    {
+                        "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
+                        "vout": 0,
+                        "amount": "100000",
+                        "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                        "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
+                        "derivedPath": "0/0"
+                    }
+                ]
+            }
+            "#;
+
+            let ret = _to_str(sign_transaction(_to_c_char(param)));
+
             let ret_v = Value::from_str(ret).unwrap();
             let expected = r#"{"sign":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","hash":"4d43cc66e9763a4e263fdb592591b9f19a6915ac821c92896d13f95beaca3b28","wtxId":""}"#;
             let expected_v = Value::from_str(expected).unwrap();

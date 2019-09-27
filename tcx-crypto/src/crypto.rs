@@ -177,12 +177,13 @@ impl Crypto<Pbkdf2Params> {
     }
 
     pub fn verify_password(&self, password: &str) -> bool {
-        let derived_key = self.generate_derived_key(password).unwrap_or_default();
-        self.verify_derived_key(&derived_key)
+        let derived_key_ret = self.generate_derived_key(password);
+
+        derived_key_ret.is_ok() && self.verify_derived_key(&derived_key_ret.expect(""))
     }
 
     fn encrypt_data(&self, password: &str, origin: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
-        let derived_key = self.generate_derived_key(password).unwrap_or_default();
+        let derived_key = self.generate_derived_key(password)?;
 
         if !self.verify_derived_key(&derived_key) {
             return Err(Error::InvalidPassword.into());
@@ -193,7 +194,7 @@ impl Crypto<Pbkdf2Params> {
     }
 
     fn decrypt_data(&self, password: &str, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
-        let derived_key = self.generate_derived_key(password).unwrap_or_default();
+        let derived_key = self.generate_derived_key(password)?;
 
         if !self.verify_derived_key(&derived_key) {
             return Err(Error::InvalidPassword.into());
