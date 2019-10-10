@@ -5,11 +5,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use tcx_crypto::{Crypto, Pbkdf2Params};
-use tcx_primitive::key::{DerivePath, Pair};
+use tcx_primitive::{Derive, DeriveJunction, DerivePath, Pair, Public, Secp256k1Pair};
 
 use crate::bips;
 
 use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
+
 use crate::Error;
 use crate::Result;
 use std::str::FromStr;
@@ -65,7 +66,7 @@ impl Default for Metadata {
 pub trait Address {
     fn is_valid(address: &str) -> bool;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
-    fn from_public_key(public_key: &impl PublicKey, coin: Option<&str>) -> Result<String>;
+    fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String>;
 
     //    fn from_public_key_with(public_key: &impl PublicKey, coin: &CoinInfo) -> Result<String>;
     // fn from_data(data: &[u8]) -> Box<dyn Address>;
@@ -149,9 +150,12 @@ impl HdKeystore {
     ) -> Result<Account> {
         let paths = vec![coin_info.derivation_path.clone()];
         let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
+        //        let key = keys.first().ok_or(format_err!("derivate_failed"))?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
-        let pub_key = key.public_key();
-        let address = A::from_public_key(&pub_key, Some(&coin_info.symbol))?;
+        let normal_pair = key.to_normal_pair();
+        let pub_key = normal_pair.public();
+        let bytes = pub_key.as_slice();
+        let address = A::from_public_key(bytes, Some(&coin_info.symbol))?;
 
         let extra = E::new(coin_info, seed)?;
         let acc = Account {
@@ -220,12 +224,34 @@ impl HdKeystore {
         curve: CurveType,
         paths: &[impl AsRef<str>],
         seed: &Seed,
-    ) -> Result<Vec<impl PrivateKey>> {
+    ) -> Result<Vec<impl Pair>> {
         match curve {
-            CurveType::SECP256k1 => Secp256k1Curve::key_at_paths_with_seed(paths, seed),
+            CurveType::SECP256k1 => {
+                //                let s = Secp256k1::new();
+                //                let sk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
+                let pair = Secp256k1Pair::from_seed_slice(seed.as_bytes())
+                    .map_err(|_| Error::CanNotDerivePairFromSeed)?;
+                let pairs: Result<Vec<Secp256k1Pair>> = paths
+                    .iter()
+                    .map(|path| {
+                        let path = DerivePath::from_str(path.as_ref())
+                            .map_err(|_| Error::CannotDeriveKey)?;
+                        let child_pair = pair
+                            .derive(path.into_iter())
+                            .map_err(|_| Error::CannotDeriveKey)?;
+                        Ok(child_pair)
+                    })
+                    .collect();
+                pairs
+            }
+
             _ => Err(Error::UnsupportedCurve.into()),
         }
     }
+    //    fn get_pair_at_paths<T: Pair>(&self, seed: &[u8]) -> Result<T> {
+    //
+    //
+    //    }
 
     pub fn get_pair<T: Pair>(&self, path: &str, password: &str) -> Result<T> {
         let seed = self.seed(password)?;
@@ -250,7 +276,7 @@ impl HdKeystore {
         symbol: &str,
         paths: &[impl AsRef<str>],
         password: &str,
-    ) -> Result<Vec<impl PrivateKey>> {
+    ) -> Result<Vec<impl Pair>> {
         let acc = self.account(symbol).ok_or(Error::AccountNotFound)?;
         let seed = self.seed(password)?;
         Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)
@@ -294,6 +320,7 @@ mod tests {
     use crate::curve::{PrivateKey, PublicKey};
     use bitcoin_hashes::hex::ToHex;
     use serde_json::Map;
+    use tcx_primitive::Public;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
@@ -382,7 +409,7 @@ mod tests {
             unimplemented!()
         }
 
-        fn from_public_key(_public_key: &impl PublicKey, _coin: Option<&str>) -> Result<String> {
+        fn from_public_key(_public_key: &[u8], _coin: Option<&str>) -> Result<String> {
             Ok("mock_address".to_string())
         }
     }
@@ -503,7 +530,7 @@ mod tests {
         let prv_keys = keystore.key_at_paths("BITCOIN", &paths, PASSWORD).unwrap();
         let pub_keys = prv_keys
             .iter()
-            .map(|prv| prv.public_key().to_bytes().to_hex())
+            .map(|prv| prv.to_normal_pair().unwrap().public().as_slice().to_hex())
             .collect::<Vec<String>>();
         let expected_pub_keys = vec![
             "026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868",

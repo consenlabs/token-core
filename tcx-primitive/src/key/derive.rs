@@ -1,4 +1,5 @@
 use crate::key::KeyError;
+use crate::Result;
 use bitcoin::util::bip32::ChildNumber;
 use std::convert::TryInto;
 use std::str::FromStr;
@@ -12,10 +13,7 @@ pub enum DeriveJunction {
 pub trait Derive: Sized {
     type Error;
 
-    fn derive<Iter: Iterator<Item = DeriveJunction>>(
-        &self,
-        path: Iter,
-    ) -> Result<Self, Self::Error>;
+    fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self>;
 }
 
 // TODO add parity string derivation path
@@ -45,9 +43,9 @@ impl DeriveJunction {
 }
 
 impl FromStr for DeriveJunction {
-    type Err = KeyError;
+    type Err = failure::Error;
 
-    fn from_str(inp: &str) -> Result<Self, Self::Err> {
+    fn from_str(inp: &str) -> Result<Self> {
         Ok(
             match inp.chars().last().map_or(false, |l| l == '\'' || l == 'h') {
                 true => DeriveJunction::hard(
@@ -65,16 +63,16 @@ impl FromStr for DeriveJunction {
 }
 
 impl TryInto<ChildNumber> for DeriveJunction {
-    type Error = KeyError;
+    type Error = failure::Error;
 
-    fn try_into(self) -> Result<ChildNumber, Self::Error> {
+    fn try_into(self) -> Result<ChildNumber> {
         if let Ok(num) = match self {
             DeriveJunction::Soft(index) => ChildNumber::from_normal_idx(index),
             DeriveJunction::Hard(index) => ChildNumber::from_hardened_idx(index),
         } {
             Ok(num)
         } else {
-            Err(KeyError::InvalidChildNumber)
+            Err(KeyError::InvalidChildNumber.into())
         }
     }
 }
@@ -83,16 +81,16 @@ impl TryInto<ChildNumber> for DeriveJunction {
 pub struct DerivePath(Vec<DeriveJunction>);
 
 impl FromStr for DerivePath {
-    type Err = KeyError;
+    type Err = failure::Error;
 
-    fn from_str(path: &str) -> Result<Self, Self::Err> {
+    fn from_str(path: &str) -> Result<Self> {
         let mut parts = path.split("/").peekable();
         // First parts must be `m`.
         if *parts.peek().unwrap() == "m" {
             parts.next();
         }
 
-        let ret: Result<Vec<DeriveJunction>, KeyError> = parts.map(str::parse).collect();
+        let ret: Result<Vec<DeriveJunction>> = parts.map(str::parse).collect();
         Ok(DerivePath(ret?))
     }
 }

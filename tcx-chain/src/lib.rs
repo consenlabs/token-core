@@ -65,4 +65,6 @@ pub enum Error {
     AccountNotFound,
     #[fail(display = "can_not_derive_pair_from_seed")]
     CanNotDerivePairFromSeed,
+    #[fail(display = "can_not_derive_key")]
+    CannotDeriveKey,
 }

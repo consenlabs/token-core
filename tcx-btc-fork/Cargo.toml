@@ -7,11 +7,13 @@ edition = "2018"
 [dependencies]
 tcx-crypto = { path = "../tcx-crypto" }
 tcx-chain = { path = "../tcx-chain" }
+tcx-primitive = { path = "../tcx-primitive" }
 
 hex = "0.3.2"
 base64 = "0.10.1"
 #bitcoin = { path = "../../../rust-bitcoin"}
 #secp256k1 = { path = "../../../rust-secp256k1"}
+
 bitcoin = "0.20.0"
 secp256k1 = {version ="0.15", features = ["recovery"] }
 tiny-bip39 = "0.6.0"

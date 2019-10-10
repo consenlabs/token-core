@@ -16,6 +16,7 @@ use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
 use tcx_chain::curve::PrivateKey;
+use tcx_primitive::Pair;
 
 use crate::ExtendedPubKeyExtra;
 use bitcoin::util::bip143::SighashComponents;
@@ -24,6 +25,7 @@ use std::marker::PhantomData;
 use tcx_chain::bips::get_account_path;
 use tcx_chain::curve::PublicKey;
 use tcx_chain::keystore::Address;
+use tcx_primitive::key::Public;
 //use serde::
 
 const DUST: u64 = 546;
@@ -231,7 +233,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
 
     pub fn sign_transaction(
         &self,
-        prv_keys: &[impl PrivateKey],
+        prv_keys: &[impl Pair],
         change_addr_pubkey: Script,
     ) -> Result<TxSignResult> {
         let tx_outs = self.tx_outs(change_addr_pubkey)?;
@@ -258,20 +260,21 @@ pub trait BitcoinTransactionSignComponent {
     fn sign_inputs(
         tx: &Transaction,
         unspents: &[Utxo],
-        prv_keys: &[impl PrivateKey],
+        prv_keys: &[impl Pair],
     ) -> Result<Transaction>;
     fn tx_version() -> u32;
 
     fn sign_hash_and_pub_key(
-        pri_key: &impl PrivateKey,
+        pri_key: &impl Pair,
         hash: &[u8],
         sign_hash: u8,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         let signature_bytes = pri_key.sign(&hash)?;
         let raw_bytes: Vec<u8> = vec![sign_hash];
         let sig_bytes: Vec<u8> = [signature_bytes, raw_bytes].concat();
-        let pub_key_bytes = pri_key.public_key().to_bytes();
-        Ok((sig_bytes, pub_key_bytes))
+        let pub_key = pri_key.public();
+        let pub_key_bytes = pub_key.as_slice();
+        Ok((sig_bytes, pub_key_bytes.to_vec()))
     }
 }
 
@@ -281,15 +284,15 @@ impl SegWitTransactionSignComponent {
     fn witness_sign(
         tx: &Transaction,
         unspents: &[Utxo],
-        prv_keys: &[impl PrivateKey],
+        prv_keys: &[impl Pair],
     ) -> Result<Vec<(Vec<u8>, Vec<u8>)>> {
         let mut witnesses: Vec<(Vec<u8>, Vec<u8>)> = vec![];
         let shc = SighashComponents::new(&tx);
         for i in 0..tx.input.len() {
             let tx_in = &tx.input[i];
             let unspent = &unspents[i];
-            let pub_key = &prv_keys[i].public_key();
-            let pub_key_hash = hash160::Hash::hash(&pub_key.to_bytes()).into_inner();
+            let pub_key = &prv_keys[i].to_normal_pair().public();
+            let pub_key_hash = hash160::Hash::hash(&pub_key.as_slice()).into_inner();
             let script_hex = format!("76a914{}88ac", hex::encode(pub_key_hash));
             let script = Script::from(hex::decode(script_hex)?);
             let hash = shc.sighash_all(tx_in, &script, unspent.amount as u64);
@@ -309,7 +312,7 @@ impl BitcoinTransactionSignComponent for SegWitTransactionSignComponent {
     fn sign_inputs(
         tx: &Transaction,
         unspents: &[Utxo],
-        prv_keys: &[impl PrivateKey],
+        prv_keys: &[impl Pair],
     ) -> Result<Transaction> {
         let _sig_hash_components = SighashComponentsWithForkId::new(&tx);
         let witnesses: Vec<(Vec<u8>, Vec<u8>)> = Self::witness_sign(tx, unspents, prv_keys)?;
@@ -318,8 +321,8 @@ impl BitcoinTransactionSignComponent for SegWitTransactionSignComponent {
             .iter()
             .enumerate()
             .map(|(i, txin)| {
-                let pub_key = &prv_keys[i].public_key();
-                let hash = hash160::Hash::hash(&pub_key.to_bytes()).into_inner();
+                let pub_key = &prv_keys[i].to_normal_pair().public();
+                let hash = hash160::Hash::hash(&pub_key.as_slice()).into_inner();
                 let hex = format!("160014{}", hex::encode(&hash));
 
                 TxIn {
@@ -365,7 +368,7 @@ impl<H: SignHasher> LegacyTransactionSignComponent<H> {
     fn script_sigs_sign(
         tx: &Transaction,
         unspents: &[Utxo],
-        prv_keys: &[impl PrivateKey],
+        prv_keys: &[impl Pair],
     ) -> Result<Vec<Script>> {
         let mut script_sigs: Vec<Script> = vec![];
 
@@ -389,7 +392,7 @@ impl<H: SignHasher> BitcoinTransactionSignComponent for LegacyTransactionSignCom
     fn sign_inputs(
         tx: &Transaction,
         unspents: &[Utxo],
-        prv_keys: &[impl PrivateKey],
+        prv_keys: &[impl Pair],
     ) -> Result<Transaction> {
         let sign_scripts = Self::script_sigs_sign(&tx, unspents, &prv_keys)?;
         let input_with_sigs = tx

@@ -106,7 +106,7 @@ impl<T: Address> ExtendedPubKeyExtra<T> {
                 ChildNumber::from_normal_idx(idx as u32).unwrap(),
             ],
         )?;
-        let address = T::from_public_key(&index_pub.public_key, Some(coin))?;
+        let address = T::from_public_key(&index_pub.public_key.to_bytes(), Some(coin))?;
         Ok(ExternalAddress {
             address,
             addr_type: "EXTERNAL".to_string(),

@@ -11,6 +11,8 @@ use std::convert::TryInto;
 use std::str::FromStr;
 
 use crate::key::derive::*;
+use crate::key::KeyError::InvalidMessage;
+use crate::Result;
 use bitcoin::{PrivateKey, PublicKey};
 use lazy_static::lazy_static;
 
@@ -78,12 +80,12 @@ impl Pair {
 }
 
 impl Derive for Public {
-    type Error = KeyError;
+    type Error = failure::Error;
 
     fn derive<Iter: Iterator<Item = DeriveJunction>>(
         &self,
         path: Iter,
-    ) -> Result<Self, Self::Error> {
+    ) -> core::result::Result<Self, Self::Error> {
         match self.0 {
             PublicType::ExtendedPubKey(r) => {
                 let mut extended_key = r;
@@ -94,22 +96,25 @@ impl Derive for Public {
                     match extended_key.ckd_pub(&SECP256K1_ENGINE, child_number) {
                         Ok(r) => extended_key = r,
                         Err(e) => {
-                            return Err(transform_bip32_error(e));
+                            return Err(transform_bip32_error(e).into());
                         }
                     }
                 }
 
                 Ok(Public(PublicType::ExtendedPubKey(extended_key)))
             }
-            _ => Err(KeyError::CannotDeriveKey),
+            _ => Err(KeyError::CannotDeriveKey.into()),
         }
     }
 }
 
 impl Derive for Pair {
-    type Error = KeyError;
+    type Error = failure::Error;
 
-    fn derive<T: Iterator<Item = DeriveJunction>>(&self, path: T) -> Result<Self, Self::Error> {
+    fn derive<T: Iterator<Item = DeriveJunction>>(
+        &self,
+        path: T,
+    ) -> core::result::Result<Self, Self::Error> {
         match self.0 {
             PrivateType::ExtendedPrivKey(r) => {
                 let mut extended_key = r;
@@ -120,35 +125,35 @@ impl Derive for Pair {
                     match extended_key.ckd_priv(&SECP256K1_ENGINE, child_number) {
                         Ok(r) => extended_key = r,
                         Err(e) => {
-                            return Err(transform_bip32_error(e));
+                            return Err(transform_bip32_error(e).into());
                         }
                     }
                 }
 
                 Ok(Pair(PrivateType::ExtendedPrivKey(extended_key)))
             }
-            _ => Err(KeyError::CannotDeriveKey),
+            _ => Err(KeyError::CannotDeriveKey.into()),
         }
     }
 }
 
 impl FromStr for Pair {
-    type Err = KeyError;
+    type Err = failure::Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self> {
         match ExtendedPrivKey::from_str(s) {
             Ok(r) => Ok(Pair(PrivateType::ExtendedPrivKey(r))),
-            Err(_e) => Err(KeyError::InvalidBase58),
+            Err(_e) => Err(KeyError::InvalidBase58.into()),
         }
     }
 }
 
 impl Pair {
     /// Construct a new master key from a seed value
-    pub fn new_pair(network: Network, seed: &[u8]) -> Result<Pair, KeyError> {
+    pub fn new_pair(network: Network, seed: &[u8]) -> Result<Pair> {
         match ExtendedPrivKey::new_master(network, seed) {
             Ok(r) => Ok(Pair(PrivateType::ExtendedPrivKey(r))),
-            Err(e) => Err(transform_bip32_error(e)),
+            Err(e) => Err(transform_bip32_error(e).into()),
         }
     }
 }
@@ -157,7 +162,7 @@ impl TraitPair for Pair {
     type Public = Public;
     type Seed = Seed;
 
-    fn from_slice(data: &[u8]) -> Result<Self, KeyError> {
+    fn from_slice(data: &[u8]) -> Result<Self> {
         let private_key = PrivateKey {
             compressed: true,
             network: Network::Bitcoin,
@@ -167,11 +172,11 @@ impl TraitPair for Pair {
         Ok(Pair(PrivateType::PrivateKey(private_key)))
     }
 
-    fn from_seed(seed: &Seed) -> Result<Pair, KeyError> {
+    fn from_seed(seed: &Seed) -> Result<Pair> {
         Self::from_seed_slice(&seed[..])
     }
 
-    fn from_seed_slice(seed: &[u8]) -> Result<Pair, KeyError> {
+    fn from_seed_slice(seed: &[u8]) -> Result<Pair> {
         Self::new_pair(Network::Bitcoin, seed)
     }
 
@@ -185,6 +190,47 @@ impl TraitPair for Pair {
                 let pub_key = PublicKey::from_private_key(&SECP256K1_ENGINE, &r);
                 Public(PublicType::PublicKey(pub_key))
             }
+        }
+    }
+
+    fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
+        let pk = match self.0 {
+            PrivateType::ExtendedPrivKey(epk) => epk.private_key,
+            PrivateType::PrivateKey(prv) => prv,
+        };
+        let msg = Message::from_slice(data).map_err(transform_secp256k1_error)?;
+        let signature = SECP256K1_ENGINE.sign(&msg, &pk.key);
+        Ok(signature.serialize_der().to_vec())
+    }
+
+    fn to_normal_pair(&self) -> Self {
+        match self.0 {
+            PrivateType::ExtendedPrivKey(epk) => {
+                Pair::from_slice(&epk.private_key.to_bytes()).expect("convert_to_normal_pair")
+            }
+            PrivateType::PrivateKey(pk) => {
+                Pair::from_slice(&pk.to_bytes()).expect("convert_to_normal_from_private_key")
+            }
+        }
+    }
+
+    //    fn public_key(&self) -> Self::Public {
+    //        match self.0 {
+    //            PrivateType::ExtendedPrivKey(r) => {
+    //                let pub_key = ExtendedPubKey::from_private(&SECP256K1_ENGINE, &r);
+    //                Public(PublicType::ExtendedPubKey(pub_key))
+    //            }
+    //            PrivateType::PrivateKey(r) => {
+    //                let pub_key = PublicKey::from_private_key(&SECP256K1_ENGINE, &r);
+    //                Public(PublicType::PublicKey(pub_key))
+    //            }
+    //        }
+    //    }
+
+    fn is_extendable(&self) -> bool {
+        match self.0 {
+            PrivateType::ExtendedPrivKey(_) => true,
+            PrivateType::PrivateKey(_) => false,
         }
     }
 }
@@ -202,7 +248,7 @@ impl std::fmt::Debug for Public {
 }
 
 impl TraitPublic for Public {
-    fn from_slice(_data: &[u8]) -> Result<Self, Self::Error> {
+    fn from_slice(_data: &[u8]) -> core::result::Result<Self, Self::Error> {
         //TODO from
         unimplemented!()
     }
@@ -216,7 +262,7 @@ impl TraitPublic for Public {
 impl FromStr for Public {
     type Err = KeyError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         match ExtendedPubKey::from_str(s) {
             Ok(r) => Ok(Public(PublicType::ExtendedPubKey(r))),
             Err(_e) => Err(KeyError::InvalidBase58),
@@ -245,9 +291,9 @@ impl TypedKey for Pair {
 }
 
 impl Signer<Signature> for Pair {
-    type Error = KeyError;
+    type Error = failure::Error;
 
-    fn sign<T: AsRef<[u8]>>(&self, data: T) -> Result<Signature, Self::Error> {
+    fn sign<T: AsRef<[u8]>>(&self, data: T) -> core::result::Result<Signature, Self::Error> {
         let msg = Message::from_slice(data.as_ref()).map_err(transform_secp256k1_error)?;
 
         Ok(SECP256K1_ENGINE.sign(&msg, &self.private_key().key))
@@ -255,9 +301,12 @@ impl Signer<Signature> for Pair {
 }
 
 impl Signer<RecoverableSignature> for Pair {
-    type Error = KeyError;
+    type Error = failure::Error;
 
-    fn sign<T: AsRef<[u8]>>(&self, data: T) -> Result<RecoverableSignature, Self::Error> {
+    fn sign<T: AsRef<[u8]>>(
+        &self,
+        data: T,
+    ) -> core::result::Result<RecoverableSignature, Self::Error> {
         let msg = Message::from_slice(data.as_ref()).map_err(transform_secp256k1_error)?;
 
         Ok(SECP256K1_ENGINE.sign_recoverable(&msg, &(self.private_key().key)))
@@ -266,6 +315,7 @@ impl Signer<RecoverableSignature> for Pair {
 
 #[cfg(test)]
 mod tests {
-
     //TODO add more test
+    #[test]
+    fn it_works() {}
 }

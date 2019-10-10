@@ -13,3 +13,4 @@ secp256k1 = {version ="0.15", features = ["recovery"] }
 hex-literal = "0.2"
 hex = "0.3.2"
 lazy_static = "1.3.0"
+failure = "0.1.5"

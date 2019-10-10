@@ -138,8 +138,8 @@ impl Address for BtcForkAddress {
         unimplemented!()
     }
 
-    fn from_public_key(public_key: &impl PublicKey, coin: Option<&str>) -> Result<String> {
-        let pub_key = Secp256k1PublicKey::from_slice(&public_key.to_bytes())?;
+    fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String> {
+        let pub_key = Secp256k1PublicKey::from_slice(&public_key)?;
         let coin = coin.expect("coin from address_pub_key");
         let network = network_from_coin(&coin);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);

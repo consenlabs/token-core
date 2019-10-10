@@ -57,8 +57,7 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
             .ok_or(format_err!("account_not_found"))?;
         let path = &account.derivation_path;
         let pair = &self.get_pair::<Pair>(path, password.unwrap())?;
-        let sign_result: core::result::Result<RecoverableSignature, KeyError> =
-            pair.sign(&hash[..]);
+        let sign_result: Result<RecoverableSignature> = pair.sign(&hash[..]);
 
         match sign_result {
             Ok(r) => {
@@ -84,7 +83,7 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
 //
 //        let hash = Hash::hash(&hex::decode(raw["raw_data_hex"].as_str().unwrap())?);
 //
-//        let sign_result: core::result::Result<RecoverableSignature, KeyError> =
+//        let sign_result: core::result::Result<RecoverableSignature> =
 //            self.sign(&hash[..]);
 //
 //        match sign_result {
