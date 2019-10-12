@@ -9,7 +9,7 @@ use tcx_primitive::{Derive, DeriveJunction, DerivePath, Pair, Public, Secp256k1P
 
 use crate::bips;
 
-use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
+use crate::curve::{CurveType, PrivateKey, PublicKey};
 
 use crate::Error;
 use crate::Result;
@@ -152,8 +152,7 @@ impl HdKeystore {
         let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
         //        let key = keys.first().ok_or(format_err!("derivate_failed"))?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
-        let normal_pair = key.to_normal_pair();
-        let pub_key = normal_pair.public();
+        let pub_key = key.public_key();
         let bytes = pub_key.as_slice();
         let address = A::from_public_key(bytes, Some(&coin_info.symbol))?;
 
@@ -530,7 +529,7 @@ mod tests {
         let prv_keys = keystore.key_at_paths("BITCOIN", &paths, PASSWORD).unwrap();
         let pub_keys = prv_keys
             .iter()
-            .map(|prv| prv.to_normal_pair().unwrap().public().as_slice().to_hex())
+            .map(|prv| prv.public_key().as_slice().to_hex())
             .collect::<Vec<String>>();
         let expected_pub_keys = vec![
             "026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868",

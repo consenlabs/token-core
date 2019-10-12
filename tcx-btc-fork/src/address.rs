@@ -14,7 +14,8 @@ use core::result;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_chain::keystore::Address;
-use tcx_chain::{CoinInfo, DerivationInfo};
+use tcx_chain::CoinInfo;
+use tcx_primitive::{ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BtcForkAddress {
@@ -200,21 +201,29 @@ impl BtcForkAddress {
     }
 
     pub fn extended_public_key(
-        derivation_info: &DerivationInfo,
+        derivation_info: &ArbitraryNetworkExtendedPubKey,
         coin_info: &CoinInfo,
     ) -> Result<String> {
         let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
-        Ok(derivation_info.encode_with_network(network.expect("network").xpub_prefix))
+        let anepk = ArbitraryNetworkExtendedPubKey {
+            network: network.unwrap().xpub_prefix,
+            extended_pub_key: derivation_info.extended_pub_key,
+        };
+        Ok(anepk.to_string())
     }
 
     pub fn extended_private_key(
-        derivation_info: &DerivationInfo,
+        extended_priv_key: &ArbitraryNetworkExtendedPrivKey,
         coin_info: &CoinInfo,
     ) -> Result<String> {
         let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
-        Ok(derivation_info.encode_with_network(network.expect("network").xprv_prefix))
+        let anepk = ArbitraryNetworkExtendedPrivKey {
+            network: network.unwrap().xpub_prefix,
+            extended_priv_key: extended_priv_key.extended_priv_key,
+        };
+        Ok(anepk.to_string())
     }
 }
 

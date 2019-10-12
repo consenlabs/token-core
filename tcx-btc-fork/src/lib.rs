@@ -7,8 +7,9 @@ pub mod transaction;
 
 use core::result;
 use serde::{Deserialize, Serialize};
+use std::iter::IntoIterator;
 use std::str::FromStr;
-use tcx_chain::curve::{CurveType, Secp256k1Curve};
+use tcx_chain::curve::CurveType;
 use tcx_chain::keystore::Address;
 use tcx_chain::keystore::{CoinInfo, Extra};
 
@@ -35,6 +36,9 @@ pub use transaction::{BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkT
 
 pub use address::PubKeyScript;
 use serde::export::PhantomData;
+use tcx_primitive::Derive;
+use tcx_primitive::Pair;
+use tcx_primitive::{DerivePath, Secp256k1Pair};
 pub use transaction::ScriptPubKeyComponent;
 
 #[derive(Fail, Debug)]
@@ -82,7 +86,11 @@ where
             "BCH must be at secp256k1"
         );
         let account_path = get_account_path(&coin_info.derivation_path)?;
-        let derivation_info = Secp256k1Curve::extended_pub_key(&account_path, &seed)?;
+        let pair = Secp256k1Pair::from_seed_slice(seed.as_bytes())?;
+        let derive_path = DerivePath::from_str(&account_path)?;
+        let account_pair = pair.derive(derive_path.into_iter())?;
+        let derivation_info = pair.extended_pub_key()?;
+        //        let derivation_info = Secp256k1Curve::extended_pub_key(&account_path, &seed)?;
         let xpub = BtcForkAddress::extended_public_key(&derivation_info, coin_info)?;
         ExtendedPubKeyExtra::from_xpub(&xpub, &coin_info.symbol)
     }

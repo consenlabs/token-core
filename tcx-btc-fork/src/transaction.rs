@@ -1,4 +1,4 @@
-use tcx_chain::{HdKeystore, Secp256k1Curve, TransactionSigner, TxSignResult};
+use tcx_chain::{HdKeystore, TransactionSigner, TxSignResult};
 
 use bitcoin::{OutPoint, Script, Transaction, TxIn, TxOut};
 use bitcoin_hashes::hex::FromHex;
@@ -16,13 +16,14 @@ use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
 use tcx_chain::curve::PrivateKey;
-use tcx_primitive::Pair;
+use tcx_primitive::{ArbitraryNetworkExtendedPubKey, Pair};
 
 use crate::ExtendedPubKeyExtra;
 use bitcoin::util::bip143::SighashComponents;
 use bitcoin_hashes::hash160;
+use secp256k1::Secp256k1;
 use std::marker::PhantomData;
-use tcx_chain::bips::get_account_path;
+use tcx_chain::bips::{get_account_path, relative_path_to_child_nums};
 use tcx_chain::curve::PublicKey;
 use tcx_chain::keystore::Address;
 use tcx_primitive::key::Public;
@@ -177,9 +178,17 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         } else {
             let from = &self.unspents.first().expect("first_utxo").address;
             let change_path = format!("0/{}", &self.change_idx.expect("change_idx"));
-            let pub_key = Secp256k1Curve::derive_pub_key_at_path(&xpub, &change_path)?;
+            let pub_key = Self::derive_pub_key_at_path(&xpub, &change_path)?;
             S::address_like(&from, &pub_key)
         }
+    }
+
+    pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
+        let ext_pub_key = ArbitraryNetworkExtendedPubKey::from_str(xpub)?;
+        let s = Secp256k1::new();
+        let child_nums = relative_path_to_child_nums(child_path)?;
+        let index_ext_pub_key = ext_pub_key.extended_pub_key.derive_pub(&s, &child_nums)?;
+        Ok(index_ext_pub_key.public_key)
     }
 
     fn tx_outs(&self, change_script_pubkey: Script) -> Result<Vec<TxOut>> {
@@ -291,7 +300,7 @@ impl SegWitTransactionSignComponent {
         for i in 0..tx.input.len() {
             let tx_in = &tx.input[i];
             let unspent = &unspents[i];
-            let pub_key = &prv_keys[i].to_normal_pair().public();
+            let pub_key = &prv_keys[i].public_key();
             let pub_key_hash = hash160::Hash::hash(&pub_key.as_slice()).into_inner();
             let script_hex = format!("76a914{}88ac", hex::encode(pub_key_hash));
             let script = Script::from(hex::decode(script_hex)?);
@@ -321,7 +330,7 @@ impl BitcoinTransactionSignComponent for SegWitTransactionSignComponent {
             .iter()
             .enumerate()
             .map(|(i, txin)| {
-                let pub_key = &prv_keys[i].to_normal_pair().public();
+                let pub_key = &prv_keys[i].public_key();
                 let hash = hash160::Hash::hash(&pub_key.as_slice()).into_inner();
                 let hex = format!("160014{}", hex::encode(&hash));
 
