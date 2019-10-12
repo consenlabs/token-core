@@ -24,6 +24,8 @@ use core::fmt;
 use lazy_static::lazy_static;
 use std::io::Cursor;
 
+use crate::key_types::SECP256K1;
+use bip39::Seed;
 use bitcoin::util::psbt::serialize::Serialize;
 use std::convert::AsMut;
 //use tcx::curve::PublicKey;
@@ -81,6 +83,19 @@ enum PrivateType {
 pub struct ArbitraryNetworkExtendedPubKey {
     pub network: [u8; 4],
     pub extended_pub_key: ExtendedPubKey,
+}
+
+impl ArbitraryNetworkExtendedPubKey {
+    fn derive(&self, child_path: &str) -> Result<ArbitraryNetworkExtendedPubKey> {
+        let child_nums = relative_path_to_child_nums(child_path)?;
+        let index_ext_pub_key = self
+            .extended_pub_key
+            .derive_pub(&SECP256K1_ENGINE, &child_nums)?;
+        Ok(ArbitraryNetworkExtendedPubKey {
+            network: self.network,
+            extended_pub_key: index_ext_pub_key,
+        })
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -189,8 +204,6 @@ impl FromStr for ArbitraryNetworkExtendedPrivKey {
     }
 }
 
-pub type Seed = Vec<u8>;
-
 pub struct Public(PublicType);
 
 pub struct Pair(PrivateType);
@@ -243,6 +256,24 @@ impl Pair {
             }
             _ => Err(CannotDeriveKey.into()),
         }
+    }
+
+    pub fn extended_priv_key(&self) -> Result<ArbitraryNetworkExtendedPrivKey> {
+        match &self.0 {
+            PrivateType::ExtendedPrivKey(r) => {
+                let extended_priv_key = r.extended_priv_key.clone();
+                Ok(ArbitraryNetworkExtendedPrivKey {
+                    network: r.network,
+                    extended_priv_key,
+                })
+            }
+            _ => Err(CannotDeriveKey.into()),
+        }
+    }
+
+    pub fn from_wif(wif: &str) -> Result<Self> {
+        let pk = bitcoin::PrivateKey::from_wif(wif)?;
+        Ok(Pair(PrivateType::PrivateKey(pk)))
     }
 }
 
@@ -348,7 +379,6 @@ impl Pair {
 
 impl TraitPair for Pair {
     type Public = Public;
-    type Seed = Seed;
 
     fn from_slice(data: &[u8]) -> Result<Self> {
         let private_key = PrivateKey {
@@ -361,7 +391,7 @@ impl TraitPair for Pair {
     }
 
     fn from_seed(seed: &Seed) -> Result<Pair> {
-        Self::from_seed_slice(&seed[..])
+        Self::from_seed_slice(&seed.as_bytes())
     }
 
     fn from_seed_slice(seed: &[u8]) -> Result<Pair> {
@@ -470,33 +500,210 @@ impl TypedKey for Public {
 impl TypedKey for Pair {
     const KEY_TYPE: KeyTypeId = key_types::SECP256K1;
 }
-
-impl Signer<Signature> for Pair {
-    type Error = failure::Error;
-
-    fn sign<T: AsRef<[u8]>>(&self, data: T) -> core::result::Result<Signature, Self::Error> {
-        let msg = Message::from_slice(data.as_ref()).map_err(transform_secp256k1_error)?;
-
-        Ok(SECP256K1_ENGINE.sign(&msg, &self.private_key().key))
-    }
-}
-
-impl Signer<RecoverableSignature> for Pair {
-    type Error = failure::Error;
-
-    fn sign<T: AsRef<[u8]>>(
-        &self,
-        data: T,
-    ) -> core::result::Result<RecoverableSignature, Self::Error> {
-        let msg = Message::from_slice(data.as_ref()).map_err(transform_secp256k1_error)?;
-
-        Ok(SECP256K1_ENGINE.sign_recoverable(&msg, &(self.private_key().key)))
-    }
-}
+//
+//impl Signer<Signature> for Pair {
+//    type Error = failure::Error;
+//
+//    fn sign<T: AsRef<[u8]>>(&self, data: T) -> core::result::Result<Signature, Self::Error> {
+//        let msg = Message::from_slice(data.as_ref()).map_err(transform_secp256k1_error)?;
+//
+//        Ok(SECP256K1_ENGINE.sign(&msg, &self.private_key().key))
+//    }
+//}
+//
+//impl Signer<RecoverableSignature> for Pair {
+//    type Error = failure::Error;
+//
+//    fn sign<T: AsRef<[u8]>>(
+//        &self,
+//        data: T,
+//    ) -> core::result::Result<RecoverableSignature, Self::Error> {
+//        let msg = Message::from_slice(data.as_ref()).map_err(transform_secp256k1_error)?;
+//
+//        Ok(SECP256K1_ENGINE.sign_recoverable(&msg, &(self.private_key().key)))
+//    }
+//}
 
 #[cfg(test)]
 mod tests {
-    use crate::{ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey};
+    use crate::derive::Derive;
+    use crate::secp256k1::PublicType::PublicKey;
+    use crate::Secp256k1Pair;
+    use crate::{
+        ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, DerivePath, Pair, Public,
+    };
+    use bip39::{Language, Mnemonic, Seed};
+    use bitcoin::util::bip32::DerivationPath;
+    use bitcoin::util::misc::hex_bytes;
+    use bitcoin_hashes::hex::ToHex;
+    use bitcoin_hashes::Hash;
+    use std::str::FromStr;
+
+    //    #[test]
+    //        fn test_secp256k1_pub_key() {
+    //            let ret = Public::from_slice(&[0]);
+    //            assert_eq!(
+    //                "length 1 invalid for this base58 type",
+    //                format!("{}", ret.err().unwrap())
+    //            );
+    //
+    //            let ret = Secp256k1PubKey::from_slice(&[0, 1, 2, 3]);
+    //            assert_eq!(
+    //                "length 4 invalid for this base58 type",
+    //                format!("{}", ret.err().unwrap())
+    //            );
+    //
+    //            let pub_bytes = hex_bytes("04506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76").unwrap();
+    //
+    //            let ret = Secp256k1PubKey::from_slice(&pub_bytes).unwrap();
+    //            let bytes = ret.to_bytes();
+    //            assert_eq!(bytes, pub_bytes);
+    //
+    //            let compressed = bitcoin::PublicKey::to_compressed(&ret);
+    //            assert_eq!(
+    //                "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
+    //                compressed.to_hex()
+    //            );
+    //
+    //            let uncompressed = bitcoin::PublicKey::to_uncompressed(&ret);
+    //            assert_eq!("04506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76", uncompressed.to_hex());
+    //        }
+    //
+    //        #[test]
+    //        fn test_secp256k1_prv_key() {
+    //            assert!(!Secp256k1PrivateKey::is_valid(&[0, 1, 2, 3]));
+    //
+    //            let maximum_valid_pk_bytes =
+    //                hex_bytes("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140").unwrap();
+    //            assert!(Secp256k1PrivateKey::is_valid(&maximum_valid_pk_bytes));
+    //
+    //            assert!(!Secp256k1PrivateKey::is_valid(&[0]));
+    //
+    //            let invalid_pk_bytes =
+    //                hex_bytes("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141").unwrap();
+    //            assert!(!Secp256k1PrivateKey::is_valid(&invalid_pk_bytes));
+    //
+    //            let prv_key =
+    //                Secp256k1PrivateKey::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
+    //                    .unwrap();
+    //            let _expected_pub_key_bytes = hex_bytes("00").unwrap();
+    //            let pub_key = PrivateKey::public_key(&prv_key);
+    //            assert_eq!(
+    //                "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
+    //                pub_key.to_bytes().to_hex()
+    //            );
+    //        }
+
+    #[test]
+    fn test_secp256k1_sign() {
+        let prv_key =
+            Secp256k1Pair::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
+                .unwrap();
+        let msg = "TokenCoreX";
+        let hash = bitcoin_hashes::sha256::Hash::hash(msg.as_bytes());
+        let signed_bytes = prv_key.sign(&hash.into_inner()).unwrap();
+        assert_eq!("304402202514266dc7d807ecd69f6d5d03dae7d68619b2c562d8ac77f60e186f4fde4f2202207fbedf5642b095e4a37e71432c99e2b1144f8b9d73a0018be04e6d5ddbd26146", signed_bytes.to_hex());
+
+        let wrong_signed = prv_key.sign(&[0, 1, 2, 3]);
+        assert_eq!(
+            format!("{}", wrong_signed.err().unwrap()),
+            "invalid_message"
+        )
+    }
+
+    fn default_seed() -> Seed {
+        let mn = Mnemonic::from_phrase(
+            "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            Language::English,
+        )
+        .unwrap();
+        Seed::new(&mn, "")
+    }
+
+    #[test]
+    fn test_key_at_paths_with_seed() {
+        let seed = default_seed();
+        let paths = vec![
+            "m/44'/0'/0'/0/0",
+            "m/44'/0'/0'/0/1",
+            "m/44'/0'/0'/1/0",
+            "m/44'/0'/0'/1/1",
+        ];
+        let pair = Secp256k1Pair::from_seed(&seed).unwrap();
+        //        paths.iter().map()
+        //        let prv_keys = pair.derive(paths).unwrap();
+        let pub_keys = paths
+            .iter()
+            .map(|path| {
+                pair.derive(DerivePath::from_str(path).unwrap().into_iter())
+                    .unwrap()
+                    .public_key()
+                    .to_compressed()
+                    .to_hex()
+            })
+            .collect::<Vec<String>>();
+        let expected_pub_keys = vec![
+            "026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868",
+            "024fb7df3961e08f01025e434ea19708a4317d2fe59775cddd38df6e8a2d30697d",
+            "0352470ace48f25b01b9c341e3b0e033fc32a203fb7a81a0453f97d94eca819a35",
+            "022f4c38f7bbaa00fc886db62f975b34201c2bfed146e98973caf03268941801db",
+        ];
+        assert_eq!(pub_keys, expected_pub_keys);
+    }
+
+    #[test]
+    fn extended_key_test() {
+        let main_network_xpub_version: [u8; 4] = [0x04, 0x88, 0xb2, 0x1e];
+        let main_network_xprv_version: [u8; 4] = [0x04, 0x88, 0xad, 0xe4];
+
+        let seed = default_seed();
+        let pair = Secp256k1Pair::from_seed(&seed).unwrap();
+        let xpub_key = pair.extended_pub_key().unwrap();
+        let mut index_xpub_key = pair
+            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
+            .unwrap()
+            .extended_pub_key()
+            .unwrap();
+        //        let derivation_info = Secp256k1Curve::extended_pub_key("m/44'/0'/0'", &seed).unwrap();
+        index_xpub_key.network = main_network_xpub_version;
+        let xpub = index_xpub_key.to_string();
+        assert_eq!(xpub, "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
+        let pair = Secp256k1Pair::from_seed(&seed).unwrap();
+        let mut xprv_key = pair
+            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
+            .unwrap()
+            .extended_priv_key()
+            .unwrap();
+        //        let mut account_xprv_key = xprv_key
+        xprv_key.network = main_network_xprv_version;
+        let xprv = xprv_key.to_string();
+        assert_eq!(xprv, "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
+    }
+
+    #[test]
+    fn derive_pub_key_test() {
+        let xpub = "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8";
+        let xpub_key = ArbitraryNetworkExtendedPubKey::from_str(xpub).unwrap();
+
+        let index_pub_key = xpub_key.derive("0/0").unwrap();
+
+        assert_eq!(
+            index_pub_key
+                .extended_pub_key
+                .public_key
+                .to_bytes()
+                .to_hex(),
+            "026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868"
+        );
+
+        let err = ArbitraryNetworkExtendedPubKey::from_str("invalid_xpub")
+            .err()
+            .unwrap();
+        //        let err = Secp256k1Curve::derive_pub_key_at_path("invalid_xpub", "0/0")
+        //            .err()
+        //            .unwrap();
+        assert_eq!(format!("{}", err), "invalid base58 character 0x6c");
+    }
 
     //TODO add more test
     #[test]
@@ -508,15 +715,15 @@ mod tests {
         let main_network_xprv_version: [u8; 4] = [0x04, 0x88, 0xad, 0xe4];
 
         let xpub = "tpubDDDcs8o1LaKXKXaPTEVBUZJYTgNAte4xj24MtFCMsfrHku93ZZjy87CGyz93dcocR6x6JHdusHodD9EVcSQuDbmkAWznWZtvyqyMDqS6VK4";
-        let epk = ArbitraryNetworkExtendedPubKey::from_str(xpub).unwrap();
-        let derivation_info = DerivationInfo::from(epk);
-        let ret = derivation_info.encode_with_network(main_network_xpub_version);
+        let mut xpub_key = ArbitraryNetworkExtendedPubKey::from_str(xpub).unwrap();
+        xpub_key.network = main_network_xpub_version;
+        let ret = xpub_key.to_string();
         assert_eq!("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8", ret);
 
         let xprv = "tprv8g8UWPRHxaNWXZN3uoaiNpyYyaDr2j5Dvcj1vxLxKcEF653k7xcN9wq9eT73wBM1HzE9hmWJbAPXvDvaMXqGWm81UcVpHnmATfH2JJrfhGg";
-        let epk = ArbitraryNetworkExtendedPrivKey::from_str(xprv).unwrap();
-        let derivation_info = DerivationInfo::from(epk);
-        let ret = derivation_info.encode_with_network(main_network_xprv_version);
+        let mut xprv_key = ArbitraryNetworkExtendedPrivKey::from_str(xprv).unwrap();
+        xprv_key.network = main_network_xprv_version;
+        let ret = xprv_key.to_string();
         assert_eq!("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS", ret);
     }
 }

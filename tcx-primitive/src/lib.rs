@@ -103,11 +103,9 @@ pub trait Public: AsRef<[u8]> + TypedKey + Sized + FromStr + Derive {
 pub trait Pair: TypedKey + Sized + FromStr + Derive {
     type Public: Public;
 
-    type Seed: Default + AsRef<[u8]> + AsMut<[u8]> + Clone;
-
     fn from_slice(data: &[u8]) -> Result<Self>;
 
-    fn from_seed(seed: &Self::Seed) -> Result<Self>;
+    fn from_seed(seed: &bip39::Seed) -> Result<Self>;
 
     fn from_seed_slice(seed: &[u8]) -> Result<Self>;
 
