@@ -9,7 +9,7 @@ use core::result;
 use serde::{Deserialize, Serialize};
 use std::iter::IntoIterator;
 use std::str::FromStr;
-use tcx_chain::curve::CurveType;
+//use tcx_chain::curve::CurveType;
 use tcx_chain::keystore::Address;
 use tcx_chain::keystore::{CoinInfo, Extra};
 
@@ -38,7 +38,7 @@ pub use address::PubKeyScript;
 use serde::export::PhantomData;
 use tcx_primitive::Derive;
 use tcx_primitive::Pair;
-use tcx_primitive::{DerivePath, Secp256k1Pair};
+use tcx_primitive::{CurveType, DerivePath, Secp256k1Pair};
 pub use transaction::ScriptPubKeyComponent;
 
 #[derive(Fail, Debug)]

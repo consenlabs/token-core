@@ -1,7 +1,7 @@
 use bitcoin::util::base58;
 
 use tcx_chain::keystore::Address as TraitAddress;
-use tcx_chain::{PublicKey, Secp256k1PublicKey};
+use tcx_primitive::{Public, Secp256k1PublicKey};
 
 pub struct Address(pub String);
 

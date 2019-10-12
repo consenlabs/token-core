@@ -25,8 +25,9 @@ use tcx_btc_fork::{
 };
 use tcx_chain::keystore::EmptyExtra;
 use tcx_chain::signer::TransactionSigner;
-use tcx_chain::{CoinInfo, CurveType, HdKeystore, Metadata, TxSignResult};
+use tcx_chain::{CoinInfo, HdKeystore, Metadata, TxSignResult};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
+use tcx_primitive::CurveType;
 use tcx_tron::{TrxAddress, TrxSignedTransaction, TrxTransaction};
 
 use std::convert::TryFrom;

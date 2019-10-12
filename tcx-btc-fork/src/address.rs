@@ -1,4 +1,4 @@
-use tcx_chain::curve::{PublicKey, Secp256k1PublicKey};
+//use tcx_chain::curve::{PublicKey, Secp256k1PublicKey};
 
 use crate::transaction::ScriptPubKeyComponent;
 use crate::Error;
@@ -15,7 +15,9 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_chain::keystore::Address;
 use tcx_chain::CoinInfo;
-use tcx_primitive::{ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey};
+use tcx_primitive::{
+    ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, Public, Secp256k1PublicKey,
+};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BtcForkAddress {
@@ -140,16 +142,16 @@ impl Address for BtcForkAddress {
     }
 
     fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String> {
-        let pub_key = Secp256k1PublicKey::from_slice(&public_key)?;
+        //        let pub_key = Secp256k1PublicKey::from_slice(&public_key)?.public_key();
         let coin = coin.expect("coin from address_pub_key");
         let network = network_from_coin(&coin);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         let network = network.expect("network");
         let addr: String;
         if coin.to_uppercase().contains("P2WPKH") {
-            addr = BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string();
+            addr = BtcForkAddress::p2shwpkh(public_key, &network)?.to_string();
         } else {
-            addr = BtcForkAddress::p2pkh(&pub_key, &network)?.to_string();
+            addr = BtcForkAddress::p2pkh(public_key, &network)?.to_string();
         }
         //        let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string();
         Ok(addr.to_string())
@@ -157,27 +159,27 @@ impl Address for BtcForkAddress {
 }
 
 impl BtcForkAddress {
-    pub fn p2pkh(pub_key: &impl PublicKey, network: &BtcForkNetwork) -> Result<BtcForkAddress> {
-        let pub_key = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
-        let addr = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
+    pub fn p2pkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
+        let pub_key = Secp256k1PublicKey::from_slice(&pub_key)?;
+        let addr = BtcAddress::p2pkh(&pub_key.public_key(), Network::Bitcoin);
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
         })
     }
 
-    pub fn p2shwpkh(pub_key: &impl PublicKey, network: &BtcForkNetwork) -> Result<BtcForkAddress> {
-        let pub_key = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
-        let addr = BtcAddress::p2shwpkh(&pub_key, Network::Bitcoin);
+    pub fn p2shwpkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
+        let pub_key = Secp256k1PublicKey::from_slice(&pub_key)?;
+        let addr = BtcAddress::p2shwpkh(&pub_key.public_key(), Network::Bitcoin);
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
         })
     }
 
-    pub fn p2wpkh(pub_key: &impl PublicKey, network: &BtcForkNetwork) -> Result<BtcForkAddress> {
-        let pub_key = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
-        let addr = BtcAddress::p2wpkh(&pub_key, Network::Bitcoin);
+    pub fn p2wpkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
+        let pub_key = Secp256k1PublicKey::from_slice(&pub_key)?;
+        let addr = BtcAddress::p2wpkh(&pub_key.public_key(), Network::Bitcoin);
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
@@ -188,7 +190,7 @@ impl BtcForkAddress {
         self.payload.script_pubkey()
     }
 
-    pub fn address_like(target_addr: &str, pub_key: &impl PublicKey) -> Result<BtcForkAddress> {
+    pub fn address_like(target_addr: &str, pub_key: &[u8]) -> Result<BtcForkAddress> {
         let target = BtcForkAddress::from_str(target_addr)?;
         match target.payload {
             Payload::PubkeyHash(_) => BtcForkAddress::p2pkh(pub_key, &target.network),
@@ -379,7 +381,7 @@ impl PubKeyScript for BtcForkAddress {
 
 impl ScriptPubKeyComponent for BtcForkAddress {
     fn address_like(target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
-        let addr = BtcForkAddress::address_like(target_addr, pub_key)?;
+        let addr = BtcForkAddress::address_like(target_addr, &pub_key.to_bytes())?;
         Ok(addr.script_pubkey())
     }
 

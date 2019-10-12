@@ -24,7 +24,9 @@ use core::fmt;
 use lazy_static::lazy_static;
 use std::io::Cursor;
 
+use bitcoin::util::psbt::serialize::Serialize;
 use std::convert::AsMut;
+//use tcx::curve::PublicKey;
 
 fn clone_into_array<A, T>(slice: &[T]) -> A
 where
@@ -200,7 +202,28 @@ impl Public {
             PublicType::PublicKey(r) => &r,
         }
     }
+
+    pub fn to_compressed(&self) -> Vec<u8> {
+        match &self.0 {
+            PublicType::ExtendedPubKey(r) => r.extended_pub_key.public_key.key.serialize().to_vec(),
+            PublicType::PublicKey(r) => r.key.serialize().to_vec(),
+        }
+    }
+
+    pub fn to_uncompressed(&self) -> Vec<u8> {
+        match &self.0 {
+            PublicType::ExtendedPubKey(r) => r
+                .extended_pub_key
+                .public_key
+                .key
+                .serialize_uncompressed()
+                .to_vec(),
+            PublicType::PublicKey(r) => r.key.serialize_uncompressed().to_vec(),
+        }
+    }
 }
+
+//pub type Secp256k1PublicKey = PublicKey;
 //
 //pub enum NetworklessDerivationInfo {
 //    Public(DerivationInfo),

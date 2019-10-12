@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
-use tcx_chain::curve::PrivateKey;
+//use tcx_chain::curve::PrivateKey;
 use tcx_primitive::{ArbitraryNetworkExtendedPubKey, Pair};
 
 use crate::ExtendedPubKeyExtra;
@@ -24,7 +24,7 @@ use bitcoin_hashes::hash160;
 use secp256k1::Secp256k1;
 use std::marker::PhantomData;
 use tcx_chain::bips::{get_account_path, relative_path_to_child_nums};
-use tcx_chain::curve::PublicKey;
+//use tcx_chain::curve::PublicKey;
 use tcx_chain::keystore::Address;
 use tcx_primitive::key::Public;
 //use serde::

@@ -9,75 +9,67 @@ use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum CurveType {
-    SECP256k1,          /* "secp256k1" */
-    ED25519,            /* "ed25519" */
-    ED25519Blake2bNano, /* "ed25519-blake2b-nano" */
-    Curve25519,         /* "curve25519" */
-    NIST256p1,
-}
-
-pub trait PublicKey: Sized {
-    fn to_bytes(&self) -> Vec<u8>;
-    fn to_compressed(&self) -> Vec<u8>;
-    fn to_uncompressed(&self) -> Vec<u8>;
-
-    fn from_slice(data: &[u8]) -> Result<Self>;
-}
-
-pub trait PrivateKey: Sized {
-    type PublicKey: PublicKey;
-
-    fn is_valid(data: &[u8]) -> bool;
-    fn public_key(&self) -> Self::PublicKey;
-    fn sign(&self, data: &[u8]) -> Result<Vec<u8>>;
-}
-
-impl PublicKey for bitcoin::PublicKey {
-    fn to_bytes(&self) -> Vec<u8> {
-        self.to_bytes()
-    }
-
-    fn to_compressed(&self) -> Vec<u8> {
-        self.key.serialize().to_vec()
-    }
-
-    fn to_uncompressed(&self) -> Vec<u8> {
-        self.key.serialize_uncompressed().to_vec()
-    }
-
-    fn from_slice(data: &[u8]) -> Result<bitcoin::PublicKey> {
-        if let Ok(key) = bitcoin::PublicKey::from_slice(data) {
-            Ok(key)
-        } else {
-            Err(Error::InvalidSecp256k1PublicKey.into())
-        }
-    }
-}
-
-pub type Secp256k1PublicKey = bitcoin::PublicKey;
-
-impl PrivateKey for bitcoin::PrivateKey {
-    type PublicKey = bitcoin::PublicKey;
-
-    fn is_valid(data: &[u8]) -> bool {
-        SecretKey::from_slice(data).is_ok()
-    }
-
-    fn public_key(&self) -> Self::PublicKey {
-        self.public_key(&secp256k1::Secp256k1::new())
-    }
-
-    fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
-        let s = Secp256k1::new();
-        let msg = Message::from_slice(data)?;
-        let signature = s.sign(&msg, &self.key);
-        Ok(signature.serialize_der().to_vec())
-    }
-}
-
-pub type Secp256k1PrivateKey = bitcoin::PrivateKey;
+//
+//pub trait PublicKey: Sized {
+//    fn to_bytes(&self) -> Vec<u8>;
+//    fn to_compressed(&self) -> Vec<u8>;
+//    fn to_uncompressed(&self) -> Vec<u8>;
+//
+//    fn from_slice(data: &[u8]) -> Result<Self>;
+//}
+//
+//pub trait PrivateKey: Sized {
+//    type PublicKey: PublicKey;
+//
+//    fn is_valid(data: &[u8]) -> bool;
+//    fn public_key(&self) -> Self::PublicKey;
+//    fn sign(&self, data: &[u8]) -> Result<Vec<u8>>;
+//}
+//
+//impl PublicKey for bitcoin::PublicKey {
+//    fn to_bytes(&self) -> Vec<u8> {
+//        self.to_bytes()
+//    }
+//
+//    fn to_compressed(&self) -> Vec<u8> {
+//        self.key.serialize().to_vec()
+//    }
+//
+//    fn to_uncompressed(&self) -> Vec<u8> {
+//        self.key.serialize_uncompressed().to_vec()
+//    }
+//
+//    fn from_slice(data: &[u8]) -> Result<bitcoin::PublicKey> {
+//        if let Ok(key) = bitcoin::PublicKey::from_slice(data) {
+//            Ok(key)
+//        } else {
+//            Err(Error::InvalidSecp256k1PublicKey.into())
+//        }
+//    }
+//}
+//
+////pub type Secp256k1PublicKey = bitcoin::PublicKey;
+//
+//impl PrivateKey for bitcoin::PrivateKey {
+//    type PublicKey = bitcoin::PublicKey;
+//
+//    fn is_valid(data: &[u8]) -> bool {
+//        SecretKey::from_slice(data).is_ok()
+//    }
+//
+//    fn public_key(&self) -> Self::PublicKey {
+//        self.public_key(&secp256k1::Secp256k1::new())
+//    }
+//
+//    fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
+//        let s = Secp256k1::new();
+//        let msg = Message::from_slice(data)?;
+//        let signature = s.sign(&msg, &self.key);
+//        Ok(signature.serialize_der().to_vec())
+//    }
+//}
+//
+//pub type Secp256k1PrivateKey = bitcoin::PrivateKey;
 //
 //pub struct Secp256k1Curve {}
 //
