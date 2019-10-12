@@ -1,4 +1,4 @@
-use crate::key::KeyError;
+use crate::KeyError;
 use crate::Result;
 use bitcoin::util::bip32::ChildNumber;
 use std::convert::TryInto;

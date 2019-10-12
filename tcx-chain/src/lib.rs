@@ -38,7 +38,7 @@ pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
 
 pub use signer::{SignedTransaction, Transaction, TransactionSigner, TxSignResult};
 
-use tcx_primitive::key::Public;
+use tcx_primitive::Public;
 
 pub trait Address1: Sized {
     type Error;

@@ -26,7 +26,7 @@ use std::marker::PhantomData;
 use tcx_chain::bips::{get_account_path, relative_path_to_child_nums};
 //use tcx_chain::curve::PublicKey;
 use tcx_chain::keystore::Address;
-use tcx_primitive::key::Public;
+use tcx_primitive::Public;
 //use serde::
 
 const DUST: u64 = 546;

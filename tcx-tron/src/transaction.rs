@@ -8,8 +8,8 @@ use bitcoin_hashes::Hash as TraitHash;
 
 use serde_json::Value;
 use std::convert::{TryFrom, TryInto};
-use tcx_primitive::key::secp256k1::Pair;
-use tcx_primitive::key::{KeyError, Signer};
+use tcx_primitive::Secp256k1Pair;
+use tcx_primitive::{KeyError, Signer};
 
 use failure::format_err;
 use secp256k1::recovery::RecoverableSignature;
@@ -56,7 +56,7 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
             .account(&"TRON")
             .ok_or(format_err!("account_not_found"))?;
         let path = &account.derivation_path;
-        let pair = &self.get_pair::<Pair>(path, password.unwrap())?;
+        let pair = &self.get_pair::<Secp256k1Pair>(path, password.unwrap())?;
         let sign_result: Result<RecoverableSignature> = pair.sign(&hash[..]);
 
         match sign_result {
