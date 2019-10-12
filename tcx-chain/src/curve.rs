@@ -1,7 +1,6 @@
 use bitcoin::network::constants::Network;
 use secp256k1::{Message, Secp256k1, SecretKey};
 
-use crate::bips::DerivationInfo;
 use crate::Error;
 use crate::Result;
 use bip39::Seed;

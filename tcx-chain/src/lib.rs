@@ -24,7 +24,6 @@ pub mod curve;
 pub mod keystore;
 pub mod signer;
 
-pub use bips::DerivationInfo;
 //pub use curve::{CurveType, PrivateKey, PublicKey};
 pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
 

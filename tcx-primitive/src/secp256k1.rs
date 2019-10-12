@@ -496,7 +496,27 @@ impl Signer<RecoverableSignature> for Pair {
 
 #[cfg(test)]
 mod tests {
+    use crate::{ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey};
+
     //TODO add more test
     #[test]
     fn it_works() {}
+
+    #[test]
+    fn test_encode_with_network() {
+        let main_network_xpub_version: [u8; 4] = [0x04, 0x88, 0xb2, 0x1e];
+        let main_network_xprv_version: [u8; 4] = [0x04, 0x88, 0xad, 0xe4];
+
+        let xpub = "tpubDDDcs8o1LaKXKXaPTEVBUZJYTgNAte4xj24MtFCMsfrHku93ZZjy87CGyz93dcocR6x6JHdusHodD9EVcSQuDbmkAWznWZtvyqyMDqS6VK4";
+        let epk = ArbitraryNetworkExtendedPubKey::from_str(xpub).unwrap();
+        let derivation_info = DerivationInfo::from(epk);
+        let ret = derivation_info.encode_with_network(main_network_xpub_version);
+        assert_eq!("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8", ret);
+
+        let xprv = "tprv8g8UWPRHxaNWXZN3uoaiNpyYyaDr2j5Dvcj1vxLxKcEF653k7xcN9wq9eT73wBM1HzE9hmWJbAPXvDvaMXqGWm81UcVpHnmATfH2JJrfhGg";
+        let epk = ArbitraryNetworkExtendedPrivKey::from_str(xprv).unwrap();
+        let derivation_info = DerivationInfo::from(epk);
+        let ret = derivation_info.encode_with_network(main_network_xprv_version);
+        assert_eq!("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS", ret);
+    }
 }
