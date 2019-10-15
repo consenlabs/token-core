@@ -223,7 +223,9 @@ fn _init_token_core_x(v: &Value) -> Result<()> {
 
         let mut f = File::open(fp).expect("open file");
         let mut contents = String::new();
+
         let _ = f.read_to_string(&mut contents);
+        println!("contents: {}", &contents);
         let v: Value = serde_json::from_str(&contents).expect("read json from content");
 
         let version = v["version"].as_i64().expect("version");
@@ -757,12 +759,17 @@ mod tests {
         T: FnOnce() -> () + panic::UnwindSafe,
     {
         setup();
-
         let result = panic::catch_unwind(|| test());
-
-        teardown();
-
+        //        teardown();
         assert!(result.is_ok())
+    }
+
+    fn remove_created_wallet(wid: &str) {
+        let file_dir = WALLET_FILE_DIR.read().unwrap();
+        let file_dir_str = file_dir.to_string();
+        let full_file_path = format!("{}/{}.json", file_dir, wid);
+        let p = Path::new(&full_file_path);
+        remove_file(p);
     }
 
     #[test]
@@ -808,6 +815,7 @@ mod tests {
             assert_eq!(v["source"].as_str().unwrap(), "MNEMONIC");
             let map = KEYSTORE_MAP.read().unwrap();
             assert!(map.get(id).is_some());
+            remove_created_wallet(id);
         })
     }
 
@@ -857,6 +865,8 @@ mod tests {
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+
+            remove_created_wallet(ret_v["id"].as_str().unwrap());
         });
     }
 
@@ -890,6 +900,8 @@ mod tests {
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+
+            remove_created_wallet(ret_v["id"].as_str().unwrap());
         });
     }
 
@@ -923,6 +935,8 @@ mod tests {
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+
+            remove_created_wallet(ret_v["id"].as_str().unwrap());
         });
     }
 
@@ -956,13 +970,15 @@ mod tests {
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+
+            remove_created_wallet(ret_v["id"].as_str().unwrap());
         });
     }
 
     #[test]
     fn remove_wallet_test() {
         run_test(|| {
-            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let param = r#"{"chainType":"LITECOIN","mnemonic":"calm release clay imitate top extend close draw quiz refuse shuffle injury","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let ret_v = Value::from_str(ret).unwrap();
@@ -975,6 +991,8 @@ mod tests {
             let ret = unsafe { _to_str(remove_wallet(_to_c_char(&param))) };
             let ret_v = Value::from_str(ret).unwrap();
             assert_eq!(ret_v["id"], imported_id);
+
+            //            remove_created_wallet(ret_v["id"].as_str().unwrap());
         });
     }
 
@@ -1000,22 +1018,13 @@ mod tests {
 
             assert_eq!(expected_v["address"], ret_v["address"]);
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
+
+            remove_created_wallet(ret_v["id"].as_str().unwrap());
         });
     }
 
     #[test]
     fn export_mnemonic_test() {
-        //        let init_params = r#"
-        //        {
-        //            "fileDir": "../test-data",
-        //            "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
-        //            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
-        //        }
-        //        "#;
-        //        unsafe {
-        //            init_token_core_x(_to_c_char(init_params));
-        //        }
-
         run_test(|| {
             let param = r#"
         {
@@ -1082,78 +1091,49 @@ mod tests {
     #[test]
     fn cache_derived_key_test() {
         run_test(|| {
-            let param = r#"
-            {
-                "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
-                "password": "Insecure Password"
-            }
-            "#;
-            unsafe { clear_err() }
-            let derived_key = unsafe { _to_str(get_derived_key(_to_c_char(param))) };
-
-            let param: Value = json!({"id": "9c6cbc21-1c43-4c8b-bb7a-5e538f908819", "tempPassword": "88888888", "derivedKey": derived_key});
-            unsafe { clear_err() }
-            unsafe { _to_str(cache_derived_key(_to_c_char(param.to_string().as_str()))) };
-
-            let param = r#"
-            {
-                "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
-                "password": "888888",
-                "to": "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
-                "amount": "93454",
-                "fee": "6000",
-                "internalUsed": 0,
-                "chainType": "BITCOINCASH",
-                "chainId": "145",
-                "segWit":"NONE",
-                "outputs": [
-                    {
-                        "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
-                        "vout": 0,
-                        "amount": "100000",
-                        "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
-                        "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
-                        "derivedPath": "0/0"
-                    }
-                ]
-            }
-            "#;
-
-            unsafe { clear_err() }
-            let error = unsafe { _to_str(get_last_err_message()) };
-            assert_eq!(error, "invalid_password");
-
-            unsafe { clear_err() }
-            let param = r#"
-            {
-                "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
-                "password": "88888888",
-                "to": "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
-                "amount": "93454",
-                "fee": "6000",
-                "internalUsed": 0,
-                "chainType": "BITCOINCASH",
-                "chainId": "145",
-                "segWit":"NONE",
-                "outputs": [
-                    {
-                        "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
-                        "vout": 0,
-                        "amount": "100000",
-                        "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
-                        "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
-                        "derivedPath": "0/0"
-                    }
-                ]
-            }
-            "#;
-
-            let ret = _to_str(sign_transaction(_to_c_char(param)));
+            let param = r#"{"chainType":"LITECOIN","mnemonic":"salute slush now script nest law admit achieve voice soda fruit field","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let ret_v = Value::from_str(ret).unwrap();
-            let expected = r#"{"sign":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","hash":"4d43cc66e9763a4e263fdb592591b9f19a6915ac821c92896d13f95beaca3b28","wtxId":""}"#;
-            let expected_v = Value::from_str(expected).unwrap();
-            assert_eq!(ret_v, expected_v);
+            let imported_id = ret_v["id"].as_str().unwrap();
+            let param = json!({
+                "id": imported_id,
+                "password": "Insecure Password"
+            });
+
+            let derived_key =
+                unsafe { _to_str(get_derived_key(_to_c_char(param.to_string().as_str()))) };
+            println!("derivedKey: {}", derived_key);
+            let param: Value =
+                json!({"id": imported_id, "tempPassword": "88888888", "derivedKey": derived_key});
+            unsafe { _to_str(cache_derived_key(_to_c_char(param.to_string().as_str()))) };
+
+            let param = json!({
+                "id": imported_id,
+                "password": "888888"
+            });
+
+            unsafe {
+                clear_err();
+            }
+            let _ = unsafe { export_mnemonic(_to_c_char(param.to_string().as_str())) };
+            let err = unsafe { _to_str(get_last_err_message()) };
+            assert_eq!("invalid_password", err);
+
+            let param = json!({
+                "id": imported_id,
+                "password": "88888888"
+            });
+
+            unsafe {
+                clear_err();
+            }
+            let exported_mnemonic =
+                unsafe { _to_str(export_mnemonic(_to_c_char(param.to_string().as_str()))) };
+            assert_eq!(r#"{"mnemonic":"salute slush now script nest law admit achieve voice soda fruit field","ok":true}"#, exported_mnemonic);
+            unsafe { clear_derived_key() };
+
+            remove_created_wallet(imported_id);
         })
     }
 
@@ -1198,11 +1178,4 @@ mod tests {
         })
     }
 
-    #[test]
-    fn run_without_collect() {
-        run_test(|| {
-            unsafe { clear_derived_key() };
-            assert_eq!("", "")
-        });
-    }
 }

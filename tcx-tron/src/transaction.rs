@@ -9,7 +9,7 @@ use bitcoin_hashes::Hash as TraitHash;
 use serde_json::Value;
 use std::convert::{TryFrom, TryInto};
 use tcx_primitive::Secp256k1Pair;
-use tcx_primitive::{KeyError, Signer};
+use tcx_primitive::{Pair, Signer};
 
 use failure::format_err;
 use secp256k1::recovery::RecoverableSignature;
@@ -57,18 +57,18 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
             .ok_or(format_err!("account_not_found"))?;
         let path = &account.derivation_path;
         let pair = &self.get_pair::<Secp256k1Pair>(path, password.unwrap())?;
-        let sign_result: Result<RecoverableSignature> = pair.sign(&hash[..]);
+        let sign_result = pair.sign_recoverable(&hash[..]);
 
         match sign_result {
             Ok(r) => {
-                let (recover_id, sign) = r.serialize_compact();
-                let mut bs = bytebuffer::ByteBuffer::new();
-                bs.write_bytes(&sign);
-                bs.write_u8(recover_id.to_i32() as u8);
+                //                let (recover_id, sign) = r.serialize_compact();
+                //                let mut bs = bytebuffer::ByteBuffer::new();
+                //                bs.write_bytes(&sign);
+                //                bs.write_u8(recover_id.to_i32() as u8);
 
                 raw.as_object_mut()
                     .unwrap()
-                    .insert("signature".to_owned(), json!([hex::encode(&bs.to_bytes())]));
+                    .insert("signature".to_owned(), json!([hex::encode(&r)]));
 
                 Ok(SignedTransaction { raw: raw.clone() })
             }
@@ -111,7 +111,8 @@ mod tests {
     use serde_json::Value;
     use std::convert::TryFrom;
     use tcx_chain::keystore::EmptyExtra;
-    use tcx_chain::{CoinInfo, CurveType, Metadata, TransactionSigner};
+    use tcx_chain::{CoinInfo, Metadata, TransactionSigner};
+    use tcx_primitive::CurveType;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =

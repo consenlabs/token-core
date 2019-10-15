@@ -13,7 +13,7 @@ use std::convert::TryInto;
 use std::str::FromStr;
 
 use crate::derive::*;
-use crate::KeyError::{CannotDeriveKey, InvalidMessage};
+use crate::KeyError::{CannotDeriveKey, InvalidMessage, InvalidPublicKey};
 use crate::Result;
 use bitcoin::util::base58;
 use bitcoin::util::base58::Error::InvalidLength;
@@ -28,6 +28,7 @@ use crate::key_types::SECP256K1;
 use bip39::Seed;
 use bitcoin::util::psbt::serialize::Serialize;
 use std::convert::AsMut;
+//use secp256k1::Secp256k1
 //use tcx::curve::PublicKey;
 
 fn clone_into_array<A, T>(slice: &[T]) -> A
@@ -422,7 +423,23 @@ impl TraitPair for Pair {
         };
         let msg = Message::from_slice(data).map_err(transform_secp256k1_error)?;
         let signature = SECP256K1_ENGINE.sign(&msg, &pk.key);
+        //        Ok(signature)
         Ok(signature.serialize_der().to_vec())
+    }
+
+    fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>> {
+        let pk = match self.0 {
+            PrivateType::ExtendedPrivKey(epk) => epk.extended_priv_key.private_key,
+            PrivateType::PrivateKey(prv) => prv,
+        };
+        let msg = Message::from_slice(data).map_err(transform_secp256k1_error)?;
+        let signature = SECP256K1_ENGINE.sign_recoverable(&msg, &pk.key);
+        let (recover_id, sign) = signature.serialize_compact();
+        //        let mut bs = bytebuffer::ByteBuffer::new();
+        //        bs.write_bytes(&sign);
+        //        bs.write_u8(recover_id.to_i32() as u8);
+        let signed_bytes = [sign[..].to_vec(), vec![recover_id.to_i32() as u8]].concat();
+        Ok(signed_bytes)
     }
 
     fn public_key(&self) -> Self::Public {
@@ -460,13 +477,19 @@ impl std::fmt::Debug for Public {
 
 impl TraitPublic for Public {
     fn from_slice(_data: &[u8]) -> core::result::Result<Self, Self::Error> {
-        //TODO from
-        unimplemented!()
+        //TODO from public key
+        let pub_key = bitcoin::PublicKey::from_slice(_data)?;
+        Ok(Public(PublicType::PublicKey(pub_key)))
     }
 
-    fn as_slice(&self) -> &[u8] {
-        let r: &[u8] = self.as_ref();
-        &r[..]
+    fn to_bytes(&self) -> Result<Vec<u8>> {
+        match self.0 {
+            PublicType::PublicKey(pub_key) => Ok(pub_key.to_bytes()),
+            // todo: throw error
+            PublicType::ExtendedPubKey(epk) => Err(InvalidPublicKey.into()),
+        }
+        //        let r: &[u8] = self.as_ref();
+        //        &r[..]
     }
 }
 
@@ -489,6 +512,10 @@ impl AsRef<[u8]> for Pair {
 
 impl AsRef<[u8]> for Public {
     fn as_ref(&self) -> &[u8] {
+        //        match self.0 {
+        //            PublicType::PublicKey(pub_key) => pub_key.as_ref(),
+        //            PublicType::ExtendedPubKey(epk) => epk.as_ref()
+        //        }
         unimplemented!()
     }
 }
@@ -630,8 +657,6 @@ mod tests {
             "m/44'/0'/0'/1/1",
         ];
         let pair = Secp256k1Pair::from_seed(&seed).unwrap();
-        //        paths.iter().map()
-        //        let prv_keys = pair.derive(paths).unwrap();
         let pub_keys = paths
             .iter()
             .map(|path| {
@@ -664,7 +689,6 @@ mod tests {
             .unwrap()
             .extended_pub_key()
             .unwrap();
-        //        let derivation_info = Secp256k1Curve::extended_pub_key("m/44'/0'/0'", &seed).unwrap();
         index_xpub_key.network = main_network_xpub_version;
         let xpub = index_xpub_key.to_string();
         assert_eq!(xpub, "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
@@ -699,15 +723,8 @@ mod tests {
         let err = ArbitraryNetworkExtendedPubKey::from_str("invalid_xpub")
             .err()
             .unwrap();
-        //        let err = Secp256k1Curve::derive_pub_key_at_path("invalid_xpub", "0/0")
-        //            .err()
-        //            .unwrap();
         assert_eq!(format!("{}", err), "invalid base58 character 0x6c");
     }
-
-    //TODO add more test
-    #[test]
-    fn it_works() {}
 
     #[test]
     fn test_encode_with_network() {

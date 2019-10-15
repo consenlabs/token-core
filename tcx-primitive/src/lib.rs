@@ -22,6 +22,7 @@ pub use crate::secp256k1::{
     ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, Pair as Secp256k1Pair,
     Public as Secp256k1PublicKey,
 };
+
 pub use derive::{Derive, DeriveJunction, DerivePath};
 use std::str::FromStr;
 
@@ -97,7 +98,7 @@ pub trait TypedKey {
 pub trait Public: AsRef<[u8]> + TypedKey + Sized + FromStr + Derive {
     fn from_slice(data: &[u8]) -> Result<Self>;
 
-    fn as_slice(&self) -> &[u8];
+    fn to_bytes(&self) -> Result<Vec<u8>>;
 }
 
 pub trait Pair: TypedKey + Sized + FromStr + Derive {
@@ -112,6 +113,8 @@ pub trait Pair: TypedKey + Sized + FromStr + Derive {
     fn public(&self) -> Self::Public;
 
     fn sign(&self, _: &[u8]) -> Result<Vec<u8>>;
+
+    fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>>;
 
     fn public_key(&self) -> Self::Public;
 

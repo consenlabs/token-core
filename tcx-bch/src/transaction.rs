@@ -32,8 +32,8 @@ mod tests {
     use secp256k1::SecretKey;
     use std::marker::PhantomData;
     use std::str::FromStr;
-
-    use tcx_chain::Secp256k1PrivateKey;
+    use tcx_primitive::Pair;
+    use tcx_primitive::Secp256k1Pair;
 
     #[test]
     pub fn bch_signer() {
@@ -60,15 +60,12 @@ mod tests {
                 _marker_t: PhantomData,
             };
         //
-        let prv_key = Secp256k1PrivateKey {
-            compressed: true,
-            network: Network::Bitcoin,
-            key: SecretKey::from_slice(
-                &hex::decode("b0dabbf9ffed224fbca3b41a9e446b3d0b6240c6d2957197a8ab75bbf2e1a5d4")
-                    .unwrap(),
-            )
-            .unwrap(),
-        };
+        let prv_key = Secp256k1Pair::from_slice(
+            &hex::decode("b0dabbf9ffed224fbca3b41a9e446b3d0b6240c6d2957197a8ab75bbf2e1a5d4")
+                .unwrap(),
+        )
+        .unwrap();
+
         let change_addr =
             BchAddress::from_str("bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r").unwrap();
         let expected = tran

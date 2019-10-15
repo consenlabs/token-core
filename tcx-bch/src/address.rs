@@ -102,7 +102,8 @@ mod tests {
     use bitcoin::util::misc::hex_bytes;
 
     use tcx_chain::keystore::Address;
-    use tcx_chain::Secp256k1PublicKey;
+    use tcx_primitive::Public;
+    use tcx_primitive::Secp256k1PublicKey;
 
     #[test]
     pub fn test_convert() {
@@ -131,11 +132,9 @@ mod tests {
 
     #[test]
     pub fn test_from_pub_key() {
-        let pub_key =
-            hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
-                .unwrap();
         let addr = BchAddress::from_public_key(
-            &Secp256k1PublicKey::from_slice(&pub_key).unwrap(),
+            &hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
+                .unwrap(),
             Some("bch"),
         )
         .unwrap();

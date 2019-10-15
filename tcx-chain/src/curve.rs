@@ -219,8 +219,8 @@ mod tests {
     //            "m/44'/0'/0'/1/0",
     //            "m/44'/0'/0'/1/1",
     //        ];
-    //        let prv_keys = Secp256k1Curve::key_at_paths_with_seed(&paths, &seed).unwrap();
-    //        let pub_keys = prv_keys
+    //        let key_pairs = Secp256k1Curve::key_at_paths_with_seed(&paths, &seed).unwrap();
+    //        let pub_keys = key_pairs
     //            .iter()
     //            .map(|prv| prv.public_key().to_bytes().to_hex())
     //            .collect::<Vec<String>>();

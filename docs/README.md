@@ -198,7 +198,7 @@ impl TransactionSigner<BitcoinForkTransaction, TxSignResult> for HdKeystore {
         let path = &account.derivation_path;
         let extra = ExtendedPubKeyExtra::from(account.extra.clone());
 
-        let paths = tx.collect_prv_keys_paths(path)?;
+        let paths = tx.collect_key_pairs_paths(path)?;
         tcx_ensure!(password.is_some(), tcx_crypto::Error::InvalidPassword);
         let priv_keys = &self.key_at_paths("BITCOINCASH", &paths, password.unwrap())?;
         let xpub = extra.xpub()?;

@@ -36,8 +36,8 @@ pub use transaction::{BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkT
 
 pub use address::PubKeyScript;
 use serde::export::PhantomData;
-use tcx_primitive::Derive;
 use tcx_primitive::Pair;
+use tcx_primitive::{ArbitraryNetworkExtendedPubKey, Derive};
 use tcx_primitive::{CurveType, DerivePath, Secp256k1Pair};
 pub use transaction::ScriptPubKeyComponent;
 
@@ -88,9 +88,11 @@ where
         let account_path = get_account_path(&coin_info.derivation_path)?;
         let pair = Secp256k1Pair::from_seed_slice(seed.as_bytes())?;
         let derive_path = DerivePath::from_str(&account_path)?;
-        let derivation_info = pair.extended_pub_key()?;
+        //        let
+        let account_pair = pair.derive(derive_path.into_iter())?;
+        let xpub_key = account_pair.extended_pub_key()?;
         //        let derivation_info = Secp256k1Curve::extended_pub_key(&account_path, &seed)?;
-        let xpub = BtcForkAddress::extended_public_key(&derivation_info, coin_info)?;
+        let xpub = BtcForkAddress::extended_public_key(&xpub_key, coin_info)?;
         ExtendedPubKeyExtra::from_xpub(&xpub, &coin_info.symbol)
     }
 }
@@ -104,9 +106,9 @@ impl<T: Address> ExtendedPubKeyExtra<T> {
     }
 
     fn _calc_external_address(xpub: &str, idx: i64, coin: &str) -> Result<ExternalAddress> {
-        let extended_pub_key = ExtendedPubKey::from_str(&xpub)?;
+        let extended_pub_key = ArbitraryNetworkExtendedPubKey::from_str(&xpub)?;
         let s = Secp256k1::new();
-        let index_pub = extended_pub_key.derive_pub(
+        let index_pub = extended_pub_key.extended_pub_key.derive_pub(
             &s,
             &vec![
                 ChildNumber::from_normal_idx(0).unwrap(),

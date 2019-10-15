@@ -397,15 +397,12 @@ mod tests {
 
     use std::str::FromStr;
 
-    use tcx_chain::Secp256k1PublicKey;
+    use tcx_primitive::Secp256k1PublicKey;
 
     #[test]
     pub fn test_btc_fork_address() {
-        let pub_key = Secp256k1PublicKey::from_str(
-            "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
-        )
-        .unwrap();
-
+        let pub_key_str = "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba";
+        let pub_key = hex::decode(pub_key_str).unwrap();
         let network = network_from_coin("LITECOIN").unwrap();
         let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)
             .unwrap()

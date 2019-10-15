@@ -37,7 +37,8 @@ impl TraitAddress for Address {
 mod tests {
     use super::Address;
     use tcx_chain::keystore::Address as TraitAddress;
-    use tcx_chain::Secp256k1PublicKey;
+    use tcx_primitive::Public;
+    use tcx_primitive::Secp256k1PublicKey;
 
     #[test]
     fn tron_address() {
