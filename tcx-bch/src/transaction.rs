@@ -28,8 +28,7 @@ pub type BchTransaction =
 mod tests {
     use super::*;
     use crate::address::BchAddress;
-    use bitcoin::network::constants::Network;
-    use secp256k1::SecretKey;
+
     use std::marker::PhantomData;
     use std::str::FromStr;
     use tcx_primitive::Pair;

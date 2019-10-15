@@ -766,7 +766,7 @@ mod tests {
 
     fn remove_created_wallet(wid: &str) {
         let file_dir = WALLET_FILE_DIR.read().unwrap();
-        let file_dir_str = file_dir.to_string();
+        let _file_dir_str = file_dir.to_string();
         let full_file_path = format!("{}/{}.json", file_dir, wid);
         let p = Path::new(&full_file_path);
         remove_file(p);

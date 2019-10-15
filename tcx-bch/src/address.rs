@@ -102,8 +102,6 @@ mod tests {
     use bitcoin::util::misc::hex_bytes;
 
     use tcx_chain::keystore::Address;
-    use tcx_primitive::Public;
-    use tcx_primitive::Secp256k1PublicKey;
 
     #[test]
     pub fn test_convert() {

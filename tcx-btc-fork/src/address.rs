@@ -397,8 +397,6 @@ mod tests {
 
     use std::str::FromStr;
 
-    use tcx_primitive::Secp256k1PublicKey;
-
     #[test]
     pub fn test_btc_fork_address() {
         let pub_key_str = "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba";

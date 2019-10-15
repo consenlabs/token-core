@@ -21,13 +21,10 @@ use tcx_primitive::{ArbitraryNetworkExtendedPubKey, Pair};
 use crate::ExtendedPubKeyExtra;
 use bitcoin::util::bip143::SighashComponents;
 use bitcoin_hashes::hash160;
-use secp256k1::Secp256k1;
 use std::marker::PhantomData;
-use tcx_chain::bips::{get_account_path, relative_path_to_child_nums};
-//use tcx_chain::curve::PublicKey;
 use tcx_chain::keystore::Address;
+use tcx_primitive::derive::get_account_path;
 use tcx_primitive::Public;
-//use serde::
 
 const DUST: u64 = 546;
 
@@ -185,10 +182,10 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
 
     pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
         let ext_pub_key = ArbitraryNetworkExtendedPubKey::from_str(xpub)?;
-        let s = Secp256k1::new();
-        let child_nums = relative_path_to_child_nums(child_path)?;
-        let index_ext_pub_key = ext_pub_key.extended_pub_key.derive_pub(&s, &child_nums)?;
-        Ok(index_ext_pub_key.public_key)
+        //        let s = Secp256k1::new();
+        //        let child_nums = relative_path_to_child_nums(child_path)?;
+        let index_ext_pub_key = ext_pub_key.derive(&child_path)?;
+        Ok(index_ext_pub_key.public_key())
     }
 
     fn tx_outs(&self, change_script_pubkey: Script) -> Result<Vec<TxOut>> {
@@ -438,8 +435,7 @@ pub type BtcForkSegWitTransaction =
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bitcoin::network::constants::Network;
-    use secp256k1::SecretKey;
+
     use tcx_primitive::Secp256k1Pair;
 
     #[test]

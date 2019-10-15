@@ -1,19 +1,17 @@
-use super::{
-    key_types, KeyError, KeyTypeId, Pair as TraitPair, Public as TraitPublic, Signer, TypedKey,
-};
+use super::{key_types, KeyError, KeyTypeId, Pair as TraitPair, Public as TraitPublic, TypedKey};
 
 use bitcoin::network::constants::Network;
 use bitcoin::util::bip32::{
     ChainCode, ChildNumber, Error as Bip32Error, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
-use secp256k1::recovery::RecoverableSignature;
-use secp256k1::{Message, Signature};
+
+use secp256k1::Message;
 use std::convert::TryInto;
 
 use std::str::FromStr;
 
 use crate::derive::*;
-use crate::KeyError::{CannotDeriveKey, InvalidMessage, InvalidPublicKey};
+use crate::KeyError::{CannotDeriveKey, InvalidPublicKey};
 use crate::Result;
 use bitcoin::util::base58;
 use bitcoin::util::base58::Error::InvalidLength;
@@ -22,11 +20,8 @@ use byteorder::BigEndian;
 use byteorder::ByteOrder;
 use core::fmt;
 use lazy_static::lazy_static;
-use std::io::Cursor;
 
-use crate::key_types::SECP256K1;
 use bip39::Seed;
-use bitcoin::util::psbt::serialize::Serialize;
 use std::convert::AsMut;
 //use secp256k1::Secp256k1
 //use tcx::curve::PublicKey;
@@ -87,7 +82,7 @@ pub struct ArbitraryNetworkExtendedPubKey {
 }
 
 impl ArbitraryNetworkExtendedPubKey {
-    fn derive(&self, child_path: &str) -> Result<ArbitraryNetworkExtendedPubKey> {
+    pub fn derive(&self, child_path: &str) -> Result<ArbitraryNetworkExtendedPubKey> {
         let child_nums = relative_path_to_child_nums(child_path)?;
         let index_ext_pub_key = self
             .extended_pub_key
@@ -96,6 +91,10 @@ impl ArbitraryNetworkExtendedPubKey {
             network: self.network,
             extended_pub_key: index_ext_pub_key,
         })
+    }
+
+    pub fn public_key(&self) -> bitcoin::PublicKey {
+        self.extended_pub_key.public_key
     }
 }
 
@@ -486,7 +485,7 @@ impl TraitPublic for Public {
         match self.0 {
             PublicType::PublicKey(pub_key) => Ok(pub_key.to_bytes()),
             // todo: throw error
-            PublicType::ExtendedPubKey(epk) => Err(InvalidPublicKey.into()),
+            PublicType::ExtendedPubKey(_epk) => Err(InvalidPublicKey.into()),
         }
         //        let r: &[u8] = self.as_ref();
         //        &r[..]
@@ -554,14 +553,13 @@ impl TypedKey for Pair {
 #[cfg(test)]
 mod tests {
     use crate::derive::Derive;
-    use crate::secp256k1::PublicType::PublicKey;
+
     use crate::Secp256k1Pair;
     use crate::{
         ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, DerivePath, Pair, Public,
     };
     use bip39::{Language, Mnemonic, Seed};
-    use bitcoin::util::bip32::DerivationPath;
-    use bitcoin::util::misc::hex_bytes;
+
     use bitcoin_hashes::hex::ToHex;
     use bitcoin_hashes::Hash;
     use std::str::FromStr;
@@ -683,7 +681,7 @@ mod tests {
 
         let seed = default_seed();
         let pair = Secp256k1Pair::from_seed(&seed).unwrap();
-        let xpub_key = pair.extended_pub_key().unwrap();
+        let _xpub_key = pair.extended_pub_key().unwrap();
         let mut index_xpub_key = pair
             .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
             .unwrap()

@@ -5,7 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use tcx_crypto::{Crypto, Pbkdf2Params};
-use tcx_primitive::{CurveType, Derive, DeriveJunction, DerivePath, Pair, Public, Secp256k1Pair};
+use tcx_primitive::{CurveType, Derive, DerivePath, Pair, Public, Secp256k1Pair};
 
 use crate::bips;
 

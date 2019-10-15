@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate failure;
 
-mod derive;
+pub mod derive;
 mod error;
 mod secp256k1;
 

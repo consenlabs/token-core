@@ -1,13 +1,3 @@
-use bitcoin::network::constants::Network;
-use secp256k1::{Message, Secp256k1, SecretKey};
-
-use crate::Error;
-use crate::Result;
-use bip39::Seed;
-use bitcoin::util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey};
-use serde::{Deserialize, Serialize};
-use std::str::FromStr;
-
 //
 //pub trait PublicKey: Sized {
 //    fn to_bytes(&self) -> Vec<u8>;

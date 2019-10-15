@@ -43,7 +43,7 @@ mod tests {
     #[test]
     fn tron_address() {
         let bytes = hex::decode("04DAAC763B1B3492720E404C53D323BAF29391996F7DD5FA27EF0D12F7D50D694700684A32AD97FF4C09BF9CF0B9D0AC7F0091D9C6CB8BE9BB6A1106DA557285D8").unwrap();
-        let public_key = Secp256k1PublicKey::from_slice(&bytes).unwrap();
+        let _public_key = Secp256k1PublicKey::from_slice(&bytes).unwrap();
         assert_eq!(
             Address::from_public_key(&bytes, None).unwrap(),
             "THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"

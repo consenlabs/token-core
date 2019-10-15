@@ -8,11 +8,11 @@ use bitcoin_hashes::Hash as TraitHash;
 
 use serde_json::Value;
 use std::convert::{TryFrom, TryInto};
+use tcx_primitive::Pair;
 use tcx_primitive::Secp256k1Pair;
-use tcx_primitive::{Pair, Signer};
 
 use failure::format_err;
-use secp256k1::recovery::RecoverableSignature;
+
 use serde_json::json;
 
 pub struct Transaction {
