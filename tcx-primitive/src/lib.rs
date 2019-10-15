@@ -2,13 +2,10 @@
 extern crate failure;
 
 pub mod derive;
-mod error;
 mod secp256k1;
 
 use core::result;
 use serde::{Deserialize, Serialize};
-
-pub use error::Error;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
@@ -104,13 +101,13 @@ pub trait Pair: TypedKey + Sized + FromStr + Derive {
 
     fn from_seed_slice(seed: &[u8]) -> Result<Self>;
 
-    fn public(&self) -> Self::Public;
+    fn extended_public_key(&self) -> Result<Self::Public>;
+
+    fn public_key(&self) -> Self::Public;
 
     fn sign(&self, _: &[u8]) -> Result<Vec<u8>>;
 
     fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>>;
-
-    fn public_key(&self) -> Self::Public;
 
     fn is_extendable(&self) -> bool;
 }

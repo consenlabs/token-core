@@ -19,22 +19,10 @@ use core::result;
 extern crate failure;
 extern crate regex;
 
-pub mod bips;
-pub mod curve;
 pub mod keystore;
 pub mod signer;
 
-//pub use curve::{CurveType, PrivateKey, PublicKey};
 pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
-
-//cfg_if! {
-//    if #[cfg(test)] {
-//        pub use crate::keystore::MockHdKeystore as HdKeystore;
-//    } else {
-//        pub use crate::keystore::HdKeystore;
-//    }
-//}
-
 pub use signer::{SignedTransaction, Transaction, TransactionSigner, TxSignResult};
 
 use tcx_primitive::Public;

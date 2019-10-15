@@ -12,7 +12,6 @@ pub fn generate_mnemonic() -> String {
     Mnemonic::new(MnemonicType::Words12, Language::English).to_string()
 }
 
-#[allow(dead_code)]
 pub fn get_account_path(path: &str) -> Result<String> {
     // example: m/44'/60'/0'/0/0
     let _ = bitcoin::util::bip32::DerivationPath::from_str(path)?;
@@ -25,7 +24,6 @@ pub fn get_account_path(path: &str) -> Result<String> {
     Ok(childs.join("/"))
 }
 
-#[allow(dead_code)]
 pub fn relative_path_to_child_nums(path: &str) -> Result<Vec<ChildNumber>> {
     let childs: Vec<&str> = path.split("/").collect();
     childs

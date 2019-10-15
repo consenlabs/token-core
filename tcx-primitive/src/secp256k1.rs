@@ -395,15 +395,27 @@ impl TraitPair for Pair {
         Self::new_pair(seed)
     }
 
-    fn public(&self) -> Public {
+    fn extended_public_key(&self) -> Result<Public> {
         match self.0 {
             PrivateType::ExtendedPrivKey(r) => {
                 let pub_key = ExtendedPubKey::from_private(&SECP256K1_ENGINE, &r.extended_priv_key);
 
-                Public(PublicType::ExtendedPubKey(ArbitraryNetworkExtendedPubKey {
-                    network: r.network,
-                    extended_pub_key: pub_key,
-                }))
+                Ok(Public(PublicType::ExtendedPubKey(
+                    ArbitraryNetworkExtendedPubKey {
+                        network: r.network,
+                        extended_pub_key: pub_key,
+                    },
+                )))
+            }
+            PrivateType::PrivateKey(_) => Err(CannotDeriveKey.into()),
+        }
+    }
+
+    fn public_key(&self) -> Self::Public {
+        match self.0 {
+            PrivateType::ExtendedPrivKey(r) => {
+                let pub_key = ExtendedPubKey::from_private(&SECP256K1_ENGINE, &r.extended_priv_key);
+                Public(PublicType::PublicKey(pub_key.public_key))
             }
             PrivateType::PrivateKey(r) => {
                 let pub_key = PublicKey::from_private_key(&SECP256K1_ENGINE, &r);
@@ -419,7 +431,6 @@ impl TraitPair for Pair {
         };
         let msg = Message::from_slice(data).map_err(transform_secp256k1_error)?;
         let signature = SECP256K1_ENGINE.sign(&msg, &pk.key);
-        //        Ok(signature)
         Ok(signature.serialize_der().to_vec())
     }
 
@@ -431,24 +442,8 @@ impl TraitPair for Pair {
         let msg = Message::from_slice(data).map_err(transform_secp256k1_error)?;
         let signature = SECP256K1_ENGINE.sign_recoverable(&msg, &pk.key);
         let (recover_id, sign) = signature.serialize_compact();
-        //        let mut bs = bytebuffer::ByteBuffer::new();
-        //        bs.write_bytes(&sign);
-        //        bs.write_u8(recover_id.to_i32() as u8);
         let signed_bytes = [sign[..].to_vec(), vec![recover_id.to_i32() as u8]].concat();
         Ok(signed_bytes)
-    }
-
-    fn public_key(&self) -> Self::Public {
-        match self.0 {
-            PrivateType::ExtendedPrivKey(r) => {
-                let pub_key = ExtendedPubKey::from_private(&SECP256K1_ENGINE, &r.extended_priv_key);
-                Public(PublicType::PublicKey(pub_key.public_key))
-            }
-            PrivateType::PrivateKey(r) => {
-                let pub_key = PublicKey::from_private_key(&SECP256K1_ENGINE, &r);
-                Public(PublicType::PublicKey(pub_key))
-            }
-        }
     }
 
     fn is_extendable(&self) -> bool {
@@ -467,21 +462,16 @@ impl std::fmt::Display for Public {
         }
     }
 }
-//
-//impl std::fmt::Debug for Public {
-//    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-//        write!(f, "{}", hex::encode(self.as_ref()))
-//    }
-//}
 
 impl TraitPublic for Public {
     fn from_slice(_data: &[u8]) -> core::result::Result<Self, Self::Error> {
-        //TODO from public key
+        //TODO How to distinguish whether to import from XPub or import from PublicKey
         let pub_key = bitcoin::PublicKey::from_slice(_data)?;
         Ok(Public(PublicType::PublicKey(pub_key)))
     }
 
     fn to_bytes(&self) -> Result<Vec<u8>> {
+        //TODO How to distinguish whether to export to XPub or export to PublicKey
         match self.0 {
             PublicType::PublicKey(pub_key) => Ok(pub_key.to_bytes()),
             // todo: throw error
@@ -494,6 +484,7 @@ impl FromStr for Public {
     type Err = KeyError;
 
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        //TODO How to distinguish whether to import from XPub or import from PublicKey
         match ArbitraryNetworkExtendedPubKey::from_str(s) {
             Ok(r) => Ok(Public(PublicType::ExtendedPubKey(r))),
             Err(_e) => Err(KeyError::InvalidBase58),

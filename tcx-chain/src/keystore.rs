@@ -5,11 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use tcx_crypto::{Crypto, Pbkdf2Params};
-use tcx_primitive::{CurveType, Derive, DerivePath, Pair, Public, Secp256k1Pair};
-
-use crate::bips;
-
-//use crate::curve::{CurveType, PrivateKey, PublicKey};
+use tcx_primitive::{derive, CurveType, Derive, DerivePath, Pair, Public, Secp256k1Pair};
 
 use crate::Error;
 use crate::Result;
@@ -168,7 +164,7 @@ impl HdKeystore {
     }
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
-        let mnemonic = bips::generate_mnemonic();
+        let mnemonic = derive::generate_mnemonic();
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
