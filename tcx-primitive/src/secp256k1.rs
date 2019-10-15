@@ -23,8 +23,6 @@ use lazy_static::lazy_static;
 
 use bip39::Seed;
 use std::convert::AsMut;
-//use secp256k1::Secp256k1
-//use tcx::curve::PublicKey;
 
 fn clone_into_array<A, T>(slice: &[T]) -> A
 where
@@ -132,7 +130,6 @@ impl FromStr for ArbitraryNetworkExtendedPubKey {
             return Err(KeyError::InvalidBase58.into());
         }
         let cn_int: u32 = BigEndian::read_u32(&data[9..13]);
-        //        let cn_int: u32 = Cursor::new(&data[9..13]).read_u32::<BigEndian>().unwrap();
         let child_number: ChildNumber = ChildNumber::from(cn_int);
 
         let epk = ExtendedPubKey {
@@ -464,15 +461,18 @@ impl TraitPair for Pair {
 
 impl std::fmt::Display for Public {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", hex::encode(self.as_ref()))
+        match self.0 {
+            PublicType::ExtendedPubKey(epk) => epk.fmt(f),
+            PublicType::PublicKey(pub_key) => pub_key.fmt(f),
+        }
     }
 }
-
-impl std::fmt::Debug for Public {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", hex::encode(self.as_ref()))
-    }
-}
+//
+//impl std::fmt::Debug for Public {
+//    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+//        write!(f, "{}", hex::encode(self.as_ref()))
+//    }
+//}
 
 impl TraitPublic for Public {
     fn from_slice(_data: &[u8]) -> core::result::Result<Self, Self::Error> {
@@ -487,8 +487,6 @@ impl TraitPublic for Public {
             // todo: throw error
             PublicType::ExtendedPubKey(_epk) => Err(InvalidPublicKey.into()),
         }
-        //        let r: &[u8] = self.as_ref();
-        //        &r[..]
     }
 }
 
@@ -502,22 +500,18 @@ impl FromStr for Public {
         }
     }
 }
-
-impl AsRef<[u8]> for Pair {
-    fn as_ref(&self) -> &[u8] {
-        unimplemented!()
-    }
-}
-
-impl AsRef<[u8]> for Public {
-    fn as_ref(&self) -> &[u8] {
-        //        match self.0 {
-        //            PublicType::PublicKey(pub_key) => pub_key.as_ref(),
-        //            PublicType::ExtendedPubKey(epk) => epk.as_ref()
-        //        }
-        unimplemented!()
-    }
-}
+//
+//impl AsRef<[u8]> for Pair {
+//    fn as_ref(&self) -> &[u8] {
+//        unimplemented!()
+//    }
+//}
+//
+//impl AsRef<[u8]> for Public {
+//    fn as_ref(&self) -> &[u8] {
+//        unimplemented!()
+//    }
+//}
 
 impl TypedKey for Public {
     const KEY_TYPE: KeyTypeId = key_types::SECP256K1;
@@ -564,60 +558,17 @@ mod tests {
     use bitcoin_hashes::Hash;
     use std::str::FromStr;
 
-    //    #[test]
-    //        fn test_secp256k1_pub_key() {
-    //            let ret = Public::from_slice(&[0]);
-    //            assert_eq!(
-    //                "length 1 invalid for this base58 type",
-    //                format!("{}", ret.err().unwrap())
-    //            );
-    //
-    //            let ret = Secp256k1PubKey::from_slice(&[0, 1, 2, 3]);
-    //            assert_eq!(
-    //                "length 4 invalid for this base58 type",
-    //                format!("{}", ret.err().unwrap())
-    //            );
-    //
-    //            let pub_bytes = hex_bytes("04506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76").unwrap();
-    //
-    //            let ret = Secp256k1PubKey::from_slice(&pub_bytes).unwrap();
-    //            let bytes = ret.to_bytes();
-    //            assert_eq!(bytes, pub_bytes);
-    //
-    //            let compressed = bitcoin::PublicKey::to_compressed(&ret);
-    //            assert_eq!(
-    //                "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
-    //                compressed.to_hex()
-    //            );
-    //
-    //            let uncompressed = bitcoin::PublicKey::to_uncompressed(&ret);
-    //            assert_eq!("04506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76", uncompressed.to_hex());
-    //        }
-    //
-    //        #[test]
-    //        fn test_secp256k1_prv_key() {
-    //            assert!(!Secp256k1PrivateKey::is_valid(&[0, 1, 2, 3]));
-    //
-    //            let maximum_valid_pk_bytes =
-    //                hex_bytes("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140").unwrap();
-    //            assert!(Secp256k1PrivateKey::is_valid(&maximum_valid_pk_bytes));
-    //
-    //            assert!(!Secp256k1PrivateKey::is_valid(&[0]));
-    //
-    //            let invalid_pk_bytes =
-    //                hex_bytes("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141").unwrap();
-    //            assert!(!Secp256k1PrivateKey::is_valid(&invalid_pk_bytes));
-    //
-    //            let prv_key =
-    //                Secp256k1PrivateKey::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
-    //                    .unwrap();
-    //            let _expected_pub_key_bytes = hex_bytes("00").unwrap();
-    //            let pub_key = PrivateKey::public_key(&prv_key);
-    //            assert_eq!(
-    //                "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
-    //                pub_key.to_bytes().to_hex()
-    //            );
-    //        }
+    #[test]
+    fn test_secp256k1_prv_key() {
+        let pair = Secp256k1Pair::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
+            .unwrap();
+        let _expected_pub_key_bytes = hex::decode("00").unwrap();
+        let pub_key = pair.public_key().to_bytes().unwrap().to_hex();
+        assert_eq!(
+            "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
+            pub_key
+        );
+    }
 
     #[test]
     fn test_secp256k1_sign() {

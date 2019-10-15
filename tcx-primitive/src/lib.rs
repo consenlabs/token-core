@@ -5,12 +5,6 @@ pub mod derive;
 mod error;
 mod secp256k1;
 
-pub type U256 = [u8; 32];
-
-pub type U160 = [u8; 20];
-
-pub type U128 = [u8; 16];
-
 use core::result;
 use serde::{Deserialize, Serialize};
 
@@ -95,7 +89,7 @@ pub trait TypedKey {
     const KEY_TYPE: KeyTypeId;
 }
 
-pub trait Public: AsRef<[u8]> + TypedKey + Sized + FromStr + Derive {
+pub trait Public: TypedKey + Sized + FromStr + Derive {
     fn from_slice(data: &[u8]) -> Result<Self>;
 
     fn to_bytes(&self) -> Result<Vec<u8>>;
