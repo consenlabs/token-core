@@ -63,9 +63,6 @@ pub trait Address {
     fn is_valid(address: &str) -> bool;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
     fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String>;
-
-    //    fn from_public_key_with(public_key: &impl PublicKey, coin: &CoinInfo) -> Result<String>;
-    // fn from_data(data: &[u8]) -> Box<dyn Address>;
 }
 
 /// Blockchain basic config
@@ -146,7 +143,6 @@ impl HdKeystore {
     ) -> Result<Account> {
         let paths = vec![coin_info.derivation_path.clone()];
         let keys = Self::key_pair_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
-        //        let key = keys.first().ok_or(format_err!("derivate_failed"))?;
         let key = keys.first().ok_or(format_err!("derivate_failed"))?;
         let pub_key = key.public_key();
         let bytes = pub_key.to_bytes()?;
@@ -306,7 +302,6 @@ impl HdKeystore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    //    use crate::curve::{PrivateKey, PublicKey};
     use bitcoin_hashes::hex::ToHex;
     use serde_json::Map;
     use tcx_primitive::Public;
@@ -531,5 +526,4 @@ mod tests {
         ];
         assert_eq!(pub_keys, expected_pub_keys);
     }
-
 }

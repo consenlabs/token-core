@@ -3,6 +3,7 @@
 use crate::transaction::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
+use bech32::{FromBase32, ToBase32, WriteBase32};
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Error as BtcAddressError;
 use bitcoin::util::address::Payload;
@@ -142,7 +143,6 @@ impl Address for BtcForkAddress {
     }
 
     fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String> {
-        //        let pub_key = Secp256k1PublicKey::from_slice(&public_key)?.public_key();
         let coin = coin.expect("coin from address_pub_key");
         let network = network_from_coin(&coin);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
@@ -153,7 +153,6 @@ impl Address for BtcForkAddress {
         } else {
             addr = BtcForkAddress::p2pkh(public_key, &network)?.to_string();
         }
-        //        let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string();
         Ok(addr.to_string())
     }
 }

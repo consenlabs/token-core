@@ -15,7 +15,6 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
-//use tcx_chain::curve::PrivateKey;
 use tcx_primitive::{ArbitraryNetworkExtendedPubKey, Pair};
 
 use crate::ExtendedPubKeyExtra;
@@ -27,13 +26,14 @@ use tcx_primitive::derive::get_account_path;
 use tcx_primitive::Public;
 
 const DUST: u64 = 546;
+const SIGHASH_ALL: u8 = 0x01;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Utxo {
     pub tx_hash: String,
     pub vout: i32,
-    #[serde(with = "string")]
+    #[serde(with = "stringify")]
     pub amount: i64,
     pub address: String,
     pub script_pub_key: String,
@@ -42,7 +42,7 @@ pub struct Utxo {
     pub sequence: i64,
 }
 
-mod string {
+mod stringify {
     use std::fmt::Display;
     use std::str::FromStr;
 
@@ -114,12 +114,12 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         let paths = tx.collect_key_pair_paths(path)?;
 
         tcx_ensure!(password.is_some(), tcx_crypto::Error::InvalidPassword);
-        let priv_keys =
+        let pairs =
             &self.key_pair_at_paths(tx.coin.to_uppercase().as_str(), &paths, password.unwrap())?;
 
         let xpub = extra.xpub()?;
         let change_addr = tx.change_address(&xpub)?;
-        tx.sign_transaction(&priv_keys, change_addr)
+        tx.sign_transaction(&pairs, change_addr)
     }
 }
 
@@ -182,8 +182,6 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
 
     pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
         let ext_pub_key = ArbitraryNetworkExtendedPubKey::from_str(xpub)?;
-        //        let s = Secp256k1::new();
-        //        let child_nums = relative_path_to_child_nums(child_path)?;
         let index_ext_pub_key = ext_pub_key.derive(&child_path)?;
         Ok(index_ext_pub_key.public_key())
     }
@@ -308,7 +306,7 @@ impl SegWitTransactionSignComponent {
             witnesses.push(Self::sign_hash_and_pub_key(
                 prv_key,
                 &hash.into_inner(),
-                0x01,
+                SIGHASH_ALL,
             )?);
         }
         Ok(witnesses)
@@ -367,8 +365,8 @@ impl SignHasher for LegacySignHasher {
     fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
         let addr = BtcForkAddress::from_str(&unspent.address)?;
         let script = addr.script_pubkey();
-        let hash = tx.signature_hash(index, &script, 0x01);
-        Ok((hash, 0x01))
+        let hash = tx.signature_hash(index, &script, SIGHASH_ALL as u32);
+        Ok((hash, SIGHASH_ALL as u32))
     }
 }
 

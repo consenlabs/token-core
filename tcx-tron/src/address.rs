@@ -9,17 +9,6 @@ pub enum Error {
     InvalidBase58,
 }
 
-//impl TraitAddress for Address {
-//    type Error = Error;
-//    type Public = Public;
-//
-//    fn from_public(public: &Self::Public) -> core::result::Result<Address, Self::Error> {
-//        let bytes = public.public_key().to_uncompressed();
-//        let hash = keccak_hash::keccak(&bytes[1..]);
-//        let hex: Vec<u8> = [vec![0x41], hash[12..32].to_vec()].concat();
-//        Ok(Address(base58::check_encode_slice(&hex)))
-//    }
-//}
 impl TraitAddress for Address {
     fn is_valid(_address: &str) -> bool {
         unimplemented!()

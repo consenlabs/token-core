@@ -2,14 +2,12 @@ use bip39::Seed;
 
 pub mod address;
 pub mod bip143_with_forkid;
-pub mod hard_wallet_keystore;
 pub mod transaction;
 
 use core::result;
 use serde::{Deserialize, Serialize};
 use std::iter::IntoIterator;
 use std::str::FromStr;
-//use tcx_chain::curve::CurveType;
 use tcx_chain::keystore::Address;
 use tcx_chain::keystore::{CoinInfo, Extra};
 
@@ -41,12 +39,6 @@ pub use transaction::ScriptPubKeyComponent;
 
 #[derive(Fail, Debug)]
 pub enum Error {
-    #[fail(display = "bch_convert_to_legacy_address_failed# address: {}", _0)]
-    ConvertToLegacyAddressFailed(String),
-    #[fail(display = "bch_convert_to_cash_address_failed# address: {}", _0)]
-    ConvertToCashAddressFailed(String),
-    #[fail(display = "construct_bch_address_failed# address: {}", _0)]
-    ConstructBchAddressFailed(String),
     #[fail(display = "decrypt_xpub_error")]
     DecryptXPubError,
     #[fail(display = "unsupported_chain")]
@@ -103,7 +95,6 @@ impl<T: Address> ExtendedPubKeyExtra<T> {
 
     fn _calc_external_address(xpub: &str, idx: i64, coin: &str) -> Result<ExternalAddress> {
         let extended_pub_key = ArbitraryNetworkExtendedPubKey::from_str(&xpub)?;
-        //        let s = Secp256k1::new();
         let child_path = format!("{}/{}", 0, idx as u32);
         let index_pub = extended_pub_key.derive(&child_path)?;
         let address = T::from_public_key(&index_pub.public_key().to_bytes(), Some(coin))?;

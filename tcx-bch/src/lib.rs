@@ -22,10 +22,6 @@ pub enum Error {
     ConvertToCashAddressFailed(String),
     #[fail(display = "construct_bch_address_failed# address: {}", _0)]
     ConstructBchAddressFailed(String),
-    #[fail(display = "decrypt_xpub_error")]
-    DecryptXPubError,
-    #[fail(display = "unsupported_chain")]
-    UnsupportedChain,
 }
 
 #[cfg(test)]
@@ -132,5 +128,4 @@ mod tests {
             serde_json::Value::from_str(expected).unwrap()
         );
     }
-
 }

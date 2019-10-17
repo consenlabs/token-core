@@ -244,5 +244,4 @@ mod tests {
         assert_eq!(&ChildNumber::from_normal_idx(1).unwrap(), &child_nums[1]);
         assert_eq!(&ChildNumber::from_normal_idx(2).unwrap(), &child_nums[2]);
     }
-
 }

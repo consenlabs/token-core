@@ -30,7 +30,6 @@ pub mod ctr {
         cipher.apply_keystream(&mut data_copy);
         Ok(Vec::from(data_copy))
     }
-
 }
 
 pub mod cbc {
@@ -123,5 +122,4 @@ mod tests {
         let ret = encrypt_pkcs7(&data, &key, &wrong_len_iv);
         assert!(ret.is_err());
     }
-
 }

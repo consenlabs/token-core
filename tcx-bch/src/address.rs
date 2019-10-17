@@ -85,7 +85,6 @@ impl PubKeyScript for BchAddress {
 
 impl ScriptPubKeyComponent for BchAddress {
     fn address_like(_target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
-        //        let target_addr = BchAddress::convert_to_legacy_if_need(target_addr)?;
         Ok(BtcAddress::p2pkh(&pub_key, Network::Bitcoin).script_pubkey())
     }
 
@@ -141,5 +140,4 @@ mod tests {
             "bitcoincash:qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
         );
     }
-
 }

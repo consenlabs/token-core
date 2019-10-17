@@ -62,7 +62,7 @@ fn cache_keystore(keystore: HdKeystore) {
         .insert(keystore.id.to_owned(), keystore);
 }
 
-fn find_keystore_id_by_address(address: &str) -> Option<String> {
+fn _find_keystore_id_by_address(address: &str) -> Option<String> {
     let map = KEYSTORE_MAP.read().unwrap();
     let mut k_id: Option<String> = None;
     for (id, keystore) in map.borrow().iter() {
@@ -73,6 +73,25 @@ fn find_keystore_id_by_address(address: &str) -> Option<String> {
         }
     }
     k_id
+}
+
+fn _flush_keystore(ks: &HdKeystore) -> Result<()> {
+    let json = ks.json();
+
+    let file_dir = WALLET_FILE_DIR.read().unwrap();
+    let ks_path = format!("{}/{}.json", file_dir, ks.id);
+    let path = Path::new(&ks_path);
+    let mut file = File::create(path)?;
+    let _ = file.write_all(&json.as_bytes());
+    Ok(())
+}
+
+fn _delete_keystore_file(wid: &str) -> Result<()> {
+    let file_dir = WALLET_FILE_DIR.read().unwrap();
+    let ks_path = format!("{}/{}.json", file_dir, wid);
+    let path = Path::new(&ks_path);
+    let _ = fs::remove_file(path)?;
+    Ok(())
 }
 
 fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
@@ -171,11 +190,9 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 }
 
 pub extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
-    let json_c_str = unsafe { CStr::from_ptr(json_str) };
-    let json_str = json_c_str.to_str().unwrap();
-    let v: Value = serde_json::from_str(json_str).unwrap();
+    let v: Value = parse_arguments(json_str);
     let json = unsafe { landingpad(|| _create_wallet(&v)) };
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _create_wallet(v: &Value) -> Result<String> {
@@ -225,7 +242,6 @@ fn _init_token_core_x(v: &Value) -> Result<()> {
         let mut contents = String::new();
 
         let _ = f.read_to_string(&mut contents);
-        println!("contents: {}", &contents);
         let v: Value = serde_json::from_str(&contents).expect("read json from content");
 
         let version = v["version"].as_i64().expect("version");
@@ -238,12 +254,11 @@ fn _init_token_core_x(v: &Value) -> Result<()> {
     Ok(())
 }
 
-//
 #[no_mangle]
 pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
     let json = landingpad(|| _find_wallet_by_mnemonic(&v));
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
@@ -264,7 +279,7 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
     let address = acc.address;
-    let kid = find_keystore_id_by_address(&address);
+    let kid = _find_keystore_id_by_address(&address);
     if let Some(id) = kid {
         let map = KEYSTORE_MAP.read().unwrap();
         let ks: &HdKeystore = map.get(&id).unwrap();
@@ -278,7 +293,7 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
 pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
     let json = landingpad(|| _import_wallet_from_mnemonic(&v));
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
@@ -303,7 +318,7 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
 
-    let exist_kid_opt = find_keystore_id_by_address(&account.address);
+    let exist_kid_opt = _find_keystore_id_by_address(&account.address);
     if exist_kid_opt.is_some() {
         if !overwrite {
             return Err(format_err!("{}", "wallet_exists"));
@@ -319,30 +334,11 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     json
 }
 
-fn _flush_keystore(ks: &HdKeystore) -> Result<()> {
-    let json = ks.json();
-
-    let file_dir = WALLET_FILE_DIR.read().unwrap();
-    let ks_path = format!("{}/{}.json", file_dir, ks.id);
-    let path = Path::new(&ks_path);
-    let mut file = File::create(path)?;
-    let _ = file.write_all(&json.as_bytes());
-    Ok(())
-}
-
-fn _delete_keystore_file(wid: &str) -> Result<()> {
-    let file_dir = WALLET_FILE_DIR.read().unwrap();
-    let ks_path = format!("{}/{}.json", file_dir, wid);
-    let path = Path::new(&ks_path);
-    let _ = fs::remove_file(path)?;
-    Ok(())
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn export_mnemonic(json_str: *const c_char) -> *const c_char {
     let v: Value = parse_arguments(json_str);
     let json = landingpad(|| _export_mnemonic(&v));
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _export_mnemonic(v: &Value) -> Result<String> {
@@ -364,7 +360,7 @@ fn _export_mnemonic(v: &Value) -> Result<String> {
 pub unsafe extern "C" fn verify_password(json_str: *const c_char) -> *const c_char {
     let v: Value = parse_arguments(json_str);
     let json = landingpad(|| _verify_password(&v));
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _verify_password(v: &Value) -> Result<String> {
@@ -385,14 +381,13 @@ fn _verify_password(v: &Value) -> Result<String> {
     }
 }
 
-//
 #[no_mangle]
 pub extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().unwrap();
 
     let json = unsafe { landingpad(|| _sign_transaction(json_str)) };
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _sign_transaction(json_str: &str) -> Result<String> {
@@ -439,7 +434,7 @@ fn _sign_btc_fork_transaction(
                 .expect("utxo amount")
                 .to_string()
                 .parse::<i64>()
-                .expect("converter amount to i64"),
+                .expect("utxo converter amount to i64"),
             address: v["address"].as_str().expect("utxo address").to_string(),
             script_pub_key: v["scriptPubKey"]
                 .as_str()
@@ -515,11 +510,11 @@ fn _sign_trx_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
 pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
     let json = landingpad(|| _calc_external_address(&v));
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _calc_external_address(v: &Value) -> Result<String> {
-    let w_id = v["id"].as_str().unwrap();
+    let w_id = v["id"].as_str().expect("wallet_id");
     let external_id = v["externalIdx"].as_i64().expect("external_id");
     let _network = v["network"].as_str().unwrap();
     let chain_type = v["chainType"].as_str().unwrap();
@@ -549,11 +544,11 @@ fn _calc_external_address(v: &Value) -> Result<String> {
 pub unsafe extern "C" fn remove_wallet(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
     let json = landingpad(|| _remove_wallet(&v));
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _remove_wallet(v: &Value) -> Result<String> {
-    let w_id = v["id"].as_str().unwrap();
+    let w_id = v["id"].as_str().expect("wallet_id");
     let password = v["password"].as_str().expect("password");
 
     let mut map = KEYSTORE_MAP.write().unwrap();
@@ -571,15 +566,17 @@ fn _remove_wallet(v: &Value) -> Result<String> {
     }
 }
 
+// get_derived_key and cache_derived_key functions are one way to speed decrypt data,
+// you should cache the derived_key in some secure place like keystore in iOS, and protect it by biometric.
 #[no_mangle]
 pub unsafe extern "C" fn get_derived_key(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
     let json = landingpad(|| _get_derived_key(&v));
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _get_derived_key(v: &Value) -> Result<String> {
-    let w_id = v["id"].as_str().unwrap();
+    let w_id = v["id"].as_str().expect("wallet_id");
     let password = v["password"].as_str().expect("password");
 
     let map = KEYSTORE_MAP.read().unwrap();
@@ -597,11 +594,11 @@ fn _get_derived_key(v: &Value) -> Result<String> {
 pub unsafe extern "C" fn verify_derived_key(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
     let json = landingpad(|| _verify_derived_key(&v));
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _verify_derived_key(v: &Value) -> Result<String> {
-    let w_id = v["id"].as_str().unwrap();
+    let w_id = v["id"].as_str().expect("wallet_id");
     let derived_key = v["derivedKey"].as_str().expect("derivedKey");
 
     let map = KEYSTORE_MAP.read().unwrap();
@@ -623,11 +620,11 @@ fn _verify_derived_key(v: &Value) -> Result<String> {
 pub unsafe extern "C" fn cache_derived_key(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
     let json = landingpad(|| _cache_derived_key(&v));
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _cache_derived_key(v: &Value) -> Result<String> {
-    let w_id = v["id"].as_str().unwrap();
+    let w_id = v["id"].as_str().expect("wallet_id");
     let derived_key = v["derivedKey"].as_str().expect("derivedKey");
     let tmp_password = v["tempPassword"].as_str().expect("tempPassword");
 
@@ -653,7 +650,7 @@ fn _cache_derived_key(v: &Value) -> Result<String> {
 pub unsafe extern "C" fn clear_derived_key() -> *const c_char {
     //    let v = parse_arguments(json_str);
     let json = landingpad(|| _clear_derived_key());
-    CString::new(json).unwrap().into_raw()
+    CString::new(json).expect("ret json").into_raw()
 }
 
 fn _clear_derived_key() -> Result<String> {
@@ -739,6 +736,7 @@ mod tests {
         }
     }
 
+    #[allow(dead_code)]
     fn teardown() {
         let file_dir = WALLET_FILE_DIR.read().unwrap();
         let file_dir_str = file_dir.to_string();
@@ -770,11 +768,6 @@ mod tests {
         let full_file_path = format!("{}/{}.json", file_dir, wid);
         let p = Path::new(&full_file_path);
         remove_file(p);
-    }
-
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
     }
 
     #[test]
@@ -811,7 +804,7 @@ mod tests {
             let json = _to_str(create_wallet(_to_c_char(params)));
             let v = Value::from_str(json).unwrap();
             let _expected = Value::from_str(params).unwrap();
-            let id = v["id"].as_str().unwrap();
+            let id = v["id"].as_str().expect("wallet_id");
             assert_eq!(v["source"].as_str().unwrap(), "MNEMONIC");
             let map = KEYSTORE_MAP.read().unwrap();
             assert!(map.get(id).is_some());
@@ -866,7 +859,7 @@ mod tests {
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
 
-            remove_created_wallet(ret_v["id"].as_str().unwrap());
+            remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
         });
     }
 
@@ -901,7 +894,7 @@ mod tests {
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
 
-            remove_created_wallet(ret_v["id"].as_str().unwrap());
+            remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
         });
     }
 
@@ -936,7 +929,7 @@ mod tests {
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
 
-            remove_created_wallet(ret_v["id"].as_str().unwrap());
+            remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
         });
     }
 
@@ -971,7 +964,7 @@ mod tests {
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
 
-            remove_created_wallet(ret_v["id"].as_str().unwrap());
+            remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
         });
     }
 
@@ -982,7 +975,7 @@ mod tests {
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let ret_v = Value::from_str(ret).unwrap();
-            let imported_id = ret_v["id"].as_str().unwrap();
+            let imported_id = ret_v["id"].as_str().expect("wallet_id");
             let param = json!({
                 "id": imported_id,
                 "password": "Insecure Password"
@@ -992,7 +985,7 @@ mod tests {
             let ret_v = Value::from_str(ret).unwrap();
             assert_eq!(ret_v["id"], imported_id);
 
-            //            remove_created_wallet(ret_v["id"].as_str().unwrap());
+            //            remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
         });
     }
 
@@ -1019,7 +1012,7 @@ mod tests {
             assert_eq!(expected_v["address"], ret_v["address"]);
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
 
-            remove_created_wallet(ret_v["id"].as_str().unwrap());
+            remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
         });
     }
 
@@ -1095,7 +1088,7 @@ mod tests {
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let ret_v = Value::from_str(ret).unwrap();
-            let imported_id = ret_v["id"].as_str().unwrap();
+            let imported_id = ret_v["id"].as_str().expect("wallet_id");
             let param = json!({
                 "id": imported_id,
                 "password": "Insecure Password"
@@ -1103,7 +1096,6 @@ mod tests {
 
             let derived_key =
                 unsafe { _to_str(get_derived_key(_to_c_char(param.to_string().as_str()))) };
-            println!("derivedKey: {}", derived_key);
             let param: Value =
                 json!({"id": imported_id, "tempPassword": "88888888", "derivedKey": derived_key});
             unsafe { _to_str(cache_derived_key(_to_c_char(param.to_string().as_str()))) };
@@ -1177,5 +1169,4 @@ mod tests {
             //            assert_eq!(ret_v, expected_v);
         })
     }
-
 }

@@ -27,13 +27,6 @@ pub use signer::{SignedTransaction, Transaction, TransactionSigner, TxSignResult
 
 use tcx_primitive::Public;
 
-pub trait Address1: Sized {
-    type Error;
-    type Public: Public;
-
-    fn from_public(public: &Self::Public) -> core::result::Result<Self, Self::Error>;
-}
-
 pub type Result<T> = result::Result<T, failure::Error>;
 
 #[derive(Fail, Debug, PartialEq)]

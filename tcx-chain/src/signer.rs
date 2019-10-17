@@ -1,6 +1,3 @@
-//use crate::keystore::V3MnemonicKeystore;
-
-//use crate::keystore::Keystore;
 use crate::Result;
 use serde::{Deserialize, Serialize};
 
@@ -15,16 +12,6 @@ pub struct TxSignResult {
 }
 
 impl SignedTransaction for TxSignResult {}
-/*
-pub trait TransactionSinger {
-    fn sign_transaction(
-        &self,
-        json_str: &str,
-        keystore: &HdKeystore,
-        password: &str,
-    ) -> Result<String>;
-}
-*/
 
 pub trait Transaction: Sized {}
 
