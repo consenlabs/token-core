@@ -58,10 +58,10 @@ pub unsafe fn set_panic_hook() {
 
 pub unsafe fn landingpad<F: FnOnce() -> Result<T> + panic::UnwindSafe, T>(f: F) -> T {
     match panic::catch_unwind(f) {
-        Ok(rv) => rv.map_err(|err| notify_err(err)).unwrap_or(mem::zeroed()),
+        Ok(rv) => rv.map_err(notify_err).unwrap_or_else(|_| mem::zeroed()),
         Err(err) => {
             use std::any::Any;
-            let err = &*err as &Any;
+            let err = &*err as &dyn Any;
             let msg = match err.downcast_ref::<&str>() {
                 Some(s) => *s,
                 None => match err.downcast_ref::<String>() {

@@ -67,7 +67,7 @@ fn _find_keystore_id_by_address(address: &str) -> Option<String> {
     let mut k_id: Option<String> = None;
     for (id, keystore) in map.borrow().iter() {
         let mut iter = keystore.active_accounts.iter();
-        if iter.find(|a| a.address == address).is_some() {
+        if iter.any(|a| a.address == address) {
             k_id = Some(id.to_string());
             break;
         }
@@ -90,7 +90,7 @@ fn _delete_keystore_file(wid: &str) -> Result<()> {
     let file_dir = WALLET_FILE_DIR.read().unwrap();
     let ks_path = format!("{}/{}.json", file_dir, wid);
     let path = Path::new(&ks_path);
-    let _ = fs::remove_file(path)?;
+    fs::remove_file(path)?;
     Ok(())
 }
 
@@ -135,7 +135,7 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
     }
 }
 
-const NETWORK_COINS: [&'static str; 3] = ["BITCOINCASH", "LITECOIN", "BITCOIN"];
+const NETWORK_COINS: [&str; 3] = ["BITCOINCASH", "LITECOIN", "BITCOIN"];
 
 fn _coin_symbol_with_network(v: &Value) -> String {
     let chain_type = v["chainType"].as_str().expect("chainType");
@@ -164,23 +164,19 @@ fn _coin_symbol_with_network(v: &Value) -> String {
 }
 
 #[no_mangle]
-pub extern "C" fn free_string(s: *mut c_char) {
-    unsafe {
-        if s.is_null() {
-            return;
-        }
-        CString::from_raw(s)
-    };
+pub unsafe extern "C" fn free_string(s: *mut c_char) {
+    if s.is_null() {
+        return;
+    }
+    CString::from_raw(s);
 }
 
 #[no_mangle]
-pub extern "C" fn free_const_string(s: *const c_char) {
-    unsafe {
-        if s.is_null() {
-            return;
-        }
-        CStr::from_ptr(s)
-    };
+pub unsafe extern "C" fn free_const_string(s: *const c_char) {
+    if s.is_null() {
+        return;
+    }
+    CStr::from_ptr(s);
 }
 
 fn parse_arguments(json_str: *const c_char) -> Value {
@@ -212,7 +208,6 @@ pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
     // !!! warning !!! just set_panic_hook when debug
     // set_panic_hook();
     landingpad(|| _init_token_core_x(&v));
-    ()
 }
 
 fn _init_token_core_x(v: &Value) -> Result<()> {
@@ -245,7 +240,7 @@ fn _init_token_core_x(v: &Value) -> Result<()> {
         let v: Value = serde_json::from_str(&contents).expect("read json from content");
 
         let version = v["version"].as_i64().expect("version");
-        if version != HdKeystore::VERSION as i64 {
+        if version != i64::from(HdKeystore::VERSION) {
             continue;
         }
         let keystore: HdKeystore = serde_json::from_str(&contents)?;
@@ -319,11 +314,11 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
     }?;
 
     let exist_kid_opt = _find_keystore_id_by_address(&account.address);
-    if exist_kid_opt.is_some() {
+    if let Some(exist_kid) = exist_kid_opt {
         if !overwrite {
             return Err(format_err!("{}", "wallet_exists"));
         } else {
-            ks.id = exist_kid_opt.unwrap();
+            ks.id = exist_kid;
         }
     }
 
@@ -382,11 +377,11 @@ fn _verify_password(v: &Value) -> Result<String> {
 }
 
 #[no_mangle]
-pub extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
-    let json_c_str = unsafe { CStr::from_ptr(json_str) };
+pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
+    let json_c_str = CStr::from_ptr(json_str);
     let json_str = json_c_str.to_str().unwrap();
 
-    let json = unsafe { landingpad(|| _sign_transaction(json_str)) };
+    let json = landingpad(|| _sign_transaction(json_str));
     CString::new(json).expect("ret json").into_raw()
 }
 
@@ -527,7 +522,7 @@ fn _calc_external_address(v: &Value) -> Result<String> {
 
     let account = keystore
         .account(&chain_type)
-        .ok_or(format_err!("account_not_found, chainType: {}", &chain_type))?;
+        .ok_or_else(|| format_err!("account_not_found, chainType: {}", &chain_type))?;
     let external_addr: ExternalAddress;
     if chain_type.starts_with("BITCOINCASH") {
         let extra = BchExtra::from(account.extra.clone());
@@ -649,14 +644,13 @@ fn _cache_derived_key(v: &Value) -> Result<String> {
 #[no_mangle]
 pub unsafe extern "C" fn clear_derived_key() -> *const c_char {
     //    let v = parse_arguments(json_str);
-    let json = landingpad(|| _clear_derived_key());
+    let json = landingpad(_clear_derived_key);
     CString::new(json).expect("ret json").into_raw()
 }
 
 fn _clear_derived_key() -> Result<String> {
     let map: &mut HashMap<String, HdKeystore> = &mut KEYSTORE_MAP.write().unwrap();
-    let _ = map
-        .values_mut()
+    map.values_mut()
         .map(|keystore| {
             keystore.crypto.clear_cache_derived_key();
         })

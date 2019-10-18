@@ -143,7 +143,7 @@ impl HdKeystore {
     ) -> Result<Account> {
         let paths = vec![coin_info.derivation_path.clone()];
         let keys = Self::key_pair_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
-        let key = keys.first().ok_or(format_err!("derivate_failed"))?;
+        let key = keys.first().ok_or_else(|| format_err!("derivate_failed"))?;
         let pub_key = key.public_key();
         let bytes = pub_key.to_bytes()?;
         let address = A::from_public_key(&bytes, Some(&coin_info.symbol))?;

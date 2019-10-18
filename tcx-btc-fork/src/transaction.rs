@@ -107,7 +107,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     ) -> Result<TxSignResult> {
         let account = self
             .account(tx.coin.to_uppercase().as_str())
-            .ok_or(format_err!("account_not_found"))?;
+            .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
         let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
 
@@ -157,7 +157,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             let derived_path = unspent.derived_path.trim();
             let path_with_space = derived_path.replace("/", " ");
 
-            let path_idxs: Vec<&str> = path_with_space.split(" ").collect();
+            let path_idxs: Vec<&str> = path_with_space.split(' ').collect();
             ensure!(path_idxs.len() == 2, "derived path must be x/x");
 
             paths.push(format!("{}/{}", account_path, derived_path));
@@ -228,7 +228,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
                     vout: unspent.vout as u32,
                 },
                 script_sig: Script::new(),
-                sequence: 0xFFFFFFFF,
+                sequence: 0xFFFF_FFFF,
                 witness: vec![],
             });
         }
@@ -365,8 +365,8 @@ impl SignHasher for LegacySignHasher {
     fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
         let addr = BtcForkAddress::from_str(&unspent.address)?;
         let script = addr.script_pubkey();
-        let hash = tx.signature_hash(index, &script, SIGHASH_ALL as u32);
-        Ok((hash, SIGHASH_ALL as u32))
+        let hash = tx.signature_hash(index, &script, u32::from(SIGHASH_ALL));
+        Ok((hash, u32::from(SIGHASH_ALL)))
     }
 }
 

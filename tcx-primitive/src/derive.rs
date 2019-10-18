@@ -15,7 +15,7 @@ pub fn generate_mnemonic() -> String {
 pub fn get_account_path(path: &str) -> Result<String> {
     // example: m/44'/60'/0'/0/0
     let _ = bitcoin::util::bip32::DerivationPath::from_str(path)?;
-    let mut childs: Vec<&str> = path.split("/").collect();
+    let mut childs: Vec<&str> = path.split('/').collect();
 
     ensure!(childs.len() >= 4, format!("{} path is too short", path));
     while childs.len() > 4 {
@@ -25,12 +25,12 @@ pub fn get_account_path(path: &str) -> Result<String> {
 }
 
 pub fn relative_path_to_child_nums(path: &str) -> Result<Vec<ChildNumber>> {
-    let childs: Vec<&str> = path.split("/").collect();
+    let childs: Vec<&str> = path.split('/').collect();
     childs
         .iter()
         .filter(|child| **child != "")
         .map(|child| {
-            if child.ends_with("'") {
+            if child.ends_with('\'') {
                 let idx = child
                     .replace("'", "")
                     .parse::<u32>()
@@ -89,16 +89,17 @@ impl FromStr for DeriveJunction {
 
     fn from_str(inp: &str) -> Result<Self> {
         Ok(
-            match inp.chars().last().map_or(false, |l| l == '\'' || l == 'h') {
-                true => DeriveJunction::hard(
+            if inp.chars().last().map_or(false, |l| l == '\'' || l == 'h') {
+                DeriveJunction::hard(
                     inp[0..inp.len() - 1]
                         .parse()
                         .map_err(|_| KeyError::InvalidChildNumberFormat)?,
-                ),
-                false => DeriveJunction::soft(
+                )
+            } else {
+                DeriveJunction::soft(
                     inp.parse()
                         .map_err(|_| KeyError::InvalidChildNumberFormat)?,
-                ),
+                )
             },
         )
     }
@@ -126,7 +127,7 @@ impl FromStr for DerivePath {
     type Err = failure::Error;
 
     fn from_str(path: &str) -> Result<Self> {
-        let mut parts = path.split("/").peekable();
+        let mut parts = path.split('/').peekable();
         // First parts must be `m`.
         if *parts.peek().unwrap() == "m" {
             parts.next();

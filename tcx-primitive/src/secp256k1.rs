@@ -136,7 +136,7 @@ impl FromStr for ArbitraryNetworkExtendedPubKey {
             network: Network::Bitcoin,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
-            child_number: child_number,
+            child_number,
             chain_code: ChainCode::from(&data[13..45]),
             public_key: PublicKey::from_slice(&data[45..78])
                 .map_err(|e| base58::Error::Other(e.to_string()))?,
@@ -182,14 +182,14 @@ impl FromStr for ArbitraryNetworkExtendedPrivKey {
 
         let network = Network::Bitcoin;
         let epk = ExtendedPrivKey {
-            network: network,
+            network,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
-            child_number: child_number,
+            child_number,
             chain_code: ChainCode::from(&data[13..45]),
             private_key: PrivateKey {
                 compressed: true,
-                network: network,
+                network,
                 key: secp256k1::SecretKey::from_slice(&data[46..78])
                     .map_err(|e| base58::Error::Other(e.to_string()))?,
             },
@@ -258,7 +258,7 @@ impl Pair {
     pub fn extended_priv_key(&self) -> Result<ArbitraryNetworkExtendedPrivKey> {
         match &self.0 {
             PrivateType::ExtendedPrivKey(r) => {
-                let extended_priv_key = r.extended_priv_key.clone();
+                let extended_priv_key = r.extended_priv_key;
                 Ok(ArbitraryNetworkExtendedPrivKey {
                     network: r.network,
                     extended_priv_key,
@@ -283,7 +283,7 @@ impl Derive for Public {
     ) -> core::result::Result<Self, Self::Error> {
         match &self.0 {
             PublicType::ExtendedPubKey(r) => {
-                let mut extended_key: ArbitraryNetworkExtendedPubKey = r.clone();
+                let mut extended_key: ArbitraryNetworkExtendedPubKey = *r;
 
                 for j in path {
                     let child_number = j.try_into()?;

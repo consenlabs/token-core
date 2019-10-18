@@ -39,18 +39,18 @@ pub struct Pbkdf2Params {
 
 impl Pbkdf2Params {
     pub fn default() -> Pbkdf2Params {
-        return Pbkdf2Params {
+        Pbkdf2Params {
             c: 10240,
             prf: "hmac-sha256".to_owned(),
             dklen: 32,
             salt: "".to_owned(),
-        };
+        }
     }
 }
 
 impl KdfParams for Pbkdf2Params {
     fn validate(&self) -> Result<()> {
-        if self.dklen == 0 || self.c == 0 || self.salt.len() <= 0 || self.prf.len() <= 0 {
+        if self.dklen == 0 || self.c == 0 || self.salt.is_empty() || self.prf.is_empty() {
             Err(Error::KdfParamsInvalid.into())
         } else {
             Ok(())

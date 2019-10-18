@@ -3,7 +3,7 @@
 use crate::transaction::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
-use bech32::{FromBase32, ToBase32, WriteBase32};
+
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Error as BtcAddressError;
 use bitcoin::util::address::Payload;
@@ -147,12 +147,11 @@ impl Address for BtcForkAddress {
         let network = network_from_coin(&coin);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         let network = network.expect("network");
-        let addr: String;
-        if coin.to_uppercase().contains("P2WPKH") {
-            addr = BtcForkAddress::p2shwpkh(public_key, &network)?.to_string();
+        let addr = if coin.to_uppercase().contains("P2WPKH") {
+            BtcForkAddress::p2shwpkh(public_key, &network)?.to_string()
         } else {
-            addr = BtcForkAddress::p2pkh(public_key, &network)?.to_string();
-        }
+            BtcForkAddress::p2pkh(public_key, &network)?.to_string()
+        };
         Ok(addr.to_string())
     }
 }
@@ -231,7 +230,7 @@ impl BtcForkAddress {
 /// Extract the bech32 prefix.
 /// Returns the same slice when no prefix is found.
 fn bech32_network(bech32: &str) -> Option<BtcForkNetwork> {
-    let bech32_prefix = match bech32.rfind("1") {
+    let bech32_prefix = match bech32.rfind('1') {
         None => None,
         Some(sep) => Some(bech32.split_at(sep).0),
     };
@@ -250,11 +249,11 @@ fn _decode_base58(addr: &str) -> result::Result<Vec<u8>, BtcAddressError> {
     }
     let data = base58::from_check(&addr)?;
     if data.len() != 21 {
-        return Err(BtcAddressError::Base58(base58::Error::InvalidLength(
+        Err(BtcAddressError::Base58(base58::Error::InvalidLength(
             data.len(),
-        )));
+        )))
     } else {
-        return Ok(data);
+        Ok(data)
     }
 }
 
@@ -267,7 +266,7 @@ impl FromStr for BtcForkAddress {
         if let Some(network) = bech32_network {
             // decode as bech32
             let (_, payload) = bech32::decode(s)?;
-            if payload.len() == 0 {
+            if payload.is_empty() {
                 return Err(BtcAddressError::EmptyBech32Payload);
             }
 
@@ -291,11 +290,8 @@ impl FromStr for BtcForkAddress {
             }
 
             return Ok(BtcForkAddress {
-                payload: Payload::WitnessProgram {
-                    version: version,
-                    program: program,
-                },
-                network: network,
+                payload: Payload::WitnessProgram { version, program },
+                network,
             });
         }
 

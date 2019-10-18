@@ -25,8 +25,6 @@ pub mod signer;
 pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
 pub use signer::{SignedTransaction, Transaction, TransactionSigner, TxSignResult};
 
-use tcx_primitive::Public;
-
 pub type Result<T> = result::Result<T, failure::Error>;
 
 #[derive(Fail, Debug, PartialEq)]

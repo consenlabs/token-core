@@ -54,7 +54,7 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
         let hash = Hash::hash(&hex::decode(raw["raw_data_hex"].as_str().unwrap())?);
         let account = self
             .account(&"TRON")
-            .ok_or(format_err!("account_not_found"))?;
+            .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
         let pair = &self.get_pair::<Secp256k1Pair>(path, password.unwrap())?;
         let sign_result = pair.sign_recoverable(&hash[..]);

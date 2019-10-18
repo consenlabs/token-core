@@ -39,7 +39,7 @@ impl Presenter for HdKeystore {
                 .first()
                 .expect("get first account from hdkeystore");
             pw.insert("address".to_string(), json!(acc.address.to_string()));
-            let coin_split: Vec<&str> = acc.coin.split("-").collect();
+            let coin_split: Vec<&str> = acc.coin.split('-').collect();
             coin_split.iter().enumerate().for_each(|(i, s)| {
                 if i == 0 {
                     pw.insert("chainType".to_string(), json!(s));
@@ -51,11 +51,9 @@ impl Presenter for HdKeystore {
             if let Some(extra) = acc.extra.as_object() {
                 merge_value(&mut obj, &Value::Object(extra.clone()))
             }
-            return serde_json::to_string(&obj)
-                .map_err(|_| format_err!("present err when convert to json"));
+            serde_json::to_string(&obj).map_err(|_| format_err!("present err when convert to json"))
         } else {
-            return serde_json::to_string(&pw)
-                .map_err(|_| format_err!("present err when convert to json"));
+            serde_json::to_string(&pw).map_err(|_| format_err!("present err when convert to json"))
         }
     }
 }
