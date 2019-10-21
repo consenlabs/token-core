@@ -1067,7 +1067,7 @@ mod tests {
             "#;
 
             unsafe { clear_err() }
-            let ret = _to_str(sign_transaction(_to_c_char(param)));
+            let ret = unsafe { _to_str(sign_transaction(_to_c_char(param))) };
             let ret_v = Value::from_str(ret).unwrap();
             let expected = r#"{"sign":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","hash":"4d43cc66e9763a4e263fdb592591b9f19a6915ac821c92896d13f95beaca3b28","wtxId":""}"#;
             let expected_v = Value::from_str(expected).unwrap();
@@ -1116,7 +1116,10 @@ mod tests {
             }
             let exported_mnemonic =
                 unsafe { _to_str(export_mnemonic(_to_c_char(param.to_string().as_str()))) };
-            assert_eq!(r#"{"mnemonic":"salute slush now script nest law admit achieve voice soda fruit field","ok":true}"#, exported_mnemonic);
+            assert_eq!(
+                r#"{"mnemonic":"salute slush now script nest law admit achieve voice soda fruit field","ok":true}"#,
+                exported_mnemonic
+            );
             unsafe { clear_derived_key() };
 
             remove_created_wallet(imported_id);
@@ -1154,7 +1157,7 @@ mod tests {
             "#;
 
             unsafe { clear_err() }
-            let ret = _to_str(sign_transaction(_to_c_char(param)));
+            let ret = unsafe { _to_str(sign_transaction(_to_c_char(param))) };
             //            unsafe { assert_eq!("", _to_str(get_last_err_message()));}
             assert_eq!("", ret);
             //            let ret_v = Value::from_str(ret).unwrap();

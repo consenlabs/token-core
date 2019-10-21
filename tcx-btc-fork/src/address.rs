@@ -1,5 +1,3 @@
-//use tcx_chain::curve::{PublicKey, Secp256k1PublicKey};
-
 use crate::transaction::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
@@ -220,7 +218,7 @@ impl BtcForkAddress {
         let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         let anepk = ArbitraryNetworkExtendedPrivKey {
-            network: network.unwrap().xpub_prefix,
+            network: network.unwrap().xprv_prefix,
             extended_priv_key: extended_priv_key.extended_priv_key,
         };
         Ok(anepk.to_string())
@@ -375,7 +373,7 @@ impl PubKeyScript for BtcForkAddress {
 }
 
 impl ScriptPubKeyComponent for BtcForkAddress {
-    fn address_like(target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
+    fn address_script_like(target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
         let addr = BtcForkAddress::address_like(target_addr, &pub_key.to_bytes())?;
         Ok(addr.script_pubkey())
     }
@@ -390,7 +388,16 @@ impl ScriptPubKeyComponent for BtcForkAddress {
 mod tests {
     use crate::address::{network_from_coin, BtcForkAddress};
 
+    use crate::transaction::ScriptPubKeyComponent;
+    use crate::PubKeyScript;
+    use bip39::{Language, Mnemonic, MnemonicType, Seed};
+    use bitcoin::util::bip32::ExtendedPrivKey;
     use std::str::FromStr;
+    use tcx_chain::CoinInfo;
+    use tcx_primitive::{
+        ArbitraryNetworkExtendedPrivKey, CurveType, Derive, DerivePath, Secp256k1Pair,
+        Secp256k1PublicKey,
+    };
 
     #[test]
     pub fn test_btc_fork_address() {
@@ -429,5 +436,145 @@ mod tests {
         assert_eq!(addr.network.coin, "BITCOIN-P2WPKH");
         let addr = BtcForkAddress::from_str("bc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdntm7f4e").unwrap();
         assert_eq!(addr.network.coin, "BITCOIN-SEGWIT");
+    }
+
+    #[test]
+    pub fn test_address_like() {
+        let addr = BtcForkAddress::from_str("MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW").unwrap();
+        let pub_key =
+            hex::decode("02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba")
+                .unwrap();
+        let liked_address = BtcForkAddress::address_like(&addr.to_string(), &pub_key)
+            .ok()
+            .unwrap();
+        assert_eq!(
+            "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW",
+            liked_address.to_string()
+        );
+
+        let addr = BtcForkAddress::from_str("ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf").unwrap();
+        let pub_key =
+            hex::decode("02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba")
+                .unwrap();
+        let liked_address = BtcForkAddress::address_like(&addr.to_string(), &pub_key)
+            .ok()
+            .unwrap();
+        assert_eq!(
+            "ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf",
+            liked_address.to_string()
+        );
+
+        let addr = BtcForkAddress::from_str("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG").unwrap();
+        let pub_key =
+            hex::decode("02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba")
+                .unwrap();
+        let liked_address = BtcForkAddress::address_like(&addr.to_string(), &pub_key)
+            .ok()
+            .unwrap();
+        assert_eq!(
+            "3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG",
+            liked_address.to_string()
+        );
+
+        let addr = BtcForkAddress::from_str("bc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdntm7f4e").unwrap();
+        let pub_key =
+            hex::decode("02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba")
+                .unwrap();
+        let liked_address = BtcForkAddress::address_like(&addr.to_string(), &pub_key)
+            .ok()
+            .unwrap();
+        assert_eq!(
+            "bc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdntm7f4e",
+            liked_address.to_string()
+        );
+    }
+
+    #[test]
+    pub fn extended_private_key_test() {
+        let bitcoin_xprv_str = "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ";
+        let anprv = ArbitraryNetworkExtendedPrivKey::from_str(bitcoin_xprv_str).unwrap();
+        let coin_info = CoinInfo {
+            symbol: "LITECOIN".to_string(),
+            derivation_path: "m/44'/2'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        };
+        let ltc_xprv_str = BtcForkAddress::extended_private_key(&anprv, &coin_info).unwrap();
+        assert_eq!("xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ", ltc_xprv_str);
+    }
+
+    #[test]
+    pub fn extended_public_key_test() {
+        let bitcoin_xprv_str = "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ";
+        let anprv = ArbitraryNetworkExtendedPrivKey::from_str(bitcoin_xprv_str).unwrap();
+        let anpub = Secp256k1Pair::from_str(bitcoin_xprv_str)
+            .unwrap()
+            .derive(DerivePath::from_str("m/44'/2'/0'").unwrap().into_iter())
+            .unwrap()
+            .extended_pub_key()
+            .unwrap();
+        let coin_info = CoinInfo {
+            symbol: "LITECOIN".to_string(),
+            derivation_path: "m/44'/2'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        };
+        let ltc_xprv_str = BtcForkAddress::extended_public_key(&anpub, &coin_info).unwrap();
+        assert_eq!("xpub6JeaAjhtvtjCDnEo4Bjr7uEbGccaHnJtLY4aBnMaAYGjkBRB3fP9XvjcCbNjMiU1n5tt7dYKVgHPGzh3t3W6eLBxavxABTaoQ2jhbiQrfe4", ltc_xprv_str);
+    }
+
+    #[test]
+    pub fn script_pub_key_test() {
+        let addr = BtcForkAddress::from_str("MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW").unwrap();
+        let script = hex::encode(addr.script_pubkey().as_bytes());
+        assert_eq!("a914bc64b2d79807cd3d72101c3298b89117d32097fb87", script);
+
+        let addr = BtcForkAddress::from_str("ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf").unwrap();
+        let script = hex::encode(addr.script_pubkey().as_bytes());
+        assert_eq!("0014e6cfaab9a59ba187f0a45db0b169c21bb48f09b3", script);
+
+        let addr = BtcForkAddress::from_str("Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP").unwrap();
+        let script = hex::encode(addr.script_pubkey().as_bytes());
+        assert_eq!("76a914ca4d8acded69ce4f05d0925946d261f86c675fd888ac", script);
+
+        let addr = BtcForkAddress::from_str("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG").unwrap();
+        let script = hex::encode(addr.script_pubkey().as_bytes());
+        assert_eq!("a914bc64b2d79807cd3d72101c3298b89117d32097fb87", script);
+    }
+
+    #[test]
+    pub fn script_pub_key_component_address_like_test() {
+        let addr = BtcForkAddress::from_str("MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW").unwrap();
+        let pub_key = bitcoin::PublicKey::from_str(
+            "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
+        )
+        .unwrap();
+        let script =
+            BtcForkAddress::address_script_like("MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW", &pub_key)
+                .unwrap();
+
+        let script = hex::encode(script.as_bytes());
+        assert_eq!("a914bc64b2d79807cd3d72101c3298b89117d32097fb87", script);
+
+        let script = BtcForkAddress::address_script_like(
+            "ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf",
+            &pub_key,
+        )
+        .unwrap();
+
+        let script = hex::encode(script.as_bytes());
+        assert_eq!("0014e6cfaab9a59ba187f0a45db0b169c21bb48f09b3", script);
+
+        let script =
+            BtcForkAddress::address_script_like("Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP", &pub_key)
+                .unwrap();
+
+        let script = hex::encode(script.as_bytes());
+        assert_eq!("76a914e6cfaab9a59ba187f0a45db0b169c21bb48f09b388ac", script);
+
+        let script =
+            BtcForkAddress::address_script_like("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG", &pub_key)
+                .unwrap();
+
+        let script = hex::encode(script.as_bytes());
+        assert_eq!("a914bc64b2d79807cd3d72101c3298b89117d32097fb87", script);
     }
 }

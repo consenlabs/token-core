@@ -69,7 +69,7 @@ mod stringify {
 }
 
 pub trait ScriptPubKeyComponent {
-    fn address_like(target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script>;
+    fn address_script_like(target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script>;
     fn address_script_pub_key(target_addr: &str) -> Result<Script>;
 }
 
@@ -176,7 +176,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             let from = &self.unspents.first().expect("first_utxo").address;
             let change_path = format!("0/{}", &self.change_idx.expect("change_idx"));
             let pub_key = Self::derive_pub_key_at_path(&xpub, &change_path)?;
-            S::address_like(&from, &pub_key)
+            S::address_script_like(&from, &pub_key)
         }
     }
 
