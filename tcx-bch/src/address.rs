@@ -9,7 +9,8 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_btc_fork::{PubKeyScript, ScriptPubKeyComponent};
 use tcx_chain::keystore::Address;
-use tcx_chain::{PublicKey, Secp256k1PublicKey};
+use tcx_primitive::Public;
+use tcx_primitive::Secp256k1PublicKey;
 
 fn _legacy_to_bch(addr: &str) -> Result<String> {
     let convert = Converter::new();
@@ -60,9 +61,9 @@ impl Address for BchAddress {
         unimplemented!()
     }
 
-    fn from_public_key(public_key: &impl PublicKey, _coin: Option<&str>) -> Result<String> {
-        let pubkey = Secp256k1PublicKey::from_slice(&public_key.to_bytes())?;
-        let btc_addr = BtcAddress::p2pkh(&pubkey, Network::Bitcoin);
+    fn from_public_key(public_key: &[u8], _coin: Option<&str>) -> Result<String> {
+        let pubkey = Secp256k1PublicKey::from_slice(&public_key)?;
+        let btc_addr = BtcAddress::p2pkh(&pubkey.public_key(), Network::Bitcoin);
         let btc_addr_str = btc_addr.to_string();
         _legacy_to_bch(&btc_addr_str)
     }
@@ -84,7 +85,6 @@ impl PubKeyScript for BchAddress {
 
 impl ScriptPubKeyComponent for BchAddress {
     fn address_like(_target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
-        //        let target_addr = BchAddress::convert_to_legacy_if_need(target_addr)?;
         Ok(BtcAddress::p2pkh(&pub_key, Network::Bitcoin).script_pubkey())
     }
 
@@ -101,7 +101,6 @@ mod tests {
     use bitcoin::util::misc::hex_bytes;
 
     use tcx_chain::keystore::Address;
-    use tcx_chain::Secp256k1PublicKey;
 
     #[test]
     pub fn test_convert() {
@@ -130,11 +129,9 @@ mod tests {
 
     #[test]
     pub fn test_from_pub_key() {
-        let pub_key =
-            hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
-                .unwrap();
         let addr = BchAddress::from_public_key(
-            &Secp256k1PublicKey::from_slice(&pub_key).unwrap(),
+            &hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
+                .unwrap(),
             Some("bch"),
         )
         .unwrap();
@@ -143,5 +140,4 @@ mod tests {
             "bitcoincash:qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
         );
     }
-
 }

@@ -19,35 +19,11 @@ use core::result;
 extern crate failure;
 extern crate regex;
 
-pub mod bips;
-pub mod curve;
 pub mod keystore;
 pub mod signer;
 
-pub use bips::DerivationInfo;
-pub use curve::{
-    CurveType, PrivateKey, PublicKey, Secp256k1Curve, Secp256k1PrivateKey, Secp256k1PublicKey,
-};
 pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
-
-//cfg_if! {
-//    if #[cfg(test)] {
-//        pub use crate::keystore::MockHdKeystore as HdKeystore;
-//    } else {
-//        pub use crate::keystore::HdKeystore;
-//    }
-//}
-
 pub use signer::{SignedTransaction, Transaction, TransactionSigner, TxSignResult};
-
-use tcx_primitive::key::Public;
-
-pub trait Address1: Sized {
-    type Error;
-    type Public: Public;
-
-    fn from_public(public: &Self::Public) -> core::result::Result<Self, Self::Error>;
-}
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
@@ -65,4 +41,6 @@ pub enum Error {
     AccountNotFound,
     #[fail(display = "can_not_derive_pair_from_seed")]
     CanNotDerivePairFromSeed,
+    #[fail(display = "can_not_derive_key")]
+    CannotDeriveKey,
 }

@@ -1,8 +1,9 @@
-use tcx_chain::curve::{PublicKey, Secp256k1PublicKey};
+//use tcx_chain::curve::{PublicKey, Secp256k1PublicKey};
 
 use crate::transaction::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
+
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Error as BtcAddressError;
 use bitcoin::util::address::Payload;
@@ -14,7 +15,10 @@ use core::result;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_chain::keystore::Address;
-use tcx_chain::{CoinInfo, DerivationInfo};
+use tcx_chain::CoinInfo;
+use tcx_primitive::{
+    ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, Public, Secp256k1PublicKey,
+};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BtcForkAddress {
@@ -138,45 +142,42 @@ impl Address for BtcForkAddress {
         unimplemented!()
     }
 
-    fn from_public_key(public_key: &impl PublicKey, coin: Option<&str>) -> Result<String> {
-        let pub_key = Secp256k1PublicKey::from_slice(&public_key.to_bytes())?;
+    fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String> {
         let coin = coin.expect("coin from address_pub_key");
         let network = network_from_coin(&coin);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         let network = network.expect("network");
-        let addr: String;
-        if coin.to_uppercase().contains("P2WPKH") {
-            addr = BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string();
+        let addr = if coin.to_uppercase().contains("P2WPKH") {
+            BtcForkAddress::p2shwpkh(public_key, &network)?.to_string()
         } else {
-            addr = BtcForkAddress::p2pkh(&pub_key, &network)?.to_string();
-        }
-        //        let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)?.to_string();
+            BtcForkAddress::p2pkh(public_key, &network)?.to_string()
+        };
         Ok(addr.to_string())
     }
 }
 
 impl BtcForkAddress {
-    pub fn p2pkh(pub_key: &impl PublicKey, network: &BtcForkNetwork) -> Result<BtcForkAddress> {
-        let pub_key = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
-        let addr = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
+    pub fn p2pkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
+        let pub_key = Secp256k1PublicKey::from_slice(&pub_key)?;
+        let addr = BtcAddress::p2pkh(&pub_key.public_key(), Network::Bitcoin);
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
         })
     }
 
-    pub fn p2shwpkh(pub_key: &impl PublicKey, network: &BtcForkNetwork) -> Result<BtcForkAddress> {
-        let pub_key = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
-        let addr = BtcAddress::p2shwpkh(&pub_key, Network::Bitcoin);
+    pub fn p2shwpkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
+        let pub_key = Secp256k1PublicKey::from_slice(&pub_key)?;
+        let addr = BtcAddress::p2shwpkh(&pub_key.public_key(), Network::Bitcoin);
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
         })
     }
 
-    pub fn p2wpkh(pub_key: &impl PublicKey, network: &BtcForkNetwork) -> Result<BtcForkAddress> {
-        let pub_key = Secp256k1PublicKey::from_slice(&pub_key.to_bytes())?;
-        let addr = BtcAddress::p2wpkh(&pub_key, Network::Bitcoin);
+    pub fn p2wpkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
+        let pub_key = Secp256k1PublicKey::from_slice(&pub_key)?;
+        let addr = BtcAddress::p2wpkh(&pub_key.public_key(), Network::Bitcoin);
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
@@ -187,7 +188,7 @@ impl BtcForkAddress {
         self.payload.script_pubkey()
     }
 
-    pub fn address_like(target_addr: &str, pub_key: &impl PublicKey) -> Result<BtcForkAddress> {
+    pub fn address_like(target_addr: &str, pub_key: &[u8]) -> Result<BtcForkAddress> {
         let target = BtcForkAddress::from_str(target_addr)?;
         match target.payload {
             Payload::PubkeyHash(_) => BtcForkAddress::p2pkh(pub_key, &target.network),
@@ -200,28 +201,36 @@ impl BtcForkAddress {
     }
 
     pub fn extended_public_key(
-        derivation_info: &DerivationInfo,
+        derivation_info: &ArbitraryNetworkExtendedPubKey,
         coin_info: &CoinInfo,
     ) -> Result<String> {
         let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
-        Ok(derivation_info.encode_with_network(network.expect("network").xpub_prefix))
+        let anepk = ArbitraryNetworkExtendedPubKey {
+            network: network.unwrap().xpub_prefix,
+            extended_pub_key: derivation_info.extended_pub_key,
+        };
+        Ok(anepk.to_string())
     }
 
     pub fn extended_private_key(
-        derivation_info: &DerivationInfo,
+        extended_priv_key: &ArbitraryNetworkExtendedPrivKey,
         coin_info: &CoinInfo,
     ) -> Result<String> {
         let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
-        Ok(derivation_info.encode_with_network(network.expect("network").xprv_prefix))
+        let anepk = ArbitraryNetworkExtendedPrivKey {
+            network: network.unwrap().xpub_prefix,
+            extended_priv_key: extended_priv_key.extended_priv_key,
+        };
+        Ok(anepk.to_string())
     }
 }
 
 /// Extract the bech32 prefix.
 /// Returns the same slice when no prefix is found.
 fn bech32_network(bech32: &str) -> Option<BtcForkNetwork> {
-    let bech32_prefix = match bech32.rfind("1") {
+    let bech32_prefix = match bech32.rfind('1') {
         None => None,
         Some(sep) => Some(bech32.split_at(sep).0),
     };
@@ -240,11 +249,11 @@ fn _decode_base58(addr: &str) -> result::Result<Vec<u8>, BtcAddressError> {
     }
     let data = base58::from_check(&addr)?;
     if data.len() != 21 {
-        return Err(BtcAddressError::Base58(base58::Error::InvalidLength(
+        Err(BtcAddressError::Base58(base58::Error::InvalidLength(
             data.len(),
-        )));
+        )))
     } else {
-        return Ok(data);
+        Ok(data)
     }
 }
 
@@ -257,7 +266,7 @@ impl FromStr for BtcForkAddress {
         if let Some(network) = bech32_network {
             // decode as bech32
             let (_, payload) = bech32::decode(s)?;
-            if payload.len() == 0 {
+            if payload.is_empty() {
                 return Err(BtcAddressError::EmptyBech32Payload);
             }
 
@@ -281,11 +290,8 @@ impl FromStr for BtcForkAddress {
             }
 
             return Ok(BtcForkAddress {
-                payload: Payload::WitnessProgram {
-                    version: version,
-                    program: program,
-                },
-                network: network,
+                payload: Payload::WitnessProgram { version, program },
+                network,
             });
         }
 
@@ -370,7 +376,7 @@ impl PubKeyScript for BtcForkAddress {
 
 impl ScriptPubKeyComponent for BtcForkAddress {
     fn address_like(target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
-        let addr = BtcForkAddress::address_like(target_addr, pub_key)?;
+        let addr = BtcForkAddress::address_like(target_addr, &pub_key.to_bytes())?;
         Ok(addr.script_pubkey())
     }
 
@@ -386,15 +392,10 @@ mod tests {
 
     use std::str::FromStr;
 
-    use tcx_chain::Secp256k1PublicKey;
-
     #[test]
     pub fn test_btc_fork_address() {
-        let pub_key = Secp256k1PublicKey::from_str(
-            "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
-        )
-        .unwrap();
-
+        let pub_key_str = "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba";
+        let pub_key = hex::decode(pub_key_str).unwrap();
         let network = network_from_coin("LITECOIN").unwrap();
         let addr = BtcForkAddress::p2shwpkh(&pub_key, &network)
             .unwrap()

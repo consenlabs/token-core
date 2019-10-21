@@ -1,4 +1,4 @@
-use tcx_chain::{HdKeystore, Secp256k1Curve, TransactionSigner, TxSignResult};
+use tcx_chain::{HdKeystore, TransactionSigner, TxSignResult};
 
 use bitcoin::{OutPoint, Script, Transaction, TxIn, TxOut};
 use bitcoin_hashes::hex::FromHex;
@@ -15,25 +15,25 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
-use tcx_chain::curve::PrivateKey;
+use tcx_primitive::{ArbitraryNetworkExtendedPubKey, Pair};
 
 use crate::ExtendedPubKeyExtra;
 use bitcoin::util::bip143::SighashComponents;
 use bitcoin_hashes::hash160;
 use std::marker::PhantomData;
-use tcx_chain::bips::get_account_path;
-use tcx_chain::curve::PublicKey;
 use tcx_chain::keystore::Address;
-//use serde::
+use tcx_primitive::derive::get_account_path;
+use tcx_primitive::Public;
 
 const DUST: u64 = 546;
+const SIGHASH_ALL: u8 = 0x01;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Utxo {
     pub tx_hash: String,
     pub vout: i32,
-    #[serde(with = "string")]
+    #[serde(with = "stringify")]
     pub amount: i64,
     pub address: String,
     pub script_pub_key: String,
@@ -42,7 +42,7 @@ pub struct Utxo {
     pub sequence: i64,
 }
 
-mod string {
+mod stringify {
     use std::fmt::Display;
     use std::str::FromStr;
 
@@ -107,19 +107,19 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     ) -> Result<TxSignResult> {
         let account = self
             .account(tx.coin.to_uppercase().as_str())
-            .ok_or(format_err!("account_not_found"))?;
+            .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
         let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
 
-        let paths = tx.collect_prv_keys_paths(path)?;
+        let paths = tx.collect_key_pair_paths(path)?;
 
         tcx_ensure!(password.is_some(), tcx_crypto::Error::InvalidPassword);
-        let priv_keys =
-            &self.key_at_paths(tx.coin.to_uppercase().as_str(), &paths, password.unwrap())?;
+        let pairs =
+            &self.key_pair_at_paths(tx.coin.to_uppercase().as_str(), &paths, password.unwrap())?;
 
         let xpub = extra.xpub()?;
         let change_addr = tx.change_address(&xpub)?;
-        tx.sign_transaction(&priv_keys, change_addr)
+        tx.sign_transaction(&pairs, change_addr)
     }
 }
 
@@ -149,7 +149,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         }
     }
 
-    fn collect_prv_keys_paths(&self, path: &str) -> Result<Vec<String>> {
+    fn collect_key_pair_paths(&self, path: &str) -> Result<Vec<String>> {
         let mut paths: Vec<String> = vec![];
         let account_path = get_account_path(path)?;
 
@@ -157,7 +157,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             let derived_path = unspent.derived_path.trim();
             let path_with_space = derived_path.replace("/", " ");
 
-            let path_idxs: Vec<&str> = path_with_space.split(" ").collect();
+            let path_idxs: Vec<&str> = path_with_space.split(' ').collect();
             ensure!(path_idxs.len() == 2, "derived path must be x/x");
 
             paths.push(format!("{}/{}", account_path, derived_path));
@@ -175,9 +175,15 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         } else {
             let from = &self.unspents.first().expect("first_utxo").address;
             let change_path = format!("0/{}", &self.change_idx.expect("change_idx"));
-            let pub_key = Secp256k1Curve::derive_pub_key_at_path(&xpub, &change_path)?;
+            let pub_key = Self::derive_pub_key_at_path(&xpub, &change_path)?;
             S::address_like(&from, &pub_key)
         }
+    }
+
+    pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
+        let ext_pub_key = ArbitraryNetworkExtendedPubKey::from_str(xpub)?;
+        let index_ext_pub_key = ext_pub_key.derive(&child_path)?;
+        Ok(index_ext_pub_key.public_key())
     }
 
     fn tx_outs(&self, change_script_pubkey: Script) -> Result<Vec<TxOut>> {
@@ -222,7 +228,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
                     vout: unspent.vout as u32,
                 },
                 script_sig: Script::new(),
-                sequence: 0xFFFFFFFF,
+                sequence: 0xFFFF_FFFF,
                 witness: vec![],
             });
         }
@@ -231,7 +237,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
 
     pub fn sign_transaction(
         &self,
-        prv_keys: &[impl PrivateKey],
+        key_pairs: &[impl Pair],
         change_addr_pubkey: Script,
     ) -> Result<TxSignResult> {
         let tx_outs = self.tx_outs(change_addr_pubkey)?;
@@ -243,7 +249,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             output: tx_outs,
         };
 
-        let signed_tx = T::sign_inputs(&tx, &self.unspents, &prv_keys)?;
+        let signed_tx = T::sign_inputs(&tx, &self.unspents, &key_pairs)?;
         let tx_bytes = serialize(&signed_tx);
 
         Ok(TxSignResult {
@@ -258,20 +264,21 @@ pub trait BitcoinTransactionSignComponent {
     fn sign_inputs(
         tx: &Transaction,
         unspents: &[Utxo],
-        prv_keys: &[impl PrivateKey],
+        key_pairs: &[impl Pair],
     ) -> Result<Transaction>;
     fn tx_version() -> u32;
 
     fn sign_hash_and_pub_key(
-        pri_key: &impl PrivateKey,
+        pri_key: &impl Pair,
         hash: &[u8],
         sign_hash: u8,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         let signature_bytes = pri_key.sign(&hash)?;
         let raw_bytes: Vec<u8> = vec![sign_hash];
         let sig_bytes: Vec<u8> = [signature_bytes, raw_bytes].concat();
-        let pub_key_bytes = pri_key.public_key().to_bytes();
-        Ok((sig_bytes, pub_key_bytes))
+        let pub_key = pri_key.public_key();
+        let pub_key_bytes = pub_key.to_bytes()?;
+        Ok((sig_bytes, pub_key_bytes.to_vec()))
     }
 }
 
@@ -281,24 +288,25 @@ impl SegWitTransactionSignComponent {
     fn witness_sign(
         tx: &Transaction,
         unspents: &[Utxo],
-        prv_keys: &[impl PrivateKey],
+        key_pairs: &[impl Pair],
     ) -> Result<Vec<(Vec<u8>, Vec<u8>)>> {
         let mut witnesses: Vec<(Vec<u8>, Vec<u8>)> = vec![];
         let shc = SighashComponents::new(&tx);
         for i in 0..tx.input.len() {
             let tx_in = &tx.input[i];
             let unspent = &unspents[i];
-            let pub_key = &prv_keys[i].public_key();
-            let pub_key_hash = hash160::Hash::hash(&pub_key.to_bytes()).into_inner();
+            let pub_key = &key_pairs[i].public_key();
+            let pub_key_bytes = pub_key.to_bytes()?;
+            let pub_key_hash = hash160::Hash::hash(&pub_key_bytes).into_inner();
             let script_hex = format!("76a914{}88ac", hex::encode(pub_key_hash));
             let script = Script::from(hex::decode(script_hex)?);
             let hash = shc.sighash_all(tx_in, &script, unspent.amount as u64);
 
-            let prv_key = &prv_keys[i];
+            let prv_key = &key_pairs[i];
             witnesses.push(Self::sign_hash_and_pub_key(
                 prv_key,
                 &hash.into_inner(),
-                0x01,
+                SIGHASH_ALL,
             )?);
         }
         Ok(witnesses)
@@ -309,17 +317,18 @@ impl BitcoinTransactionSignComponent for SegWitTransactionSignComponent {
     fn sign_inputs(
         tx: &Transaction,
         unspents: &[Utxo],
-        prv_keys: &[impl PrivateKey],
+        key_pairs: &[impl Pair],
     ) -> Result<Transaction> {
         let _sig_hash_components = SighashComponentsWithForkId::new(&tx);
-        let witnesses: Vec<(Vec<u8>, Vec<u8>)> = Self::witness_sign(tx, unspents, prv_keys)?;
+        let witnesses: Vec<(Vec<u8>, Vec<u8>)> = Self::witness_sign(tx, unspents, key_pairs)?;
         let input_with_sigs = tx
             .input
             .iter()
             .enumerate()
             .map(|(i, txin)| {
-                let pub_key = &prv_keys[i].public_key();
-                let hash = hash160::Hash::hash(&pub_key.to_bytes()).into_inner();
+                let pub_key = &key_pairs[i].public_key();
+                let pub_key_bytes = pub_key.to_bytes().expect("get bytes from pub_key");
+                let hash = hash160::Hash::hash(&pub_key_bytes).into_inner();
                 let hex = format!("160014{}", hex::encode(&hash));
 
                 TxIn {
@@ -356,8 +365,8 @@ impl SignHasher for LegacySignHasher {
     fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
         let addr = BtcForkAddress::from_str(&unspent.address)?;
         let script = addr.script_pubkey();
-        let hash = tx.signature_hash(index, &script, 0x01);
-        Ok((hash, 0x01))
+        let hash = tx.signature_hash(index, &script, u32::from(SIGHASH_ALL));
+        Ok((hash, u32::from(SIGHASH_ALL)))
     }
 }
 
@@ -365,14 +374,14 @@ impl<H: SignHasher> LegacyTransactionSignComponent<H> {
     fn script_sigs_sign(
         tx: &Transaction,
         unspents: &[Utxo],
-        prv_keys: &[impl PrivateKey],
+        key_pairs: &[impl Pair],
     ) -> Result<Vec<Script>> {
         let mut script_sigs: Vec<Script> = vec![];
 
         for i in 0..tx.input.len() {
             let unspent = &unspents[i];
             let (hash, hash_type) = H::sign_hash(&tx, i, &unspent)?;
-            let prv_key = &prv_keys[i];
+            let prv_key = &key_pairs[i];
             let script_sig_and_pub_key =
                 Self::sign_hash_and_pub_key(prv_key, &hash.into_inner(), hash_type as u8)?;
             let script = Builder::new()
@@ -389,9 +398,9 @@ impl<H: SignHasher> BitcoinTransactionSignComponent for LegacyTransactionSignCom
     fn sign_inputs(
         tx: &Transaction,
         unspents: &[Utxo],
-        prv_keys: &[impl PrivateKey],
+        key_pairs: &[impl Pair],
     ) -> Result<Transaction> {
-        let sign_scripts = Self::script_sigs_sign(&tx, unspents, &prv_keys)?;
+        let sign_scripts = Self::script_sigs_sign(&tx, unspents, &key_pairs)?;
         let input_with_sigs = tx
             .input
             .iter()
@@ -425,10 +434,7 @@ pub type BtcForkSegWitTransaction =
 mod tests {
     use super::*;
 
-    use bitcoin::network::constants::Network;
-    use secp256k1::SecretKey;
-
-    use tcx_chain::Secp256k1PrivateKey;
+    use tcx_primitive::Secp256k1Pair;
 
     #[test]
     fn test_sign_ltc() {
@@ -458,7 +464,7 @@ mod tests {
         };
 
         let prv_key =
-            Secp256k1PrivateKey::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
+            Secp256k1Pair::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
                 .unwrap();
         let change_addr = BtcForkAddress::from_str("mgBCJAsvzgT2qNNeXsoECg2uPKrUsZ76up").unwrap();
         //        let sign_ret = keystore.sign_transaction(&tran, Some(&PASSWORD)).unwrap();
@@ -495,13 +501,12 @@ mod tests {
             _marker_t: PhantomData,
         };
 
-        let prv_key =
-            Secp256k1PrivateKey::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
-                .unwrap();
+        let pair = Secp256k1Pair::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
+            .unwrap();
         let change_addr = BtcForkAddress::from_str("mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1").unwrap();
         //        let sign_ret = keystore.sign_transaction(&tran, Some(&PASSWORD)).unwrap();
         let actual = tran
-            .sign_transaction(&vec![prv_key], change_addr.script_pubkey())
+            .sign_transaction(&vec![pair], change_addr.script_pubkey())
             .unwrap();
         assert_eq!(actual.signature, "01000000015884e5db9de218238671572340b207ee85b628074e7e467096c267266baf77a4000000006b483045022100eefdd6cace70ee64d6a29bca5f52c338b2b3ecf6e6c7b222818c9bba60f094fb022053535e23a77afc7255c18ae8c6e6bf0f8b6e3f552d08519455714cbe59e489cf01210223078d2942df62c45621d209fab84ea9a7a23346201b7727b9b45a29c4e76f5effffffff0220a10700000000001976a9147821c0a3768aa9d1a37e16cf76002aef5373f1a888ac801a0600000000001976a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac00000000");
     }
@@ -530,18 +535,15 @@ mod tests {
             _marker_t: PhantomData,
         };
         //
-        let prv_key = Secp256k1PrivateKey {
-            compressed: true,
-            network: Network::Bitcoin,
-            key: SecretKey::from_slice(
-                &hex::decode("f3731f49d830c109e054522df01a9378383814af5b01a9cd150511f12db39e6e")
-                    .unwrap(),
-            )
-            .unwrap(),
-        };
+        let pair = Secp256k1Pair::from_slice(
+            &hex::decode("f3731f49d830c109e054522df01a9378383814af5b01a9cd150511f12db39e6e")
+                .unwrap(),
+        )
+        .unwrap();
+
         let change_addr = BtcForkAddress::from_str("MV3hqxhhcGxCdeLXpZKRCabtUApRXixgid").unwrap();
         let expected = tran
-            .sign_transaction(&vec![prv_key], change_addr.script_pubkey())
+            .sign_transaction(&vec![pair], change_addr.script_pubkey())
             .unwrap();
         assert_eq!(expected.signature, "020000000001018bba45b98e54a14d79ca2a5e253f727bff45cf58b5ac5421dd6a37756eb668e801000000171600147b03478d2f7c984179084baa38f790ed1d37629bffffffff01c01f2e010000000017a91400aff21f24bc08af58e41e4186d8492a10b84f9e8702483045022100d0cc3d94c7b7b34fdcc2adc4fd3f735560407581afd6caa11c8d04b963a048a00220777d98e0122fe97206875f49556a401dfc449739ec30e44cb9ed9b92a0b3ff1b01210209c629c64829ec2e99703600ee86c7161a9ed13213e714726210274c29cf780900000000");
     }

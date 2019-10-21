@@ -15,7 +15,7 @@ pub mod ctr {
         let mut data_copy = vec![0; data.len()];
         data_copy.copy_from_slice(data);
         cipher.apply_keystream(&mut data_copy);
-        Ok(Vec::from(data_copy))
+        Ok(data_copy)
     }
 
     pub fn decrypt_nopadding(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
@@ -28,9 +28,8 @@ pub mod ctr {
         let mut data_copy = vec![0; data.len()];
         data_copy.copy_from_slice(data);
         cipher.apply_keystream(&mut data_copy);
-        Ok(Vec::from(data_copy))
+        Ok(data_copy)
     }
-
 }
 
 pub mod cbc {
@@ -123,5 +122,4 @@ mod tests {
         let ret = encrypt_pkcs7(&data, &key, &wrong_len_iv);
         assert!(ret.is_err());
     }
-
 }

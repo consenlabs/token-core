@@ -22,10 +22,6 @@ pub enum Error {
     ConvertToCashAddressFailed(String),
     #[fail(display = "construct_bch_address_failed# address: {}", _0)]
     ConstructBchAddressFailed(String),
-    #[fail(display = "decrypt_xpub_error")]
-    DecryptXPubError,
-    #[fail(display = "unsupported_chain")]
-    UnsupportedChain,
 }
 
 #[cfg(test)]
@@ -34,9 +30,9 @@ mod tests {
 
     use serde_json::Value;
     use std::str::FromStr;
-    use tcx_chain::curve::CurveType;
     use tcx_chain::keystore::CoinInfo;
     use tcx_chain::{HdKeystore, Metadata};
+    use tcx_primitive::CurveType;
 
     const PASSWORD: &str = "Insecure Password";
     const BIP_PATH: &str = "m/44'/145'/0'";
@@ -132,5 +128,4 @@ mod tests {
             serde_json::Value::from_str(expected).unwrap()
         );
     }
-
 }

@@ -52,9 +52,9 @@ impl SighashComponentsWithForkId {
         SighashComponentsWithForkId {
             tx_version: tx.version,
             tx_locktime: tx.lock_time,
-            hash_prevouts: hash_prevouts,
-            hash_sequence: hash_sequence,
-            hash_outputs: hash_outputs,
+            hash_prevouts,
+            hash_sequence,
+            hash_outputs,
         }
     }
 
@@ -95,7 +95,7 @@ impl SighashComponentsWithForkId {
 
     pub fn sign_hash_type_with_fork_id(sign_hash_type: u32) -> u32 {
         let fork_value = sign_hash_type >> 8;
-        let new_fork_value = 0xff0000 | (fork_value ^ 0xdead);
+        let new_fork_value = 0x00ff_0000 | (fork_value ^ 0xdead);
         (new_fork_value << 8) | (sign_hash_type & 0xff)
     }
 }

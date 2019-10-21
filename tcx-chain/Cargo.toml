@@ -8,11 +8,9 @@ edition = "2018"
 tcx-crypto = { path = "../tcx-crypto" }
 tcx-primitive = { path = "../tcx-primitive" }
 
-#bitcoin = { path = "../../../rust-bitcoin"}
 bitcoin = "0.20.0"
 byteorder = "1.2"
 secp256k1 = {version ="0.15", features = ["recovery"] }
-#secp256k1 = { path = "../../../rust-secp256k1"}
 tiny-bip39 = "0.6.0"
 bitcoin_hashes = "0.7"
 uuid = { version = "0.7", features = ["serde", "v4"] }

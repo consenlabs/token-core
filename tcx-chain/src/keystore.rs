@@ -5,11 +5,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use tcx_crypto::{Crypto, Pbkdf2Params};
-use tcx_primitive::key::{DerivePath, Pair};
+use tcx_primitive::{derive, CurveType, Derive, DerivePath, Pair, Public, Secp256k1Pair};
 
-use crate::bips;
-
-use crate::curve::{CurveType, PrivateKey, PublicKey, Secp256k1Curve};
 use crate::Error;
 use crate::Result;
 use std::str::FromStr;
@@ -65,10 +62,7 @@ impl Default for Metadata {
 pub trait Address {
     fn is_valid(address: &str) -> bool;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
-    fn from_public_key(public_key: &impl PublicKey, coin: Option<&str>) -> Result<String>;
-
-    //    fn from_public_key_with(public_key: &impl PublicKey, coin: &CoinInfo) -> Result<String>;
-    // fn from_data(data: &[u8]) -> Box<dyn Address>;
+    fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String>;
 }
 
 /// Blockchain basic config
@@ -148,10 +142,11 @@ impl HdKeystore {
         seed: &Seed,
     ) -> Result<Account> {
         let paths = vec![coin_info.derivation_path.clone()];
-        let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
-        let key = keys.first().ok_or(format_err!("derivate_failed"))?;
+        let keys = Self::key_pair_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
+        let key = keys.first().ok_or_else(|| format_err!("derivate_failed"))?;
         let pub_key = key.public_key();
-        let address = A::from_public_key(&pub_key, Some(&coin_info.symbol))?;
+        let bytes = pub_key.to_bytes()?;
+        let address = A::from_public_key(&bytes, Some(&coin_info.symbol))?;
 
         let extra = E::new(coin_info, seed)?;
         let acc = Account {
@@ -165,7 +160,7 @@ impl HdKeystore {
     }
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
-        let mnemonic = bips::generate_mnemonic();
+        let mnemonic = derive::generate_mnemonic();
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
@@ -216,13 +211,29 @@ impl HdKeystore {
         Ok(bip39::Seed::new(&mnemonic, &""))
     }
 
-    fn key_at_paths_with_seed(
+    fn key_pair_at_paths_with_seed(
         curve: CurveType,
         paths: &[impl AsRef<str>],
         seed: &Seed,
-    ) -> Result<Vec<impl PrivateKey>> {
+    ) -> Result<Vec<impl Pair>> {
         match curve {
-            CurveType::SECP256k1 => Secp256k1Curve::key_at_paths_with_seed(paths, seed),
+            CurveType::SECP256k1 => {
+                let pair = Secp256k1Pair::from_seed_slice(seed.as_bytes())
+                    .map_err(|_| Error::CanNotDerivePairFromSeed)?;
+                let pairs: Result<Vec<Secp256k1Pair>> = paths
+                    .iter()
+                    .map(|path| {
+                        let path = DerivePath::from_str(path.as_ref())
+                            .map_err(|_| Error::CannotDeriveKey)?;
+                        let child_pair = pair
+                            .derive(path.into_iter())
+                            .map_err(|_| Error::CannotDeriveKey)?;
+                        Ok(child_pair)
+                    })
+                    .collect();
+                pairs
+            }
+
             _ => Err(Error::UnsupportedCurve.into()),
         }
     }
@@ -245,15 +256,15 @@ impl HdKeystore {
     }
 
     /// Derive a private key at a specific path, it's coin independent
-    pub fn key_at_paths(
+    pub fn key_pair_at_paths(
         &self,
         symbol: &str,
         paths: &[impl AsRef<str>],
         password: &str,
-    ) -> Result<Vec<impl PrivateKey>> {
+    ) -> Result<Vec<impl Pair>> {
         let acc = self.account(symbol).ok_or(Error::AccountNotFound)?;
         let seed = self.seed(password)?;
-        Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)
+        Ok(Self::key_pair_at_paths_with_seed(acc.curve, paths, &seed)?)
     }
 
     /// Derive an account on a specific coin
@@ -291,9 +302,9 @@ impl HdKeystore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::curve::{PrivateKey, PublicKey};
     use bitcoin_hashes::hex::ToHex;
     use serde_json::Map;
+    use tcx_primitive::Public;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
@@ -382,7 +393,7 @@ mod tests {
             unimplemented!()
         }
 
-        fn from_public_key(_public_key: &impl PublicKey, _coin: Option<&str>) -> Result<String> {
+        fn from_public_key(_public_key: &[u8], _coin: Option<&str>) -> Result<String> {
             Ok("mock_address".to_string())
         }
     }
@@ -500,10 +511,12 @@ mod tests {
             "m/44'/0'/0'/1/0",
             "m/44'/0'/0'/1/1",
         ];
-        let prv_keys = keystore.key_at_paths("BITCOIN", &paths, PASSWORD).unwrap();
-        let pub_keys = prv_keys
+        let pairs = keystore
+            .key_pair_at_paths("BITCOIN", &paths, PASSWORD)
+            .unwrap();
+        let pub_keys = pairs
             .iter()
-            .map(|prv| prv.public_key().to_bytes().to_hex())
+            .map(|pair| pair.public_key().to_bytes().unwrap().to_hex())
             .collect::<Vec<String>>();
         let expected_pub_keys = vec![
             "026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868",
@@ -513,5 +526,4 @@ mod tests {
         ];
         assert_eq!(pub_keys, expected_pub_keys);
     }
-
 }

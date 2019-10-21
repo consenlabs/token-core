@@ -2,13 +2,12 @@ use bip39::Seed;
 
 pub mod address;
 pub mod bip143_with_forkid;
-pub mod hard_wallet_keystore;
 pub mod transaction;
 
 use core::result;
 use serde::{Deserialize, Serialize};
+use std::iter::IntoIterator;
 use std::str::FromStr;
-use tcx_chain::curve::{CurveType, Secp256k1Curve};
 use tcx_chain::keystore::Address;
 use tcx_chain::keystore::{CoinInfo, Extra};
 
@@ -25,26 +24,21 @@ extern crate tcx_chain;
 pub type Result<T> = result::Result<T, failure::Error>;
 
 use crate::address::BtcForkAddress;
-use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
-use secp256k1::Secp256k1;
-use serde_json::Value;
-use tcx_chain::bips::get_account_path;
 use tcx_crypto::aes::cbc::{decrypt_pkcs7, encrypt_pkcs7};
+use tcx_primitive::derive::get_account_path;
 
 pub use transaction::{BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkTransaction, Utxo};
 
 pub use address::PubKeyScript;
 use serde::export::PhantomData;
+use serde_json::Value;
+use tcx_primitive::Pair;
+use tcx_primitive::{ArbitraryNetworkExtendedPubKey, Derive};
+use tcx_primitive::{CurveType, DerivePath, Secp256k1Pair};
 pub use transaction::ScriptPubKeyComponent;
 
 #[derive(Fail, Debug)]
 pub enum Error {
-    #[fail(display = "bch_convert_to_legacy_address_failed# address: {}", _0)]
-    ConvertToLegacyAddressFailed(String),
-    #[fail(display = "bch_convert_to_cash_address_failed# address: {}", _0)]
-    ConvertToCashAddressFailed(String),
-    #[fail(display = "construct_bch_address_failed# address: {}", _0)]
-    ConstructBchAddressFailed(String),
     #[fail(display = "decrypt_xpub_error")]
     DecryptXPubError,
     #[fail(display = "unsupported_chain")]
@@ -82,8 +76,11 @@ where
             "BCH must be at secp256k1"
         );
         let account_path = get_account_path(&coin_info.derivation_path)?;
-        let derivation_info = Secp256k1Curve::extended_pub_key(&account_path, &seed)?;
-        let xpub = BtcForkAddress::extended_public_key(&derivation_info, coin_info)?;
+        let pair = Secp256k1Pair::from_seed_slice(seed.as_bytes())?;
+        let derive_path = DerivePath::from_str(&account_path)?;
+        let account_pair = pair.derive(derive_path.into_iter())?;
+        let xpub_key = account_pair.extended_pub_key()?;
+        let xpub = BtcForkAddress::extended_public_key(&xpub_key, coin_info)?;
         ExtendedPubKeyExtra::from_xpub(&xpub, &coin_info.symbol)
     }
 }
@@ -97,16 +94,10 @@ impl<T: Address> ExtendedPubKeyExtra<T> {
     }
 
     fn _calc_external_address(xpub: &str, idx: i64, coin: &str) -> Result<ExternalAddress> {
-        let extended_pub_key = ExtendedPubKey::from_str(&xpub)?;
-        let s = Secp256k1::new();
-        let index_pub = extended_pub_key.derive_pub(
-            &s,
-            &vec![
-                ChildNumber::from_normal_idx(0).unwrap(),
-                ChildNumber::from_normal_idx(idx as u32).unwrap(),
-            ],
-        )?;
-        let address = T::from_public_key(&index_pub.public_key, Some(coin))?;
+        let extended_pub_key = ArbitraryNetworkExtendedPubKey::from_str(&xpub)?;
+        let child_path = format!("{}/{}", 0, idx as u32);
+        let index_pub = extended_pub_key.derive(&child_path)?;
+        let address = T::from_public_key(&index_pub.public_key().to_bytes(), Some(coin))?;
         Ok(ExternalAddress {
             address,
             addr_type: "EXTERNAL".to_string(),
