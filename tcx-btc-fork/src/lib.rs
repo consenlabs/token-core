@@ -140,4 +140,20 @@ impl<T: Address> From<Value> for ExtendedPubKeyExtra<T> {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use crate::BtcForkExtra;
+    use tcx_chain::CoinInfo;
+    use tcx_primitive::CurveType;
+
+    #[test]
+    pub fn create_test() {
+        let coin_info = CoinInfo {
+            symbol: "LITECOIN".to_string(),
+            derivation_path: "m/44'/2'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+        };
+        let extra = BtcForkExtra::from_xpub("tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R", "LITECOIN").unwrap();
+        let xpub = extra.xpub().unwrap();
+        assert_eq!("tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R", xpub);
+    }
+}

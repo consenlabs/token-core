@@ -246,8 +246,9 @@ impl Pair {
             PrivateType::ExtendedPrivKey(r) => {
                 let extended_pub_key =
                     ExtendedPubKey::from_private(&SECP256K1_ENGINE, &r.extended_priv_key);
+                // FIXME: Could not pass network from ArbitraryNetworkExtendedPrivKey
                 Ok(ArbitraryNetworkExtendedPubKey {
-                    network: r.network,
+                    network: [0u8, 0u8, 0u8, 0u8],
                     extended_pub_key,
                 })
             }

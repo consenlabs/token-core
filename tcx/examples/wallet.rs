@@ -113,7 +113,7 @@ fn main() {
         id,
         "bitcoincash:qrj5mazh5vayn8jnqqsgqymnjtn7wshejyt3un6758",
         txinputs);
-    let json = CString::new(json).expect("CString:new failed");;
+    let json = CString::new(json).expect("CString:new failed");
     unsafe {
         let result = sign_transaction(json.as_ptr());
         let result = CStr::from_ptr(result);

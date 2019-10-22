@@ -84,7 +84,7 @@ impl PubKeyScript for BchAddress {
 }
 
 impl ScriptPubKeyComponent for BchAddress {
-    fn address_like(_target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
+    fn address_script_like(_target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
         Ok(BtcAddress::p2pkh(&pub_key, Network::Bitcoin).script_pubkey())
     }
 
@@ -136,7 +136,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            addr,
+            format!("{}", addr),
             "bitcoincash:qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
         );
     }
