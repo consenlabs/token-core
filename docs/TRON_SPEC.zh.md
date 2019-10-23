@@ -1,10 +1,10 @@
-= 接入 TRON 
+# TRON Spec
 
-== 交易
+## 交易
 
-==== 使用 tronweb 发送交易
-[source, javascript]
-----
+### 使用 tronweb 发送交易
+
+```javascript
 const TronWeb = require('tronweb');
 const HttpProvider = TronWeb.providers.HttpProvider;
 
@@ -66,110 +66,105 @@ tronWeb.transactionBuilder.sendTrx(address1, 100, address).then( resp => {
     ]
   }
 }
-----
+```
 
-* *ref_block_hash*  引用块的 hash[9,15] 8个字节 
-* *ref_block_bytes*  引用块的块高 Longs.toBytes(height) [7,8] 最后的两个字节
-* *raw_data_hex* protobuf 协议序列化 raw_data
-* *txID* sha256(raw_data_hex)
-* *signature* row_data 中的 contract 对应， 每个 contract 都会有一个独立的 signature。 一个 Transaction 中可以包括多个合约调用。 signature 内容是 DER-encoded, 总长度64*2+2=130 bytes
+- *ref_block_hash*  引用块的 hash[9,15] 8个字节 
+- *ref_block_bytes*  引用块的块高 Longs.toBytes(height) [7,8] 最后的两个字节
+- *raw_data_hex* protobuf 协议序列化 raw_data
+- *txID* sha256(raw_data_hex)
+- *signature* row_data 中的 contract 对应， 每个 contract 都会有一个独立的 signature。 一个 Transaction 中可以包括多个合约调用。 signature 内容是 DER-encoded, 总长度`64*2+2=130` bytes
 
 注：TRON 的 txID 并不包括签名信息
 
-=== 发送交易流程
+### 发送交易流程
 
-* tronWeb.transactionBuilder.sendTx 创建一个未签名的交易
-* tronWeb.trx.sign(tx, privateKey) 交易签名
-* tronWeb.trx.sendRawTransaction(signedTx) 向节点发送交易
+- tronWeb.transactionBuilder.sendTx 创建一个未签名的交易
+- tronWeb.trx.sign(tx, privateKey) 交易签名
+- tronWeb.trx.sendRawTransaction(signedTx) 向节点发送交易
 
-== 地址
+## 地址
 
-=== 生成算法
+### 生成算法
 
-* 获取未压缩的公钥
-* 使用 Keccak256 算法计算公钥的 Hash
-* 保留最后的20个字节
-* 增加 41 在最后的20个字节前面
-* 转换为 Base58check 格式 (https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki[bip-13])
+- 获取未压缩的公钥
+- 使用 Keccak256 算法计算公钥的 Hash
+- 保留最后的20个字节
+- 增加 41 在最后的20个字节前面
+- 转换为 Base58check 格式 <https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki[bip-13]>
 
-=== 通过助记词
+### 通过助记词
 TRON 采用 m/44'/195'/0' 路径生成符合 BIP-44 规范的地址。 m/44'/195'/0'/0/0 为第一个地址。 195’ 为 SLIP-44 为 TRON 定义。
 
-== token-core 实现
+## token-core 实现
 
-=== tron package
+### tron package
 
 创建 tron library 来实现所有的与 tron 相关的实现。 预计会引用 crypto、chain、wallet、common 包
 
-=== rust 支持 protobuf 
+### rust 支持 protobuf 
 
 * 引入 rust-protobuf 包
 * 拷贝 tron 的 protobuf 文件到 tron/src/protos 目录
 * 生成 rust 代码
 
-=== 新增 Address 实现
+### 新增 Address 实现
 
-[source, rust]
-----
-
+```rust
 pub struct Address {
-  ...
+    //...
 }
 
 impl Address {
   fn from_public_key(pubkey: PublicKey) -> Result<Self, Error> {
-    ...
+    // ...
   }
 
   fn from_string(address: &'a str) -> Result<Self, Error> {
-    ...
+    // ...
   }
 
   fn into_bytes(&self) -> Vec<u8> {
-    ...
+    // ...
   }
 
   fn as_string(&self) -> &'a str {
-    ...    
+    // ...    
   }
 }
 
 impl PartialEq for Address {
   fn eq(&self, other: &Self) -> bool {
-    ...
+    // ...
   }
 }
+```
 
-----
+### 新增 Transaction 实现
 
-=== 新增 Transaction 实现
-
-[source, rust]
-----
-
+```rust
 pub struct Transaction {
-   ...
+   //...
 }
 
 pub struct SignedTransaction {
     raw_transaction: Transaction
-    ...
+    // ...
 }
 
 impl SignedTransaction {
   fn from_bytes(bytes: &'a Vec<u8>) -> SignedTransaction {
-     ...
+     // ...
   }
  
   // 得到 transaction 的 raw data
   fn into_bytes(&self) -> Vec<u8> {
-    ...
+    // ...
   }
 }
 
 pub trait TransactionSigner {
   fn sign_tx(tx: RawTransaction) -> SignedTransaction {
-    ...
+    // ...
   }
 }
 
@@ -180,5 +175,5 @@ impl TransactionSigner for PrivateKey {
 impl TransactionSigner for Wallet {
 
 }
+```
 
-----
