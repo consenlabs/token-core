@@ -33,11 +33,6 @@ use tcx_tron::{TrxAddress, TrxSignedTransaction, TrxTransaction};
 use std::convert::TryFrom;
 use std::fs;
 
-// #[link(name = "TrezorCrypto")]
-// extern {
-//     fn mnemonic_generate(strength: c_int, mnemonic: *mut c_char) -> c_int;
-// }
-
 #[macro_use]
 extern crate failure;
 
