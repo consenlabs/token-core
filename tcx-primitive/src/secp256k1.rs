@@ -540,12 +540,14 @@ impl TypedKey for Pair {
 mod tests {
     use crate::derive::Derive;
 
-    use crate::Secp256k1Pair;
     use crate::{
         ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, DerivePath, Pair, Public,
     };
+    use crate::{Secp256k1Pair, Secp256k1PublicKey};
     use bip39::{Language, Mnemonic, Seed};
 
+    use crate::secp256k1::PublicType::PublicKey;
+    use crate::CurveType::SECP256k1;
     use bitcoin_hashes::hex::ToHex;
     use bitcoin_hashes::Hash;
     use std::str::FromStr;
@@ -683,5 +685,35 @@ mod tests {
         xprv_key.network = main_network_xprv_version;
         let ret = xprv_key.to_string();
         assert_eq!("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS", ret);
+    }
+
+    #[test]
+    fn pair_private_key() {
+        let pair = Secp256k1Pair::from_str("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS").unwrap();
+        assert!(pair.is_extendable());
+        let wif = pair.private_key().to_wif();
+        assert_eq!("L2saPfZaQWXY6AMxBdLy4UdR8M3xz698fVo3HY5rmRPZDgHe2nAD", wif);
+
+        let pair = Secp256k1Pair::from_wif("L2saPfZaQWXY6AMxBdLy4UdR8M3xz698fVo3HY5rmRPZDgHe2nAD")
+            .unwrap();
+        assert_eq!(
+            "L2saPfZaQWXY6AMxBdLy4UdR8M3xz698fVo3HY5rmRPZDgHe2nAD",
+            pair.private_key().to_wif()
+        );
+        assert!(!pair.is_extendable());
+    }
+
+    #[test]
+    fn extended_pub_key_test() {
+        let pair = Secp256k1Pair::from_str("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS").unwrap();
+        let xpub = pair.extended_pub_key().unwrap();
+        assert_eq!([0u8, 0u8, 0u8, 0u8], xpub.network);
+        assert_eq!("11117SXAChgZFW7ugmrR9jt8pf4MJ7A6Wmcy1jCj18USohxTUxJLWDpCJtiVEDuNUMJARUSs2Sbtm9XxUPBXrP77UPmLyQgpXDQRPSCY5DxRvz", xpub.to_string());
+    }
+
+    #[test]
+    fn xpub_from_str_test() {
+        let xpub = crate::secp256k1::Public::from_str("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8").unwrap();
+        assert_eq!("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8", xpub.to_string());
     }
 }

@@ -511,7 +511,6 @@ pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *cons
 fn _calc_external_address(v: &Value) -> Result<String> {
     let w_id = v["id"].as_str().expect("wallet_id");
     let external_id = v["externalIdx"].as_i64().expect("external_id");
-    let _network = v["network"].as_str().unwrap();
     let chain_type = v["chainType"].as_str().unwrap();
 
     let mut map = KEYSTORE_MAP.write().unwrap();
@@ -689,8 +688,9 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 #[cfg(test)]
 mod tests {
     use crate::{
-        cache_derived_key, clear_derived_key, clear_err, export_mnemonic, get_derived_key,
-        get_last_err_message, remove_wallet, sign_transaction,
+        cache_derived_key, calc_external_address, clear_derived_key, clear_err, export_mnemonic,
+        get_derived_key, get_last_err_message, remove_wallet, sign_transaction, verify_derived_key,
+        verify_password,
     };
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
@@ -853,7 +853,30 @@ mod tests {
             assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
             assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
 
-            remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
+            let imported_id = ret_v["id"].as_str().unwrap();
+            let param = json!({
+                "id": imported_id,
+                "chainType": "BITCOINCASH",
+                "externalIdx": 2
+            });
+
+            let ret = unsafe {
+                _to_str(calc_external_address(_to_c_char(
+                    param.to_string().as_str(),
+                )))
+            };
+            let ret_v: Value = Value::from_str(ret).unwrap();
+            let expected = r#"
+            {
+                "address": "bitcoincash:qzhsz3s4hr0f3x0v00zdn6w50tdpa9zgryp4kxgx49",
+                "derivedPath": "0/2",
+                "type": "EXTERNAL"
+            }
+            "#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+            assert_eq!(expected_v["derivedPath"], ret_v["derivedPath"]);
+            assert_eq!(expected_v["address"], ret_v["address"]);
+            remove_created_wallet(imported_id);
         });
     }
 
@@ -1090,6 +1113,25 @@ mod tests {
 
             let derived_key =
                 unsafe { _to_str(get_derived_key(_to_c_char(param.to_string().as_str()))) };
+
+            let param = json!({
+                "id": imported_id,
+                "derivedKey": derived_key
+            });
+            let ret =
+                unsafe { _to_str(verify_derived_key(_to_c_char(param.to_string().as_str()))) };
+            let ret_v: Value = serde_json::from_str(ret).unwrap();
+            assert_eq!(derived_key, ret_v["derivedKey"].as_str().unwrap());
+
+            let param = json!({
+                "id": imported_id,
+                "derivedKey": "1111111111111111111111111111111111111111111111111111111111111111"
+            });
+            let ret =
+                unsafe { _to_str(verify_derived_key(_to_c_char(param.to_string().as_str()))) };
+            let err = unsafe { _to_str(get_last_err_message()) };
+            assert_eq!("invalid_cached_derived_key", err);
+
             let param: Value =
                 json!({"id": imported_id, "tempPassword": "88888888", "derivedKey": derived_key});
             unsafe { _to_str(cache_derived_key(_to_c_char(param.to_string().as_str()))) };
@@ -1123,6 +1165,31 @@ mod tests {
             unsafe { clear_derived_key() };
 
             remove_created_wallet(imported_id);
+        })
+    }
+
+    #[test]
+    fn verify_password_test() {
+        run_test(|| {
+            let param = r#"
+        {
+            "id": "9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
+            "password": "Wrong Password"
+        }
+        "#;
+            let _ = unsafe { _to_str(verify_password(_to_c_char(param))) };
+            let err = unsafe { _to_str(get_last_err_message()) };
+            assert_eq!(err, "password_incorrect");
+
+            let param = r#"
+        {
+            "id": "9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
+            "password": "Insecure Password"
+        }
+        "#;
+            let ret = unsafe { _to_str(verify_password(_to_c_char(param))) };
+            let v: Value = serde_json::from_str(ret).unwrap();
+            assert!(v["ok"].as_bool().unwrap())
         })
     }
 
