@@ -93,6 +93,7 @@ impl SighashComponentsWithForkId {
         sha256d::Hash::hash(&encoder.into_inner())
     }
 
+    #[warn(dead_code)]
     fn sign_hash_type_with_fork_id(sign_hash_type: u32) -> u32 {
         let fork_value = sign_hash_type >> 8;
         let new_fork_value = 0x00ff_0000 | (fork_value ^ 0xdead);
