@@ -180,6 +180,7 @@ fn parse_arguments(json_str: *const c_char) -> Value {
     serde_json::from_str(json_str).expect("parse_arguments serde_json")
 }
 
+#[no_mangle]
 pub extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
     let v: Value = parse_arguments(json_str);
     let json = unsafe { landingpad(|| _create_wallet(&v)) };

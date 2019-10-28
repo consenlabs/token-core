@@ -18,6 +18,6 @@ func prettyPrintJSON(_ obj: JSONObject) -> String  {
 
 func parseJSONObject(_ str: String) -> JSONObject {
   let data = str.data(using: .utf8)!
-  try! JSONSerialization.jsonObject(with: data, options: .allowFragments);
+  return try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as! JSONObject;
 }
 

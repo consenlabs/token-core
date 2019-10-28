@@ -21,13 +21,13 @@ struct ContentView: View {
             }
           }
       }
-      .navigationBarTitle(Text("TokenCoreX Example"))
+        .navigationBarTitle(Text("TokenCoreX Example"), displayMode: .inline)
       }
   }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView().environmentObject(UserData())
+      ContentView().environmentObject(UserData.shared)
     }
 }

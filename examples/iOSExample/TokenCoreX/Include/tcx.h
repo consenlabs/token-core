@@ -11,6 +11,8 @@ const char *clear_derived_key(void);
 
 void clear_err(void);
 
+const char *create_wallet(const char *json_str);
+
 const char *export_mnemonic(const char *json_str);
 
 const char *find_wallet_by_mnemonic(const char *json_str);
