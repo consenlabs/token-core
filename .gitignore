@@ -7,6 +7,8 @@
 *.o
 *.so
 !examples/android/app/src/main/jniLibs/**
+!examples/iOSExample/TokenCoreX/Include/**
+!examples/iOSExample/TokenCoreX/Libs/**
 *.rlib
 *.dll
 .gdb_history
