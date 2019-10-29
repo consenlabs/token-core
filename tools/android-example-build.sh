@@ -3,7 +3,7 @@
 
 
 export ANDROID_NDK_TOOLCHAINS=$HOME/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin
-
+JNI_LIBS=../examples/android/app/src/main/jniLibs
 if [ ! -d $JNI_LIBS ]; then
     mkdir $JNI_LIBS
     mkdir $JNI_LIBS/arm64-v8a
