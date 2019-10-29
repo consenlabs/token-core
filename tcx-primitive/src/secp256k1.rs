@@ -540,14 +540,12 @@ impl TypedKey for Pair {
 mod tests {
     use crate::derive::Derive;
 
+    use crate::Secp256k1Pair;
     use crate::{
         ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, DerivePath, Pair, Public,
     };
-    use crate::{Secp256k1Pair, Secp256k1PublicKey};
     use bip39::{Language, Mnemonic, Seed};
 
-    use crate::secp256k1::PublicType::PublicKey;
-    use crate::CurveType::SECP256k1;
     use bitcoin_hashes::hex::ToHex;
     use bitcoin_hashes::Hash;
     use std::str::FromStr;

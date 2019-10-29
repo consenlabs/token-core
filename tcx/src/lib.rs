@@ -1123,7 +1123,7 @@ mod tests {
                 "id": imported_id,
                 "derivedKey": "1111111111111111111111111111111111111111111111111111111111111111"
             });
-            let ret =
+            let _ret =
                 unsafe { _to_str(verify_derived_key(_to_c_char(param.to_string().as_str()))) };
             let err = unsafe { _to_str(get_last_err_message()) };
             assert_eq!("invalid_cached_derived_key", err);

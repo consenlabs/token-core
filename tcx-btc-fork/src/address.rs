@@ -389,14 +389,11 @@ mod tests {
     use crate::address::{network_from_coin, BtcForkAddress};
 
     use crate::transaction::ScriptPubKeyComponent;
-    use crate::PubKeyScript;
-    use bip39::{Language, Mnemonic, MnemonicType, Seed};
-    use bitcoin::util::bip32::ExtendedPrivKey;
+
     use std::str::FromStr;
     use tcx_chain::CoinInfo;
     use tcx_primitive::{
         ArbitraryNetworkExtendedPrivKey, CurveType, Derive, DerivePath, Secp256k1Pair,
-        Secp256k1PublicKey,
     };
 
     #[test]
@@ -505,7 +502,7 @@ mod tests {
     #[test]
     pub fn extended_public_key_test() {
         let bitcoin_xprv_str = "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ";
-        let anprv = ArbitraryNetworkExtendedPrivKey::from_str(bitcoin_xprv_str).unwrap();
+        let _anprv = ArbitraryNetworkExtendedPrivKey::from_str(bitcoin_xprv_str).unwrap();
         let anpub = Secp256k1Pair::from_str(bitcoin_xprv_str)
             .unwrap()
             .derive(DerivePath::from_str("m/44'/2'/0'").unwrap().into_iter())
@@ -542,7 +539,7 @@ mod tests {
 
     #[test]
     pub fn script_pub_key_component_address_like_test() {
-        let addr = BtcForkAddress::from_str("MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW").unwrap();
+        let _addr = BtcForkAddress::from_str("MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW").unwrap();
         let pub_key = bitcoin::PublicKey::from_str(
             "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
         )
