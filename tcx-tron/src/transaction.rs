@@ -90,29 +90,29 @@ mod tests {
     fn sign_transaction() -> core::result::Result<(), failure::Error> {
         let json: Value = serde_json::from_str(
             r#" {
-    "visible": false,
-    "txID": "2a0f45b6aa90dfa563698efb6d30ce5b8415f93ba15381e9a9314afdebcc7496",
-    "raw_data": {
-      "contract": [
-        {
-          "parameter": {
-            "value": {
-              "amount": 1100000,
-              "owner_address": "415c68cc82c87446f602f019e5fd797437f5b79cc2",
-              "to_address": "4156a6076cd1537fa317c2606e4edfa4acd3e8e92e"
-            },
-            "type_url": "type.googleapis.com/protocol.TransferContract"
-          },
-          "type": "TransferContract"
-        }
-      ],
-      "ref_block_bytes": "f64e",
-      "ref_block_hash": "ba4593ed82d50347",
-      "expiration": 1571889387000,
-      "timestamp": 1571889327301
-    },
-    "raw_data_hex": "0a02f64e2208ba4593ed82d5034740f8aba2dfdf2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18e0914370c5d99edfdf2d"
-  } "#,
+            "visible": false,
+            "txID": "dc74fc99076e7638067753c5c9c3aa61f9ce208707ef6940e4ab8a4944b5d69f",
+            "raw_data": {
+            "contract": [
+                {
+                    "parameter": {
+                    "value": {
+                        "amount": 100,
+                        "owner_address": "41a1e81654258bf14f63feb2e8d1380075d45b0dac",
+                        "to_address": "410b3e84ec677b3e63c99affcadb91a6b4e086798f"
+                    },
+                    "type_url": "type.googleapis.com/protocol.TransferContract"
+                },
+                    "type": "TransferContract"
+                }
+            ],
+            "ref_block_bytes": "0831",
+            "ref_block_hash": "b02efdc02638b61e",
+            "expiration": 1565866902000,
+            "timestamp": 1565866844064
+        },
+            "raw_data_hex": "0a0208312208b02efdc02638b61e40f083c3a7c92d5a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541a1e81654258bf14f63feb2e8d1380075d45b0dac1215410b3e84ec677b3e63c99affcadb91a6b4e086798f186470a0bfbfa7c92d"
+        } "#,
         )?;
 
         let tx = Transaction::try_from(json)?;
