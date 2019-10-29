@@ -18,13 +18,9 @@ public class MainActivity extends AppCompatActivity {
 
 
   static {
-//    System.loadLibrary("TrezorCrypto");
     System.loadLibrary("secp256k1");
     System.loadLibrary("tcx");
   }
-
-
-
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
