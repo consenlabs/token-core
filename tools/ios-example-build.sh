@@ -11,7 +11,7 @@ fi
 pushd ../libs/secp256k1
 if ! type "cargo-lipo" > /dev/null; then
     cargo install cargo-lipo
-    rustup target add aarch64-apple-ios x86_64-apple-ios
+    rustup target add aarch64-apple-ios x86_64-apple-ios armv7-apple-ios armv7s-apple-ios i386-apple-ios
 fi
 LIBS=../../examples/iOSExample/TokenCoreX
 cargo lipo --release --targets aarch64-apple-ios,armv7-apple-ios,armv7s-apple-ios,x86_64-apple-ios,i386-apple-ios
