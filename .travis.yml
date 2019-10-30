@@ -1,0 +1,5 @@
+osx_image: xcode11.2
+language: swift
+xcode_project: examples/iOSExample/iOSExample.xcodeproj # path to your xcodeproj folder
+xcode_scheme: iOSExample
+xcode_destination: platform=iOS Simulator,OS=13.1,name=iPhone 11 Pro
