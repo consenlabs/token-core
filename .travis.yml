@@ -1,5 +1,19 @@
-osx_image: xcode11.2
-language: swift
-xcode_project: examples/iOSExample/iOSExample.xcodeproj # path to your xcodeproj folder
-xcode_scheme: iOSExample
-xcode_destination: platform=iOS Simulator,OS=13.1,name=iPhone 11 Pro
+---
+matrix:
+  include:
+    -
+      language: rust
+      script:
+        - cargo build --verbose --all
+        - cargo test --verbose --all
+    -
+      os: osx
+      language: swift
+      osx_image: xcode11
+      before_script:
+      - "cd tools & sh ios-example-build.sh"
+      - "cd ../examples/iOSExample"
+      xcode_project: iOSExample.xcodeproj # path to your xcodeproj folder
+      xcode_scheme: iOSExample
+      xcode_destination: platform=iOS Simulator,OS=13.1,name=iPhone 11 Pro
+      
