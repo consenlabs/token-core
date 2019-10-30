@@ -57,10 +57,6 @@ impl BchAddress {
 }
 
 impl Address for BchAddress {
-    fn is_valid(_address: &str) -> bool {
-        unimplemented!()
-    }
-
     fn from_public_key(public_key: &[u8], _coin: Option<&str>) -> Result<String> {
         let pubkey = Secp256k1PublicKey::from_slice(&public_key)?;
         let btc_addr = BtcAddress::p2pkh(&pubkey.public_key(), Network::Bitcoin);

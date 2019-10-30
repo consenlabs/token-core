@@ -136,10 +136,6 @@ pub fn network_form_hrp(hrp: &str) -> Option<BtcForkNetwork> {
 }
 
 impl Address for BtcForkAddress {
-    fn is_valid(_address: &str) -> bool {
-        unimplemented!()
-    }
-
     fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String> {
         let coin = coin.expect("coin from address_pub_key");
         let network = network_from_coin(&coin);

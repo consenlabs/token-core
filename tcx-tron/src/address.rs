@@ -10,10 +10,6 @@ pub enum Error {
 }
 
 impl TraitAddress for Address {
-    fn is_valid(_address: &str) -> bool {
-        unimplemented!()
-    }
-
     fn from_public_key(public_key: &[u8], _coin: Option<&str>) -> Result<String, failure::Error> {
         let bytes = Secp256k1PublicKey::from_slice(public_key)?.to_uncompressed();
         let hash = keccak_hash::keccak(&bytes[1..]);

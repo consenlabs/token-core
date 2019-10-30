@@ -10,7 +10,6 @@ use std::fs::File;
 use std::io::{Read, Write};
 
 use core::borrow::Borrow;
-use presenter::Presenter;
 
 use serde_json::{Map, Value};
 use std::collections::HashMap;
@@ -37,7 +36,6 @@ use std::fs;
 extern crate failure;
 
 #[macro_use]
-pub mod presenter;
 pub mod error_handle;
 
 #[macro_use]
@@ -57,7 +55,7 @@ fn cache_keystore(keystore: HdKeystore) {
         .insert(keystore.id.to_owned(), keystore);
 }
 
-fn _find_keystore_id_by_address(address: &str) -> Option<String> {
+fn find_keystore_id_by_address(address: &str) -> Option<String> {
     let map = KEYSTORE_MAP.read().unwrap();
     let mut k_id: Option<String> = None;
     for (id, keystore) in map.borrow().iter() {
@@ -70,7 +68,7 @@ fn _find_keystore_id_by_address(address: &str) -> Option<String> {
     k_id
 }
 
-fn _flush_keystore(ks: &HdKeystore) -> Result<()> {
+fn flush_keystore(ks: &HdKeystore) -> Result<()> {
     let json = ks.json();
 
     let file_dir = WALLET_FILE_DIR.read().unwrap();
@@ -81,7 +79,7 @@ fn _flush_keystore(ks: &HdKeystore) -> Result<()> {
     Ok(())
 }
 
-fn _delete_keystore_file(wid: &str) -> Result<()> {
+fn delete_keystore_file(wid: &str) -> Result<()> {
     let file_dir = WALLET_FILE_DIR.read().unwrap();
     let ks_path = format!("{}/{}.json", file_dir, wid);
     let path = Path::new(&ks_path);
@@ -89,7 +87,7 @@ fn _delete_keystore_file(wid: &str) -> Result<()> {
     Ok(())
 }
 
-fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
+fn coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
     match symbol.to_uppercase().as_str() {
         "BITCOINCASH" => Ok(CoinInfo {
             symbol: "BITCOINCASH".to_string(),
@@ -132,7 +130,7 @@ fn _coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
 
 const NETWORK_COINS: [&str; 3] = ["BITCOINCASH", "LITECOIN", "BITCOIN"];
 
-fn _coin_symbol_with_network(v: &Value) -> String {
+fn coin_symbol_with_network(v: &Value) -> String {
     let chain_type = v["chainType"].as_str().expect("chainType");
     if !NETWORK_COINS.contains(&chain_type) {
         return chain_type.to_string();
@@ -183,19 +181,19 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 #[no_mangle]
 pub extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
     let v: Value = parse_arguments(json_str);
-    let json = unsafe { landingpad(|| _create_wallet(&v)) };
+    let json = unsafe { landingpad(|| create_wallet_internal(&v)) };
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _create_wallet(v: &Value) -> Result<String> {
+fn create_wallet_internal(v: &Value) -> Result<String> {
     let meta: Metadata = serde_json::from_value(v.clone())?;
     let password = v["password"].as_str().unwrap();
     let keystore = HdKeystore::new(password, meta);
     let _json = keystore.json();
-    let _ = _flush_keystore(&keystore);
-    let ret = keystore.present();
+    let _ = flush_keystore(&keystore);
+    let ret = format!("{}", &keystore);
     cache_keystore(keystore);
-    ret
+    Ok(ret)
 }
 
 #[no_mangle]
@@ -203,10 +201,10 @@ pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
     let v = parse_arguments(json_str);
     // !!! warning !!! just set_panic_hook when debug
     // set_panic_hook();
-    landingpad(|| _init_token_core_x(&v));
+    landingpad(|| init_token_core_x_internal(&v));
 }
 
-fn _init_token_core_x(v: &Value) -> Result<()> {
+fn init_token_core_x_internal(v: &Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().expect("fileDir");
     let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
     let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
@@ -248,16 +246,16 @@ fn _init_token_core_x(v: &Value) -> Result<()> {
 #[no_mangle]
 pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
-    let json = landingpad(|| _find_wallet_by_mnemonic(&v));
+    let json = landingpad(|| find_wallet_by_mnemonic_internal(&v));
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
+fn find_wallet_by_mnemonic_internal(v: &Value) -> Result<String> {
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let path = v["path"].as_str().unwrap();
-    let symbol = _coin_symbol_with_network(v);
+    let symbol = coin_symbol_with_network(v);
 
-    let mut coin_info = _coin_info_from_symbol(&symbol)?;
+    let mut coin_info = coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
     let acc = match symbol.as_str() {
         "BITCOINCASH" => {
@@ -270,11 +268,11 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
     let address = acc.address;
-    let kid = _find_keystore_id_by_address(&address);
+    let kid = find_keystore_id_by_address(&address);
     if let Some(id) = kid {
         let map = KEYSTORE_MAP.read().unwrap();
         let ks: &HdKeystore = map.get(&id).unwrap();
-        ks.present()
+        Ok(format!("{}", &ks))
     } else {
         Ok("{}".to_owned())
     }
@@ -283,22 +281,22 @@ fn _find_wallet_by_mnemonic(v: &Value) -> Result<String> {
 #[no_mangle]
 pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
-    let json = landingpad(|| _import_wallet_from_mnemonic(&v));
+    let json = landingpad(|| import_wallet_from_mnemonic_internal(&v));
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
+fn import_wallet_from_mnemonic_internal(v: &Value) -> Result<String> {
     let password = v["password"].as_str().unwrap();
     let mnemonic = v["mnemonic"].as_str().unwrap();
     let path = v["path"].as_str().unwrap();
     let overwrite = v["overwrite"].as_bool().unwrap();
-    let symbol = _coin_symbol_with_network(v);
+    let symbol = coin_symbol_with_network(v);
 
     let meta: Metadata = serde_json::from_value(v.clone())?;
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
     let _pw = Map::new();
 
-    let mut coin_info = _coin_info_from_symbol(&symbol)?;
+    let mut coin_info = coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
     let account = match symbol.as_str() {
         "BITCOINCASH" => ks.derive_coin::<BchAddress, BchExtra>(&coin_info, password),
@@ -309,7 +307,7 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
 
-    let exist_kid_opt = _find_keystore_id_by_address(&account.address);
+    let exist_kid_opt = find_keystore_id_by_address(&account.address);
     if let Some(exist_kid) = exist_kid_opt {
         if !overwrite {
             return Err(format_err!("{}", "wallet_exists"));
@@ -318,21 +316,21 @@ fn _import_wallet_from_mnemonic(v: &Value) -> Result<String> {
         }
     }
 
-    _flush_keystore(&ks)?;
-    let json = ks.present();
+    flush_keystore(&ks)?;
+    let json = format!("{}", ks);
     cache_keystore(ks);
 
-    json
+    Ok(json)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn export_mnemonic(json_str: *const c_char) -> *const c_char {
     let v: Value = parse_arguments(json_str);
-    let json = landingpad(|| _export_mnemonic(&v));
+    let json = landingpad(|| export_mnemonic_internal(&v));
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _export_mnemonic(v: &Value) -> Result<String> {
+fn export_mnemonic_internal(v: &Value) -> Result<String> {
     let wid = v["id"].as_str().expect("id");
     let password = v["password"].as_str().expect("password");
 
@@ -350,11 +348,11 @@ fn _export_mnemonic(v: &Value) -> Result<String> {
 #[no_mangle]
 pub unsafe extern "C" fn verify_password(json_str: *const c_char) -> *const c_char {
     let v: Value = parse_arguments(json_str);
-    let json = landingpad(|| _verify_password(&v));
+    let json = landingpad(|| verify_password_internal(&v));
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _verify_password(v: &Value) -> Result<String> {
+fn verify_password_internal(v: &Value) -> Result<String> {
     let wid = v["id"].as_str().expect("id");
     let password = v["password"].as_str().expect("password");
 
@@ -377,15 +375,15 @@ pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_c
     let json_c_str = CStr::from_ptr(json_str);
     let json_str = json_c_str.to_str().unwrap();
 
-    let json = landingpad(|| _sign_transaction(json_str));
+    let json = landingpad(|| sign_transaction_internal(json_str));
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _sign_transaction(json_str: &str) -> Result<String> {
+fn sign_transaction_internal(json_str: &str) -> Result<String> {
     let v: Value = serde_json::from_str(json_str).unwrap();
     let w_id = v["id"].as_str().expect("wid");
     let password = v["password"].as_str().expect("password");
-    let symbol = _coin_symbol_with_network(&v);
+    let symbol = coin_symbol_with_network(&v);
 
     let mut map = KEYSTORE_MAP.write().unwrap();
     let keystore = match map.get_mut(w_id) {
@@ -399,14 +397,14 @@ fn _sign_transaction(json_str: &str) -> Result<String> {
         | "LITECOIN-P2WPKH"
         | "LITECOIN-TESTNET"
         | "LITECOIN-TESTNET-P2WPKH" => {
-            _sign_btc_fork_transaction(json_str, &symbol, keystore, password)
+            sign_btc_fork_transaction(json_str, &symbol, keystore, password)
         }
-        "TRON" => _sign_trx_transaction(json_str, keystore, password),
+        "TRON" => sign_trx_transaction(json_str, keystore, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }
 }
 
-fn _sign_btc_fork_transaction(
+fn sign_btc_fork_transaction(
     json: &str,
     coin: &str,
     keystore: &HdKeystore,
@@ -489,7 +487,7 @@ fn _sign_btc_fork_transaction(
     Ok(serde_json::to_string(&ret)?)
 }
 
-fn _sign_trx_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+fn sign_trx_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
     let v = Value::from_str(json)?;
     let tx = TrxTransaction::try_from(v)?;
     let signed: TrxSignedTransaction = keystore.sign_transaction(&tx, Some(password))?;
@@ -500,11 +498,11 @@ fn _sign_trx_transaction(json: &str, keystore: &HdKeystore, password: &str) -> R
 #[no_mangle]
 pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
-    let json = landingpad(|| _calc_external_address(&v));
+    let json = landingpad(|| calc_external_address_internal(&v));
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _calc_external_address(v: &Value) -> Result<String> {
+fn calc_external_address_internal(v: &Value) -> Result<String> {
     let w_id = v["id"].as_str().expect("wallet_id");
     let external_id = v["externalIdx"].as_i64().expect("external_id");
     let chain_type = v["chainType"].as_str().unwrap();
@@ -533,11 +531,11 @@ fn _calc_external_address(v: &Value) -> Result<String> {
 #[no_mangle]
 pub unsafe extern "C" fn remove_wallet(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
-    let json = landingpad(|| _remove_wallet(&v));
+    let json = landingpad(|| remove_wallet_internal(&v));
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _remove_wallet(v: &Value) -> Result<String> {
+fn remove_wallet_internal(v: &Value) -> Result<String> {
     let w_id = v["id"].as_str().expect("wallet_id");
     let password = v["password"].as_str().expect("password");
 
@@ -548,7 +546,7 @@ fn _remove_wallet(v: &Value) -> Result<String> {
     }?;
 
     if keystore.verify_password(password) {
-        _delete_keystore_file(w_id)?;
+        delete_keystore_file(w_id)?;
         map.remove(w_id);
         Ok(serde_json::to_string(&json!({ "id": w_id }))?)
     } else {
@@ -561,11 +559,11 @@ fn _remove_wallet(v: &Value) -> Result<String> {
 #[no_mangle]
 pub unsafe extern "C" fn get_derived_key(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
-    let json = landingpad(|| _get_derived_key(&v));
+    let json = landingpad(|| get_derived_key_internal(&v));
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _get_derived_key(v: &Value) -> Result<String> {
+fn get_derived_key_internal(v: &Value) -> Result<String> {
     let w_id = v["id"].as_str().expect("wallet_id");
     let password = v["password"].as_str().expect("password");
 
@@ -583,11 +581,11 @@ fn _get_derived_key(v: &Value) -> Result<String> {
 #[no_mangle]
 pub unsafe extern "C" fn verify_derived_key(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
-    let json = landingpad(|| _verify_derived_key(&v));
+    let json = landingpad(|| verify_derived_key_internal(&v));
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _verify_derived_key(v: &Value) -> Result<String> {
+fn verify_derived_key_internal(v: &Value) -> Result<String> {
     let w_id = v["id"].as_str().expect("wallet_id");
     let derived_key = v["derivedKey"].as_str().expect("derivedKey");
 
@@ -609,11 +607,11 @@ fn _verify_derived_key(v: &Value) -> Result<String> {
 #[no_mangle]
 pub unsafe extern "C" fn cache_derived_key(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
-    let json = landingpad(|| _cache_derived_key(&v));
+    let json = landingpad(|| cache_derived_key_internal(&v));
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _cache_derived_key(v: &Value) -> Result<String> {
+fn cache_derived_key_internal(v: &Value) -> Result<String> {
     let w_id = v["id"].as_str().expect("wallet_id");
     let derived_key = v["derivedKey"].as_str().expect("derivedKey");
     let tmp_password = v["tempPassword"].as_str().expect("tempPassword");
@@ -639,11 +637,11 @@ fn _cache_derived_key(v: &Value) -> Result<String> {
 #[no_mangle]
 pub unsafe extern "C" fn clear_derived_key() -> *const c_char {
     //    let v = parse_arguments(json_str);
-    let json = landingpad(_clear_derived_key);
+    let json = landingpad(clear_derived_key_internal);
     CString::new(json).expect("ret json").into_raw()
 }
 
-fn _clear_derived_key() -> Result<String> {
+fn clear_derived_key_internal() -> Result<String> {
     let map: &mut HashMap<String, HdKeystore> = &mut KEYSTORE_MAP.write().unwrap();
     map.values_mut()
         .map(|keystore| {
@@ -805,11 +803,23 @@ mod tests {
     #[test]
     fn find_wallet_by_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"BITCOINCASH","mnemonic":"blind gravity card grunt basket expect garment tilt organ concert great critic","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"NONE"}"#;
+            let param = r#"{
+            "chainType":"BITCOINCASH",
+            "mnemonic":"blind gravity card grunt basket expect garment tilt organ concert great critic",
+            "network":"MAINNET",
+            "path":"m/44'/145'/0'/0/0",
+            "segWit":"NONE"
+            }"#;
             let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
             assert_eq!("{}", ret);
 
-            let param = r#"{"chainType":"BITCOINCASH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","network":"MAINNET","path":"m/44'/145'/0'/0/0","segWit":"NONE"}"#;
+            let param = r#"{
+            "chainType":"BITCOINCASH",
+            "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            "network":"MAINNET",
+            "path":"m/44'/145'/0'/0/0",
+            "segWit":"NONE"
+            }"#;
             let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
             let v = Value::from_str(ret).expect("find wallet");
             assert_eq!(
@@ -822,7 +832,18 @@ mod tests {
     #[test]
     fn import_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"BITCOINCASH","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"BCH-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/145'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let param = r#"{
+            "chainType":"BITCOINCASH",
+            "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            "name":"BCH-Wallet-1",
+            "network":"MAINNET",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "path":"m/44'/145'/0'/0/0",
+            "segWit":"NONE",
+            "source":"MNEMONIC"
+            }"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
@@ -879,7 +900,18 @@ mod tests {
     #[test]
     fn import_ltc_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"TESTNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/2'/0'/0/0","segWit":"P2WPKH","source":"MNEMONIC"}"#;
+            let param = r#"{
+            "chainType":"LITECOIN",
+            "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            "name":"LTC-Wallet-1",
+            "network":"TESTNET",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "path":"m/44'/2'/0'/0/0",
+            "segWit":"P2WPKH",
+            "source":"MNEMONIC"
+            }"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
@@ -914,7 +946,18 @@ mod tests {
     #[test]
     fn import_legacy_ltc_wallet_from_mnemonic_mainnet() {
         run_test(|| {
-            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/2'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let param = r#"{
+            "chainType":"LITECOIN",
+            "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            "name":"LTC-Wallet-1",
+            "network":"MAINNET",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "path":"m/44'/2'/0'/0/0",
+            "segWit":"NONE",
+            "source":"MNEMONIC"
+            }"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
@@ -949,7 +992,18 @@ mod tests {
     #[test]
     fn import_legacy_ltc_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"LITECOIN","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"LTC-Wallet-1","network":"TESTNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let param = r#"{
+            "chainType":"LITECOIN",
+            "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            "name":"LTC-Wallet-1",
+            "network":"TESTNET",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "path":"m/44'/1'/0'/0/0",
+            "segWit":"NONE",
+            "source":"MNEMONIC"
+            }"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
@@ -984,7 +1038,18 @@ mod tests {
     #[test]
     fn remove_wallet_test() {
         run_test(|| {
-            let param = r#"{"chainType":"LITECOIN","mnemonic":"calm release clay imitate top extend close draw quiz refuse shuffle injury","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let param = r#"{
+            "chainType":"LITECOIN",
+            "mnemonic":"calm release clay imitate top extend close draw quiz refuse shuffle injury",
+            "name":"LTC-Wallet-1",
+            "network":"MAINNET",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "path":"m/44'/1'/0'/0/0",
+            "segWit":"NONE",
+            "source":"MNEMONIC"
+            }"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let ret_v = Value::from_str(ret).unwrap();
@@ -1005,7 +1070,16 @@ mod tests {
     #[test]
     fn import_trx_wallet_from_mnemonic_test() {
         run_test(|| {
-            let param = r#"{"chainType":"TRON","mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch","name":"TRX-Wallet-1","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/195'/0'/0/0","source":"MNEMONIC"}"#;
+            let param = r#"{
+            "chainType":"TRON",
+            "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            "name":"TRX-Wallet-1",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "path":"m/44'/195'/0'/0/0",
+            "source":"MNEMONIC"
+            }"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let expected = r#"
@@ -1097,7 +1171,18 @@ mod tests {
     #[test]
     fn cache_derived_key_test() {
         run_test(|| {
-            let param = r#"{"chainType":"LITECOIN","mnemonic":"salute slush now script nest law admit achieve voice soda fruit field","name":"LTC-Wallet-1","network":"MAINNET","overwrite":true,"password":"Insecure Password","passwordHint":"","path":"m/44'/1'/0'/0/0","segWit":"NONE","source":"MNEMONIC"}"#;
+            let param = r#"{
+            "chainType":"LITECOIN",
+            "mnemonic":"salute slush now script nest law admit achieve voice soda fruit field",
+            "name":"LTC-Wallet-1",
+            "network":"MAINNET",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "path":"m/44'/1'/0'/0/0",
+            "segWit":"NONE",
+            "source":"MNEMONIC"
+            }"#;
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
 
             let ret_v = Value::from_str(ret).unwrap();

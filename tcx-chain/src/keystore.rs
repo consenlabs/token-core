@@ -1,6 +1,6 @@
 use bip39::{Language, Mnemonic, Seed};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::json;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
@@ -9,6 +9,9 @@ use tcx_primitive::{derive, CurveType, Derive, DerivePath, Pair, Public, Secp256
 
 use crate::Error;
 use crate::Result;
+use core::{fmt, result};
+use serde_json::{Map, Value};
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 /// Source to remember which format it comes from
@@ -60,7 +63,6 @@ impl Default for Metadata {
 
 /// Chain address interface, for encapsulate derivation
 pub trait Address {
-    fn is_valid(address: &str) -> bool;
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
     fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String>;
 }
@@ -299,6 +301,64 @@ impl HdKeystore {
     }
 }
 
+fn merge_value(a: &mut Value, b: &Value) {
+    match (a, b) {
+        (&mut Value::Object(ref mut a), &Value::Object(ref b)) => {
+            for (k, v) in b {
+                merge_value(a.entry(k.clone()).or_insert(Value::Null), v);
+            }
+        }
+        (a, b) => {
+            *a = b.clone();
+        }
+    }
+}
+
+impl Display for HdKeystore {
+    fn fmt(&self, f: &mut Formatter<'_>) -> result::Result<(), fmt::Error> {
+        let mut pw = Map::new();
+        pw.insert("id".to_string(), json!(&self.id.to_string()));
+        pw.insert("name".to_string(), json!(&self.meta.name));
+        pw.insert("passwordHint".to_string(), json!(&self.meta.password_hint));
+        pw.insert("createdAt".to_string(), json!(&self.meta.timestamp));
+        pw.insert("source".to_string(), json!(&self.meta.source));
+
+        if !&self.active_accounts.is_empty() {
+            if self.active_accounts.len() > 1usize {
+                panic!("Only one account in token 2.5");
+            }
+            let acc = &self
+                .active_accounts
+                .first()
+                .expect("get first account from hdkeystore");
+            pw.insert("address".to_string(), json!(acc.address.to_string()));
+            let coin_split: Vec<&str> = acc.coin.split('-').collect();
+            coin_split.iter().enumerate().for_each(|(i, s)| {
+                if i == 0 {
+                    pw.insert("chainType".to_string(), json!(s));
+                } else if vec!["NONE", "P2WPKH"].contains(s) {
+                    pw.insert("segWit".to_string(), json!(s));
+                }
+            });
+            let mut obj = Value::Object(pw);
+            if let Some(extra) = acc.extra.as_object() {
+                merge_value(&mut obj, &Value::Object(extra.clone()))
+            }
+            write!(
+                f,
+                "{}",
+                serde_json::to_string(&obj).expect("present err when convert to json")
+            )
+        } else {
+            write!(
+                f,
+                "{}",
+                serde_json::to_string(&pw).expect("present err when convert to json")
+            )
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -389,10 +449,6 @@ mod tests {
 
     struct MockAddress {}
     impl Address for MockAddress {
-        fn is_valid(_address: &str) -> bool {
-            unimplemented!()
-        }
-
         fn from_public_key(_public_key: &[u8], _coin: Option<&str>) -> Result<String> {
             Ok("mock_address".to_string())
         }
