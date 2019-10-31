@@ -50,7 +50,7 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
         password: Option<&str>,
     ) -> Result<SignedTransaction> {
         let mut raw = tx.raw.clone();
-        tcx_ensure!(password.is_some(), tcx_crypto::Error::InvalidPassword);
+        tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
         let hash = Hash::hash(&hex::decode(raw["raw_data_hex"].as_str().unwrap())?);
         let account = self
             .account(&"TRON")

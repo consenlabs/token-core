@@ -502,10 +502,10 @@ mod tests {
         assert_eq!(seed.to_hex(), expected_seed);
 
         let wrong_password_err = keystore.mnemonic("WrongPassword").err().unwrap();
-        assert_eq!(format!("{}", wrong_password_err), "invalid_password");
+        assert_eq!(format!("{}", wrong_password_err), "password_incorrect");
 
         let wrong_password_err = keystore.seed("WrongPassword").err().unwrap();
-        assert_eq!(format!("{}", wrong_password_err), "invalid_password");
+        assert_eq!(format!("{}", wrong_password_err), "password_incorrect");
     }
 
     #[test]

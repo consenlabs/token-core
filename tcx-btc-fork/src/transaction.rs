@@ -113,7 +113,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
 
         let paths = tx.collect_key_pair_paths(path)?;
 
-        tcx_ensure!(password.is_some(), tcx_crypto::Error::InvalidPassword);
+        tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
         let pairs =
             &self.key_pair_at_paths(tx.coin.to_uppercase().as_str(), &paths, password.unwrap())?;
 

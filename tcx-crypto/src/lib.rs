@@ -20,8 +20,8 @@ pub type Result<T> = result::Result<T, failure::Error>;
 pub enum Error {
     #[fail(display = "kdf_params_invalid")]
     KdfParamsInvalid,
-    #[fail(display = "invalid_password")]
-    InvalidPassword,
+    #[fail(display = "password_incorrect")]
+    PasswordIncorrect,
     #[fail(display = "invalid_key_iv_length")]
     InvalidKeyIvLength,
     #[fail(display = "invalid_ciphertext")]

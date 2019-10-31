@@ -1128,7 +1128,7 @@ mod tests {
             unsafe { clear_err() }
             let _exported_mnemonic = unsafe { _to_str(export_mnemonic(_to_c_char(param))) };
             let err = unsafe { _to_str(get_last_err_message()) };
-            assert_eq!(err, "invalid_password");
+            assert_eq!(err, "password_incorrect");
         })
     }
 
@@ -1227,7 +1227,7 @@ mod tests {
             }
             let _ = unsafe { export_mnemonic(_to_c_char(param.to_string().as_str())) };
             let err = unsafe { _to_str(get_last_err_message()) };
-            assert_eq!("invalid_password", err);
+            assert_eq!("password_incorrect", err);
 
             let param = json!({
                 "id": imported_id,

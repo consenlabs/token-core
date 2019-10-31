@@ -86,7 +86,7 @@ impl CacheDerivedKey {
         if self.hashed_key == Self::hash(key) {
             Ok(self.derived_key.clone())
         } else {
-            Err(Error::InvalidPassword.into())
+            Err(Error::PasswordIncorrect.into())
         }
     }
 }
@@ -139,7 +139,7 @@ impl Crypto<Pbkdf2Params> {
             self.kdfparams
                 .generate_derived_key(key.as_bytes(), &mut derived_key);
             if self.mac != "" && !self.verify_derived_key(&derived_key) {
-                return Err(Error::InvalidPassword.into());
+                return Err(Error::PasswordIncorrect.into());
             }
             Ok(derived_key.to_vec())
         }
@@ -186,7 +186,7 @@ impl Crypto<Pbkdf2Params> {
         let derived_key = self.generate_derived_key(password)?;
 
         if !self.verify_derived_key(&derived_key) {
-            return Err(Error::InvalidPassword.into());
+            return Err(Error::PasswordIncorrect.into());
         }
 
         let key = &derived_key[0..16];
@@ -197,7 +197,7 @@ impl Crypto<Pbkdf2Params> {
         let derived_key = self.generate_derived_key(password)?;
 
         if !self.verify_derived_key(&derived_key) {
-            return Err(Error::InvalidPassword.into());
+            return Err(Error::PasswordIncorrect.into());
         }
 
         let key = &derived_key[0..16];
@@ -264,7 +264,7 @@ mod tests {
         assert!(ret.is_err());
         let err = ret.err().unwrap();
         assert_eq!(
-            Error::InvalidPassword,
+            Error::PasswordIncorrect,
             err.downcast::<crate::Error>().unwrap()
         );
     }
@@ -288,7 +288,7 @@ mod tests {
         assert!(ret.is_err());
         let err = ret.err().unwrap();
         assert_eq!(
-            Error::InvalidPassword,
+            Error::PasswordIncorrect,
             err.downcast::<crate::Error>().unwrap()
         );
 
@@ -296,7 +296,7 @@ mod tests {
         assert!(ret.is_err());
         let err = ret.err().unwrap();
         assert_eq!(
-            Error::InvalidPassword,
+            Error::PasswordIncorrect,
             err.downcast::<crate::Error>().unwrap()
         );
     }
