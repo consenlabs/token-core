@@ -19,7 +19,8 @@ fn main() {
 
     let _ = create_dir(path);
     let json = format!(
-        "{{\"fileDir\": \"{}\",\"version\": \"0.1\"}}",
+        r#"{{"fileDir": "{}","xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
+            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799","version": "0.1"}}"#,
         path.to_str().unwrap()
     );
 
@@ -65,8 +66,20 @@ fn main() {
     };
 
     // 4) import wallet (optional)
-    let json = format!("{{\"passwordHint\": \"hint\",\"name\": \"urugang\",\"timestamp\": 0,\"source\": \"NEW_IDENTITY\",\"password\": \"mypass\",\"mnemonic\": \"{}\",\"path\": \"0/1\",\"overwrite\": true,\"chainType\": \"BCH\" }}",
-                       mnemonic);
+    let json = format!(
+        r#"{{
+        "passwordHint": "hint",
+        "name": "urugang",
+        "timestamp": 0,
+        "source": "NEW_IDENTITY",
+        "password": "mypass",
+        "mnemonic": "{}",
+        "path": "0/1",
+        "overwrite": true,
+        "chainType": "BCH" 
+        }}"#,
+        mnemonic
+    );
     let json = CString::new(json).expect("CString:new failed");
     unsafe {
         let result = import_wallet_from_mnemonic(json.as_ptr());
@@ -77,8 +90,20 @@ fn main() {
     }
 
     // 5) find keystore
-    let json = format!("{{\"mnemonic\": \"{}\",\"network\": \"mainnet\",\"chainType\": \"BCH\",\"password\": \"mypass\",\"name\": \"urugang\",\"passwordHint\": \"hint\",\"timestamp\": 0,\"source\": \"KEYSTORE\",\"path\": \"0/1\"}}",
-                       mnemonic);
+    let json = format!(
+        r#"{{
+        "mnemonic": "{}",
+        "network": "mainnet",
+        "chainType": "BCH",
+        "password": "mypass",
+        "name": "urugang",
+        "passwordHint": "hint",
+        "timestamp": 0,
+        "source": "KEYSTORE",
+        "path": "0/1"
+        }}"#,
+        mnemonic
+    );
     let json = CString::new(json).expect("CString:new failed");
     let id = unsafe {
         let result = find_wallet_by_mnemonic(json.as_ptr());
@@ -109,11 +134,19 @@ fn main() {
     let txinputs = serde_json::to_string(&txinputs).unwrap();
 
     let json = format!(
-        "{{\"id\": {},\"chainType\": \"BCH\",\"to\": \"{}\",\"amount\": \"1200\",\"fee\": \"13\",\"internalUsed\": 1,\"outputs\": {:},\"password\": \"mypass\" }}",
-        id,
-        "bitcoincash:qrj5mazh5vayn8jnqqsgqymnjtn7wshejyt3un6758",
-        txinputs);
-    let json = CString::new(json).expect("CString:new failed");;
+        r#"{{
+        "id": {},
+        "chainType": "BCH",
+        "to": "{}",
+        "amount": "1200",
+        "fee": "13",
+        "internalUsed": 1,
+        "outputs": {:},
+        "password": "mypass"
+        }}"#,
+        id, "bitcoincash:qrj5mazh5vayn8jnqqsgqymnjtn7wshejyt3un6758", txinputs
+    );
+    let json = CString::new(json).expect("CString:new failed");
     unsafe {
         let result = sign_transaction(json.as_ptr());
         let result = CStr::from_ptr(result);

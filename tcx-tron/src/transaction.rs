@@ -50,7 +50,7 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
         password: Option<&str>,
     ) -> Result<SignedTransaction> {
         let mut raw = tx.raw.clone();
-        tcx_ensure!(password.is_some(), tcx_crypto::Error::InvalidPassword);
+        tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
         let hash = Hash::hash(&hex::decode(raw["raw_data_hex"].as_str().unwrap())?);
         let account = self
             .account(&"TRON")
@@ -88,7 +88,8 @@ mod tests {
 
     #[test]
     fn sign_transaction() -> core::result::Result<(), failure::Error> {
-        let json: Value = serde_json::from_str( r#" {
+        let json: Value = serde_json::from_str(
+            r#" {
             "visible": false,
             "txID": "dc74fc99076e7638067753c5c9c3aa61f9ce208707ef6940e4ab8a4944b5d69f",
             "raw_data": {
@@ -111,7 +112,8 @@ mod tests {
             "timestamp": 1565866844064
         },
             "raw_data_hex": "0a0208312208b02efdc02638b61e40f083c3a7c92d5a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541a1e81654258bf14f63feb2e8d1380075d45b0dac1215410b3e84ec677b3e63c99affcadb91a6b4e086798f186470a0bfbfa7c92d"
-        } "#)?;
+        } "#,
+        )?;
 
         let tx = Transaction::try_from(json)?;
 

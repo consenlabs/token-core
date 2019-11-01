@@ -57,10 +57,6 @@ impl BchAddress {
 }
 
 impl Address for BchAddress {
-    fn is_valid(_address: &str) -> bool {
-        unimplemented!()
-    }
-
     fn from_public_key(public_key: &[u8], _coin: Option<&str>) -> Result<String> {
         let pubkey = Secp256k1PublicKey::from_slice(&public_key)?;
         let btc_addr = BtcAddress::p2pkh(&pubkey.public_key(), Network::Bitcoin);
@@ -84,7 +80,7 @@ impl PubKeyScript for BchAddress {
 }
 
 impl ScriptPubKeyComponent for BchAddress {
-    fn address_like(_target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
+    fn address_script_like(_target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script> {
         Ok(BtcAddress::p2pkh(&pub_key, Network::Bitcoin).script_pubkey())
     }
 
@@ -136,7 +132,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            addr,
+            format!("{}", addr),
             "bitcoincash:qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
         );
     }
