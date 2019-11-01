@@ -1,0 +1,18 @@
+kind: pipeline
+name: default
+
+steps:
+  - name: build
+    image: rust:1.38
+    environment:
+      CARGO_HOME: /var/cache/drone/cargo
+    volumes:
+      - name: cache
+        path: /var/cache/drone/cargo
+    commands:
+      - cargo test
+
+volumes:
+  - name: cache
+    host:
+      path: /tmp/cache

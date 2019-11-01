@@ -1,154 +1,131 @@
-
-use bitcoin::network::constants::Network;
-use bitcoin::util::address::Address;
-use secp256k1::{Secp256k1, Message};
-
-use bitcoin::{PrivateKey, TxIn, OutPoint, Script, PublicKey, TxOut, Transaction};
-use bitcoin_hashes::sha256d::Hash as Hash256;
-use bitcoin::blockdata::script::Builder;
-use bitcoin::consensus::serialize;
-use bitcoin_hashes::hex::ToHex;
-use bitcoin_hashes::hex::FromHex;
-use std::str::FromStr;
-use bitcoin_hashes::Hash;
-use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey, DerivationPath};
-use bip39::{Mnemonic, Language};
-
-pub mod bip143_with_forkid;
-pub mod hard_wallet_keystore;
-pub mod bch_coin;
-pub mod bch_transaction;
-
-use bip143_with_forkid::SighashComponentsWithForkId;
 use core::result;
 
-#[macro_use] extern crate failure;
-#[macro_use] extern crate hex_literal;
-extern crate num_bigint;
-extern crate num_traits;
-extern crate num_integer;
+mod address;
+mod transaction;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
-// todo: move wif and bch address to coin
-fn generate_address_from_wif(wif : &str) -> String {
-    let s: Secp256k1<_> = Secp256k1::new();
-    let prv_key = PrivateKey::from_wif(wif).unwrap();
-    let pub_key = prv_key.public_key(&s);
-    // Generate pay-to-pubkey-hash address
-    let address = Address::p2pkh(&pub_key, Network::Bitcoin);
-    println!("Script Pub Key {:?}", address.script_pubkey().to_hex());
-    println!("{}", address.to_string());
-    return address.to_string();
+#[macro_use]
+extern crate failure;
+
+pub use address::BchAddress;
+use tcx_btc_fork::ExtendedPubKeyExtra;
+pub use transaction::BchTransaction;
+
+pub type BchExtra = ExtendedPubKeyExtra<BchAddress>;
+
+#[derive(Fail, Debug)]
+pub enum Error {
+    #[fail(display = "bch_convert_to_legacy_address_failed# address: {}", _0)]
+    ConvertToLegacyAddressFailed(String),
+    #[fail(display = "bch_convert_to_cash_address_failed# address: {}", _0)]
+    ConvertToCashAddressFailed(String),
+    #[fail(display = "construct_bch_address_failed# address: {}", _0)]
+    ConstructBchAddressFailed(String),
 }
-
-fn pub_key(wif: &str) -> PublicKey {
-    let s = Secp256k1::new();
-    let prv_key = PrivateKey::from_wif(wif).unwrap();
-    let pub_key = prv_key.public_key(&s);
-    return pub_key;
-}
-
-fn generate_transaction() -> String {
-    let s = Secp256k1::new();
-    let pri_key = PrivateKey::from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy").unwrap();
-    let pub_key = pri_key.public_key(&s);
-    println!("Address {:?}", Address::p2pkh(&pub_key, Network::Bitcoin).to_string());
-    let pub_key_script = Address::p2pkh(&pub_key, Network::Bitcoin).script_pubkey();
-    println!("pub key script {:?}", pub_key_script.to_hex());
-//    let pub_key_script_manual = Builder::new().push_key(&pub_key).into_script();
-//    assert_eq!(pub_key_script, pub_key_script_manual);
-
-    let tx_in = TxIn {
-        previous_output: OutPoint {
-            txid: Hash256::from_hex("115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986").unwrap(),
-            vout: 0,
-        },
-        script_sig: Script::new(),
-        sequence: 0xFFFFFFFF,
-        witness: vec![]
-
-    };
-
-    let address = Address::from_str("1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK").unwrap();
-//    let key_hash = address.payload.
-    let tx_out = TxOut {
-        value: 15000,
-        script_pubkey: address.script_pubkey()
-    };
-    let mut tx = Transaction {
-        version: 1,
-        lock_time: 0,
-        input: vec![tx_in],
-        output: vec![tx_out]
-    };
-//    l
-    let sig_hash_components = SighashComponentsWithForkId::new(&tx);
-//    println!("sign_hash_components: {:?}", serialize_hex(&sig_hash_components));
-//    println!("hash prevouts {:?}\n, hash sequence: {:?}\n, hash outputs: {:?}", sig_hash_components.hash_prevouts, sig_hash_components.hash_sequence, sig_hash_components.hash_outputs);
-    let shc_hash = sig_hash_components.sighash_all(&tx.input[0], &pub_key_script, 50000, 0x01 | 0x40);
-//    println!("pub_key_script: {:?}", pub_key_script.to_bytes().to_hex());
-//    println!("lock time: {:?}", ))
-    let shc_hash = Hash256::from_slice(&shc_hash.into_inner()).unwrap();
-    println!("SegWit hash {:?}", shc_hash.into_inner().to_hex());
-
-//    println!("before hash {:?}", tx_bytes.to_hex());
-
-
-//    let hash = tx.signature_hash(0, &pub_key_script, SigHashType::All.as_u32());
-//    println!("hash: {:?}", hash.into_inner().to_hex());
-
-    let msg = Message::from_slice(&shc_hash.into_inner()).unwrap();
-    let signature = s.sign(&msg, &pri_key.key);
-    let signature_bytes = signature.serialize_der();
-    let raw_bytes: Vec<u8> = vec![0x41];
-    let sig_bytes: Vec<u8> = [signature_bytes, raw_bytes.to_vec()].concat();
-    let pub_key_bytes = pri_key.public_key(&s).to_bytes();
-    let sig_script = Builder::new().push_slice(&sig_bytes).push_slice(&pub_key_bytes).into_script();
-
-    let new_tx_in = TxIn {
-        previous_output: OutPoint {
-            txid: Hash256::from_hex("115e8f72f39fad874cfab0deed11a80f24f967a84079fb56ddf53ea02e308986").unwrap(),
-            vout: 0,
-        },
-        script_sig: sig_script,
-        sequence: 0xFFFFFFFF,
-        witness: vec![]
-
-    };
-
-    tx.input = vec![new_tx_in];
-    let tx_bytes = serialize(&tx);
-    println!("{:?}", tx_bytes.to_hex());
-    return tx_bytes.to_hex();
-}
-
 
 #[cfg(test)]
 mod tests {
+    use crate::{BchAddress, BchExtra};
 
-    use bitcoin::PrivateKey;
-    use secp256k1::Secp256k1;
-//    use cash_addr::{encode, decode, AddressType};
-    use crate::{generate_address_from_wif, generate_transaction};
-    use bch_addr::Converter;
+    use serde_json::Value;
+    use std::str::FromStr;
+    use tcx_chain::keystore::CoinInfo;
+    use tcx_chain::{HdKeystore, Metadata};
+    use tcx_primitive::CurveType;
 
+    const PASSWORD: &str = "Insecure Password";
+    const BIP_PATH: &str = "m/44'/145'/0'";
+    const MNEMONIC: &str =
+        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 
     #[test]
-    fn bch_address() {
+    fn bch_create() {
+        let mut meta = Metadata::default();
+        meta.name = "CreateTest".to_string();
 
-        let address = generate_address_from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy");
-        let converter = Converter::new();
-        let cash_addr = converter.to_cash_addr("1Gokm82v6DmtwKEB8AiVhm82hyFSsEvBDK").unwrap();
-                assert_eq!("bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkvrmn5zj3l", cash_addr);
+        let mut keystore = HdKeystore::new("Insecure Password", meta);
 
+        //        let coin = BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut keystore, PASSWORD, BIP_PATH);
+        let bch_coin = CoinInfo {
+            symbol: "BITCOINCASH".to_string(),
+            derivation_path: BIP_PATH.to_string(),
+            curve: CurveType::SECP256k1,
+        };
+        let _ = keystore
+            .derive_coin::<BchAddress, BchExtra>(&bch_coin, PASSWORD)
+            .unwrap();
+        let json_str = keystore.json();
+        let v: Value = serde_json::from_str(&json_str).unwrap();
+
+        let active_accounts = v["activeAccounts"].as_array().unwrap();
+        assert_eq!(1, active_accounts.len());
+        let account = active_accounts.first().unwrap();
+        let address = account["address"].as_str().unwrap();
+        assert!(!address.is_empty());
+        let path = account["derivationPath"].as_str().unwrap();
+        assert_eq!(BIP_PATH, path);
+        let coin = account["coin"].as_str().unwrap();
+        assert_eq!("BITCOINCASH", coin);
     }
 
     #[test]
-    fn tx() {
-        let tx_hex = generate_transaction();
-        assert_eq!("01000000018689302ea03ef5dd56fb7940a867f9240fa811eddeb0fa4c87ad9ff3728f5e11000000006b483045022100bc4295d369443e2cc4e20b50a6fd8e7e16c08aabdbb42bdf167dec9d41afc3d402207a8e0ccb91438785e51203e7d2f85c4698ff81245936ebb71935e3d052876dcd4121029f50f51d63b345039a290c94bffd3180c99ed659ff6ea6b1242bca47eb93b59fffffffff01983a0000000000001976a914ad618cf4333b3b248f9744e8e81db2964d0ae39788ac00000000", tx_hex);
+    fn bch_recover() {
+        let mut meta = Metadata::default();
+        meta.name = "RecoverTest".to_string();
+
+        let mut keystore = HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta);
+
+        let bch_coin = CoinInfo {
+            symbol: "BITCOINCASH".to_string(),
+            derivation_path: BIP_PATH.to_string(),
+            curve: CurveType::SECP256k1,
+        };
+
+        let _ = keystore
+            .derive_coin::<BchAddress, BchExtra>(&bch_coin, PASSWORD)
+            .unwrap();
+        let json_str = keystore.json();
+        let v: Value = serde_json::from_str(&json_str).unwrap();
+
+        let active_accounts = v["activeAccounts"].as_array().unwrap();
+        assert_eq!(1, active_accounts.len());
+        let account = active_accounts.first().unwrap();
+        let address = account["address"].as_str().unwrap();
+
+        assert_eq!(
+            "bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885",
+            address
+        );
+
+        let path = account["derivationPath"].as_str().unwrap();
+        assert_eq!(BIP_PATH, path);
+        let coin = account["coin"].as_str().unwrap();
+        assert_eq!("BITCOINCASH", coin);
+
+        let extra = account["extra"].as_object().expect("extra");
+        let enc_xpub = extra["encXPub"].as_str().expect("enc_xpub");
+        assert_eq!(enc_xpub, "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==")
     }
 
+    #[test]
+    fn extra_test() {
+        let ex = BchExtra::from_xpub("tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R", "bch").unwrap();
 
+        assert_eq!(ex.enc_xpub, "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==");
+
+        //        let addr = ex.calc_external_address::<BchAddress>(1i64).unwrap();
+        let expected = r#"
+        {
+            "address": "bitcoincash:qqn4as4zx0jmy02rlgv700umavxt8xtpzu5gcetg92",
+            "type": "EXTERNAL",
+            "derivedPath": "0/1"
+        }
+        "#;
+
+        assert_eq!(
+            serde_json::to_value(ex.external_address).unwrap(),
+            serde_json::Value::from_str(expected).unwrap()
+        );
+    }
 }

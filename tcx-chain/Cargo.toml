@@ -6,14 +6,20 @@ edition = "2018"
 
 [dependencies]
 tcx-crypto = { path = "../tcx-crypto" }
-#bitcoin = { path = "../../../rust-bitcoin"}
-bitcoin = "0.18.0"
+tcx-primitive = { path = "../tcx-primitive" }
+
+bitcoin = "0.20.0"
 byteorder = "1.2"
-secp256k1 = "0.12"
-#secp256k1 = { path = "../../../rust-secp256k1"}
+secp256k1 = {version ="0.15", features = ["recovery"] }
 tiny-bip39 = "0.6.0"
-bitcoin_hashes = "0.3.2"
+bitcoin_hashes = "0.7"
 uuid = { version = "0.7", features = ["serde", "v4"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.39"
 failure = "0.1.5"
+regex = "1"
+
+[dev-dependencies.cargo-husky]
+version = "1"
+default-features = false
+features = ["precommit-hook", "run-cargo-fmt"]

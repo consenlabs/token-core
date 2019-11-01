@@ -6,6 +6,10 @@
 
 *.o
 *.so
+examples/android/app/src/main/jniLibs/**
+examples/iOSExample/TokenCoreX/**
+tools/android-token-v2-build.sh
+tools/ios-token-v2-build.sh
 *.rlib
 *.dll
 .gdb_history
@@ -16,6 +20,13 @@
 
 .idea
 .vscode
+generated/
 *.iml
 *.swp
 *.swo
+
+test-data/**
+
+
+lcov.info
+ccov/

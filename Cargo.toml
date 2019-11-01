@@ -1,7 +1,10 @@
 [workspace]
 members = [
+    "tcx-primitive",
     "tcx-crypto",
     "tcx-chain",
+    "tcx-tron",
+    "tcx-btc-fork",
     "tcx-bch",
     "tcx",
 ]

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <Group
+      location = "group:../TokenCoreX"
+      name = "TokenCoreX">
+      <Group
+         location = "group:Include"
+         name = "Include">
+         <FileRef
+            location = "group:tcx.h">
+         </FileRef>
+      </Group>
+      <Group
+         location = "group:Libs"
+         name = "Libs">
+         <FileRef
+            location = "group:libtcx.a">
+         </FileRef>
+      </Group>
+   </Group>
+   <FileRef
+      location = "self:">
+   </FileRef>
+</Workspace>
