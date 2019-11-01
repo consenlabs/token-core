@@ -3,7 +3,7 @@ name: default
 
 steps:
   - name: build
-    image: rust
+    image: rust:1.38
     environment:
       CARGO_HOME: /var/cache/drone/cargo
     volumes:
