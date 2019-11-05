@@ -68,15 +68,6 @@ pub trait Address {
     fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String>;
 }
 
-/// Blockchain basic config
-///
-/// NOTE: Unique key field is `symbol`
-//pub struct CoinInfo {
-//    pub symbol: String,
-//    pub derivation_path: String,
-//    pub curve: CurveType,
-//}
-
 /// Account that presents one blockchain wallet on a keystore
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]

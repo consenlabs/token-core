@@ -625,9 +625,6 @@ mod tests {
 
     #[test]
     fn extended_key_test() {
-        let main_network_xpub_version: [u8; 4] = [0x04, 0x88, 0xb2, 0x1e];
-        let main_network_xprv_version: [u8; 4] = [0x04, 0x88, 0xad, 0xe4];
-
         let seed = default_seed();
         let pair = Secp256k1Pair::from_seed(&seed).unwrap();
         let _xpub_key = pair.extended_pub_key().unwrap();
@@ -675,9 +672,6 @@ mod tests {
 
     #[test]
     fn test_encode_with_network() {
-        let main_network_xpub_version: [u8; 4] = [0x04, 0x88, 0xb2, 0x1e];
-        let main_network_xprv_version: [u8; 4] = [0x04, 0x88, 0xad, 0xe4];
-
         let xpub = "tpubDDDcs8o1LaKXKXaPTEVBUZJYTgNAte4xj24MtFCMsfrHku93ZZjy87CGyz93dcocR6x6JHdusHodD9EVcSQuDbmkAWznWZtvyqyMDqS6VK4";
         let mut xpub_key = ArbitraryNetworkExtendedPubKey::from_str(xpub).unwrap();
         xpub_key.coin = Some("BITCOIN".to_owned());
