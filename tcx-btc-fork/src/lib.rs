@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::iter::IntoIterator;
 use std::str::FromStr;
 use tcx_chain::keystore::Address;
-use tcx_chain::keystore::{CoinInfo, Extra};
+use tcx_chain::keystore::Extra;
 
 #[macro_use]
 extern crate failure;
@@ -32,9 +32,10 @@ pub use transaction::{BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkT
 pub use address::PubKeyScript;
 use serde::export::PhantomData;
 use serde_json::Value;
+use tcx_constants::{CoinInfo, CurveType};
 use tcx_primitive::Pair;
 use tcx_primitive::{ArbitraryNetworkExtendedPubKey, Derive};
-use tcx_primitive::{CurveType, DerivePath, Secp256k1Pair};
+use tcx_primitive::{DerivePath, Secp256k1Pair};
 pub use transaction::ScriptPubKeyComponent;
 
 #[derive(Fail, Debug)]
@@ -144,8 +145,7 @@ mod tests {
     use crate::BtcForkExtra;
     use bip39::{Language, Mnemonic, Seed};
     use tcx_chain::keystore::Extra;
-    use tcx_chain::CoinInfo;
-    use tcx_primitive::CurveType;
+    use tcx_constants::{CoinInfo, CurveType};
 
     #[test]
     pub fn extra_test() {

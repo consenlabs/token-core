@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 tcx-crypto = { path = "../tcx-crypto" }
 tcx-primitive = { path = "../tcx-primitive" }
+tcx-constants = { path = "../tcx-constants" }
 
 bitcoin = "0.20.0"
 byteorder = "1.2"

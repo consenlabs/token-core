@@ -5,7 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use tcx_crypto::{Crypto, Pbkdf2Params};
-use tcx_primitive::{derive, CurveType, Derive, DerivePath, Pair, Public, Secp256k1Pair};
+use tcx_primitive::{derive, Derive, DerivePath, Pair, Public, Secp256k1Pair};
 
 use crate::Error;
 use crate::Result;
@@ -13,6 +13,7 @@ use core::{fmt, result};
 use serde_json::{Map, Value};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use tcx_constants::{CoinInfo, CurveType};
 
 /// Source to remember which format it comes from
 ///
@@ -70,11 +71,11 @@ pub trait Address {
 /// Blockchain basic config
 ///
 /// NOTE: Unique key field is `symbol`
-pub struct CoinInfo {
-    pub symbol: String,
-    pub derivation_path: String,
-    pub curve: CurveType,
-}
+//pub struct CoinInfo {
+//    pub symbol: String,
+//    pub derivation_path: String,
+//    pub curve: CurveType,
+//}
 
 /// Account that presents one blockchain wallet on a keystore
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

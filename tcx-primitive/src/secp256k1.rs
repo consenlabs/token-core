@@ -22,17 +22,7 @@ use core::fmt;
 use lazy_static::lazy_static;
 
 use bip39::Seed;
-use std::convert::AsMut;
-
-fn clone_into_array<A, T>(slice: &[T]) -> A
-where
-    A: Sized + Default + AsMut<[T]>,
-    T: Clone,
-{
-    let mut a = Default::default();
-    <A as AsMut<[T]>>::as_mut(&mut a).clone_from_slice(slice);
-    a
-}
+use tcx_constants::{coin_from_xprv_prefix, coin_from_xpub_prefix, network_from_coin};
 
 lazy_static! {
     /// Lazily initialized secp256k1 engine
@@ -73,9 +63,10 @@ enum PrivateType {
     PrivateKey(PrivateKey),
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct ArbitraryNetworkExtendedPubKey {
-    pub network: [u8; 4],
+    pub coin: Option<String>,
+    //    pub network: [u8; 4],
     pub extended_pub_key: ExtendedPubKey,
 }
 
@@ -86,7 +77,7 @@ impl ArbitraryNetworkExtendedPubKey {
             .extended_pub_key
             .derive_pub(&SECP256K1_ENGINE, &child_nums)?;
         Ok(ArbitraryNetworkExtendedPubKey {
-            network: self.network,
+            coin: self.coin.clone(),
             extended_pub_key: index_ext_pub_key,
         })
     }
@@ -96,27 +87,34 @@ impl ArbitraryNetworkExtendedPubKey {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct ArbitraryNetworkExtendedPrivKey {
-    pub network: [u8; 4],
+    pub coin: Option<String>,
     pub extended_priv_key: ExtendedPrivKey,
 }
 
 impl fmt::Display for ArbitraryNetworkExtendedPubKey {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&self.network[..]);
-        ret[4] = self.extended_pub_key.depth as u8;
-        ret[5..9].copy_from_slice(&self.extended_pub_key.parent_fingerprint[..]);
+        if let Some(coin) = &self.coin {
+            if let Some(network) = network_from_coin(coin) {
+                let mut ret = [0; 78];
+                ret[0..4].copy_from_slice(&network.xpub_prefix[..]);
+                ret[4] = self.extended_pub_key.depth as u8;
+                ret[5..9].copy_from_slice(&self.extended_pub_key.parent_fingerprint[..]);
 
-        BigEndian::write_u32(
-            &mut ret[9..13],
-            u32::from(self.extended_pub_key.child_number),
-        );
+                BigEndian::write_u32(
+                    &mut ret[9..13],
+                    u32::from(self.extended_pub_key.child_number),
+                );
 
-        ret[13..45].copy_from_slice(&self.extended_pub_key.chain_code[..]);
-        ret[45..78].copy_from_slice(&self.extended_pub_key.public_key.key.serialize()[..]);
-        fmt.write_str(&base58::check_encode_slice(&ret[..]))
+                ret[13..45].copy_from_slice(&self.extended_pub_key.chain_code[..]);
+                ret[45..78].copy_from_slice(&self.extended_pub_key.public_key.key.serialize()[..]);
+                return write!(fmt, "{}", &base58::check_encode_slice(&ret[..]));
+            }
+        }
+        write!(fmt, "{}", "invalid_coin");
+        Err(fmt::Error)
+        //        fmt.write_str(&base58::check_encode_slice(&ret[..]))
     }
 }
 
@@ -141,8 +139,9 @@ impl FromStr for ArbitraryNetworkExtendedPubKey {
             public_key: PublicKey::from_slice(&data[45..78])
                 .map_err(|e| base58::Error::Other(e.to_string()))?,
         };
+        let coin = coin_from_xpub_prefix(&data[0..4]);
         Ok(ArbitraryNetworkExtendedPubKey {
-            network: clone_into_array(&data[0..4]),
+            coin,
             extended_pub_key: epk,
         })
     }
@@ -150,20 +149,27 @@ impl FromStr for ArbitraryNetworkExtendedPubKey {
 
 impl fmt::Display for ArbitraryNetworkExtendedPrivKey {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&self.network[..]);
-        ret[4] = self.extended_priv_key.depth as u8;
-        ret[5..9].copy_from_slice(&self.extended_priv_key.parent_fingerprint[..]);
+        if let Some(coin) = &self.coin {
+            if let Some(network) = network_from_coin(coin) {
+                let mut ret = [0; 78];
 
-        BigEndian::write_u32(
-            &mut ret[9..13],
-            u32::from(self.extended_priv_key.child_number),
-        );
+                ret[0..4].copy_from_slice(&network.xprv_prefix[..]);
+                ret[4] = self.extended_priv_key.depth as u8;
+                ret[5..9].copy_from_slice(&self.extended_priv_key.parent_fingerprint[..]);
 
-        ret[13..45].copy_from_slice(&self.extended_priv_key.chain_code[..]);
-        ret[45] = 0;
-        ret[46..78].copy_from_slice(&self.extended_priv_key.private_key[..]);
-        fmt.write_str(&base58::check_encode_slice(&ret[..]))
+                BigEndian::write_u32(
+                    &mut ret[9..13],
+                    u32::from(self.extended_priv_key.child_number),
+                );
+
+                ret[13..45].copy_from_slice(&self.extended_priv_key.chain_code[..]);
+                ret[45] = 0;
+                ret[46..78].copy_from_slice(&self.extended_priv_key.private_key[..]);
+                return write!(fmt, "{}", &base58::check_encode_slice(&ret[..]));
+            }
+        }
+        write!(fmt, "{}", "invalid_network");
+        Err(fmt::Error)
     }
 }
 
@@ -194,8 +200,9 @@ impl FromStr for ArbitraryNetworkExtendedPrivKey {
                     .map_err(|e| base58::Error::Other(e.to_string()))?,
             },
         };
+        let coin = coin_from_xprv_prefix(&data[0..4]);
         Ok(ArbitraryNetworkExtendedPrivKey {
-            network: clone_into_array(&data[0..4]),
+            coin,
             extended_priv_key: epk,
         })
     }
@@ -246,9 +253,8 @@ impl Pair {
             PrivateType::ExtendedPrivKey(r) => {
                 let extended_pub_key =
                     ExtendedPubKey::from_private(&SECP256K1_ENGINE, &r.extended_priv_key);
-                // FIXME: Could not pass network from ArbitraryNetworkExtendedPrivKey
                 Ok(ArbitraryNetworkExtendedPubKey {
-                    network: [0u8, 0u8, 0u8, 0u8],
+                    coin: r.coin.clone(),
                     extended_pub_key,
                 })
             }
@@ -261,7 +267,7 @@ impl Pair {
             PrivateType::ExtendedPrivKey(r) => {
                 let extended_priv_key = r.extended_priv_key;
                 Ok(ArbitraryNetworkExtendedPrivKey {
-                    network: r.network,
+                    coin: r.coin.to_owned(),
                     extended_priv_key,
                 })
             }
@@ -284,7 +290,7 @@ impl Derive for Public {
     ) -> core::result::Result<Self, Self::Error> {
         match &self.0 {
             PublicType::ExtendedPubKey(r) => {
-                let mut extended_key: ArbitraryNetworkExtendedPubKey = *r;
+                let mut extended_key: ArbitraryNetworkExtendedPubKey = r.clone();
 
                 for j in path {
                     let child_number = j.try_into()?;
@@ -295,7 +301,7 @@ impl Derive for Public {
                     {
                         Ok(r) => {
                             extended_key = ArbitraryNetworkExtendedPubKey {
-                                network: extended_key.network,
+                                coin: extended_key.coin,
                                 extended_pub_key: r,
                             }
                         }
@@ -319,9 +325,9 @@ impl Derive for Pair {
         &self,
         path: T,
     ) -> core::result::Result<Self, Self::Error> {
-        match self.0 {
+        match &self.0 {
             PrivateType::ExtendedPrivKey(r) => {
-                let mut extended_key = r;
+                let mut extended_key = r.clone();
 
                 for j in path {
                     let child_number = j.try_into()?;
@@ -332,7 +338,7 @@ impl Derive for Pair {
                     {
                         Ok(r) => {
                             extended_key = ArbitraryNetworkExtendedPrivKey {
-                                network: extended_key.network,
+                                coin: extended_key.coin,
                                 extended_priv_key: r,
                             }
                         }
@@ -366,7 +372,7 @@ impl Pair {
         match ExtendedPrivKey::new_master(Network::Bitcoin, seed) {
             Ok(r) => Ok(Pair(PrivateType::ExtendedPrivKey(
                 ArbitraryNetworkExtendedPrivKey {
-                    network: [0, 0, 0, 0],
+                    coin: None,
                     extended_priv_key: r,
                 },
             ))),
@@ -397,13 +403,13 @@ impl TraitPair for Pair {
     }
 
     fn extended_public_key(&self) -> Result<Public> {
-        match self.0 {
+        match &self.0 {
             PrivateType::ExtendedPrivKey(r) => {
                 let pub_key = ExtendedPubKey::from_private(&SECP256K1_ENGINE, &r.extended_priv_key);
 
                 Ok(Public(PublicType::ExtendedPubKey(
                     ArbitraryNetworkExtendedPubKey {
-                        network: r.network,
+                        coin: r.coin.clone(),
                         extended_pub_key: pub_key,
                     },
                 )))
@@ -413,7 +419,7 @@ impl TraitPair for Pair {
     }
 
     fn public_key(&self) -> Self::Public {
-        match self.0 {
+        match &self.0 {
             PrivateType::ExtendedPrivKey(r) => {
                 let pub_key = ExtendedPubKey::from_private(&SECP256K1_ENGINE, &r.extended_priv_key);
                 Public(PublicType::PublicKey(pub_key.public_key))
@@ -426,9 +432,9 @@ impl TraitPair for Pair {
     }
 
     fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
-        let pk = match self.0 {
+        let pk = match &self.0 {
             PrivateType::ExtendedPrivKey(epk) => epk.extended_priv_key.private_key,
-            PrivateType::PrivateKey(prv) => prv,
+            PrivateType::PrivateKey(prv) => prv.clone(),
         };
         let msg = Message::from_slice(data).map_err(transform_secp256k1_error)?;
         let signature = SECP256K1_ENGINE.sign(&msg, &pk.key);
@@ -436,9 +442,9 @@ impl TraitPair for Pair {
     }
 
     fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>> {
-        let pk = match self.0 {
+        let pk = match &self.0 {
             PrivateType::ExtendedPrivKey(epk) => epk.extended_priv_key.private_key,
-            PrivateType::PrivateKey(prv) => prv,
+            PrivateType::PrivateKey(prv) => prv.clone(),
         };
         let msg = Message::from_slice(data).map_err(transform_secp256k1_error)?;
         let signature = SECP256K1_ENGINE.sign_recoverable(&msg, &pk.key);
@@ -457,7 +463,7 @@ impl TraitPair for Pair {
 
 impl std::fmt::Display for Public {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        match self.0 {
+        match &self.0 {
             PublicType::ExtendedPubKey(epk) => epk.fmt(f),
             PublicType::PublicKey(pub_key) => pub_key.fmt(f),
         }
@@ -473,7 +479,7 @@ impl TraitPublic for Public {
 
     fn to_bytes(&self) -> Result<Vec<u8>> {
         //TODO How to distinguish whether to export to XPub or export to PublicKey
-        match self.0 {
+        match &self.0 {
             PublicType::PublicKey(pub_key) => Ok(pub_key.to_bytes()),
             // todo: throw error
             PublicType::ExtendedPubKey(_epk) => Err(InvalidPublicKey.into()),
@@ -630,7 +636,7 @@ mod tests {
             .unwrap()
             .extended_pub_key()
             .unwrap();
-        index_xpub_key.network = main_network_xpub_version;
+        index_xpub_key.coin = Some("BITCOIN".to_owned());
         let xpub = index_xpub_key.to_string();
         assert_eq!(xpub, "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
         let pair = Secp256k1Pair::from_seed(&seed).unwrap();
@@ -640,7 +646,7 @@ mod tests {
             .extended_priv_key()
             .unwrap();
         //        let mut account_xprv_key = xprv_key
-        xprv_key.network = main_network_xprv_version;
+        xprv_key.coin = Some("BITCOIN".to_owned());
         let xprv = xprv_key.to_string();
         assert_eq!(xprv, "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
     }
@@ -674,13 +680,14 @@ mod tests {
 
         let xpub = "tpubDDDcs8o1LaKXKXaPTEVBUZJYTgNAte4xj24MtFCMsfrHku93ZZjy87CGyz93dcocR6x6JHdusHodD9EVcSQuDbmkAWznWZtvyqyMDqS6VK4";
         let mut xpub_key = ArbitraryNetworkExtendedPubKey::from_str(xpub).unwrap();
-        xpub_key.network = main_network_xpub_version;
+        xpub_key.coin = Some("BITCOIN".to_owned());
         let ret = xpub_key.to_string();
         assert_eq!("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8", ret);
 
         let xprv = "tprv8g8UWPRHxaNWXZN3uoaiNpyYyaDr2j5Dvcj1vxLxKcEF653k7xcN9wq9eT73wBM1HzE9hmWJbAPXvDvaMXqGWm81UcVpHnmATfH2JJrfhGg";
         let mut xprv_key = ArbitraryNetworkExtendedPrivKey::from_str(xprv).unwrap();
-        xprv_key.network = main_network_xprv_version;
+        //        xprv_key.network = main_network_xprv_version;
+        xprv_key.coin = Some("BITCOIN".to_owned());
         let ret = xprv_key.to_string();
         assert_eq!("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS", ret);
     }
@@ -705,8 +712,7 @@ mod tests {
     fn extended_pub_key_test() {
         let pair = Secp256k1Pair::from_str("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS").unwrap();
         let xpub = pair.extended_pub_key().unwrap();
-        assert_eq!([0u8, 0u8, 0u8, 0u8], xpub.network);
-        assert_eq!("11117SXAChgZFW7ugmrR9jt8pf4MJ7A6Wmcy1jCj18USohxTUxJLWDpCJtiVEDuNUMJARUSs2Sbtm9XxUPBXrP77UPmLyQgpXDQRPSCY5DxRvz", xpub.to_string());
+        assert_eq!("xpub6CSt8ZdrPg6j9ECzMGGDaKJJDUe8Cfm4xHjVrvL7PyGkBGdog8asBznBaZQiYbRtCdWRUAKGpKcbyUYMUUwgmiNt7mPs1QCUMhyHB6rBURT", xpub.to_string());
     }
 
     #[test]

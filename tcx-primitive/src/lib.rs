@@ -5,7 +5,6 @@ pub mod derive;
 mod secp256k1;
 
 use core::result;
-use serde::{Deserialize, Serialize};
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
@@ -17,14 +16,14 @@ pub use crate::secp256k1::{
 pub use derive::{Derive, DeriveJunction, DerivePath};
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum CurveType {
-    SECP256k1,          /* "secp256k1" */
-    ED25519,            /* "ed25519" */
-    ED25519Blake2bNano, /* "ed25519-blake2b-nano" */
-    Curve25519,         /* "curve25519" */
-    NIST256p1,
-}
+//#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+//pub enum CurveType {
+//    SECP256k1,          /* "secp256k1" */
+//    ED25519,            /* "ed25519" */
+//    ED25519Blake2bNano, /* "ed25519-blake2b-nano" */
+//    Curve25519,         /* "curve25519" */
+//    NIST256p1,
+//}
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum KeyError {
@@ -60,6 +59,12 @@ pub enum KeyError {
     InvalidRecoveryId,
     #[fail(display = "invalid_tweak")]
     InvalidTweak,
+    #[fail(display = "invalid_xpub")]
+    InvalidXpub,
+    #[fail(display = "invalid_xprv")]
+    InvalidXprv,
+    #[fail(display = "unsupported_chain")]
+    UnsupportedChain,
     #[fail(display = "not_enough_memory")]
     NotEnoughMemory,
     #[fail(display = "unknown")]

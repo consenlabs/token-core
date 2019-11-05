@@ -8,6 +8,7 @@ edition = "2018"
 tcx-crypto = { path = "../tcx-crypto" }
 tcx-chain = { path = "../tcx-chain" }
 tcx-primitive = { path = "../tcx-primitive" }
+tcx-constants = { path = "../tcx-constants" }
 
 hex = "0.3.2"
 base64 = "0.10.1"

@@ -22,7 +22,7 @@ extern crate regex;
 pub mod keystore;
 pub mod signer;
 
-pub use keystore::{Account, CoinInfo, HdKeystore, Metadata, Source};
+pub use keystore::{Account, HdKeystore, Metadata, Source};
 pub use signer::{SignedTransaction, Transaction, TransactionSigner, TxSignResult};
 
 pub type Result<T> = result::Result<T, failure::Error>;
