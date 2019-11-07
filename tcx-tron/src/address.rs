@@ -1,5 +1,6 @@
 use bitcoin::util::base58;
 
+use crate::keccak;
 use tcx_chain::keystore::Address as TraitAddress;
 use tcx_primitive::{Public, Secp256k1PublicKey};
 
@@ -12,7 +13,7 @@ pub enum Error {
 impl TraitAddress for Address {
     fn from_public_key(public_key: &[u8], _coin: Option<&str>) -> Result<String, failure::Error> {
         let bytes = Secp256k1PublicKey::from_slice(public_key)?.to_uncompressed();
-        let hash = keccak_hash::keccak(&bytes[1..]);
+        let hash = keccak(&bytes[1..]);
         let hex: Vec<u8> = [vec![0x41], hash[12..32].to_vec()].concat();
         Ok(base58::check_encode_slice(&hex))
     }

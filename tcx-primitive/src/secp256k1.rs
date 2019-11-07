@@ -112,9 +112,8 @@ impl fmt::Display for ArbitraryNetworkExtendedPubKey {
                 return write!(fmt, "{}", &base58::check_encode_slice(&ret[..]));
             }
         }
-        write!(fmt, "{}", "invalid_coin");
+        write!(fmt, "{}", "invalid_coin")?;
         Err(fmt::Error)
-        //        fmt.write_str(&base58::check_encode_slice(&ret[..]))
     }
 }
 
@@ -168,7 +167,7 @@ impl fmt::Display for ArbitraryNetworkExtendedPrivKey {
                 return write!(fmt, "{}", &base58::check_encode_slice(&ret[..]));
             }
         }
-        write!(fmt, "{}", "invalid_network");
+        write!(fmt, "{}", "invalid_network")?;
         Err(fmt::Error)
     }
 }
@@ -449,7 +448,7 @@ impl TraitPair for Pair {
         let msg = Message::from_slice(data).map_err(transform_secp256k1_error)?;
         let signature = SECP256K1_ENGINE.sign_recoverable(&msg, &pk.key);
         let (recover_id, sign) = signature.serialize_compact();
-        let signed_bytes = [sign[..].to_vec(), vec![recover_id.to_i32() as u8]].concat();
+        let signed_bytes = [sign[..].to_vec(), vec![(recover_id.to_i32()) as u8]].concat();
         Ok(signed_bytes)
     }
 

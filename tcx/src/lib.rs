@@ -24,10 +24,10 @@ use tcx_btc_fork::{
 };
 use tcx_chain::keystore::EmptyExtra;
 use tcx_chain::signer::TransactionSigner;
-use tcx_chain::{HdKeystore, Metadata, TxSignResult};
+use tcx_chain::{HdKeystore, MessageSigner, Metadata, TxSignResult};
 use tcx_constants::coin_info::{coin_info_from_symbol, coin_symbol_with_network};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
-use tcx_tron::{TrxAddress, TrxSignedTransaction, TrxTransaction};
+use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 
 use std::convert::TryFrom;
 use std::fs;
@@ -424,6 +424,39 @@ fn sign_trx_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Re
     let signed: TrxSignedTransaction = keystore.sign_transaction(&tx, Some(password))?;
     let signed_v: Value = signed.try_into()?;
     Ok(signed_v.to_string())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sign_message(json_str: *const c_char) -> *const c_char {
+    let json_c_str = CStr::from_ptr(json_str);
+    let json_str = json_c_str.to_str().unwrap();
+
+    let json = landingpad(|| sign_message_internal(json_str));
+    CString::new(json).expect("ret json").into_raw()
+}
+
+fn sign_message_internal(json_str: &str) -> Result<String> {
+    let v: Value = serde_json::from_str(json_str).unwrap();
+    let w_id = v["id"].as_str().expect("wid");
+    let password = v["password"].as_str().expect("password");
+    let symbol = coin_symbol_with_network(&v);
+
+    let mut map = KEYSTORE_MAP.write().unwrap();
+    let keystore = match map.get_mut(w_id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    match symbol.as_str() {
+        "TRON" => sign_trx_message(json_str, keystore, password),
+        _ => Err(format_err!("{}", "chain_type_not_support")),
+    }
+}
+
+fn sign_trx_message(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+    let message = serde_json::from_str::<TrxMessage>(json)?;
+    let signed = keystore.sign_message(&message, Some(password))?;
+    Ok(signed.signature)
 }
 
 #[no_mangle]

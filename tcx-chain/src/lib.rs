@@ -23,7 +23,10 @@ pub mod keystore;
 pub mod signer;
 
 pub use keystore::{Account, HdKeystore, Metadata, Source};
-pub use signer::{SignedTransaction, Transaction, TransactionSigner, TxSignResult};
+pub use signer::{
+    Message, MessageSigner, SignedMessage, SignedTransaction, Transaction, TransactionSigner,
+    TxSignResult,
+};
 
 pub type Result<T> = result::Result<T, failure::Error>;
 

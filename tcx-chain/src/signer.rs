@@ -20,3 +20,9 @@ pub trait SignedTransaction: Sized {}
 pub trait TransactionSigner<Input: Transaction, Output: SignedTransaction> {
     fn sign_transaction(&self, tx: &Input, password: Option<&str>) -> Result<Output>;
 }
+
+pub trait Message: Sized {}
+pub trait SignedMessage: Sized {}
+pub trait MessageSigner<Input: Message, Output: SignedMessage> {
+    fn sign_message(&self, message: &Input, password: Option<&str>) -> Result<Output>;
+}
