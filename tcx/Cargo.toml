@@ -11,6 +11,7 @@ tcx-btc-fork = {path = "../tcx-btc-fork"}
 tcx-bch = {path = "../tcx-bch"}
 tcx-tron = {path = "../tcx-tron"}
 tcx-primitive = { path = "../tcx-primitive" }
+tcx-constants = { path = "../tcx-constants"}
 
 libc = "0.2.0"
 log = "0.4.6"

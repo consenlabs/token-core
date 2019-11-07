@@ -8,6 +8,7 @@ edition = "2018"
 tcx-chain = { path = "../tcx-chain" }
 tcx-btc-fork = { path = "../tcx-btc-fork" }
 tcx-primitive = { path = "../tcx-primitive" }
+tcx-constants = { path = "../tcx-constants" }
 
 bch_addr = "0.1.0"
 bitcoin = "0.20.0"

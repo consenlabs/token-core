@@ -13,7 +13,8 @@ use core::result;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_chain::keystore::Address;
-use tcx_chain::CoinInfo;
+use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcForkNetwork};
+use tcx_constants::CoinInfo;
 use tcx_primitive::{
     ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, Public, Secp256k1PublicKey,
 };
@@ -22,117 +23,6 @@ use tcx_primitive::{
 pub struct BtcForkAddress {
     pub network: BtcForkNetwork,
     pub payload: Payload,
-}
-
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct BtcForkNetwork {
-    pub coin: &'static str,
-    pub hrp: &'static str,
-    pub p2pkh_prefix: u8,
-    pub p2sh_prefix: u8,
-    pub xpub_prefix: [u8; 4],
-    pub xprv_prefix: [u8; 4],
-}
-
-// LTC address prefix: https://bitcoin.stackexchange.com/questions/62781/litecoin-constants-and-prefixes
-// hrp: https://github.com/satoshilabs/slips/blob/master/slip-0173.md
-// BTC https://en.bitcoin.it/wiki/List_of_address_prefixes
-
-pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
-    match coin.to_uppercase().as_str() {
-        "LITECOIN" => Some(BtcForkNetwork {
-            coin: "LITECOIN",
-            hrp: "ltc",
-            p2pkh_prefix: 0x30,
-            p2sh_prefix: 0x32,
-            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
-            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-        }),
-        "LITECOIN-P2WPKH" => Some(BtcForkNetwork {
-            coin: "LITECOIN-P2WPKH",
-            hrp: "ltc",
-            p2pkh_prefix: 0x30,
-            p2sh_prefix: 0x32,
-            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
-            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-        }),
-        "LITECOIN-SEGWIT" => Some(BtcForkNetwork {
-            coin: "LITECOIN-SEGWIT",
-            hrp: "ltc",
-            p2pkh_prefix: 0x30,
-            p2sh_prefix: 0x32,
-            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
-            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-        }),
-        "LITECOIN-TESTNET" => Some(BtcForkNetwork {
-            coin: "LITECOIN-TESTNET",
-            hrp: "ltc",
-            p2pkh_prefix: 0x6f,
-            p2sh_prefix: 0x3a,
-            //            043587CF
-            //            04358394
-            xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
-            xprv_prefix: [0x04, 0x35, 0x83, 0x94],
-        }),
-        "LITECOIN-TESTNET-P2WPKH" => Some(BtcForkNetwork {
-            coin: "LITECOIN-TESTNET-P2WPKH",
-            hrp: "ltc",
-            p2pkh_prefix: 0x6f,
-            p2sh_prefix: 0x3a,
-            xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
-            xprv_prefix: [0x04, 0x35, 0x83, 0x94],
-        }),
-        "BITCOIN" => Some(BtcForkNetwork {
-            coin: "BITCOIN",
-            hrp: "bc",
-            p2pkh_prefix: 0x0,
-            p2sh_prefix: 0x05,
-            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
-            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-        }),
-        "BITCOIN-P2WPKH" => Some(BtcForkNetwork {
-            coin: "BITCOIN-P2WPKH",
-            hrp: "bc",
-            p2pkh_prefix: 0x0,
-            p2sh_prefix: 0x05,
-            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
-            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-        }),
-        "BITCOIN-SEGWIT" => Some(BtcForkNetwork {
-            coin: "BITCOIN-SEGWIT",
-            hrp: "bc",
-            p2pkh_prefix: 0x0,
-            p2sh_prefix: 0x05,
-            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
-            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-        }),
-        "BITCOIN-TESTNET" => Some(BtcForkNetwork {
-            coin: "BITCOIN-TESTNET",
-            hrp: "bc",
-            p2pkh_prefix: 0x6f,
-            p2sh_prefix: 0xc4,
-            xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
-            xprv_prefix: [0x04, 0x35, 0x83, 0x94],
-        }),
-        "BITCOINCASH" => Some(BtcForkNetwork {
-            coin: "BITCOINCASH",
-            hrp: "bitcoincash",
-            p2pkh_prefix: 0x0,
-            p2sh_prefix: 0x05,
-            xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
-            xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
-        }),
-        _ => None,
-    }
-}
-
-pub fn network_form_hrp(hrp: &str) -> Option<BtcForkNetwork> {
-    match hrp {
-        "bitcoincash" => network_from_coin("BITCOINCASH"),
-        "ltc" => network_from_coin("LITECOIN-SEGWIT"),
-        "bc" => network_from_coin("BITCOIN-SEGWIT"),
-        _ => None,
-    }
 }
 
 impl Address for BtcForkAddress {
@@ -201,7 +91,7 @@ impl BtcForkAddress {
         let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         let anepk = ArbitraryNetworkExtendedPubKey {
-            network: network.unwrap().xpub_prefix,
+            coin: Some(coin_info.symbol.clone()),
             extended_pub_key: derivation_info.extended_pub_key,
         };
         Ok(anepk.to_string())
@@ -214,7 +104,7 @@ impl BtcForkAddress {
         let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         let anepk = ArbitraryNetworkExtendedPrivKey {
-            network: network.unwrap().xprv_prefix,
+            coin: Some(coin_info.symbol.clone()),
             extended_priv_key: extended_priv_key.extended_priv_key,
         };
         Ok(anepk.to_string())
@@ -382,15 +272,13 @@ impl ScriptPubKeyComponent for BtcForkAddress {
 
 #[cfg(test)]
 mod tests {
-    use crate::address::{network_from_coin, BtcForkAddress};
+    use crate::address::BtcForkAddress;
 
     use crate::transaction::ScriptPubKeyComponent;
 
     use std::str::FromStr;
-    use tcx_chain::CoinInfo;
-    use tcx_primitive::{
-        ArbitraryNetworkExtendedPrivKey, CurveType, Derive, DerivePath, Secp256k1Pair,
-    };
+    use tcx_constants::{network_from_coin, CoinInfo, CurveType};
+    use tcx_primitive::{ArbitraryNetworkExtendedPrivKey, Derive, DerivePath, Secp256k1Pair};
 
     #[test]
     pub fn test_btc_fork_address() {

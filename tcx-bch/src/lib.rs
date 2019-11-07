@@ -30,9 +30,9 @@ mod tests {
 
     use serde_json::Value;
     use std::str::FromStr;
-    use tcx_chain::keystore::CoinInfo;
     use tcx_chain::{HdKeystore, Metadata};
-    use tcx_primitive::CurveType;
+    use tcx_constants::CoinInfo;
+    use tcx_constants::CurveType;
 
     const PASSWORD: &str = "Insecure Password";
     const BIP_PATH: &str = "m/44'/145'/0'";

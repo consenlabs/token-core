@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "tcx-constants",
     "tcx-primitive",
     "tcx-crypto",
     "tcx-chain",

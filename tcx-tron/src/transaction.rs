@@ -79,8 +79,9 @@ mod tests {
     use serde_json::Value;
     use std::convert::TryFrom;
     use tcx_chain::keystore::EmptyExtra;
-    use tcx_chain::{CoinInfo, Metadata, TransactionSigner};
-    use tcx_primitive::CurveType;
+    use tcx_chain::{Metadata, TransactionSigner};
+    use tcx_constants::CoinInfo;
+    use tcx_constants::CurveType;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
