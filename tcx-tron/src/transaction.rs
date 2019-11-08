@@ -95,7 +95,13 @@ impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
     fn sign_message(&self, message: &Message, password: Option<&str>) -> Result<SignedMessage> {
         tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
         let data = match message.is_hex {
-            true => hex::decode(&message.value)?,
+            true => {
+                let mut raw_hex: String = message.value.to_owned();
+                if raw_hex.to_uppercase().starts_with("0X") {
+                    raw_hex.replace_range(..2, "")
+                }
+                hex::decode(&raw_hex)?
+            }
             false => message.value.as_bytes().to_vec(),
         };
         let header = match message.is_tron_header {

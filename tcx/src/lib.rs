@@ -647,8 +647,8 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 mod tests {
     use crate::{
         cache_derived_key, calc_external_address, clear_derived_key, clear_err, export_mnemonic,
-        get_derived_key, get_last_err_message, remove_wallet, sign_transaction, verify_derived_key,
-        verify_password,
+        get_derived_key, get_last_err_message, remove_wallet, sign_message, sign_transaction,
+        verify_derived_key, verify_password,
     };
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
@@ -1062,6 +1062,75 @@ mod tests {
 
             assert_eq!(expected_v["address"], ret_v["address"]);
             assert_eq!(expected_v["chainType"], ret_v["chainType"]);
+
+            remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
+        });
+    }
+
+    #[test]
+    fn sign_trx_message_test() {
+        run_test(|| {
+            let param = r#"{
+            "chainType":"TRON",
+            "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            "name":"TRX-Wallet-1",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "path":"m/44'/195'/0'/0/0",
+            "source":"MNEMONIC"
+            }"#;
+            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+
+            let ret_v = Value::from_str(ret).unwrap();
+
+            let param = json!({
+                "id": ret_v["id"].as_str().expect("wallet_id"),
+                "chainType": "TRON",
+                "password": "Insecure Password",
+                "value": "0xaaaaaaaa",
+                "isHex": true,
+                "isTronHeader": true
+            });
+            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
+
+            assert_eq!("47fb89c1a3726de25f64b0d98dd8ca3c12079c12cec31a35ac71d7ce337cc4df02fec800ee1c149b9cb9f79e9f60f665a4a1bf00be20b7fbca7007f9a0076d731c", signed);
+
+            let param = json!({
+                "id": ret_v["id"].as_str().expect("wallet_id"),
+                "chainType": "TRON",
+                "password": "Insecure Password",
+                "value": "aaaaaaaa",
+                "isHex": true,
+                "isTronHeader": true
+            });
+            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
+
+            assert_eq!("47fb89c1a3726de25f64b0d98dd8ca3c12079c12cec31a35ac71d7ce337cc4df02fec800ee1c149b9cb9f79e9f60f665a4a1bf00be20b7fbca7007f9a0076d731c", signed);
+
+            let param = json!({
+                "id": ret_v["id"].as_str().expect("wallet_id"),
+                "chainType": "TRON",
+                "password": "Insecure Password",
+                "value": "abc",
+                "isHex": false,
+                "isTronHeader": true
+            });
+            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
+
+            assert_eq!("f61b5966ca46dd838586f96dddf3fe594980f04c783492c240edcb3a5dd6c49b5f9ca8172e222943a61e177debad0dc374f80d4fe90a0a52b8607a1447225fd21b", signed);
+
+            let param = json!({
+                "id": ret_v["id"].as_str().expect("wallet_id"),
+                "chainType": "TRON",
+                "password": "Insecure Password",
+                "value": "abc",
+                "isHex": false,
+                "isTronHeader": false
+            });
+            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
+
+            assert_eq!("b256bb5fa285d981fb424f997c34ff9575eca7c0ec26f47141dfae058ecc7ada40f2ee3916c183fc8b3e0c810051756a9f1307d9f4e9b883a98a8b4ebce74ce51b", signed);
 
             remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
         });
