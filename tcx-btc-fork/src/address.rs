@@ -16,7 +16,8 @@ use tcx_chain::keystore::Address;
 use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcForkNetwork};
 use tcx_constants::CoinInfo;
 use tcx_primitive::{
-    ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, Public, Secp256k1PublicKey,
+    ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, Pair, Public, Secp256k1Pair,
+    Secp256k1PublicKey,
 };
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -37,6 +38,11 @@ impl Address for BtcForkAddress {
             BtcForkAddress::p2pkh(public_key, &network)?.to_string()
         };
         Ok(addr.to_string())
+    }
+
+    fn from_private_key(wif: &str, coin: Option<&str>) -> Result<String> {
+        let pair = Secp256k1Pair::from_wif(wif)?;
+        Self::from_public_key(&pair.public_key().to_compressed(), coin)
     }
 }
 

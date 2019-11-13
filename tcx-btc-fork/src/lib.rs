@@ -84,6 +84,10 @@ where
         let xpub = BtcForkAddress::extended_public_key(&xpub_key, coin_info)?;
         ExtendedPubKeyExtra::from_xpub(&xpub, &coin_info.symbol)
     }
+
+    fn from_private_key(_coin_info: &CoinInfo, _prv_key: &str) -> Result<Self> {
+        unimplemented!()
+    }
 }
 
 impl<T: Address> ExtendedPubKeyExtra<T> {

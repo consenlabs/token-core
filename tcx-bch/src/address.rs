@@ -9,8 +9,8 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_btc_fork::{PubKeyScript, ScriptPubKeyComponent};
 use tcx_chain::keystore::Address;
-use tcx_primitive::Public;
 use tcx_primitive::Secp256k1PublicKey;
+use tcx_primitive::{Pair, Public, Secp256k1Pair};
 
 fn _legacy_to_bch(addr: &str) -> Result<String> {
     let convert = Converter::new();
@@ -62,6 +62,11 @@ impl Address for BchAddress {
         let btc_addr = BtcAddress::p2pkh(&pubkey.public_key(), Network::Bitcoin);
         let btc_addr_str = btc_addr.to_string();
         _legacy_to_bch(&btc_addr_str)
+    }
+
+    fn from_private_key(wif: &str, coin: Option<&str>) -> Result<String> {
+        let pair = Secp256k1Pair::from_wif(wif)?;
+        Self::from_public_key(&pair.public_key().to_compressed(), coin)
     }
 }
 

@@ -66,6 +66,8 @@ impl Default for Metadata {
 pub trait Address {
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
     fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String>;
+
+    fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String>;
 }
 
 /// Account that presents one blockchain wallet on a keystore
@@ -82,6 +84,7 @@ pub struct Account {
 /// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
 pub trait Extra: Sized + serde::Serialize + Clone {
     fn new(coin_info: &CoinInfo, seed: &Seed) -> Result<Self>;
+    fn from_private_key(coin_info: &CoinInfo, prv_key: &str) -> Result<Self>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,6 +93,9 @@ pub struct EmptyExtra {}
 
 impl Extra for EmptyExtra {
     fn new(_coin_info: &CoinInfo, _seed: &Seed) -> Result<Self> {
+        Ok(EmptyExtra {})
+    }
+    fn from_private_key(_coin_info: &CoinInfo, _prv_key: &str) -> Result<Self> {
         Ok(EmptyExtra {})
     }
 }
@@ -178,17 +184,33 @@ impl HdKeystore {
         }
     }
 
-    pub fn from_private_key(private_key: &str, password: &str, account: Account) -> HdKeystore {
+    pub fn from_private_key(private_key: &str, password: &str, source: Source) -> HdKeystore {
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, private_key.as_bytes());
-        let meta = Metadata::default();
+        let mut meta = Metadata::default();
+        meta.source = source;
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 11000,
             key_type: KeyType::PrivateKey,
             crypto,
-            active_accounts: vec![account],
+            active_accounts: vec![],
             meta,
         }
+    }
+    pub fn private_key_to_account<A: Address, E: Extra>(
+        coin: &CoinInfo,
+        private_key: &str,
+    ) -> Result<Account> {
+        let extra = E::from_private_key(coin, private_key)?;
+        let addr = A::from_private_key(private_key, Some(&coin.symbol))?;
+        let acc = Account {
+            address: addr,
+            derivation_path: "".to_string(),
+            curve: coin.curve,
+            coin: coin.symbol.to_owned(),
+            extra: serde_json::to_value(extra.clone()).expect("extra_error"),
+        };
+        Ok(acc)
     }
 
     pub fn mnemonic(&self, password: &str) -> Result<String> {
@@ -196,6 +218,13 @@ impl HdKeystore {
         let mnemonic_bytes = self.crypto.decrypt(password)?;
         let mnemonic = String::from_utf8(mnemonic_bytes)?;
         Ok(mnemonic)
+    }
+
+    pub fn private_key(&self, password: &str) -> Result<String> {
+        tcx_ensure!(self.key_type == KeyType::PrivateKey, Error::InvalidKeyType);
+        let bytes = self.crypto.decrypt(password)?;
+        let priv_key = String::from_utf8(bytes)?;
+        Ok(priv_key)
     }
 
     pub fn seed(&self, password: &str) -> Result<Seed> {
@@ -267,8 +296,13 @@ impl HdKeystore {
         coin_info: &CoinInfo,
         password: &str,
     ) -> Result<&Account> {
-        let seed = self.seed(password)?;
-        let account = Self::derive_account_from_coin::<A, E>(coin_info, &seed)?;
+        let account = if self.meta.source != Source::Wif && self.meta.source != Source::Private {
+            let seed = self.seed(password)?;
+            Self::derive_account_from_coin::<A, E>(coin_info, &seed)?
+        } else {
+            let priv_key = self.private_key(password)?;
+            Self::private_key_to_account::<A, E>(coin_info, &priv_key)?
+        };
         self.active_accounts.push(account);
         Ok(self.active_accounts.last().unwrap())
     }
@@ -444,6 +478,10 @@ mod tests {
         fn from_public_key(_public_key: &[u8], _coin: Option<&str>) -> Result<String> {
             Ok("mock_address".to_string())
         }
+
+        fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String> {
+            Ok("mock_address".to_string())
+        }
     }
 
     #[test]
@@ -502,21 +540,14 @@ mod tests {
 
     #[test]
     pub fn from_private_key_test() {
-        let account = Account {
-            address: "".to_string(),
-            derivation_path: "".to_string(),
-            curve: CurveType::SECP256k1,
-            coin: "".to_string(),
-            extra: Value::Object(Map::new()),
-        };
         let keystore = HdKeystore::from_private_key(
             "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
             PASSWORD,
-            account,
+            Source::Private,
         );
         assert_eq!(keystore.version, 11000);
         assert_ne!(keystore.id, "");
-        assert_eq!(keystore.active_accounts.len(), 1);
+        assert_eq!(keystore.active_accounts.len(), 0);
         assert_eq!(keystore.key_type, KeyType::PrivateKey);
     }
     //
