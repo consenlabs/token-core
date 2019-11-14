@@ -11,7 +11,7 @@ matrix:
       language: swift
       osx_image: xcode11
       before_script:
-      - "cd tools & sh ios-example-build.sh"
+      - "cd tools && sh ios-example-build.sh"
       - "cd ../examples/iOSExample"
       xcode_project: iOSExample.xcodeproj # path to your xcodeproj folder
       xcode_scheme: iOSExample
