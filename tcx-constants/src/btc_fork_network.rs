@@ -87,6 +87,7 @@ lazy_static! {
             xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
             xprv_prefix: [0x04, 0x35, 0x83, 0x94],
         });
+        //Definition of BitcoinCash networks https://github.com/bitpay/bitcore/blob/master/packages/bitcore-lib-cash/lib/networks.js#L168
         networks.push(BtcForkNetwork {
             coin: "BITCOINCASH",
             hrp: "bitcoincash",
@@ -103,7 +104,6 @@ lazy_static! {
             xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
             xprv_prefix: [0x04, 0x35, 0x83, 0x94],
         });
-//        networks
         RwLock::new(networks)
     };
 }
