@@ -31,6 +31,7 @@ use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 
 use std::convert::TryFrom;
 use std::fs;
+use tcx_constants::network_from_coin;
 
 #[macro_use]
 extern crate failure;
@@ -579,7 +580,7 @@ pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *cons
 fn calc_external_address_internal(v: &Value) -> Result<String> {
     let w_id = v["id"].as_str().expect("wallet_id");
     let external_id = v["externalIdx"].as_i64().expect("external_id");
-    let chain_type = v["chainType"].as_str().unwrap();
+    let symbol = coin_symbol_with_network(v);
 
     let mut map = KEYSTORE_MAP.write().unwrap();
     let keystore = match map.get_mut(w_id) {
@@ -588,15 +589,15 @@ fn calc_external_address_internal(v: &Value) -> Result<String> {
     }?;
 
     let account = keystore
-        .account(&chain_type)
-        .ok_or_else(|| format_err!("account_not_found, chainType: {}", &chain_type))?;
+        .account(&symbol)
+        .ok_or_else(|| format_err!("account_not_found, chainType: {}", &symbol))?;
     let external_addr: ExternalAddress;
-    if chain_type.starts_with("BITCOINCASH") {
+    if symbol.starts_with("BITCOINCASH") {
         let extra = BchExtra::from(account.extra.clone());
-        external_addr = extra.calc_external_address(external_id, &chain_type)?;
+        external_addr = extra.calc_external_address(external_id, &symbol)?;
     } else {
         let extra = BtcForkExtra::from(account.extra.clone());
-        external_addr = extra.calc_external_address(external_id, &chain_type)?;
+        external_addr = extra.calc_external_address(external_id, &symbol)?;
     }
 
     Ok(serde_json::to_string(&external_addr)?)
@@ -990,12 +991,12 @@ mod tests {
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
             let expected = r#"
             {
-                "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                "address": "bchtest:qqurlwqukz3lcujttcyvlzaagppnd4c37chrtrylmc",
                 "chainType": "BITCOINCASH",
                 "createdAt": 1566455834,
-                "encXPub": "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==",
+                "encXPub": "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==",
                 "externalAddress": {
-                    "address": "bitcoincash:qzyrtfn4a7cdkn7sp60tw7hl8zndt0tk0sst3p6qr5",
+                    "address": "bchtest:qqn4as4zx0jmy02rlgv700umavxt8xtpzus6u7flzk",
                     "derivedPath": "0/1",
                     "type": "EXTERNAL"
                 },
@@ -1016,6 +1017,7 @@ mod tests {
             let param = json!({
                 "id": imported_id,
                 "chainType": "BITCOINCASH",
+                "network": "TESTNET",
                 "externalIdx": 2
             });
 
@@ -1027,7 +1029,7 @@ mod tests {
             let ret_v: Value = Value::from_str(ret).unwrap();
             let expected = r#"
             {
-                "address": "bitcoincash:qzhsz3s4hr0f3x0v00zdn6w50tdpa9zgryp4kxgx49",
+                "address": "bchtest:qqrhpq50f5n5sdgj0ehwz8qtrc3m6dnazghh3aj0ag",
                 "derivedPath": "0/2",
                 "type": "EXTERNAL"
             }

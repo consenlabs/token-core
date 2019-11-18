@@ -18,7 +18,7 @@ matrix:
         - "cargo install cargo-lipo cbindgen"
         - "cd tools && sh ios-example-build.sh"
         - "cd ../examples/iOSExample"
-      xcode_project: iOSExample.xcodeproj # path to your xcodeproj folder
+      xcode_workspace: iOSExample.xcworkspace # path to your xcodeproj folder
       xcode_scheme: iOSExample
       xcode_destination: platform=iOS Simulator,OS=13.2,name=iPhone 11 Pro
       
