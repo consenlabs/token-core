@@ -382,7 +382,7 @@ fn export_private_key_internal(v: &Value) -> Result<String> {
     }?;
     let mnemonic = keystore.private_key(password)?;
     Ok(serde_json::to_string(
-        &json!({"ok": true, "mnemonic": mnemonic}),
+        &json!({"ok": true, "privateKey": mnemonic}),
     )?)
 }
 
@@ -758,7 +758,7 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 mod tests {
     use crate::{
         cache_derived_key, calc_external_address, clear_derived_key, clear_err, export_mnemonic,
-        find_wallet_by_private_key, get_derived_key, get_last_err_message,
+        export_private_key, find_wallet_by_private_key, get_derived_key, get_last_err_message,
         import_wallet_from_private_key, remove_wallet, sign_message, sign_transaction,
         verify_derived_key, verify_password,
     };
@@ -1057,6 +1057,12 @@ mod tests {
             }"#;
             let imported_ret =
                 unsafe { _to_str(import_wallet_from_private_key(_to_c_char(param))) };
+            let param = r#"{
+            "chainType":"BITCOINCASH",
+            "privateKey":"L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
+            "network":"MAINNET",
+            "segWit":"NONE"
+            }"#;
             let founded_ret = unsafe { _to_str(find_wallet_by_private_key(_to_c_char(param))) };
             let expected = r#"
             {
@@ -1078,7 +1084,23 @@ mod tests {
                 assert_eq!(expected_v["source"], ret_v["source"]);
             });
             let imported_v = Value::from_str(imported_ret).unwrap();
+
             let imported_id = imported_v["id"].as_str().unwrap();
+            let param = json!({
+            "id": imported_id,
+            "password": "Insecure Password"
+            });
+            let ret = unsafe { _to_str(export_private_key(_to_c_char(&param.to_string()))) };
+            let ret_v = Value::from_str(ret).expect("from expected");
+            let export_expected = r#"
+            {
+                "privateKey": "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
+                "ok": true
+            }
+            "#;
+            let export_expected_v = Value::from_str(export_expected).expect("from expected");
+            assert_eq!(export_expected_v["privateKey"], ret_v["privateKey"]);
+
             remove_created_wallet(imported_id);
         });
     }
