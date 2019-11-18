@@ -1042,45 +1042,6 @@ mod tests {
     }
 
     #[test]
-    fn find_wallet_by_private_key_test() {
-        run_test(|| {
-            let param = r#"{
-            "chainType":"BITCOINCASH",
-            "privateKey":"L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
-            "name":"BCH-Wallet-1",
-            "network":"MAINNET",
-            "overwrite":true,
-            "password":"Insecure Password",
-            "passwordHint":"",
-            "segWit":"NONE",
-            "source":"WIF"
-            }"#;
-            let ret = unsafe { _to_str(import_wallet_from_private_key(_to_c_char(param))) };
-
-            let expected = r#"
-            {
-                "address": "bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr",
-                "chainType": "BITCOINCASH",
-                "createdAt": 1566455834,
-                "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
-                "name": "BCH-Wallet-1",
-                "passwordHint": "",
-                "source": "WIF"
-            }
-            "#;
-            let expected_v = Value::from_str(expected).expect("from expected");
-            let ret_v = Value::from_str(ret).unwrap();
-            assert_eq!(expected_v["address"], ret_v["address"]);
-            assert_eq!(expected_v["chainType"], ret_v["chainType"]);
-            assert_eq!(expected_v["source"], ret_v["source"]);
-
-            let imported_id = ret_v["id"].as_str().unwrap();
-
-            remove_created_wallet(imported_id);
-        });
-    }
-
-    #[test]
     fn import_bch_wallet_from_private_key_test() {
         run_test(|| {
             let param = r#"{
@@ -1100,6 +1061,48 @@ mod tests {
             let expected = r#"
             {
                 "address": "bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr",
+                "chainType": "BITCOINCASH",
+                "createdAt": 1566455834,
+                "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
+                "name": "BCH-Wallet-1",
+                "passwordHint": "",
+                "source": "WIF"
+            }
+            "#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+
+            [imported_ret, founded_ret].iter().for_each(|ret| {
+                let ret_v = Value::from_str(ret).unwrap();
+                assert_eq!(expected_v["address"], ret_v["address"]);
+                assert_eq!(expected_v["chainType"], ret_v["chainType"]);
+                assert_eq!(expected_v["source"], ret_v["source"]);
+            });
+            let imported_v = Value::from_str(imported_ret).unwrap();
+            let imported_id = imported_v["id"].as_str().unwrap();
+            remove_created_wallet(imported_id);
+        });
+    }
+
+    #[test]
+    fn import_bch_wallet_from_private_key_testnet() {
+        run_test(|| {
+            let param = r#"{
+            "chainType":"BITCOINCASH",
+            "privateKey":"cT4fTJyLd5RmSZFHnkGmVCzXDKuJLbyTt7cy77ghTTCagzNdPH1j",
+            "name":"BCH-Wallet-1",
+            "network":"TESTNET",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "segWit":"NONE",
+            "source":"WIF"
+            }"#;
+            let imported_ret =
+                unsafe { _to_str(import_wallet_from_private_key(_to_c_char(param))) };
+            let founded_ret = unsafe { _to_str(find_wallet_by_private_key(_to_c_char(param))) };
+            let expected = r#"
+            {
+                "address": "bchtest:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkvrmn5zj3l",
                 "chainType": "BITCOINCASH",
                 "createdAt": 1566455834,
                 "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
