@@ -20,7 +20,7 @@ pub fn coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
             curve: CurveType::SECP256k1,
         }),
         "BITCOINCASH-TESTNET" => Ok(CoinInfo {
-            symbol: "BITCOINCASH".to_string(),
+            symbol: "BITCOINCASH-TESTNET".to_string(),
             derivation_path: "m/44'/1'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
@@ -64,18 +64,18 @@ pub fn coin_symbol_with_network(v: &Value) -> String {
 
     if let Some(network) = v["network"].as_str() {
         if network.to_uppercase() != "MAINNET" {
-            symbol = format!("{}-{}", symbol, network);
+            symbol = format!("{}-{}", symbol, network.to_uppercase());
         }
     }
     if let Some(chain_id) = v["chainId"].as_str() {
         if chain_id == "1" {
-            symbol = format!("{}-TESTNET", symbol);
+            symbol = format!("{}-TESTNET", symbol.to_uppercase());
         }
     }
 
     if let Some(seg_wit) = v["segWit"].as_str() {
         if seg_wit.to_uppercase() != "NONE" {
-            symbol = format!("{}-{}", symbol, seg_wit);
+            symbol = format!("{}-{}", symbol, seg_wit.to_uppercase());
         }
     }
     symbol

@@ -23,13 +23,12 @@ extern crate tcx_chain;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
-use crate::address::BtcForkAddress;
 use tcx_crypto::aes::cbc::{decrypt_pkcs7, encrypt_pkcs7};
 use tcx_primitive::derive::get_account_path;
 
 pub use transaction::{BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkTransaction, Utxo};
 
-pub use address::PubKeyScript;
+pub use address::{BtcForkAddress, PubKeyScript};
 use serde::export::PhantomData;
 use serde_json::Value;
 use tcx_constants::{CoinInfo, CurveType};

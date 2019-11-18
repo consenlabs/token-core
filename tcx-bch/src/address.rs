@@ -7,8 +7,9 @@ use core::result;
 
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use tcx_btc_fork::{PubKeyScript, ScriptPubKeyComponent};
+use tcx_btc_fork::{BtcForkAddress, PubKeyScript, ScriptPubKeyComponent};
 use tcx_chain::keystore::Address;
+use tcx_constants::network_from_coin;
 use tcx_primitive::Secp256k1PublicKey;
 use tcx_primitive::{Pair, Public, Secp256k1Pair};
 
@@ -57,11 +58,9 @@ impl BchAddress {
 }
 
 impl Address for BchAddress {
-    fn from_public_key(public_key: &[u8], _coin: Option<&str>) -> Result<String> {
-        let pubkey = Secp256k1PublicKey::from_slice(&public_key)?;
-        let btc_addr = BtcAddress::p2pkh(&pubkey.public_key(), Network::Bitcoin);
-        let btc_addr_str = btc_addr.to_string();
-        _legacy_to_bch(&btc_addr_str)
+    fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String> {
+        let addr = BtcForkAddress::from_public_key(public_key, coin)?;
+        _legacy_to_bch(&addr)
     }
 
     fn from_private_key(wif: &str, coin: Option<&str>) -> Result<String> {
@@ -101,7 +100,9 @@ mod tests {
     use crate::address::BchAddress;
     use bitcoin::util::misc::hex_bytes;
 
+    use bitcoin::consensus::encode::Error::Secp256k1;
     use tcx_chain::keystore::Address;
+    use tcx_primitive::{Pair, Secp256k1Pair};
 
     #[test]
     pub fn test_convert() {
@@ -133,12 +134,45 @@ mod tests {
         let addr = BchAddress::from_public_key(
             &hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
                 .unwrap(),
-            Some("bch"),
+            Some("BITCOINCASH"),
         )
         .unwrap();
         assert_eq!(
             format!("{}", addr),
             "bitcoincash:qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
+        );
+
+        let addr = BchAddress::from_public_key(
+            &hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
+                .unwrap(),
+            Some("BITCOINCASH-TESTNET"),
+        )
+        .unwrap();
+        assert_eq!(
+            format!("{}", addr),
+            "bchtest:qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuqfkeunuc"
+        );
+
+        let pair = Secp256k1Pair::from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy")
+            .unwrap();
+        let addr =
+            BchAddress::from_public_key(&pair.public_key().to_compressed(), Some("BITCOINCASH"))
+                .unwrap();
+        assert_eq!(
+            format!("{}", addr),
+            "bitcoincash:qprcvtlpvhnpyxhcp4wau8ktg78dzuzktvetlc7g9s"
+        );
+
+        let pair = Secp256k1Pair::from_wif("cSdkPxkAjA4HDr5VHgsebAPDEh9Gyub4HK8UJr2DFGGqKKy4K5sG")
+            .unwrap();
+        let addr = BchAddress::from_public_key(
+            &pair.public_key().to_compressed(),
+            Some("BITCOINCASH-TESTNET"),
+        )
+        .unwrap();
+        assert_eq!(
+            format!("{}", addr),
+            "bchtest:qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
         );
     }
 }

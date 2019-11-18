@@ -95,6 +95,14 @@ lazy_static! {
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
+        networks.push(BtcForkNetwork {
+            coin: "BITCOINCASH-TESTNET",
+            hrp: "bitcoincash",
+            p2pkh_prefix: 0x6f,
+            p2sh_prefix: 0xc4,
+            xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
+            xprv_prefix: [0x04, 0x35, 0x83, 0x94],
+        });
 //        networks
         RwLock::new(networks)
     };
