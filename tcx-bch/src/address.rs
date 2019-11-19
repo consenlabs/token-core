@@ -50,10 +50,11 @@ pub struct BchAddress(pub BtcAddress);
 
 impl BchAddress {
     pub fn convert_to_legacy_if_need(addr: &str) -> Result<String> {
-        if None == addr.rfind("bitcoincash:") {
-            return Ok(addr.to_string());
+        if Converter::default().is_cash_addr(addr) {
+            _bch_to_legacy(addr)
+        } else {
+            Ok(addr.to_string())
         }
-        _bch_to_legacy(addr)
     }
 }
 
@@ -116,16 +117,6 @@ mod tests {
             )
             .unwrap(),
             "1oEx5Ztg2DUDYJDxb1AeaiG5TYesikMVU"
-        );
-
-        assert_eq!(
-            format!(
-                "{}",
-                BchAddress::convert_to_legacy_if_need("bitcoincash:")
-                    .err()
-                    .unwrap()
-            ),
-            "bch_convert_to_legacy_address_failed# address: bitcoincash:"
         );
     }
 
