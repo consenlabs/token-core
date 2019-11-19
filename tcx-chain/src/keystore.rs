@@ -126,39 +126,6 @@ pub struct HdKeystore {
 impl HdKeystore {
     pub const VERSION: i32 = 11000i32;
 
-    /// Derive account from a mnemonic phase
-    pub fn mnemonic_to_account<A: Address, E: Extra>(
-        coin_info: &CoinInfo,
-        mnemonic: &str,
-    ) -> Result<Account> {
-        let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English)
-            .map_err(|_| Error::InvalidMnemonic)?;
-        let seed = bip39::Seed::new(&mnemonic, &"");
-        Self::derive_account_from_coin::<A, E>(coin_info, &seed)
-    }
-
-    fn derive_account_from_coin<A: Address, E: Extra>(
-        coin_info: &CoinInfo,
-        seed: &Seed,
-    ) -> Result<Account> {
-        let paths = vec![coin_info.derivation_path.clone()];
-        let keys = Self::key_pair_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
-        let key = keys.first().ok_or_else(|| format_err!("derivate_failed"))?;
-        let pub_key = key.public_key();
-        let bytes = pub_key.to_bytes()?;
-        let address = A::from_public_key(&bytes, Some(&coin_info.symbol))?;
-
-        let extra = E::new(coin_info, seed)?;
-        let acc = Account {
-            address,
-            derivation_path: coin_info.derivation_path.to_string(),
-            curve: coin_info.curve,
-            coin: coin_info.symbol.to_string(),
-            extra: serde_json::to_value(extra.clone()).expect("extra_error"),
-        };
-        Ok(acc)
-    }
-
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
         let mnemonic = derive::generate_mnemonic();
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
@@ -197,6 +164,40 @@ impl HdKeystore {
             meta,
         }
     }
+
+    /// Derive account from a mnemonic phase
+    pub fn mnemonic_to_account<A: Address, E: Extra>(
+        coin_info: &CoinInfo,
+        mnemonic: &str,
+    ) -> Result<Account> {
+        let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English)
+            .map_err(|_| Error::InvalidMnemonic)?;
+        let seed = bip39::Seed::new(&mnemonic, &"");
+        Self::derive_account_from_coin::<A, E>(coin_info, &seed)
+    }
+
+    fn derive_account_from_coin<A: Address, E: Extra>(
+        coin_info: &CoinInfo,
+        seed: &Seed,
+    ) -> Result<Account> {
+        let paths = vec![coin_info.derivation_path.clone()];
+        let keys = Self::key_pair_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
+        let key = keys.first().ok_or_else(|| format_err!("derivate_failed"))?;
+        let pub_key = key.public_key();
+        let bytes = pub_key.to_bytes()?;
+        let address = A::from_public_key(&bytes, Some(&coin_info.symbol))?;
+
+        let extra = E::new(coin_info, seed)?;
+        let acc = Account {
+            address,
+            derivation_path: coin_info.derivation_path.to_string(),
+            curve: coin_info.curve,
+            coin: coin_info.symbol.to_string(),
+            extra: serde_json::to_value(extra.clone()).expect("extra_error"),
+        };
+        Ok(acc)
+    }
+
     pub fn private_key_to_account<A: Address, E: Extra>(
         coin: &CoinInfo,
         private_key: &str,

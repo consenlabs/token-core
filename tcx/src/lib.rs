@@ -261,7 +261,6 @@ fn import_wallet_from_mnemonic_internal(v: &Value) -> Result<String> {
 
     let meta: Metadata = serde_json::from_value(v.clone())?;
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
-    let _pw = Map::new();
 
     let mut coin_info = coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
