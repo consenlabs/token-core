@@ -8,7 +8,7 @@ use core::result;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
-pub use crate::secp256k1::{Pair as Secp256k1Pair, Public as Secp256k1PublicKey};
+pub use crate::secp256k1::{verify_wif, Pair as Secp256k1Pair, Public as Secp256k1PublicKey};
 
 pub use derive::{Derive, DeriveJunction, DerivePath};
 use std::str::FromStr;
@@ -115,16 +115,6 @@ pub trait Ss58Codec: Sized {
     }
     /// Some if the string is a properly encoded SS58Check address.
     fn from_ss58check_with_version(s: &str) -> Result<(Self, Vec<u8>)>;
-    /// Some if the string is a properly encoded SS58Check address, optionally with
-    /// a derivation path following.
-    //    fn from_string(s: &str) -> Result<Self> {
-    //        Self::from_string_with_version(s)
-    //            .and_then(|(r, v)| match v {
-    //                Ss58AddressFormat::SubstrateAccountDirect => Ok(r),
-    //                v if v == *DEFAULT_VERSION.lock() => Ok(r),
-    //                _ => Err(PublicError::UnknownVersion),
-    //            })
-    //    }
 
     /// Return the ss58-check string for this key.
     fn to_ss58check_with_version(&self, version: &[u8]) -> String;

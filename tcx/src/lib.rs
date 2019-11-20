@@ -32,6 +32,7 @@ use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 use std::convert::TryFrom;
 use std::fs;
 use tcx_constants::network_from_coin;
+use tcx_primitive::{verify_wif, Secp256k1Pair};
 
 #[macro_use]
 extern crate failure;
@@ -221,6 +222,8 @@ fn find_wallet_by_private_key_internal(v: &Value) -> Result<String> {
     let priv_key = v["privateKey"].as_str().unwrap();
     let symbol = coin_symbol_with_network(v);
 
+    verify_wif(priv_key, &symbol)?;
+
     let coin_info = coin_info_from_symbol(&symbol)?;
     let acc = match symbol.as_str() {
         "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
@@ -302,9 +305,11 @@ pub unsafe extern "C" fn import_wallet_from_private_key(json_str: *const c_char)
 fn import_wallet_from_private_key_internal(v: &Value) -> Result<String> {
     let password = v["password"].as_str().unwrap();
     let priv_key = v["privateKey"].as_str().unwrap();
+
     let overwrite = v["overwrite"].as_bool().unwrap();
     let symbol = coin_symbol_with_network(v);
 
+    verify_wif(priv_key, &symbol)?;
     let mut meta: Metadata = serde_json::from_value(v.clone())?;
     let chain_type = v["chainType"].as_str().unwrap();
     if chain_type.to_uppercase() == "ETHEREUM" {
