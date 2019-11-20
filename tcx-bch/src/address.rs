@@ -15,13 +15,14 @@ use tcx_primitive::{Pair, Public, Secp256k1Pair};
 
 fn _legacy_to_bch(addr: &str) -> Result<String> {
     let convert = Converter::new();
-    if convert.is_legacy_addr(&addr) {
+    let bch_addr = if convert.is_legacy_addr(&addr) {
         convert
             .to_cash_addr(&addr)
-            .map_err(|_| Error::ConvertToCashAddressFailed(addr.to_string()).into())
+            .map_err(|_| Error::ConvertToCashAddressFailed(addr.to_string()))?
     } else {
-        Ok(addr.to_string())
-    }
+        addr.to_string()
+    };
+    Ok(remove_bch_prefix(&bch_addr))
 }
 
 fn _bch_to_legacy(addr: &str) -> Result<String> {
@@ -47,6 +48,15 @@ impl FromStr for BchAddress {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct BchAddress(pub BtcAddress);
+
+fn remove_bch_prefix(addr: &str) -> String {
+    if let Some(sep) = addr.rfind(':') {
+        if addr.len() > sep + 1 {
+            return addr.split_at(sep + 1).1.to_owned();
+        }
+    }
+    return addr.to_owned();
+}
 
 impl BchAddress {
     pub fn convert_to_legacy_if_need(addr: &str) -> Result<String> {
@@ -98,9 +108,10 @@ impl ScriptPubKeyComponent for BchAddress {
 
 #[cfg(test)]
 mod tests {
-    use crate::address::BchAddress;
+    use crate::address::{remove_bch_prefix, BchAddress};
     use bitcoin::util::misc::hex_bytes;
 
+    use bch_addr::{AddressFormat, Converter, Network};
     use bitcoin::consensus::encode::Error::Secp256k1;
     use tcx_chain::keystore::Address;
     use tcx_primitive::{Pair, Secp256k1Pair};
@@ -112,10 +123,8 @@ mod tests {
             "2N54wJxopnWTvBfqgAPVWqXVEdaqoH7Suvf"
         );
         assert_eq!(
-            BchAddress::convert_to_legacy_if_need(
-                "bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885"
-            )
-            .unwrap(),
+            BchAddress::convert_to_legacy_if_need("qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885")
+                .unwrap(),
             "1oEx5Ztg2DUDYJDxb1AeaiG5TYesikMVU"
         );
     }
@@ -130,7 +139,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             format!("{}", addr),
-            "bitcoincash:qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
+            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
         );
 
         let addr = BchAddress::from_public_key(
@@ -141,7 +150,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             format!("{}", addr),
-            "bchtest:qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuqfkeunuc"
+            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuqfkeunuc"
         );
 
         let pair = Secp256k1Pair::from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy")
@@ -151,7 +160,7 @@ mod tests {
                 .unwrap();
         assert_eq!(
             format!("{}", addr),
-            "bitcoincash:qprcvtlpvhnpyxhcp4wau8ktg78dzuzktvetlc7g9s"
+            "qprcvtlpvhnpyxhcp4wau8ktg78dzuzktvetlc7g9s"
         );
 
         let pair = Secp256k1Pair::from_wif("cSdkPxkAjA4HDr5VHgsebAPDEh9Gyub4HK8UJr2DFGGqKKy4K5sG")
@@ -163,7 +172,28 @@ mod tests {
         .unwrap();
         assert_eq!(
             format!("{}", addr),
-            "bchtest:qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
+            "qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
+        );
+    }
+
+    #[test]
+    pub fn empty_prefix() {
+        assert_eq!(
+            remove_bch_prefix("bchtest:qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"),
+            "qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
+        );
+        assert_eq!(
+            remove_bch_prefix("qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"),
+            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
+        );
+        assert_eq!(remove_bch_prefix("bitcoincash:"), "bitcoincash:");
+        assert_eq!(
+            remove_bch_prefix("qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"),
+            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
+        );
+        assert_eq!(
+            remove_bch_prefix(":qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"),
+            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
         );
     }
 }

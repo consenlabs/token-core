@@ -93,10 +93,7 @@ mod tests {
         let account = active_accounts.first().unwrap();
         let address = account["address"].as_str().unwrap();
 
-        assert_eq!(
-            "bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885",
-            address
-        );
+        assert_eq!("qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885", address);
 
         let path = account["derivationPath"].as_str().unwrap();
         assert_eq!(BIP_PATH, path);
@@ -117,7 +114,7 @@ mod tests {
         //        let addr = ex.calc_external_address::<BchAddress>(1i64).unwrap();
         let expected = r#"
         {
-            "address": "bitcoincash:qqn4as4zx0jmy02rlgv700umavxt8xtpzu5gcetg92",
+            "address": "qqn4as4zx0jmy02rlgv700umavxt8xtpzu5gcetg92",
             "type": "EXTERNAL",
             "derivedPath": "0/1"
         }

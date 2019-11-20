@@ -898,10 +898,7 @@ mod tests {
             }"#;
             let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
             let v = Value::from_str(ret).expect("find wallet");
-            assert_eq!(
-                v["address"],
-                "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r"
-            );
+            assert_eq!(v["address"], "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r");
         })
     }
 
@@ -924,12 +921,12 @@ mod tests {
 
             let expected = r#"
             {
-                "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                "address": "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
                 "chainType": "BITCOINCASH",
                 "createdAt": 1566455834,
                 "encXPub": "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==",
                 "externalAddress": {
-                    "address": "bitcoincash:qzyrtfn4a7cdkn7sp60tw7hl8zndt0tk0sst3p6qr5",
+                    "address": "qzyrtfn4a7cdkn7sp60tw7hl8zndt0tk0sst3p6qr5",
                     "derivedPath": "0/1",
                     "type": "EXTERNAL"
                 },
@@ -961,7 +958,7 @@ mod tests {
             let ret_v: Value = Value::from_str(ret).unwrap();
             let expected = r#"
             {
-                "address": "bitcoincash:qzhsz3s4hr0f3x0v00zdn6w50tdpa9zgryp4kxgx49",
+                "address": "qzhsz3s4hr0f3x0v00zdn6w50tdpa9zgryp4kxgx49",
                 "derivedPath": "0/2",
                 "type": "EXTERNAL"
             }
@@ -991,12 +988,12 @@ mod tests {
             let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
             let expected = r#"
             {
-                "address": "bchtest:qqurlwqukz3lcujttcyvlzaagppnd4c37chrtrylmc",
+                "address": "qqurlwqukz3lcujttcyvlzaagppnd4c37chrtrylmc",
                 "chainType": "BITCOINCASH",
                 "createdAt": 1566455834,
                 "encXPub": "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==",
                 "externalAddress": {
-                    "address": "bchtest:qqn4as4zx0jmy02rlgv700umavxt8xtpzus6u7flzk",
+                    "address": "qqn4as4zx0jmy02rlgv700umavxt8xtpzus6u7flzk",
                     "derivedPath": "0/1",
                     "type": "EXTERNAL"
                 },
@@ -1029,7 +1026,7 @@ mod tests {
             let ret_v: Value = Value::from_str(ret).unwrap();
             let expected = r#"
             {
-                "address": "bchtest:qqrhpq50f5n5sdgj0ehwz8qtrc3m6dnazghh3aj0ag",
+                "address": "qqrhpq50f5n5sdgj0ehwz8qtrc3m6dnazghh3aj0ag",
                 "derivedPath": "0/2",
                 "type": "EXTERNAL"
             }
@@ -1066,7 +1063,7 @@ mod tests {
             let founded_ret = unsafe { _to_str(find_wallet_by_private_key(_to_c_char(param))) };
             let expected = r#"
             {
-                "address": "bitcoincash:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr",
+                "address": "qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr",
                 "chainType": "BITCOINCASH",
                 "createdAt": 1566455834,
                 "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
@@ -1124,7 +1121,7 @@ mod tests {
             let founded_ret = unsafe { _to_str(find_wallet_by_private_key(_to_c_char(param))) };
             let expected = r#"
             {
-                "address": "bchtest:qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkvrmn5zj3l",
+                "address": "qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkvrmn5zj3l",
                 "chainType": "BITCOINCASH",
                 "createdAt": 1566455834,
                 "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
@@ -1458,7 +1455,7 @@ mod tests {
             {
                 "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
                 "password": "Insecure Password",
-                "to": "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
+                "to": "qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
                 "amount": "93454",
                 "fee": "6000",
                 "internalUsed": 0,
@@ -1470,7 +1467,7 @@ mod tests {
                         "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
                         "vout": 0,
                         "amount": "100000",
-                        "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                        "address": "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
                         "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
                         "derivedPath": "0/0"
                     }
