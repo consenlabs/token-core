@@ -15,10 +15,11 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
-use tcx_primitive::{ArbitraryNetworkExtendedPubKey, Pair};
+use tcx_primitive::{Derive, DerivePath, Pair, Secp256k1PublicKey, Ss58Codec};
 
 use crate::ExtendedPubKeyExtra;
 use bitcoin::util::bip143::SighashComponents;
+use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin_hashes::hash160;
 use std::marker::PhantomData;
 use tcx_chain::keystore::Address;
@@ -181,8 +182,10 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     }
 
     pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
-        let ext_pub_key = ArbitraryNetworkExtendedPubKey::from_str(xpub)?;
-        let index_ext_pub_key = ext_pub_key.derive(&child_path)?;
+        let ext_pub_key = Secp256k1PublicKey::from_extended(xpub)?;
+
+        let index_ext_pub_key =
+            ext_pub_key.derive(DerivePath::from_str(child_path)?.into_iter())?;
         Ok(index_ext_pub_key.public_key())
     }
 

@@ -8,10 +8,7 @@ use core::result;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
-pub use crate::secp256k1::{
-    ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, Pair as Secp256k1Pair,
-    Public as Secp256k1PublicKey,
-};
+pub use crate::secp256k1::{Pair as Secp256k1Pair, Public as Secp256k1PublicKey};
 
 pub use derive::{Derive, DeriveJunction, DerivePath};
 use std::str::FromStr;
@@ -82,13 +79,13 @@ pub trait TypedKey {
     const KEY_TYPE: KeyTypeId;
 }
 
-pub trait Public: TypedKey + Sized + FromStr + Derive {
+pub trait Public: TypedKey + Sized + Derive {
     fn from_slice(data: &[u8]) -> Result<Self>;
 
     fn to_bytes(&self) -> Result<Vec<u8>>;
 }
 
-pub trait Pair: TypedKey + Sized + FromStr + Derive {
+pub trait Pair: TypedKey + Sized + Derive {
     type Public: Public;
 
     fn from_slice(data: &[u8]) -> Result<Self>;
@@ -106,4 +103,29 @@ pub trait Pair: TypedKey + Sized + FromStr + Derive {
     fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>>;
 
     fn is_extendable(&self) -> bool;
+}
+
+/// Key that can be encoded to/from SS58.
+//#[cfg(feature = "std")]
+pub trait Ss58Codec: Sized {
+    /// Some if the string is a properly encoded SS58Check address.
+    fn from_ss58check(s: &str) -> Result<Self> {
+        let (parsed, _) = Self::from_ss58check_with_version(s)?;
+        Ok(parsed)
+    }
+    /// Some if the string is a properly encoded SS58Check address.
+    fn from_ss58check_with_version(s: &str) -> Result<(Self, Vec<u8>)>;
+    /// Some if the string is a properly encoded SS58Check address, optionally with
+    /// a derivation path following.
+    //    fn from_string(s: &str) -> Result<Self> {
+    //        Self::from_string_with_version(s)
+    //            .and_then(|(r, v)| match v {
+    //                Ss58AddressFormat::SubstrateAccountDirect => Ok(r),
+    //                v if v == *DEFAULT_VERSION.lock() => Ok(r),
+    //                _ => Err(PublicError::UnknownVersion),
+    //            })
+    //    }
+
+    /// Return the ss58-check string for this key.
+    fn to_ss58check_with_version(&self, version: &[u8]) -> String;
 }
