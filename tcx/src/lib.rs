@@ -260,6 +260,7 @@ fn import_wallet_from_mnemonic_internal(v: &Value) -> Result<String> {
     let symbol = coin_symbol_with_network(v);
 
     let meta: Metadata = serde_json::from_value(v.clone())?;
+    // todo: mnemonic not valid
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
 
     let mut coin_info = coin_info_from_symbol(&symbol)?;
@@ -379,9 +380,9 @@ fn export_private_key_internal(v: &Value) -> Result<String> {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
-    let mnemonic = keystore.private_key(password)?;
+    let pk = keystore.private_key(password)?;
     Ok(serde_json::to_string(
-        &json!({"ok": true, "privateKey": mnemonic}),
+        &json!({"ok": true, "privateKey": pk}),
     )?)
 }
 

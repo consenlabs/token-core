@@ -297,6 +297,7 @@ impl HdKeystore {
         coin_info: &CoinInfo,
         password: &str,
     ) -> Result<&Account> {
+        // todo: keyType
         let account = if self.meta.source != Source::Wif && self.meta.source != Source::Private {
             let seed = self.seed(password)?;
             Self::derive_account_from_coin::<A, E>(coin_info, &seed)?
