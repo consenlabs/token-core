@@ -31,7 +31,7 @@ pub fn coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
         }),
         "LITECOIN-P2WPKH" => Ok(CoinInfo {
             symbol: "LITECOIN-P2WPKH".to_string(),
-            derivation_path: "m/44'/2'/0'/0/0".to_string(),
+            derivation_path: "m/49'/2'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
         "LITECOIN-TESTNET" => Ok(CoinInfo {
@@ -41,7 +41,7 @@ pub fn coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
         }),
         "LITECOIN-TESTNET-P2WPKH" => Ok(CoinInfo {
             symbol: "LITECOIN-TESTNET-P2WPKH".to_string(),
-            derivation_path: "m/44'/1'/0'/0/0".to_string(),
+            derivation_path: "m/49'/1'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         }),
         "TRON" => Ok(CoinInfo {
