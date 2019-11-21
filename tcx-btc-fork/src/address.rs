@@ -6,6 +6,7 @@ use bitcoin::network::constants::Network;
 use bitcoin::util::address::Error as BtcAddressError;
 use bitcoin::util::address::Payload;
 use bitcoin::util::base58;
+use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::{Address as BtcAddress, Script};
 use bitcoin_hashes::hash160;
 use bitcoin_hashes::Hash;
@@ -15,9 +16,7 @@ use std::str::FromStr;
 use tcx_chain::keystore::Address;
 use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcForkNetwork};
 use tcx_constants::CoinInfo;
-use tcx_primitive::{
-    ArbitraryNetworkExtendedPrivKey, ArbitraryNetworkExtendedPubKey, Public, Secp256k1PublicKey,
-};
+use tcx_primitive::{Pair, Public, Secp256k1Pair, Secp256k1PublicKey, Ss58Codec};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BtcForkAddress {
@@ -37,6 +36,11 @@ impl Address for BtcForkAddress {
             BtcForkAddress::p2pkh(public_key, &network)?.to_string()
         };
         Ok(addr.to_string())
+    }
+
+    fn from_private_key(wif: &str, coin: Option<&str>) -> Result<String> {
+        let pair = Secp256k1Pair::from_wif(wif)?;
+        Self::from_public_key(&pair.public_key().to_compressed(), coin)
     }
 }
 
@@ -85,29 +89,21 @@ impl BtcForkAddress {
     }
 
     pub fn extended_public_key(
-        derivation_info: &ArbitraryNetworkExtendedPubKey,
+        derivation_info: &ExtendedPubKey,
         coin_info: &CoinInfo,
     ) -> Result<String> {
         let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
-        let anepk = ArbitraryNetworkExtendedPubKey {
-            coin: Some(coin_info.symbol.clone()),
-            extended_pub_key: derivation_info.extended_pub_key,
-        };
-        Ok(anepk.to_string())
+        Ok(derivation_info.to_ss58check_with_version(&network.unwrap().xpub_prefix))
     }
 
     pub fn extended_private_key(
-        extended_priv_key: &ArbitraryNetworkExtendedPrivKey,
+        extended_priv_key: &ExtendedPrivKey,
         coin_info: &CoinInfo,
     ) -> Result<String> {
         let network = network_from_coin(&coin_info.symbol);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
-        let anepk = ArbitraryNetworkExtendedPrivKey {
-            coin: Some(coin_info.symbol.clone()),
-            extended_priv_key: extended_priv_key.extended_priv_key,
-        };
-        Ok(anepk.to_string())
+        Ok(extended_priv_key.to_ss58check_with_version(&network.unwrap().xprv_prefix))
     }
 }
 
@@ -276,9 +272,10 @@ mod tests {
 
     use crate::transaction::ScriptPubKeyComponent;
 
+    use bitcoin::util::bip32::ExtendedPrivKey;
     use std::str::FromStr;
     use tcx_constants::{network_from_coin, CoinInfo, CurveType};
-    use tcx_primitive::{ArbitraryNetworkExtendedPrivKey, Derive, DerivePath, Secp256k1Pair};
+    use tcx_primitive::{Derive, DerivePath, Secp256k1Pair, Ss58Codec};
 
     #[test]
     pub fn test_btc_fork_address() {
@@ -373,7 +370,7 @@ mod tests {
     #[test]
     pub fn extended_private_key_test() {
         let bitcoin_xprv_str = "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ";
-        let anprv = ArbitraryNetworkExtendedPrivKey::from_str(bitcoin_xprv_str).unwrap();
+        let anprv = ExtendedPrivKey::from_ss58check(bitcoin_xprv_str).unwrap();
         let coin_info = CoinInfo {
             symbol: "LITECOIN".to_string(),
             derivation_path: "m/44'/2'/0'/0/0".to_string(),
@@ -386,8 +383,7 @@ mod tests {
     #[test]
     pub fn extended_public_key_test() {
         let bitcoin_xprv_str = "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ";
-        let _anprv = ArbitraryNetworkExtendedPrivKey::from_str(bitcoin_xprv_str).unwrap();
-        let anpub = Secp256k1Pair::from_str(bitcoin_xprv_str)
+        let anpub = Secp256k1Pair::from_extended(bitcoin_xprv_str)
             .unwrap()
             .derive(DerivePath::from_str("m/44'/2'/0'").unwrap().into_iter())
             .unwrap()

@@ -31,6 +31,7 @@ mod tests {
     use super::*;
     use crate::address::BchAddress;
 
+    use bch_addr::Converter;
     use std::marker::PhantomData;
     use std::str::FromStr;
     use tcx_primitive::Pair;
@@ -42,14 +43,14 @@ mod tests {
             tx_hash: "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2".to_string(),
             vout: 0,
             amount: 100000,
-            address: "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r".to_string(),
+            address: "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r".to_string(),
             script_pub_key: "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac".to_string(),
             derived_path: "1/0".to_string(),
             sequence: 0,
         }];
         let tran =
             BitcoinForkTransaction::<BchAddress, LegacyTransactionSignComponent<BchSignHasher>> {
-                to: "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s".to_string(),
+                to: "qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s".to_string(),
                 amount: 93454,
                 unspents,
                 memo: "".to_string(),
@@ -68,7 +69,7 @@ mod tests {
         .unwrap();
 
         let change_addr =
-            BchAddress::from_str("bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r").unwrap();
+            BchAddress::from_str("qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r").unwrap();
         let expected = tran
             .sign_transaction(&vec![prv_key], change_addr.script_pub_key())
             .unwrap();

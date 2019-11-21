@@ -24,13 +24,15 @@ use tcx_btc_fork::{
 };
 use tcx_chain::keystore::EmptyExtra;
 use tcx_chain::signer::TransactionSigner;
-use tcx_chain::{HdKeystore, MessageSigner, Metadata, TxSignResult};
+use tcx_chain::{HdKeystore, MessageSigner, Metadata, Source, TxSignResult};
 use tcx_constants::coin_info::{coin_info_from_symbol, coin_symbol_with_network};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 
 use std::convert::TryFrom;
 use std::fs;
+use tcx_constants::network_from_coin;
+use tcx_primitive::{verify_wif, Secp256k1Pair};
 
 #[macro_use]
 extern crate failure;
@@ -189,13 +191,50 @@ fn find_wallet_by_mnemonic_internal(v: &Value) -> Result<String> {
     let mut coin_info = coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
     let acc = match symbol.as_str() {
-        "BITCOINCASH" => {
+        "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
             HdKeystore::mnemonic_to_account::<BchAddress, BchExtra>(&coin_info, mnemonic)
         }
         "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
             HdKeystore::mnemonic_to_account::<BtcForkAddress, BtcForkExtra>(&coin_info, mnemonic)
         }
         "TRON" => HdKeystore::mnemonic_to_account::<TrxAddress, EmptyExtra>(&coin_info, mnemonic),
+        _ => Err(format_err!("{}", "chain_type_not_support")),
+    }?;
+    let address = acc.address;
+    let kid = find_keystore_id_by_address(&address);
+    if let Some(id) = kid {
+        let map = KEYSTORE_MAP.read().unwrap();
+        let ks: &HdKeystore = map.get(&id).unwrap();
+        Ok(format!("{}", &ks))
+    } else {
+        Ok("{}".to_owned())
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn find_wallet_by_private_key(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = landingpad(|| find_wallet_by_private_key_internal(&v));
+    CString::new(json).expect("ret json").into_raw()
+}
+
+fn find_wallet_by_private_key_internal(v: &Value) -> Result<String> {
+    let priv_key = v["privateKey"].as_str().unwrap();
+    let symbol = coin_symbol_with_network(v);
+
+    verify_wif(priv_key, &symbol)?;
+
+    let coin_info = coin_info_from_symbol(&symbol)?;
+    let acc = match symbol.as_str() {
+        "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
+            HdKeystore::private_key_to_account::<BchAddress, EmptyExtra>(&coin_info, priv_key)
+        }
+        "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
+            HdKeystore::private_key_to_account::<BtcForkAddress, EmptyExtra>(&coin_info, priv_key)
+        }
+        "TRON" => {
+            HdKeystore::private_key_to_account::<TrxAddress, EmptyExtra>(&coin_info, priv_key)
+        }
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
     let address = acc.address;
@@ -224,15 +263,69 @@ fn import_wallet_from_mnemonic_internal(v: &Value) -> Result<String> {
     let symbol = coin_symbol_with_network(v);
 
     let meta: Metadata = serde_json::from_value(v.clone())?;
+    // todo: mnemonic not valid
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
-    let _pw = Map::new();
 
     let mut coin_info = coin_info_from_symbol(&symbol)?;
     coin_info.derivation_path = path.to_string();
     let account = match symbol.as_str() {
-        "BITCOINCASH" => ks.derive_coin::<BchAddress, BchExtra>(&coin_info, password),
+        "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
+            ks.derive_coin::<BchAddress, BchExtra>(&coin_info, password)
+        }
         "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
             ks.derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info, password)
+        }
+        "TRON" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info, password),
+        _ => Err(format_err!("{}", "chain_type_not_support")),
+    }?;
+
+    let exist_kid_opt = find_keystore_id_by_address(&account.address);
+    if let Some(exist_kid) = exist_kid_opt {
+        if !overwrite {
+            return Err(format_err!("{}", "wallet_exists"));
+        } else {
+            ks.id = exist_kid;
+        }
+    }
+
+    flush_keystore(&ks)?;
+    let json = format!("{}", ks);
+    cache_keystore(ks);
+
+    Ok(json)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn import_wallet_from_private_key(json_str: *const c_char) -> *const c_char {
+    let v = parse_arguments(json_str);
+    let json = landingpad(|| import_wallet_from_private_key_internal(&v));
+    CString::new(json).expect("ret json").into_raw()
+}
+
+fn import_wallet_from_private_key_internal(v: &Value) -> Result<String> {
+    let password = v["password"].as_str().unwrap();
+    let priv_key = v["privateKey"].as_str().unwrap();
+
+    let overwrite = v["overwrite"].as_bool().unwrap();
+    let symbol = coin_symbol_with_network(v);
+
+    verify_wif(priv_key, &symbol)?;
+    let mut meta: Metadata = serde_json::from_value(v.clone())?;
+    let chain_type = v["chainType"].as_str().unwrap();
+    if chain_type.to_uppercase() == "ETHEREUM" {
+        meta.source = Source::Private;
+    } else {
+        meta.source = Source::Wif;
+    }
+    let mut ks = HdKeystore::from_private_key(priv_key, password, meta.source);
+
+    let coin_info = coin_info_from_symbol(&symbol)?;
+    let account = match symbol.as_str() {
+        "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
+            ks.derive_coin::<BchAddress, EmptyExtra>(&coin_info, password)
+        }
+        "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
+            ks.derive_coin::<BtcForkAddress, EmptyExtra>(&coin_info, password)
         }
         "TRON" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info, password),
         _ => Err(format_err!("{}", "chain_type_not_support")),
@@ -273,6 +366,28 @@ fn export_mnemonic_internal(v: &Value) -> Result<String> {
     let mnemonic = keystore.mnemonic(password)?;
     Ok(serde_json::to_string(
         &json!({"ok": true, "mnemonic": mnemonic}),
+    )?)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn export_private_key(json_str: *const c_char) -> *const c_char {
+    let v: Value = parse_arguments(json_str);
+    let json = landingpad(|| export_private_key_internal(&v));
+    CString::new(json).expect("ret json").into_raw()
+}
+
+fn export_private_key_internal(v: &Value) -> Result<String> {
+    let wid = v["id"].as_str().expect("id");
+    let password = v["password"].as_str().expect("password");
+
+    let map = KEYSTORE_MAP.read().unwrap();
+    let keystore = match map.get(wid) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+    let pk = keystore.private_key(password)?;
+    Ok(serde_json::to_string(
+        &json!({"ok": true, "privateKey": pk}),
     )?)
 }
 
@@ -324,6 +439,7 @@ fn sign_transaction_internal(json_str: &str) -> Result<String> {
 
     match symbol.as_str() {
         "BITCOINCASH"
+        | "BITCOINCASH-TESTNET"
         | "LITECOIN"
         | "LITECOIN-P2WPKH"
         | "LITECOIN-TESTNET"
@@ -469,7 +585,7 @@ pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *cons
 fn calc_external_address_internal(v: &Value) -> Result<String> {
     let w_id = v["id"].as_str().expect("wallet_id");
     let external_id = v["externalIdx"].as_i64().expect("external_id");
-    let chain_type = v["chainType"].as_str().unwrap();
+    let symbol = coin_symbol_with_network(v);
 
     let mut map = KEYSTORE_MAP.write().unwrap();
     let keystore = match map.get_mut(w_id) {
@@ -478,15 +594,15 @@ fn calc_external_address_internal(v: &Value) -> Result<String> {
     }?;
 
     let account = keystore
-        .account(&chain_type)
-        .ok_or_else(|| format_err!("account_not_found, chainType: {}", &chain_type))?;
+        .account(&symbol)
+        .ok_or_else(|| format_err!("account_not_found, chainType: {}", &symbol))?;
     let external_addr: ExternalAddress;
-    if chain_type.starts_with("BITCOINCASH") {
+    if symbol.starts_with("BITCOINCASH") {
         let extra = BchExtra::from(account.extra.clone());
-        external_addr = extra.calc_external_address(external_id, &chain_type)?;
+        external_addr = extra.calc_external_address(external_id, &symbol)?;
     } else {
         let extra = BtcForkExtra::from(account.extra.clone());
-        external_addr = extra.calc_external_address(external_id, &chain_type)?;
+        external_addr = extra.calc_external_address(external_id, &symbol)?;
     }
 
     Ok(serde_json::to_string(&external_addr)?)
@@ -647,7 +763,8 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 mod tests {
     use crate::{
         cache_derived_key, calc_external_address, clear_derived_key, clear_err, export_mnemonic,
-        get_derived_key, get_last_err_message, remove_wallet, sign_message, sign_transaction,
+        export_private_key, find_wallet_by_private_key, get_derived_key, get_last_err_message,
+        import_wallet_from_private_key, remove_wallet, sign_message, sign_transaction,
         verify_derived_key, verify_password,
     };
     use crate::{
@@ -786,10 +903,7 @@ mod tests {
             }"#;
             let ret = unsafe { _to_str(find_wallet_by_mnemonic(_to_c_char(param))) };
             let v = Value::from_str(ret).expect("find wallet");
-            assert_eq!(
-                v["address"],
-                "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r"
-            );
+            assert_eq!(v["address"], "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r");
         })
     }
 
@@ -812,12 +926,12 @@ mod tests {
 
             let expected = r#"
             {
-                "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                "address": "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
                 "chainType": "BITCOINCASH",
                 "createdAt": 1566455834,
                 "encXPub": "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==",
                 "externalAddress": {
-                    "address": "bitcoincash:qzyrtfn4a7cdkn7sp60tw7hl8zndt0tk0sst3p6qr5",
+                    "address": "qzyrtfn4a7cdkn7sp60tw7hl8zndt0tk0sst3p6qr5",
                     "derivedPath": "0/1",
                     "type": "EXTERNAL"
                 },
@@ -849,7 +963,7 @@ mod tests {
             let ret_v: Value = Value::from_str(ret).unwrap();
             let expected = r#"
             {
-                "address": "bitcoincash:qzhsz3s4hr0f3x0v00zdn6w50tdpa9zgryp4kxgx49",
+                "address": "qzhsz3s4hr0f3x0v00zdn6w50tdpa9zgryp4kxgx49",
                 "derivedPath": "0/2",
                 "type": "EXTERNAL"
             }
@@ -857,6 +971,180 @@ mod tests {
             let expected_v = Value::from_str(expected).expect("from expected");
             assert_eq!(expected_v["derivedPath"], ret_v["derivedPath"]);
             assert_eq!(expected_v["address"], ret_v["address"]);
+            remove_created_wallet(imported_id);
+        });
+    }
+
+    #[test]
+    fn import_wallet_from_mnemonic_testnet() {
+        run_test(|| {
+            let param = r#"{
+            "chainType":"BITCOINCASH",
+            "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            "name":"BCH-Wallet-1",
+            "network":"TESTNET",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "path":"m/44'/1'/0'/0/0",
+            "segWit":"NONE",
+            "source":"MNEMONIC"
+            }"#;
+            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+            let expected = r#"
+            {
+                "address": "qqurlwqukz3lcujttcyvlzaagppnd4c37chrtrylmc",
+                "chainType": "BITCOINCASH",
+                "createdAt": 1566455834,
+                "encXPub": "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==",
+                "externalAddress": {
+                    "address": "qqn4as4zx0jmy02rlgv700umavxt8xtpzus6u7flzk",
+                    "derivedPath": "0/1",
+                    "type": "EXTERNAL"
+                },
+                "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
+                "name": "BCH-Wallet-1",
+                "passwordHint": "",
+                "source": "MNEMONIC"
+            }
+            "#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+            let ret_v = Value::from_str(ret).unwrap();
+            assert_eq!(expected_v["address"], ret_v["address"]);
+            assert_eq!(expected_v["chainType"], ret_v["chainType"]);
+            assert_eq!(expected_v["encXPub"], ret_v["encXPub"]);
+            assert_eq!(expected_v["externalAddress"], ret_v["externalAddress"]);
+
+            let imported_id = ret_v["id"].as_str().unwrap();
+            let param = json!({
+                "id": imported_id,
+                "chainType": "BITCOINCASH",
+                "network": "TESTNET",
+                "externalIdx": 2
+            });
+
+            let ret = unsafe {
+                _to_str(calc_external_address(_to_c_char(
+                    param.to_string().as_str(),
+                )))
+            };
+            let ret_v: Value = Value::from_str(ret).unwrap();
+            let expected = r#"
+            {
+                "address": "qqrhpq50f5n5sdgj0ehwz8qtrc3m6dnazghh3aj0ag",
+                "derivedPath": "0/2",
+                "type": "EXTERNAL"
+            }
+            "#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+            assert_eq!(expected_v["derivedPath"], ret_v["derivedPath"]);
+            assert_eq!(expected_v["address"], ret_v["address"]);
+            remove_created_wallet(imported_id);
+        });
+    }
+
+    #[test]
+    fn import_bch_wallet_from_private_key_test() {
+        run_test(|| {
+            let param = r#"{
+            "chainType":"BITCOINCASH",
+            "privateKey":"L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
+            "name":"BCH-Wallet-1",
+            "network":"MAINNET",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "segWit":"NONE",
+            "source":"WIF"
+            }"#;
+            let imported_ret =
+                unsafe { _to_str(import_wallet_from_private_key(_to_c_char(param))) };
+            let param = r#"{
+            "chainType":"BITCOINCASH",
+            "privateKey":"L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
+            "network":"MAINNET",
+            "segWit":"NONE"
+            }"#;
+            let founded_ret = unsafe { _to_str(find_wallet_by_private_key(_to_c_char(param))) };
+            let expected = r#"
+            {
+                "address": "qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr",
+                "chainType": "BITCOINCASH",
+                "createdAt": 1566455834,
+                "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
+                "name": "BCH-Wallet-1",
+                "passwordHint": "",
+                "source": "WIF"
+            }
+            "#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+
+            [imported_ret, founded_ret].iter().for_each(|ret| {
+                let ret_v = Value::from_str(ret).unwrap();
+                assert_eq!(expected_v["address"], ret_v["address"]);
+                assert_eq!(expected_v["chainType"], ret_v["chainType"]);
+                assert_eq!(expected_v["source"], ret_v["source"]);
+            });
+            let imported_v = Value::from_str(imported_ret).unwrap();
+
+            let imported_id = imported_v["id"].as_str().unwrap();
+            let param = json!({
+            "id": imported_id,
+            "password": "Insecure Password"
+            });
+            let ret = unsafe { _to_str(export_private_key(_to_c_char(&param.to_string()))) };
+            let ret_v = Value::from_str(ret).expect("from expected");
+            let export_expected = r#"
+            {
+                "privateKey": "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
+                "ok": true
+            }
+            "#;
+            let export_expected_v = Value::from_str(export_expected).expect("from expected");
+            assert_eq!(export_expected_v["privateKey"], ret_v["privateKey"]);
+
+            remove_created_wallet(imported_id);
+        });
+    }
+
+    #[test]
+    fn import_bch_wallet_from_private_key_testnet() {
+        run_test(|| {
+            let param = r#"{
+            "chainType":"BITCOINCASH",
+            "privateKey":"cT4fTJyLd5RmSZFHnkGmVCzXDKuJLbyTt7cy77ghTTCagzNdPH1j",
+            "name":"BCH-Wallet-1",
+            "network":"TESTNET",
+            "overwrite":true,
+            "password":"Insecure Password",
+            "passwordHint":"",
+            "segWit":"NONE",
+            "source":"WIF"
+            }"#;
+            let imported_ret =
+                unsafe { _to_str(import_wallet_from_private_key(_to_c_char(param))) };
+            let founded_ret = unsafe { _to_str(find_wallet_by_private_key(_to_c_char(param))) };
+            let expected = r#"
+            {
+                "address": "qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkvrmn5zj3l",
+                "chainType": "BITCOINCASH",
+                "createdAt": 1566455834,
+                "id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
+                "name": "BCH-Wallet-1",
+                "passwordHint": "",
+                "source": "WIF"
+            }
+            "#;
+            let expected_v = Value::from_str(expected).expect("from expected");
+
+            [imported_ret, founded_ret].iter().for_each(|ret| {
+                let ret_v = Value::from_str(ret).unwrap();
+                assert_eq!(expected_v["address"], ret_v["address"]);
+                assert_eq!(expected_v["chainType"], ret_v["chainType"]);
+                assert_eq!(expected_v["source"], ret_v["source"]);
+            });
+            let imported_v = Value::from_str(imported_ret).unwrap();
+            let imported_id = imported_v["id"].as_str().unwrap();
             remove_created_wallet(imported_id);
         });
     }
@@ -1172,7 +1460,7 @@ mod tests {
             {
                 "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
                 "password": "Insecure Password",
-                "to": "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
+                "to": "qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
                 "amount": "93454",
                 "fee": "6000",
                 "internalUsed": 0,
@@ -1184,7 +1472,7 @@ mod tests {
                         "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
                         "vout": 0,
                         "amount": "100000",
-                        "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                        "address": "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
                         "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
                         "derivedPath": "0/0"
                     }

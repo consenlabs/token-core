@@ -9,11 +9,16 @@ matrix:
     -
       os: osx
       language: swift
-      osx_image: xcode11
+      osx_image: xcode11.2
+      env:
+        - PATH=$PATH:/Users/travis/.cargo/bin:/Users/travis/.rustup
       before_script:
-      - "cd tools & sh ios-example-build.sh"
-      - "cd ../examples/iOSExample"
-      xcode_project: iOSExample.xcodeproj # path to your xcodeproj folder
+        - "bash <(curl https://sh.rustup.rs -sSf) -y"
+        - "rustup target add aarch64-apple-ios armv7-apple-ios armv7s-apple-ios i386-apple-ios x86_64-apple-ios"
+        - "cargo install cargo-lipo cbindgen"
+        - "cd tools && sh ios-example-build.sh"
+        - "cd ../examples/iOSExample"
+      xcode_workspace: iOSExample.xcworkspace # path to your xcodeproj folder
       xcode_scheme: iOSExample
-      xcode_destination: platform=iOS Simulator,OS=13.1,name=iPhone 11 Pro
+      xcode_destination: platform=iOS Simulator,OS=13.2,name=iPhone 11 Pro
       

@@ -26,6 +26,8 @@ generated/
 *.swo
 
 test-data/**
+tcx/cheader/tcx.h
+
 
 
 lcov.info

@@ -6,8 +6,20 @@ pub struct BtcForkNetwork {
     pub hrp: &'static str,
     pub p2pkh_prefix: u8,
     pub p2sh_prefix: u8,
+    pub private_prefix: u8,
     pub xpub_prefix: [u8; 4],
     pub xprv_prefix: [u8; 4],
+}
+
+//pub enum HdVersion {
+//    XPub
+//}
+
+pub struct HdVersion {
+    pub_prefix: String,
+    prv_prefix: String,
+    pub_version: [u8; 4],
+    prv_version: [u8; 4],
 }
 
 lazy_static! {
@@ -18,6 +30,7 @@ lazy_static! {
             hrp: "ltc",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
+            private_prefix: 0xb0,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
@@ -26,6 +39,7 @@ lazy_static! {
             hrp: "ltc",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
+            private_prefix: 0xb0,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
@@ -34,6 +48,7 @@ lazy_static! {
             hrp: "ltc",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
+            private_prefix: 0xb0,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
@@ -42,6 +57,7 @@ lazy_static! {
             hrp: "ltc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
+            private_prefix: 0xef,
             //            043587CF
             //            04358394
             xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
@@ -52,6 +68,7 @@ lazy_static! {
             hrp: "ltc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
+            private_prefix: 0xef,
             xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
             xprv_prefix: [0x04, 0x35, 0x83, 0x94],
         });
@@ -60,6 +77,7 @@ lazy_static! {
             hrp: "bc",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
+            private_prefix: 0x80,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
@@ -68,6 +86,7 @@ lazy_static! {
             hrp: "bc",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
+            private_prefix: 0x80,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
@@ -76,6 +95,7 @@ lazy_static! {
             hrp: "bc",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
+            private_prefix: 0x80,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
@@ -84,19 +104,47 @@ lazy_static! {
             hrp: "bc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0xc4,
+            private_prefix: 0xef,
             xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
             xprv_prefix: [0x04, 0x35, 0x83, 0x94],
         });
+        //Definition of BitcoinCash networks https://github.com/bitpay/bitcore/blob/master/packages/bitcore-lib-cash/lib/networks.js#L168
         networks.push(BtcForkNetwork {
             coin: "BITCOINCASH",
             hrp: "bitcoincash",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
+            private_prefix: 0x80,
             xpub_prefix: [0x04, 0x88, 0xB2, 0x1E],
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
-//        networks
+        networks.push(BtcForkNetwork {
+            coin: "BITCOINCASH-TESTNET",
+            hrp: "bitcoincash",
+            p2pkh_prefix: 0x6f,
+            p2sh_prefix: 0xc4,
+            private_prefix: 0xef,
+            xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
+            xprv_prefix: [0x04, 0x35, 0x83, 0x94],
+        });
         RwLock::new(networks)
+    };
+
+    static ref HD_VERSIONS: RwLock<Vec<HdVersion>> = {
+        let mut versions = Vec::new();
+        versions.push(HdVersion {
+            pub_prefix: "xpub".to_string(),
+            prv_prefix: "xprv".to_string(),
+            pub_version: [0x04, 0x88, 0xB2, 0x1E],
+            prv_version: [0x04, 0x88, 0xAD, 0xE4],
+        });
+        versions.push(HdVersion {
+            pub_prefix: "tpub".to_string(),
+            prv_prefix: "tprv".to_string(),
+            pub_version: [0x04, 0x35, 0x87, 0xCF],
+            prv_version: [0x04, 0x35, 0x83, 0x94],
+        });
+        RwLock::new(versions)
     };
 }
 
@@ -130,10 +178,11 @@ pub fn coin_from_xpub_prefix(prefix: &[u8]) -> Option<String> {
         .map(|x| x.coin.to_string())
 }
 
-pub fn coin_from_xprv_prefix(prefix: &[u8]) -> Option<String> {
-    let networks = BTC_FORK_NETWORKS.read().unwrap();
-    networks
-        .iter()
-        .find(|x| x.xprv_prefix.eq(prefix))
-        .map(|x| x.coin.to_string())
+pub fn pub_version_from_prv_version(prefix: &[u8]) -> Option<[u8; 4]> {
+    let networks = HD_VERSIONS.read().unwrap();
+    networks.iter().find(|x| x.prv_version.eq(prefix)).map(|x| {
+        let mut version = [0; 4];
+        version.copy_from_slice(&x.pub_version);
+        version
+    })
 }

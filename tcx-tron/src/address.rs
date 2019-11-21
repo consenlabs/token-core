@@ -2,7 +2,7 @@ use bitcoin::util::base58;
 
 use crate::keccak;
 use tcx_chain::keystore::Address as TraitAddress;
-use tcx_primitive::{Public, Secp256k1PublicKey};
+use tcx_primitive::{Pair, Public, Secp256k1Pair, Secp256k1PublicKey};
 
 pub struct Address(pub String);
 
@@ -16,6 +16,12 @@ impl TraitAddress for Address {
         let hash = keccak(&bytes[1..]);
         let hex: Vec<u8> = [vec![0x41], hash[12..32].to_vec()].concat();
         Ok(base58::check_encode_slice(&hex))
+    }
+
+    fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String, failure::Error> {
+        let pk_bytes = hex::decode(private_key)?;
+        let pair = Secp256k1Pair::from_slice(&pk_bytes)?;
+        Address::from_public_key(&pair.public_key().to_uncompressed(), coin)
     }
 }
 

@@ -1,4 +1,4 @@
-use tcx_chain::{HdKeystore, TransactionSigner, TxSignResult};
+use tcx_chain::{HdKeystore, Source, TransactionSigner, TxSignResult};
 
 use bitcoin::{OutPoint, Script, Transaction, TxIn, TxOut};
 use bitcoin_hashes::hex::FromHex;
@@ -15,13 +15,15 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
-use tcx_primitive::{ArbitraryNetworkExtendedPubKey, Pair};
+use tcx_primitive::{Derive, DerivePath, Pair, Secp256k1Pair, Secp256k1PublicKey, Ss58Codec};
 
 use crate::ExtendedPubKeyExtra;
 use bitcoin::util::bip143::SighashComponents;
+use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin_hashes::hash160;
 use std::marker::PhantomData;
 use tcx_chain::keystore::Address;
+use tcx_chain::keystore::KeyType::PrivateKey;
 use tcx_primitive::derive::get_account_path;
 use tcx_primitive::Public;
 
@@ -108,18 +110,30 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         let account = self
             .account(tx.coin.to_uppercase().as_str())
             .ok_or_else(|| format_err!("account_not_found"))?;
-        let path = &account.derivation_path;
-        let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
-
-        let paths = tx.collect_key_pair_paths(path)?;
-
         tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
-        let pairs =
-            &self.key_pair_at_paths(tx.coin.to_uppercase().as_str(), &paths, password.unwrap())?;
+        if self.meta.source != Source::Wif {
+            let path = &account.derivation_path;
+            let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
+            let paths = tx.collect_key_pair_paths(path)?;
+            let pairs = &self.key_pair_at_paths(
+                tx.coin.to_uppercase().as_str(),
+                &paths,
+                password.unwrap(),
+            )?;
 
-        let xpub = extra.xpub()?;
-        let change_addr = tx.change_address(&xpub)?;
-        tx.sign_transaction(&pairs, change_addr)
+            let xpub = extra.xpub()?;
+            let change_addr = tx.change_address(&xpub)?;
+            tx.sign_transaction(&pairs, change_addr)
+        } else {
+            let change_addr = S::address_script_pub_key(&account.address)?;
+            let pk = self.private_key(password.unwrap())?;
+            // todo: more easy way to clone pair, will fix after refactor the pair
+            let mut pairs: Vec<Secp256k1Pair> = vec![];
+            for x in 0..tx.unspents.len() {
+                pairs.push(Secp256k1Pair::from_wif(&pk)?);
+            }
+            tx.sign_transaction(&pairs, change_addr)
+        }
     }
 }
 
@@ -181,8 +195,10 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     }
 
     pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
-        let ext_pub_key = ArbitraryNetworkExtendedPubKey::from_str(xpub)?;
-        let index_ext_pub_key = ext_pub_key.derive(&child_path)?;
+        let ext_pub_key = Secp256k1PublicKey::from_extended(xpub)?;
+
+        let index_ext_pub_key =
+            ext_pub_key.derive(DerivePath::from_str(child_path)?.into_iter())?;
         Ok(index_ext_pub_key.public_key())
     }
 

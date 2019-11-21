@@ -93,10 +93,7 @@ mod tests {
         let account = active_accounts.first().unwrap();
         let address = account["address"].as_str().unwrap();
 
-        assert_eq!(
-            "bitcoincash:qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885",
-            address
-        );
+        assert_eq!("qqyta3mqzeaxe8hqcdsgpy4srwd4f0fc0gj0njf885", address);
 
         let path = account["derivationPath"].as_str().unwrap();
         assert_eq!(BIP_PATH, path);
@@ -110,14 +107,14 @@ mod tests {
 
     #[test]
     fn extra_test() {
-        let ex = BchExtra::from_xpub("tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R", "bch").unwrap();
+        let ex = BchExtra::from_xpub("tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R", "BITCOINCASH").unwrap();
 
         assert_eq!(ex.enc_xpub, "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==");
 
         //        let addr = ex.calc_external_address::<BchAddress>(1i64).unwrap();
         let expected = r#"
         {
-            "address": "bitcoincash:qqn4as4zx0jmy02rlgv700umavxt8xtpzu5gcetg92",
+            "address": "qqn4as4zx0jmy02rlgv700umavxt8xtpzu5gcetg92",
             "type": "EXTERNAL",
             "derivedPath": "0/1"
         }

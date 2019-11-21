@@ -54,7 +54,11 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
     ) -> Result<SignedTransaction> {
         let mut raw = tx.raw.clone();
         tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
-        let hash = Hash::hash(&hex::decode(raw["raw_data_hex"].as_str().unwrap())?);
+        let hash = Hash::hash(&hex::decode(
+            raw["raw_data_hex"]
+                .as_str()
+                .expect("trx tx should contains raw_data_hex"),
+        )?);
         let account = self
             .account(&"TRON")
             .ok_or_else(|| format_err!("account_not_found"))?;
