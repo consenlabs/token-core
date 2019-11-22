@@ -1,0 +1,8 @@
+syntax = "proto3";
+package api;
+
+message InitTokenCoreXParam {
+    string fileDir = 1;
+    string xpubCommonKey = 2;
+    string xpubCommonIv = 3;
+}

@@ -45,6 +45,13 @@ extern crate lazy_static;
 #[macro_use]
 extern crate serde_json;
 
+mod api;
+
+// Include the `items` module, which is generated from items.proto.
+//pub mod api {
+//    include!(concat!(env!("OUT_DIR"), "/api.rs"));
+//}
+
 lazy_static! {
     static ref KEYSTORE_MAP: RwLock<HashMap<String, HdKeystore>> = RwLock::new(HashMap::new());
     static ref WALLET_FILE_DIR: RwLock<String> = RwLock::new("../test-data".to_string());
@@ -779,6 +786,9 @@ mod tests {
     use std::path::Path;
     use std::str::FromStr;
 
+    use crate::api::InitTokenCoreXParam;
+    use bytes::BytesMut;
+    use prost::Message;
     use tcx_chain::HdKeystore;
 
     static WALLET_ID: &'static str = "9c6cbc21-1c43-4c8b-bb7a-5e538f908819";
@@ -1593,5 +1603,18 @@ mod tests {
             let v: Value = serde_json::from_str(ret).unwrap();
             assert!(v["ok"].as_bool().unwrap())
         })
+    }
+
+    #[test]
+    fn test_proto() {
+        let param = InitTokenCoreXParam {
+            file_dir: "aaa".to_string(),
+            xpub_common_key: "aaa".to_string(),
+            xpub_common_iv: "aaa".to_string(),
+        };
+        let mut buf = BytesMut::with_capacity(1024);
+        param.encode(&mut buf).unwrap();
+        assert_eq!("", buf);
+        let param = InitTokenCoreXParam::decode(&buf).unwrap();
     }
 }

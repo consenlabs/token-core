@@ -13,6 +13,9 @@ tcx-tron = {path = "../tcx-tron"}
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants"}
 
+prost = "0.5.0"
+bytes = "0.4.12"
+
 libc = "0.2.0"
 log = "0.4.6"
 serde_json = "1.0"
@@ -30,3 +33,7 @@ name = "tcx"
 crate-type = ["staticlib", "cdylib", "rlib"]
 #link = "TrezorCrypto"
 build = "build.rs"
+
+
+[build-dependencies]
+prost-build = "0.5.0"
