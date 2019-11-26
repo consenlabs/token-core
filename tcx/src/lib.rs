@@ -34,6 +34,8 @@ use std::fs;
 use tcx_constants::network_from_coin;
 use tcx_primitive::{verify_wif, Secp256k1Pair};
 
+use api::InitTokenCoreXParam;
+use prost::Message;
 #[macro_use]
 extern crate failure;
 
@@ -153,6 +155,61 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
     *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
 
     let p = Path::new(file_dir);
+    let walk_dir = std::fs::read_dir(p).expect("read dir");
+    for entry in walk_dir {
+        let entry = entry.expect("DirEntry");
+        let fp = entry.path();
+        if !fp
+            .file_name()
+            .expect("file_name")
+            .to_str()
+            .expect("file_name str")
+            .ends_with(".json")
+        {
+            continue;
+        }
+
+        let mut f = File::open(fp).expect("open file");
+        let mut contents = String::new();
+
+        let _ = f.read_to_string(&mut contents);
+        let v: Value = serde_json::from_str(&contents).expect("read json from content");
+
+        let version = v["version"].as_i64().expect("version");
+        if version != i64::from(HdKeystore::VERSION) {
+            continue;
+        }
+        let keystore: HdKeystore = serde_json::from_str(&contents)?;
+        cache_keystore(keystore);
+    }
+    Ok(())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn init_token_core_x_pb(json_str: *const u8) {
+    let param: Vec<u8> = Vec::from(json_str);
+    //    let v = parse_arguments(json_str);
+    // !!! warning !!! just set_panic_hook when debug
+    // set_panic_hook();
+    landingpad(|| init_token_core_x_pb_internal(param));
+}
+
+fn init_token_core_x_pb_internal(p: Vec<u8>) -> Result<()> {
+    //    let file_dir = v["fileDir"].as_str().expect("fileDir");
+    //    let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
+    //    let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
+    //    let param = prost::de
+    //    let param: InitTokenCoreXParam = InitTokenCoreXParam::decode(&param).unwrap();
+    let InitTokenCoreXParam {
+        file_dir,
+        xpub_common_key,
+        xpub_common_iv,
+    } = InitTokenCoreXParam::decode(p).unwrap();
+    *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
+    *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
+    *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
+
+    let p = Path::new(&file_dir);
     let walk_dir = std::fs::read_dir(p).expect("read dir");
     for entry in walk_dir {
         let entry = entry.expect("DirEntry");
@@ -771,8 +828,8 @@ mod tests {
     use crate::{
         cache_derived_key, calc_external_address, clear_derived_key, clear_err, export_mnemonic,
         export_private_key, find_wallet_by_private_key, get_derived_key, get_last_err_message,
-        import_wallet_from_private_key, remove_wallet, sign_message, sign_transaction,
-        verify_derived_key, verify_password,
+        import_wallet_from_private_key, init_token_core_x_pb_internal, remove_wallet, sign_message,
+        sign_transaction, verify_derived_key, verify_password,
     };
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
@@ -861,6 +918,21 @@ mod tests {
         "#;
             unsafe {
                 init_token_core_x(_to_c_char(init_params));
+            }
+
+            let map = KEYSTORE_MAP.read().unwrap();
+            let ks: &HdKeystore = map.get(WALLET_ID).unwrap();
+            assert_eq!(ks.id, WALLET_ID);
+        });
+    }
+
+    #[test]
+    fn init_token_core_x_pb_test() {
+        run_test(|| {
+            let hex = "0a0c2e2e2f746573742d646174611a203943304333303838394342434335453031414235423242423838373135373939";
+            let hex_bytes = hex::decode(hex).unwrap();
+            unsafe {
+                init_token_core_x_pb_internal(hex_bytes);
             }
 
             let map = KEYSTORE_MAP.read().unwrap();
