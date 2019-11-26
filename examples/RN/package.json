@@ -6,7 +6,10 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "e2e:build": "detox build --configuration=ios.sim.debug",
+    "e2e:test": "detox test --configuration=ios.sim.debug",
+    "e2e": "npm run e2e:build && npm run e2e:test"
   },
   "dependencies": {
     "react": "16.9.0",
@@ -20,6 +23,7 @@
     "@types/react-native": "^0.60.22",
     "@types/react-test-renderer": "16.9.0",
     "babel-jest": "^24.9.0",
+    "detox": "^14.8.2",
     "jest": "^24.9.0",
     "metro-react-native-babel-preset": "^0.56.0",
     "react-test-renderer": "16.9.0",
@@ -35,5 +39,23 @@
       "json",
       "node"
     ]
+  },
+  "detox": {
+    "test-runner": "jest",
+    "runner-config": "e2e/config.json",
+    "configurations": {
+      "ios.sim.debug": {
+        "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/RN.app",
+        "build": "xcodebuild -workspace ios/RN.xcworkspace -scheme RN -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build",
+        "type": "ios.simulator",
+        "name": "iPhone 11 Pro Max, iOS 13.2"
+      },
+      "ios.sim.release": {
+        "binaryPath": "ios/build/Build/Products/Release-iphonesimulator/RN.app",
+        "build": "xcodebuild -workspace ios/RN.xcworkspace  -scheme RN -configuration Release -sdk iphonesimulator -derivedDataPath ios/build",
+        "type": "ios.simulator",
+        "name": "iPhone 11 Pro Max, iOS 13.2"
+      }
+    }
   }
 }
