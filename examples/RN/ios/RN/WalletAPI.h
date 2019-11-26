@@ -10,11 +10,13 @@
 #import <React/RCTBridgeModule.h>
 #import "tcx.h"
 
+typedef const char *(^TokenCoreAPI)(const char *);
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface WalletAPI : NSObject
 
++(void)callTokenCoreXApi:(NSDictionary *)map resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject block:(TokenCoreAPI)block;
 +(void) importWalletFromMnemonic:(NSDictionary *)map resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 
 @end

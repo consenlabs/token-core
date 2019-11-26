@@ -9,7 +9,7 @@
 #import "WalletAPI.h"
 
 
-typedef const char *(^TokenCoreAPI)(const char *);
+
 
 @implementation WalletAPI
 
