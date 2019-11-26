@@ -98,6 +98,12 @@ fn delete_keystore_file(wid: &str) -> Result<()> {
     Ok(())
 }
 
+#[repr(C)]
+pub struct Buffer {
+    pub data: *mut u8,
+    pub len: usize,
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn free_string(s: *mut c_char) {
     if s.is_null() {
@@ -186,25 +192,26 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn init_token_core_x_pb(json_str: *const u8) {
-    let param: Vec<u8> = Vec::from(json_str);
+pub unsafe extern "C" fn init_token_core_x_pb(data: Buffer) {
+    //    let param: Vec<u8> = Vec::from(json_str);
     //    let v = parse_arguments(json_str);
     // !!! warning !!! just set_panic_hook when debug
     // set_panic_hook();
-    landingpad(|| init_token_core_x_pb_internal(param));
+    landingpad(|| init_token_core_x_pb_internal(data));
 }
 
-fn init_token_core_x_pb_internal(p: Vec<u8>) -> Result<()> {
+fn init_token_core_x_pb_internal(buf: Buffer) -> Result<()> {
     //    let file_dir = v["fileDir"].as_str().expect("fileDir");
     //    let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
     //    let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
     //    let param = prost::de
     //    let param: InitTokenCoreXParam = InitTokenCoreXParam::decode(&param).unwrap();
+    let data = unsafe { std::slice::from_raw_parts_mut(buf.data, buf.len) };
     let InitTokenCoreXParam {
         file_dir,
         xpub_common_key,
         xpub_common_iv,
-    } = InitTokenCoreXParam::decode(p).unwrap();
+    } = InitTokenCoreXParam::decode(data).unwrap();
     *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
     *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
     *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
@@ -829,7 +836,7 @@ mod tests {
         cache_derived_key, calc_external_address, clear_derived_key, clear_err, export_mnemonic,
         export_private_key, find_wallet_by_private_key, get_derived_key, get_last_err_message,
         import_wallet_from_private_key, init_token_core_x_pb_internal, remove_wallet, sign_message,
-        sign_transaction, verify_derived_key, verify_password,
+        sign_transaction, verify_derived_key, verify_password, Buffer,
     };
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
@@ -930,9 +937,18 @@ mod tests {
     fn init_token_core_x_pb_test() {
         run_test(|| {
             let hex = "0a0c2e2e2f746573742d646174611a203943304333303838394342434335453031414235423242423838373135373939";
-            let hex_bytes = hex::decode(hex).unwrap();
+            let mut hex_bytes = hex::decode(hex).unwrap();
+            //            let mut buf = vec![0; 512].into_boxed_slice();
+            //            let data = buf.as_mut_ptr();
+            //            let len = buf.len();
+            //            std::mem::forget(buf);
+            //            Buffer { data, len }
+            let param = Buffer {
+                data: hex_bytes.as_mut_ptr(),
+                len: hex_bytes.len(),
+            };
             unsafe {
-                init_token_core_x_pb_internal(hex_bytes);
+                init_token_core_x_pb_internal(param);
             }
 
             let map = KEYSTORE_MAP.read().unwrap();
