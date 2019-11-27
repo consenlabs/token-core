@@ -1,3 +1,3 @@
-import importBCHMnemonic from './specs/wallet/bch/importMnemonic'
+import mnemonicFlow from './specs/wallet/mnemonicFlow'
 
-importBCHMnemonic()
+mnemonicFlow()
