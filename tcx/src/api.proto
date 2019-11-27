@@ -1,8 +1,84 @@
 syntax = "proto3";
 package api;
 
+import "google/protobuf/any.proto";
+
+message TcxAction {
+    string method = 1;
+    google.protobuf.Any param = 2;
+}
+
 message InitTokenCoreXParam {
     string fileDir = 1;
     string xpubCommonKey = 2;
     string xpubCommonIv = 3;
+}
+
+message InitTokenCoreXParamCopy {
+    string fileDir1 = 1;
+    string xpubCommonKey = 2;
+    string xpubCommonIv = 3;
+}
+
+
+//r#"{
+//"chainType":"BITCOINCASH",
+//"mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+//"name":"BCH-Wallet-1",
+//"network":"MAINNET",
+//"overwrite":true,
+//"password":"Insecure Password",
+//"passwordHint":"",
+//"path":"m/44'/145'/0'/0/0",
+//"segWit":"NONE",
+//"source":"MNEMONIC"
+//}"#;
+
+message ImportWalletFromMnemonicParam {
+    string chainType = 1;
+    string mnemonic = 2;
+    string password = 3;
+    string path = 4;
+    string source = 5;
+    string name = 6;
+    string network = 7;
+    string segWit = 8;
+    string passwordHint = 9;
+    bool overwrite = 10;
+}
+
+//{
+//"address": "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN",
+//"chainType": "LITECOIN",
+//"createdAt": 1566455834,
+//"encXPub": "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==",
+//"externalAddress": {
+//"address": "mj78AbVtQ9SWnvbU7pcrueyE1krMmZtoUU",
+//"derivedPath": "0/1",
+//"type": "EXTERNAL"
+//},
+//"id": "fdb5e9d4-530d-46ed-bf4a-6a27fb8eddca",
+//"name": "LTC-Wallet-1",
+//"passwordHint": "",
+//"source": "MNEMONIC"
+//}
+
+message WalletResult {
+    string id = 1;
+    string name = 2;
+    string chainType = 3;
+    string address = 4;
+    string source = 5;
+    int64 createdAt = 6;
+    google.protobuf.Any extra = 7;
+}
+
+message ExternalAddressExtra {
+    string encXPub = 1;
+    message ExternalAddress {
+        string address = 1;
+        string derivedPath = 2;
+        string type = 3;
+    }
+    ExternalAddress externalAddress = 2;
 }

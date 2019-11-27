@@ -55,6 +55,37 @@ pub fn coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
 
 const NETWORK_COINS: [&str; 3] = ["BITCOINCASH", "LITECOIN", "BITCOIN"];
 
+pub fn coin_symbol_with_param(
+    chain_type: &str,
+    network: &str,
+    chain_id: &str,
+    seg_wit: &str,
+) -> String {
+    //    let chain_type = v["chainType"].as_str().expect("chainType");
+    if !NETWORK_COINS.contains(&chain_type) {
+        return chain_type.to_string();
+    }
+    let mut symbol = chain_type.to_string();
+
+    if !network.is_empty() {
+        if &network.to_uppercase() != "MAINNET" {
+            symbol = format!("{}-{}", symbol, network.to_uppercase());
+        }
+    }
+    if !chain_id.is_empty() {
+        if chain_id == "1" {
+            symbol = format!("{}-TESTNET", symbol.to_uppercase());
+        }
+    }
+
+    if !seg_wit.is_empty() {
+        if &seg_wit.to_uppercase() != "NONE" {
+            symbol = format!("{}-{}", symbol, seg_wit.to_uppercase());
+        }
+    }
+    symbol
+}
+
 pub fn coin_symbol_with_network(v: &Value) -> String {
     let chain_type = v["chainType"].as_str().expect("chainType");
     if !NETWORK_COINS.contains(&chain_type) {

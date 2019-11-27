@@ -49,6 +49,36 @@ protobuf.load("api.proto", function(err, root) {
 
     walkDir(jsonIn, generate_pb);
     console.log("Generate Success");
+    var payloads = [
+        {
+            "type": "api.InitTokenCoreXParam",
+            "fileDir": "./test-data",
+            "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
+            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
+        },
+        {
+            "type": "api.InitTokenCoreXParamCopy",
+            "fileDir1": "./test-data",
+            "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
+            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
+        }
+    ]
+for (var idx in payloads) {
+    var payload = payloads[idx];
+    var Type = root.lookupType(payload.type);
+    var errMsg = Type.verify(payload);
+    if (errMsg)
+        throw Error(errMsg);
+    var message = Type.create(payload); // or use .fromObject if conversion is necessary
+
+    // Encode a message to an Uint8Array (browser) or Buffer (node)
+    var buffer = Type.encode(message).finish();
+    // ... do something with buffer
+    var hexStr = buffer.toString('hex');
+    console.log(payload.type, hexStr);
+}
+    
+
     // Obtain a message type
     
 

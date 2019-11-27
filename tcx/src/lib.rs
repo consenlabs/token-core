@@ -25,7 +25,9 @@ use tcx_btc_fork::{
 use tcx_chain::keystore::EmptyExtra;
 use tcx_chain::signer::TransactionSigner;
 use tcx_chain::{HdKeystore, MessageSigner, Metadata, Source, TxSignResult};
-use tcx_constants::coin_info::{coin_info_from_symbol, coin_symbol_with_network};
+use tcx_constants::coin_info::{
+    coin_info_from_symbol, coin_symbol_with_network, coin_symbol_with_param,
+};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 
@@ -34,8 +36,13 @@ use std::fs;
 use tcx_constants::network_from_coin;
 use tcx_primitive::{verify_wif, Secp256k1Pair};
 
+use crate::api::{ImportWalletFromMnemonicParam, TcxAction, WalletResult};
 use api::InitTokenCoreXParam;
+use bytes::BytesMut;
+use log::MetadataBuilder;
+use prost;
 use prost::Message;
+
 #[macro_use]
 extern crate failure;
 
@@ -120,10 +127,33 @@ pub unsafe extern "C" fn free_const_string(s: *const c_char) {
     CStr::from_ptr(s);
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn free_buf(buf: Buffer) {
+    let s = unsafe { std::slice::from_raw_parts_mut(buf.data, buf.len) };
+    let s = s.as_mut_ptr();
+    unsafe {
+        Box::from_raw(s);
+    }
+}
+
 fn parse_arguments(json_str: *const c_char) -> Value {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().expect("parse_arguments to_str");
     serde_json::from_str(json_str).expect("parse_arguments serde_json")
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn call_tcx_action(buf: Buffer) -> Buffer {
+    let data = std::slice::from_raw_parts_mut(buf.data, buf.len);
+    let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
+    let mut ret: Vec<u8> = vec![];
+    if &action.method == "import_wallet_from_mnemonic" {
+        ret = landingpad(|| import_wallet_from_mnemonic_pb_internal(&action.param.unwrap().value));
+    }
+    let data = ret.as_mut_ptr();
+    let len = ret.len();
+    std::mem::forget(buf);
+    Buffer { data, len }
 }
 
 #[no_mangle]
@@ -366,6 +396,73 @@ fn import_wallet_from_mnemonic_internal(v: &Value) -> Result<String> {
     Ok(json)
 }
 
+//#[no_mangle]
+//pub unsafe extern "C" fn import_wallet_from_mnemonic_pb(buf: Buffer) -> *const c_char {
+//    let data = unsafe { std::slice::from_raw_parts_mut(buf.data, buf.len) };
+//    let json = landingpad(|| import_wallet_from_mnemonic_pb_internal(data));
+//    CString::new(json).expect("ret json").into_raw()
+//}
+//
+fn import_wallet_from_mnemonic_pb_internal(data: &[u8]) -> Result<Vec<u8>> {
+    //    let password = v["password"].as_str().unwrap();
+    //    let mnemonic = v["mnemonic"].as_str().unwrap();
+    //    let path = v["path"].as_str().unwrap();
+    //    let overwrite = v["overwrite"].as_bool().unwrap();
+    let param: ImportWalletFromMnemonicParam =
+        ImportWalletFromMnemonicParam::decode(data).expect("import wallet from mnemonic");
+    let symbol = coin_symbol_with_param(&param.chain_type, &param.network, "", &param.seg_wit);
+
+    let mut meta = Metadata::default();
+    meta.name = param.name.to_owned();
+    meta.password_hint = param.password_hint.to_owned();
+    meta.source = Source::Mnemonic;
+
+    //    let meta: Metadata = serde_json::from_value(v.clone())?;
+    let mut ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta);
+
+    let mut coin_info = coin_info_from_symbol(&symbol)?;
+    coin_info.derivation_path = param.path.to_string();
+    let account = match symbol.as_str() {
+        "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
+            ks.derive_coin::<BchAddress, BchExtra>(&coin_info, &param.password)
+        }
+        "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
+            ks.derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info, &param.password)
+        }
+        "TRON" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info, &param.password),
+        _ => Err(format_err!("{}", "chain_type_not_support")),
+    }?;
+
+    let exist_kid_opt = find_keystore_id_by_address(&account.address);
+    if let Some(exist_kid) = exist_kid_opt {
+        if !param.overwrite {
+            return Err(format_err!("{}", "wallet_exists"));
+        } else {
+            ks.id = exist_kid;
+        }
+    }
+
+    //    let json = format!("{}", ks);
+
+    flush_keystore(&ks)?;
+
+    let wallet = WalletResult {
+        id: ks.id.to_owned(),
+        name: ks.meta.name.to_owned(),
+        chain_type: param.chain_type.to_owned(),
+        address: ks.active_accounts.first().unwrap().address.to_owned(),
+        // todo: source
+        source: "MNEMONIC".to_owned(),
+        created_at: ks.meta.timestamp.clone(),
+        extra: None,
+    };
+    let mut buf = BytesMut::with_capacity(wallet.encoded_len());
+    wallet.encode_raw(&mut buf);
+    cache_keystore(ks);
+
+    Ok(buf.to_vec())
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn import_wallet_from_private_key(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
@@ -383,7 +480,7 @@ fn import_wallet_from_private_key_internal(v: &Value) -> Result<String> {
     verify_wif(priv_key, &symbol)?;
     let mut meta: Metadata = serde_json::from_value(v.clone())?;
     let chain_type = v["chainType"].as_str().unwrap();
-    if chain_type.to_uppercase() == "ETHEREUM" {
+    if &chain_type.to_uppercase() == "ETHEREUM" {
         meta.source = Source::Private;
     } else {
         meta.source = Source::Wif;
