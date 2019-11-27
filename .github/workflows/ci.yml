@@ -52,6 +52,13 @@ jobs:
     name: Install dependencies
     runs-on: macos-latest
     steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
       - name: Add iOS target
         run: |
           rustup target add aarch64-apple-ios armv7-apple-ios armv7s-apple-ios i386-apple-ios x86_64-apple-ios
