@@ -13,6 +13,8 @@
 
 @implementation WalletAPI
 
+RCT_EXPORT_MODULE();
+
 + (NSDictionary *)dictionaryWithJsonString:(NSString *)jsonString {
     if (jsonString == nil) {
         return nil;
@@ -63,9 +65,11 @@
   
 }
 
-+ (void) importWalletFromMnemonic:(NSDictionary *)map resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+RCT_EXPORT_METHOD(importWalletFromMnemonic:(NSDictionary *)map resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+{
   [WalletAPI callTokenCoreXApi:map resolver:resolve rejecter:reject block:^(const char *param) {
     return import_wallet_from_mnemonic(param);
   }];
 }
+
 @end

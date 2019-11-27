@@ -14,10 +14,10 @@ typedef const char *(^TokenCoreAPI)(const char *);
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface WalletAPI : NSObject
+@interface WalletAPI : NSObject <RCTBridgeModule>
 
 +(void)callTokenCoreXApi:(NSDictionary *)map resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject block:(TokenCoreAPI)block;
-+(void) importWalletFromMnemonic:(NSDictionary *)map resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
+-(void) importWalletFromMnemonic:(NSDictionary *)map resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 
 @end
 
