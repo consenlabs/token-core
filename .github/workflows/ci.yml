@@ -71,6 +71,7 @@ jobs:
     steps:
       - name: Generate the compiled files
         run: |
+          ls -l
           make build-ios-example
 
       - name: Install detox dependencies
