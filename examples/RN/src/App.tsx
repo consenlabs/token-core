@@ -21,6 +21,7 @@ const App = () => {
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
           style={styles.scrollView}>
+          <Header />
           <View style={styles.body}>
             <Mnemonic />
           </View>

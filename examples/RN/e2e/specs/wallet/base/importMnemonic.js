@@ -1,4 +1,4 @@
-import { id, text } from '../../../utils.js'
+import { id, toHaveText, label } from '../../../utils.js'
 
 export default async function (params) {
   const { chainType, mnemonic, password, address } = params
@@ -11,7 +11,12 @@ export default async function (params) {
   await id('mnemonicChainType').tap()
   await id('mnemonicChainType').typeText(chainType)
 
+  // dismiss keyboard
+  await label('return').tap()
+
   await id('mnemonicSubmit').tap()
 
-  await expect(text(address)).toExist()
+  await waitFor(id('mnemonicAddress')).toExist().withTimeout(2000)
+
+  await toHaveText('mnemonicAddress', address)
 }

@@ -68,9 +68,7 @@ class CMP extends React.Component<Props, State> {
           title="submit"
           onPress={this.handleSubmit}
         />
-
-        <Text testID="mnemonicId">id: {id}</Text>
-        <Text testID="mnemonicAddress">address: {address}</Text>
+        {!!address && <Text testID="mnemonicAddress">{address}</Text>}
         <Loading animating={isLoading} />
       </View>
     )

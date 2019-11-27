@@ -3,4 +3,4 @@ export const SUPPORT_CHAINTYPES = ['ETHEREUM', 'BITCOIN', 'EOS', 'COSMOS', 'BITC
 
 export const MNEMONIC = 'inject kidney empty canal shadow pact comfort wife crush horse wife sketch'
 // bch
-export const ADDRESS_BCH = 'bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r'
+export const ADDRESS_BCH = 'bchtest:qqurlwqukz3lcujttcyvlzaagppnd4c37chrtrylmc'
