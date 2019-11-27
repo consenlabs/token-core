@@ -2,6 +2,7 @@ use crate::transaction::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
 
+use bech32::FromBase32;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Error as BtcAddressError;
 use bitcoin::util::address::Payload;
@@ -16,7 +17,10 @@ use std::str::FromStr;
 use tcx_chain::keystore::Address;
 use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcForkNetwork};
 use tcx_constants::CoinInfo;
-use tcx_primitive::{Pair, Public, Secp256k1Pair, Secp256k1PublicKey, Ss58Codec};
+use tcx_primitive::{
+    DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey, Secp256k1PrivateKey,
+    Secp256k1PublicKey, Ss58Codec,
+};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BtcForkAddress {
@@ -39,15 +43,15 @@ impl Address for BtcForkAddress {
     }
 
     fn from_private_key(wif: &str, coin: Option<&str>) -> Result<String> {
-        let pair = Secp256k1Pair::from_wif(wif)?;
-        Self::from_public_key(&pair.public_key().to_compressed(), coin)
+        let sk = Secp256k1PrivateKey::from_wif(wif)?;
+        Self::from_public_key(&sk.public_key().to_compressed(), coin)
     }
 }
 
 impl BtcForkAddress {
     pub fn p2pkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
-        let pub_key = Secp256k1PublicKey::from_slice(&pub_key)?;
-        let addr = BtcAddress::p2pkh(&pub_key.public_key(), Network::Bitcoin);
+        let pub_key = bitcoin::PublicKey::from_slice(&pub_key)?;
+        let addr = BtcAddress::p2pkh(&pub_key, Network::Bitcoin);
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
@@ -55,8 +59,8 @@ impl BtcForkAddress {
     }
 
     pub fn p2shwpkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
-        let pub_key = Secp256k1PublicKey::from_slice(&pub_key)?;
-        let addr = BtcAddress::p2shwpkh(&pub_key.public_key(), Network::Bitcoin);
+        let pub_key = bitcoin::PublicKey::from_slice(&pub_key)?;
+        let addr = BtcAddress::p2shwpkh(&pub_key, Network::Bitcoin);
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
@@ -64,8 +68,8 @@ impl BtcForkAddress {
     }
 
     pub fn p2wpkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
-        let pub_key = Secp256k1PublicKey::from_slice(&pub_key)?;
-        let addr = BtcAddress::p2wpkh(&pub_key.public_key(), Network::Bitcoin);
+        let pub_key = bitcoin::PublicKey::from_slice(&pub_key)?;
+        let addr = BtcAddress::p2wpkh(&pub_key, Network::Bitcoin);
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
@@ -89,7 +93,7 @@ impl BtcForkAddress {
     }
 
     pub fn extended_public_key(
-        derivation_info: &ExtendedPubKey,
+        derivation_info: &impl Ss58Codec,
         coin_info: &CoinInfo,
     ) -> Result<String> {
         let network = network_from_coin(&coin_info.symbol);
@@ -98,7 +102,7 @@ impl BtcForkAddress {
     }
 
     pub fn extended_private_key(
-        extended_priv_key: &ExtendedPrivKey,
+        extended_priv_key: &impl Ss58Codec,
         coin_info: &CoinInfo,
     ) -> Result<String> {
         let network = network_from_coin(&coin_info.symbol);
@@ -275,7 +279,9 @@ mod tests {
     use bitcoin::util::bip32::ExtendedPrivKey;
     use std::str::FromStr;
     use tcx_constants::{network_from_coin, CoinInfo, CurveType};
-    use tcx_primitive::{Derive, DerivePath, Secp256k1Pair, Ss58Codec};
+    use tcx_primitive::{
+        Bip32DeterministicPrivateKey, Derive, DerivePath, Secp256k1PrivateKey, Ss58Codec,
+    };
 
     #[test]
     pub fn test_btc_fork_address() {
@@ -370,7 +376,7 @@ mod tests {
     #[test]
     pub fn extended_private_key_test() {
         let bitcoin_xprv_str = "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ";
-        let anprv = ExtendedPrivKey::from_ss58check(bitcoin_xprv_str).unwrap();
+        let anprv = Bip32DeterministicPrivateKey::from_ss58check(bitcoin_xprv_str).unwrap();
         let coin_info = CoinInfo {
             symbol: "LITECOIN".to_string(),
             derivation_path: "m/44'/2'/0'/0/0".to_string(),
@@ -383,11 +389,9 @@ mod tests {
     #[test]
     pub fn extended_public_key_test() {
         let bitcoin_xprv_str = "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ";
-        let anpub = Secp256k1Pair::from_extended(bitcoin_xprv_str)
+        let anpub = Bip32DeterministicPrivateKey::from_ss58check(bitcoin_xprv_str)
             .unwrap()
             .derive(DerivePath::from_str("m/44'/2'/0'").unwrap().into_iter())
-            .unwrap()
-            .extended_pub_key()
             .unwrap();
         let coin_info = CoinInfo {
             symbol: "LITECOIN".to_string(),

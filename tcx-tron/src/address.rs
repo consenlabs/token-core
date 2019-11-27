@@ -2,7 +2,7 @@ use bitcoin::util::base58;
 
 use crate::keccak;
 use tcx_chain::keystore::Address as TraitAddress;
-use tcx_primitive::{Pair, Public, Secp256k1Pair, Secp256k1PublicKey};
+use tcx_primitive::{PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey};
 
 pub struct Address(pub String);
 
@@ -19,9 +19,9 @@ impl TraitAddress for Address {
     }
 
     fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String, failure::Error> {
-        let pk_bytes = hex::decode(private_key)?;
-        let pair = Secp256k1Pair::from_slice(&pk_bytes)?;
-        Address::from_public_key(&pair.public_key().to_uncompressed(), coin)
+        let sk_bytes = hex::decode(private_key)?;
+        let sk = Secp256k1PrivateKey::from_slice(&sk_bytes)?;
+        Address::from_public_key(&sk.public_key().to_uncompressed(), coin)
     }
 }
 
@@ -29,8 +29,7 @@ impl TraitAddress for Address {
 mod tests {
     use super::Address;
     use tcx_chain::keystore::Address as TraitAddress;
-    use tcx_primitive::Public;
-    use tcx_primitive::Secp256k1PublicKey;
+    use tcx_primitive::{PublicKey, Secp256k1PublicKey};
 
     #[test]
     fn tron_address() {

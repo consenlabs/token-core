@@ -15,7 +15,10 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
-use tcx_primitive::{Derive, DerivePath, Pair, Secp256k1Pair, Secp256k1PublicKey, Ss58Codec};
+use tcx_primitive::{
+    Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPrivateKey,
+    DeterministicPublicKey, PrivateKey, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec,
+};
 
 use crate::ExtendedPubKeyExtra;
 use bitcoin::util::bip143::SighashComponents;
@@ -23,9 +26,7 @@ use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin_hashes::hash160;
 use std::marker::PhantomData;
 use tcx_chain::keystore::Address;
-use tcx_chain::keystore::KeyType::PrivateKey;
-use tcx_primitive::derive::get_account_path;
-use tcx_primitive::Public;
+use tcx_primitive::{get_account_path, PublicKey};
 
 const DUST: u64 = 546;
 const SIGHASH_ALL: u8 = 0x01;
@@ -115,11 +116,11 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             let path = &account.derivation_path;
             let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
             let paths = tx.collect_key_pair_paths(path)?;
-            let pairs = &self.key_pair_at_paths(
-                tx.coin.to_uppercase().as_str(),
-                &paths,
-                password.unwrap(),
-            )?;
+            let pairs = &self
+                .key_at_paths(tx.coin.to_uppercase().as_str(), &paths, password.unwrap())?
+                .iter()
+                .map(|esk| esk.private_key())
+                .collect();
 
             let xpub = extra.xpub()?;
             let change_addr = tx.change_address(&xpub)?;
@@ -128,10 +129,11 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             let change_addr = S::address_script_pub_key(&account.address)?;
             let pk = self.private_key(password.unwrap())?;
             // todo: more easy way to clone pair, will fix after refactor the pair
-            let mut pairs: Vec<Secp256k1Pair> = vec![];
+            let mut pairs: Vec<Secp256k1PrivateKey> = vec![];
             for x in 0..tx.unspents.len() {
-                pairs.push(Secp256k1Pair::from_wif(&pk)?);
+                pairs.push(Secp256k1PrivateKey::from_wif(&pk)?);
             }
+
             tx.sign_transaction(&pairs, change_addr)
         }
     }
@@ -195,11 +197,11 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     }
 
     pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
-        let ext_pub_key = Secp256k1PublicKey::from_extended(xpub)?;
+        let epk = Bip32DeterministicPublicKey::from_ss58check(xpub)?;
 
-        let index_ext_pub_key =
-            ext_pub_key.derive(DerivePath::from_str(child_path)?.into_iter())?;
-        Ok(index_ext_pub_key.public_key())
+        let index_ext_pub_key = epk.derive(DerivePath::from_str(child_path)?.into_iter())?;
+
+        Ok(index_ext_pub_key.public_key().0)
     }
 
     fn tx_outs(&self, change_script_pubkey: Script) -> Result<Vec<TxOut>> {
@@ -253,7 +255,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
 
     pub fn sign_transaction(
         &self,
-        key_pairs: &[impl Pair],
+        keys: &[impl PrivateKey],
         change_addr_pubkey: Script,
     ) -> Result<TxSignResult> {
         let tx_outs = self.tx_outs(change_addr_pubkey)?;
@@ -265,7 +267,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             output: tx_outs,
         };
 
-        let signed_tx = T::sign_inputs(&tx, &self.unspents, &key_pairs)?;
+        let signed_tx = T::sign_inputs(&tx, &self.unspents, &keys)?;
         let tx_bytes = serialize(&signed_tx);
 
         Ok(TxSignResult {
@@ -280,12 +282,12 @@ pub trait BitcoinTransactionSignComponent {
     fn sign_inputs(
         tx: &Transaction,
         unspents: &[Utxo],
-        key_pairs: &[impl Pair],
+        keys: &[impl PrivateKey],
     ) -> Result<Transaction>;
     fn tx_version() -> u32;
 
     fn sign_hash_and_pub_key(
-        pri_key: &impl Pair,
+        pri_key: &impl PrivateKey,
         hash: &[u8],
         sign_hash: u8,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
@@ -293,7 +295,7 @@ pub trait BitcoinTransactionSignComponent {
         let raw_bytes: Vec<u8> = vec![sign_hash];
         let sig_bytes: Vec<u8> = [signature_bytes, raw_bytes].concat();
         let pub_key = pri_key.public_key();
-        let pub_key_bytes = pub_key.to_bytes()?;
+        let pub_key_bytes = pub_key.to_bytes();
         Ok((sig_bytes, pub_key_bytes.to_vec()))
     }
 }
@@ -304,21 +306,21 @@ impl SegWitTransactionSignComponent {
     fn witness_sign(
         tx: &Transaction,
         unspents: &[Utxo],
-        key_pairs: &[impl Pair],
+        keys: &[impl PrivateKey],
     ) -> Result<Vec<(Vec<u8>, Vec<u8>)>> {
         let mut witnesses: Vec<(Vec<u8>, Vec<u8>)> = vec![];
         let shc = SighashComponents::new(&tx);
         for i in 0..tx.input.len() {
             let tx_in = &tx.input[i];
             let unspent = &unspents[i];
-            let pub_key = &key_pairs[i].public_key();
-            let pub_key_bytes = pub_key.to_bytes()?;
+            let pub_key = &keys[i].public_key();
+            let pub_key_bytes = pub_key.to_bytes();
             let pub_key_hash = hash160::Hash::hash(&pub_key_bytes).into_inner();
             let script_hex = format!("76a914{}88ac", hex::encode(pub_key_hash));
             let script = Script::from(hex::decode(script_hex)?);
             let hash = shc.sighash_all(tx_in, &script, unspent.amount as u64);
 
-            let prv_key = &key_pairs[i];
+            let prv_key = &keys[i];
             witnesses.push(Self::sign_hash_and_pub_key(
                 prv_key,
                 &hash.into_inner(),
@@ -333,17 +335,17 @@ impl BitcoinTransactionSignComponent for SegWitTransactionSignComponent {
     fn sign_inputs(
         tx: &Transaction,
         unspents: &[Utxo],
-        key_pairs: &[impl Pair],
+        keys: &[impl PrivateKey],
     ) -> Result<Transaction> {
         let _sig_hash_components = SighashComponentsWithForkId::new(&tx);
-        let witnesses: Vec<(Vec<u8>, Vec<u8>)> = Self::witness_sign(tx, unspents, key_pairs)?;
+        let witnesses: Vec<(Vec<u8>, Vec<u8>)> = Self::witness_sign(tx, unspents, keys)?;
         let input_with_sigs = tx
             .input
             .iter()
             .enumerate()
             .map(|(i, txin)| {
-                let pub_key = &key_pairs[i].public_key();
-                let pub_key_bytes = pub_key.to_bytes().expect("get bytes from pub_key");
+                let pub_key = &keys[i].public_key();
+                let pub_key_bytes = pub_key.to_bytes();
                 let hash = hash160::Hash::hash(&pub_key_bytes).into_inner();
                 let hex = format!("160014{}", hex::encode(&hash));
 
@@ -390,14 +392,14 @@ impl<H: SignHasher> LegacyTransactionSignComponent<H> {
     fn script_sigs_sign(
         tx: &Transaction,
         unspents: &[Utxo],
-        key_pairs: &[impl Pair],
+        keys: &[impl PrivateKey],
     ) -> Result<Vec<Script>> {
         let mut script_sigs: Vec<Script> = vec![];
 
         for i in 0..tx.input.len() {
             let unspent = &unspents[i];
             let (hash, hash_type) = H::sign_hash(&tx, i, &unspent)?;
-            let prv_key = &key_pairs[i];
+            let prv_key = &keys[i];
             let script_sig_and_pub_key =
                 Self::sign_hash_and_pub_key(prv_key, &hash.into_inner(), hash_type as u8)?;
             let script = Builder::new()
@@ -414,9 +416,9 @@ impl<H: SignHasher> BitcoinTransactionSignComponent for LegacyTransactionSignCom
     fn sign_inputs(
         tx: &Transaction,
         unspents: &[Utxo],
-        key_pairs: &[impl Pair],
+        keys: &[impl PrivateKey],
     ) -> Result<Transaction> {
-        let sign_scripts = Self::script_sigs_sign(&tx, unspents, &key_pairs)?;
+        let sign_scripts = Self::script_sigs_sign(&tx, unspents, &keys)?;
         let input_with_sigs = tx
             .input
             .iter()
@@ -450,7 +452,7 @@ pub type BtcForkSegWitTransaction =
 mod tests {
     use super::*;
 
-    use tcx_primitive::Secp256k1Pair;
+    use tcx_primitive::Secp256k1PrivateKey;
 
     #[test]
     fn test_sign_ltc() {
@@ -480,7 +482,7 @@ mod tests {
         };
 
         let prv_key =
-            Secp256k1Pair::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
+            Secp256k1PrivateKey::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
                 .unwrap();
         let change_addr = BtcForkAddress::from_str("mgBCJAsvzgT2qNNeXsoECg2uPKrUsZ76up").unwrap();
         //        let sign_ret = keystore.sign_transaction(&tran, Some(&PASSWORD)).unwrap();
@@ -517,8 +519,9 @@ mod tests {
             _marker_t: PhantomData,
         };
 
-        let pair = Secp256k1Pair::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
-            .unwrap();
+        let pair =
+            Secp256k1PrivateKey::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
+                .unwrap();
         let change_addr = BtcForkAddress::from_str("mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1").unwrap();
         //        let sign_ret = keystore.sign_transaction(&tran, Some(&PASSWORD)).unwrap();
         let actual = tran
@@ -551,7 +554,7 @@ mod tests {
             _marker_t: PhantomData,
         };
         //
-        let pair = Secp256k1Pair::from_slice(
+        let pair = Secp256k1PrivateKey::from_slice(
             &hex::decode("f3731f49d830c109e054522df01a9378383814af5b01a9cd150511f12db39e6e")
                 .unwrap(),
         )

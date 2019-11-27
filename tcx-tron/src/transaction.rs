@@ -9,8 +9,7 @@ use bitcoin_hashes::Hash as TraitHash;
 
 use serde_json::Value;
 use std::convert::{TryFrom, TryInto};
-use tcx_primitive::Pair;
-use tcx_primitive::Secp256k1Pair;
+use tcx_primitive::{PrivateKey, Secp256k1PrivateKey};
 
 use failure::format_err;
 
@@ -63,8 +62,8 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
             .account(&"TRON")
             .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
-        let pair = &self.get_pair::<Secp256k1Pair>(path, password.unwrap())?;
-        let sign_result = pair.sign_recoverable(&hash[..]);
+        let sk = &self.get_private_key(path, password.unwrap())?;
+        let sign_result = sk.sign_recoverable(&hash[..]);
 
         match sign_result {
             Ok(r) => {
@@ -119,8 +118,8 @@ impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
             .account(&"TRON")
             .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
-        let pair = &self.get_pair::<Secp256k1Pair>(path, password.unwrap())?;
-        let mut sign_result = pair.sign_recoverable(&hash[..])?;
+        let sk = &self.get_private_key(path, password.unwrap())?;
+        let mut sign_result = sk.sign_recoverable(&hash[..])?;
         sign_result[64] = sign_result[64] + 27;
         Ok(SignedMessage {
             signature: hex::encode(sign_result),
@@ -196,15 +195,16 @@ mod tests {
 
     #[test]
     fn sign_message() {
-        let pair = Secp256k1Pair::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
-            .unwrap();
+        let sk =
+            Secp256k1PrivateKey::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
+                .unwrap();
         let message =
             hex_bytes("645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76").unwrap();
         let header = "\x19TRON Signed Message:\n32".as_bytes();
         let to_signed = [header.to_vec(), message].concat();
 
         let hash = keccak(&to_signed);
-        let mut signed = pair.sign_recoverable(&hash).unwrap();
+        let mut signed = sk.sign_recoverable(&hash).unwrap();
         signed[64] = signed[64] + 27;
         assert_eq!("7209610445e867cf2a36ea301bb5d1fbc3da597fd2ce4bb7fa64796fbf0620a4175e9f841cbf60d12c26737797217c0082fdb3caa8e44079e04ec3f93e86bbea1c", hex::encode(&signed))
     }
