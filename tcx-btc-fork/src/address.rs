@@ -280,7 +280,8 @@ mod tests {
     use std::str::FromStr;
     use tcx_constants::{network_from_coin, CoinInfo, CurveType};
     use tcx_primitive::{
-        Bip32DeterministicPrivateKey, Derive, DerivePath, Secp256k1PrivateKey, Ss58Codec,
+        Bip32DeterministicPrivateKey, Derive, DerivePath, DeterministicPrivateKey,
+        Secp256k1PrivateKey, Ss58Codec,
     };
 
     #[test]
@@ -392,6 +393,8 @@ mod tests {
         let anpub = Bip32DeterministicPrivateKey::from_ss58check(bitcoin_xprv_str)
             .unwrap()
             .derive(DerivePath::from_str("m/44'/2'/0'").unwrap().into_iter())
+            .unwrap()
+            .deterministic_public_key()
             .unwrap();
         let coin_info = CoinInfo {
             symbol: "LITECOIN".to_string(),

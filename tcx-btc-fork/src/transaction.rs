@@ -116,25 +116,25 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             let path = &account.derivation_path;
             let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
             let paths = tx.collect_key_pair_paths(path)?;
-            let pairs = &self
+            let sks = &self
                 .key_at_paths(tx.coin.to_uppercase().as_str(), &paths, password.unwrap())?
                 .iter()
                 .map(|esk| esk.private_key())
-                .collect();
+                .collect::<Vec<Secp256k1PrivateKey>>();
 
             let xpub = extra.xpub()?;
             let change_addr = tx.change_address(&xpub)?;
-            tx.sign_transaction(&pairs, change_addr)
+            tx.sign_transaction(&sks, change_addr)
         } else {
             let change_addr = S::address_script_pub_key(&account.address)?;
             let pk = self.private_key(password.unwrap())?;
             // todo: more easy way to clone pair, will fix after refactor the pair
-            let mut pairs: Vec<Secp256k1PrivateKey> = vec![];
+            let mut sks: Vec<Secp256k1PrivateKey> = vec![];
             for x in 0..tx.unspents.len() {
-                pairs.push(Secp256k1PrivateKey::from_wif(&pk)?);
+                sks.push(Secp256k1PrivateKey::from_wif(&pk)?);
             }
 
-            tx.sign_transaction(&pairs, change_addr)
+            tx.sign_transaction(&sks, change_addr)
         }
     }
 }

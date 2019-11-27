@@ -28,7 +28,6 @@ use tcx_crypto::aes::cbc::{decrypt_pkcs7, encrypt_pkcs7};
 pub use transaction::{BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkTransaction, Utxo};
 
 pub use address::{BtcForkAddress, PubKeyScript};
-use bitcoin::util::bip32::ExtendedPubKey;
 use serde::export::PhantomData;
 use serde_json::Value;
 use tcx_constants::{CoinInfo, CurveType};

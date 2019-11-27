@@ -253,7 +253,7 @@ impl HdKeystore {
         curve: CurveType,
         paths: &[impl AsRef<str>],
         seed: &Seed,
-    ) -> Result<Vec<impl DeterministicPrivateKey>> {
+    ) -> Result<Vec<Bip32DeterministicPrivateKey>> {
         match curve {
             CurveType::SECP256k1 => {
                 let private_key = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes())
@@ -283,7 +283,7 @@ impl HdKeystore {
         symbol: &str,
         paths: &[impl AsRef<str>],
         password: &str,
-    ) -> Result<Vec<impl DeterministicPrivateKey>> {
+    ) -> Result<Vec<Bip32DeterministicPrivateKey>> {
         let acc = self.account(symbol).ok_or(Error::AccountNotFound)?;
         let seed = self.seed(password)?;
         Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)

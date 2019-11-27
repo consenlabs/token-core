@@ -32,7 +32,7 @@ use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 use std::convert::TryFrom;
 use std::fs;
 use tcx_constants::network_from_coin;
-use tcx_primitive::{verify_wif, Secp256k1Pair};
+use tcx_primitive::{verify_wif, Secp256k1PrivateKey};
 
 #[macro_use]
 extern crate failure;
