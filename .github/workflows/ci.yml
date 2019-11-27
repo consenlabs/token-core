@@ -85,7 +85,6 @@ jobs:
 
       - name: Install detox dependencies
         run: |
-          xcversion simulators --install='iOS 13.2'
           brew tap wix/brew
           brew install applesimutils
 
