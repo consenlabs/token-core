@@ -7,8 +7,9 @@
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
-    "e2e:build": "detox build --configuration=ios.sim.debug",
-    "e2e:test": "detox test --configuration=ios.sim.debug",
+    "e2e:debug": "detox build --configuration=ios.sim.debug && detox test --configuration=ios.sim.debug",
+    "e2e:build": "detox build --configuration=ios.sim.release",
+    "e2e:test": "detox test --configuration=ios.sim.release",
     "e2e": "npm run e2e:build && npm run e2e:test"
   },
   "dependencies": {
