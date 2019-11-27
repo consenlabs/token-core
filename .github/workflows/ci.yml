@@ -76,7 +76,6 @@ jobs:
 
       - name: Generate the compiled files
         run: |
-          sudo xcode-select -s /Applications/Xcode_11.2.app/Contents/Developer
           make build-ios-example
 
       - name: Install detox dependencies
@@ -87,4 +86,5 @@ jobs:
 
       - name: Run e2e test
         run: |
+          sudo xcode-select -s /Applications/Xcode_11.2.app/Contents/Developer
           make e2e
