@@ -69,6 +69,11 @@ jobs:
     name: e2e
     runs-on: macos-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+
       - name: Generate the compiled files
         run: |
           cat Makefile
