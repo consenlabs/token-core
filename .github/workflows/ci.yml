@@ -90,4 +90,5 @@ jobs:
 
       - name: Run e2e test
         run: |
+          cat ./examples/RN/ios/TokenCoreX/Include/tcx.h
           make e2e
