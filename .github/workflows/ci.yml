@@ -70,17 +70,14 @@ jobs:
           ./tools/ios-example-build.sh
         shell: bash
 
-      - name: Force xcode_11.2.1
-        run: |
-          # ls -n /Applications/ | grep Xcode*
-          sudo xcode-select -switch /Applications/Xcode_11.2.1.app
-
       - name: Install detox dependencies
         run: |
           brew tap wix/brew
           brew install applesimutils
 
       - name: Run e2e test
+        env:
+          # force xcode 11.2.1
+          DEVELOPER_DIR: /Applications/Xcode_11.2.1.app/Contents/Developer
         run: |
-          cat ./examples/RN/ios/TokenCoreX/Include/tcx.h
           make e2e
