@@ -143,11 +143,12 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn call_tcx_action(buf: Buffer) -> Buffer {
+pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
     let data = std::slice::from_raw_parts_mut(buf.data, buf.len);
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
     let mut ret: Vec<u8> = vec![];
     if &action.method == "import_wallet_from_mnemonic" {
+        println!("call method right");
         ret = landingpad(|| import_wallet_from_mnemonic_pb_internal(&action.param.unwrap().value));
     }
     let data = ret.as_mut_ptr();
@@ -442,10 +443,14 @@ fn import_wallet_from_mnemonic_pb_internal(data: &[u8]) -> Result<Vec<u8>> {
         }
     }
 
-    //    let json = format!("{}", ks);
-
+    let json = format!("{}", ks);
+    println!("ks right: {}", json);
     flush_keystore(&ks)?;
 
+    let extra = ::prost_types::Any {
+        type_url: "imToken.api.ImportWalletFromMnemonic".to_owned(),
+        value: vec![],
+    };
     let wallet = WalletResult {
         id: ks.id.to_owned(),
         name: ks.meta.name.to_owned(),
@@ -454,12 +459,12 @@ fn import_wallet_from_mnemonic_pb_internal(data: &[u8]) -> Result<Vec<u8>> {
         // todo: source
         source: "MNEMONIC".to_owned(),
         created_at: ks.meta.timestamp.clone(),
-        extra: None,
+        extra: Some(extra),
     };
-    let mut buf = BytesMut::with_capacity(wallet.encoded_len());
+    let mut buf = BytesMut::with_capacity(wallet.encoded_len() * 3);
     wallet.encode_raw(&mut buf);
     cache_keystore(ks);
-
+    println!("raw result: {}", hex::encode(buf.clone()));
     Ok(buf.to_vec())
 }
 
@@ -930,10 +935,10 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 #[cfg(test)]
 mod tests {
     use crate::{
-        cache_derived_key, calc_external_address, clear_derived_key, clear_err, export_mnemonic,
-        export_private_key, find_wallet_by_private_key, get_derived_key, get_last_err_message,
-        import_wallet_from_private_key, init_token_core_x_pb_internal, remove_wallet, sign_message,
-        sign_transaction, verify_derived_key, verify_password, Buffer,
+        cache_derived_key, calc_external_address, call_tcx_api, clear_derived_key, clear_err,
+        export_mnemonic, export_private_key, find_wallet_by_private_key, get_derived_key,
+        get_last_err_message, import_wallet_from_private_key, init_token_core_x_pb_internal,
+        remove_wallet, sign_message, sign_transaction, verify_derived_key, verify_password, Buffer,
     };
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
@@ -947,7 +952,7 @@ mod tests {
     use std::path::Path;
     use std::str::FromStr;
 
-    use crate::api::InitTokenCoreXParam;
+    use crate::api::{InitTokenCoreXParam, WalletResult};
     use bytes::BytesMut;
     use prost::Message;
     use tcx_chain::HdKeystore;
@@ -1801,5 +1806,21 @@ mod tests {
         param.encode(&mut buf).unwrap();
         assert_eq!("", buf);
         let param = InitTokenCoreXParam::decode(&buf).unwrap();
+    }
+
+    #[test]
+    fn test_call_tcx_api() {
+        let param_hex = "0a1b696d706f72745f77616c6c65745f66726f6d5f6d6e656d6f6e696312ca010a25696d546f6b656e2e496d706f727457616c6c657446726f6d4d6e656d6f6e6963506172616d12a0010a084c495445434f494e124573616c75746520736c757368206e6f7720736372697074206e657374206c61772061646d6974206163686965766520766f69636520736f6461206672756974206669656c641a11496e7365637572652050617373776f7264220f6d2f3434272f31272f30272f302f302a084d4e454d4f4e4943320c4c54432d57616c6c65742d313a074d41494e4e455442044e4f4e454a005001";
+        let mut param_bytes = hex::decode(param_hex).unwrap();
+        let param_buf = Buffer {
+            data: param_bytes.as_mut_ptr(),
+            len: param_bytes.len(),
+        };
+        let ret_buf = unsafe { call_tcx_api(param_buf) };
+        let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
+        assert_eq!("", hex::encode(&ret_bytes));
+        //        let ret = "0a1b696d706f72745f77616c6c65745f66726f6d5f6d6e656d6f6e696312ca010a25696d546f6b656e2e496d706f727457616c6c657446726f6d4d6e656d6f6e6963506172616d12a0010a084c495445434f494e124573616c75746520736c757368206e6f7720736372697074206e657374206c61772061646d6974206163686965766520766f69636520736f6461206672756974206669656c641a11496e7365637572652050617373776f7264220f6d2f3434272f31272f30272f302f302a084d4e454d4f4e4943320c4c54432d57616c6c65742d313a074d41494e4e455442044e4f4e454a005001";
+        //        let buf =  BytesMut::from(hex::decode(ret).unwrap());
+        //        assert_eq!("", format!("{:#?}", WalletResult::decode(&buf).unwrap()));
     }
 }
