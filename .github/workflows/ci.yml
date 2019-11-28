@@ -76,7 +76,6 @@ jobs:
           fetch-depth: 1
 
       - name: Generate the compiled files
-        uses: actions-rs/toolchain@v1
         run: |
           cargo install cargo-lipo
           cargo install cbindgen
