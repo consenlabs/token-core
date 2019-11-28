@@ -71,13 +71,13 @@ impl<T: Address> Extra for ExtendedPubKeyExtra<T>
 where
     T: std::clone::Clone,
 {
-    fn new(coin_info: &CoinInfo, seed: &Seed) -> Result<Self> {
+    fn new(coin_info: &CoinInfo, seed: &[u8]) -> Result<Self> {
         ensure!(
             coin_info.curve == CurveType::SECP256k1,
             "BCH must be at secp256k1"
         );
         let account_path = get_account_path(&coin_info.derivation_path)?;
-        let esk = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes())?;
+        let esk = Bip32DeterministicPrivateKey::from_seed(seed)?;
         let derive_path = DerivePath::from_str(&account_path)?;
         let account = esk
             .derive(derive_path.into_iter())?
@@ -176,7 +176,7 @@ mod tests {
         )
         .unwrap();
         let seed = Seed::new(&mnemonic, "");
-        let extra = BtcForkExtra::new(&coin_info, &seed).unwrap();
+        let extra = BtcForkExtra::new(&coin_info, seed.as_bytes()).unwrap();
         assert_eq!(extra.enc_xpub, "MwDMFXVWDEuWvBogeW1v/MOMFDnGnnflm2JAPvJaJZO4HXp8fCsWETA7u8MzOW3KaPksglpUHLN3xkDr2QWMEQq0TewFZoZ3KsjmLW0KGMRN7XQKqo/omkSEsPfalVnp9Zxm2lpxVmIacqvlernVSg==");
         assert_eq!(extra.xpub().unwrap(), "xpub6D3MqTwuLWB5veAfhDjPu1oHfS6L1imVbf22zQFWJW9EtnSmYYqiGMGkW1MCsT2HmkW872tefMY9deewW6DGd8zE7RcXVv8wKhZnbJeidjT");
 

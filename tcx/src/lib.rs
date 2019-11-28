@@ -31,6 +31,7 @@ use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 
 use std::convert::TryFrom;
 use std::fs;
+use tcx_chain::keystore_guard::KeystoreGuard;
 use tcx_constants::network_from_coin;
 use tcx_primitive::{verify_wif, Secp256k1PrivateKey};
 
@@ -266,25 +267,33 @@ fn import_wallet_from_mnemonic_internal(v: &Value) -> Result<String> {
     // todo: mnemonic not valid
     let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
 
-    let mut coin_info = coin_info_from_symbol(&symbol)?;
-    coin_info.derivation_path = path.to_string();
-    let account = match symbol.as_str() {
-        "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
-            ks.derive_coin::<BchAddress, BchExtra>(&coin_info, password)
-        }
-        "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
-            ks.derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info, password)
-        }
-        "TRON" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info, password),
-        _ => Err(format_err!("{}", "chain_type_not_support")),
-    }?;
+    {
+        let mut guard = KeystoreGuard::unlock_by_password(&mut ks, password)?;
 
-    let exist_kid_opt = find_keystore_id_by_address(&account.address);
-    if let Some(exist_kid) = exist_kid_opt {
-        if !overwrite {
-            return Err(format_err!("{}", "wallet_exists"));
-        } else {
-            ks.id = exist_kid;
+        let mut coin_info = coin_info_from_symbol(&symbol)?;
+        coin_info.derivation_path = path.to_string();
+        let account = match symbol.as_str() {
+            "BITCOINCASH" | "BITCOINCASH-TESTNET" => guard
+                .keystore_mut()
+                .derive_coin::<BchAddress, BchExtra>(&coin_info),
+            "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
+                guard
+                    .keystore_mut()
+                    .derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info)
+            }
+            "TRON" => guard
+                .keystore_mut()
+                .derive_coin::<TrxAddress, EmptyExtra>(&coin_info),
+            _ => Err(format_err!("{}", "chain_type_not_support")),
+        }?;
+
+        let exist_kid_opt = find_keystore_id_by_address(&account.address);
+        if let Some(exist_kid) = exist_kid_opt {
+            if !overwrite {
+                return Err(format_err!("{}", "wallet_exists"));
+            } else {
+                guard.keystore_mut().id = exist_kid;
+            }
         }
     }
 
@@ -295,6 +304,7 @@ fn import_wallet_from_mnemonic_internal(v: &Value) -> Result<String> {
     Ok(json)
 }
 
+/*
 #[no_mangle]
 pub unsafe extern "C" fn import_wallet_from_private_key(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
@@ -317,17 +327,17 @@ fn import_wallet_from_private_key_internal(v: &Value) -> Result<String> {
     } else {
         meta.source = Source::Wif;
     }
-    let mut ks = HdKeystore::from_private_key(priv_key, password, meta.source);
+    let ks = &mut HdKeystore::from_private_key(priv_key, password, meta.source);
 
     let coin_info = coin_info_from_symbol(&symbol)?;
     let account = match symbol.as_str() {
         "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
-            ks.derive_coin::<BchAddress, EmptyExtra>(&coin_info, password)
+            ks.derive_coin::<BchAddress, EmptyExtra>(&coin_info)
         }
         "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
-            ks.derive_coin::<BtcForkAddress, EmptyExtra>(&coin_info, password)
+            ks.derive_coin::<BtcForkAddress, EmptyExtra>(&coin_info)
         }
-        "TRON" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info, password),
+        "TRON" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }?;
 
@@ -340,12 +350,12 @@ fn import_wallet_from_private_key_internal(v: &Value) -> Result<String> {
         }
     }
 
-    flush_keystore(&ks)?;
+    flush_keystore(ks)?;
     let json = format!("{}", ks);
     cache_keystore(ks);
 
     Ok(json)
-}
+}*/
 
 #[no_mangle]
 pub unsafe extern "C" fn export_mnemonic(json_str: *const c_char) -> *const c_char {
@@ -380,12 +390,14 @@ fn export_private_key_internal(v: &Value) -> Result<String> {
     let wid = v["id"].as_str().expect("id");
     let password = v["password"].as_str().expect("password");
 
-    let map = KEYSTORE_MAP.read().unwrap();
-    let keystore = match map.get(wid) {
+    let mut map = KEYSTORE_MAP.write().unwrap();
+    let keystore = match map.get_mut(wid) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
-    let pk = keystore.private_key(password)?;
+
+    let mut guard = KeystoreGuard::unlock_by_password(keystore, password)?;
+    let pk = guard.keystore_mut().private_key()?;
     Ok(serde_json::to_string(
         &json!({"ok": true, "privateKey": pk}),
     )?)
@@ -437,6 +449,8 @@ fn sign_transaction_internal(json_str: &str) -> Result<String> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
+    let guard = KeystoreGuard::unlock_by_password(keystore, password)?;
+
     match symbol.as_str() {
         "BITCOINCASH"
         | "BITCOINCASH-TESTNET"
@@ -444,19 +458,14 @@ fn sign_transaction_internal(json_str: &str) -> Result<String> {
         | "LITECOIN-P2WPKH"
         | "LITECOIN-TESTNET"
         | "LITECOIN-TESTNET-P2WPKH" => {
-            sign_btc_fork_transaction(json_str, &symbol, keystore, password)
+            sign_btc_fork_transaction(json_str, &symbol, guard.keystore())
         }
-        "TRON" => sign_trx_transaction(json_str, keystore, password),
+        "TRON" => sign_trx_transaction(json_str, guard.keystore()),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }
 }
 
-fn sign_btc_fork_transaction(
-    json: &str,
-    coin: &str,
-    keystore: &HdKeystore,
-    password: &str,
-) -> Result<String> {
+fn sign_btc_fork_transaction(json: &str, coin: &str, keystore: &HdKeystore) -> Result<String> {
     let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
     let utxos = v["outputs"].as_array().expect("expect outputs");
 
@@ -505,7 +514,7 @@ fn sign_btc_fork_transaction(
             change_address.map(str::to_string),
             coin.to_string(),
         );
-        ret = keystore.sign_transaction(&tran, Some(&password))?;
+        ret = keystore.sign_transaction(&tran)?;
     } else if is_seg_wit {
         let tran = BtcForkSegWitTransaction::new(
             to.to_owned(),
@@ -516,7 +525,7 @@ fn sign_btc_fork_transaction(
             change_address.map(str::to_string),
             coin.to_string(),
         );
-        ret = keystore.sign_transaction(&tran, Some(&password))?;
+        ret = keystore.sign_transaction(&tran)?;
     } else {
         let tran = BtcForkTransaction::new(
             to.to_owned(),
@@ -528,16 +537,16 @@ fn sign_btc_fork_transaction(
             coin.to_string(),
         );
 
-        ret = keystore.sign_transaction(&tran, Some(&password))?;
+        ret = keystore.sign_transaction(&tran)?;
     }
 
     Ok(serde_json::to_string(&ret)?)
 }
 
-fn sign_trx_transaction(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+fn sign_trx_transaction(json: &str, keystore: &HdKeystore) -> Result<String> {
     let v = Value::from_str(json)?;
     let tx = TrxTransaction::try_from(v)?;
-    let signed: TrxSignedTransaction = keystore.sign_transaction(&tx, Some(password))?;
+    let signed: TrxSignedTransaction = keystore.sign_transaction(&tx)?;
     let signed_v: Value = signed.try_into()?;
     Ok(signed_v.to_string())
 }
@@ -558,20 +567,22 @@ fn sign_message_internal(json_str: &str) -> Result<String> {
     let symbol = coin_symbol_with_network(&v);
 
     let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore = match map.get_mut(w_id) {
+    let mut keystore = match map.get_mut(w_id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
+    let guard = KeystoreGuard::unlock_by_password(keystore, password)?;
+
     match symbol.as_str() {
-        "TRON" => sign_trx_message(json_str, keystore, password),
+        "TRON" => sign_trx_message(json_str, guard.keystore()),
         _ => Err(format_err!("{}", "chain_type_not_support")),
     }
 }
 
-fn sign_trx_message(json: &str, keystore: &HdKeystore, password: &str) -> Result<String> {
+fn sign_trx_message(json: &str, keystore: &HdKeystore) -> Result<String> {
     let message = serde_json::from_str::<TrxMessage>(json)?;
-    let signed = keystore.sign_message(&message, Some(password))?;
+    let signed = keystore.sign_message(&message)?;
     Ok(signed.signature)
 }
 
@@ -764,8 +775,7 @@ mod tests {
     use crate::{
         cache_derived_key, calc_external_address, clear_derived_key, clear_err, export_mnemonic,
         export_private_key, find_wallet_by_private_key, get_derived_key, get_last_err_message,
-        import_wallet_from_private_key, remove_wallet, sign_message, sign_transaction,
-        verify_derived_key, verify_password,
+        remove_wallet, sign_message, sign_transaction, verify_derived_key, verify_password,
     };
     use crate::{
         create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
@@ -1043,6 +1053,7 @@ mod tests {
         });
     }
 
+    /*
     #[test]
     fn import_bch_wallet_from_private_key_test() {
         run_test(|| {
@@ -1106,7 +1117,9 @@ mod tests {
             remove_created_wallet(imported_id);
         });
     }
+    */
 
+    /*
     #[test]
     fn import_bch_wallet_from_private_key_testnet() {
         run_test(|| {
@@ -1148,6 +1161,7 @@ mod tests {
             remove_created_wallet(imported_id);
         });
     }
+    */
 
     #[test]
     fn import_ltc_wallet_from_mnemonic_test() {

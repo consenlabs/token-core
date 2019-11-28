@@ -1,4 +1,4 @@
-use bip39::{Language, Mnemonic, Seed};
+use bip39::{Language, Mnemonic};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -10,6 +10,7 @@ use tcx_primitive::{
     DerivePath, DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey,
 };
 
+use crate::keystore_guard::KeystoreGuard;
 use crate::Error;
 use crate::Result;
 use core::{fmt, result};
@@ -86,7 +87,7 @@ pub struct Account {
 
 /// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
 pub trait Extra: Sized + serde::Serialize + Clone {
-    fn new(coin_info: &CoinInfo, seed: &Seed) -> Result<Self>;
+    fn new(coin_info: &CoinInfo, seed: &[u8]) -> Result<Self>;
     fn from_private_key(coin_info: &CoinInfo, prv_key: &str) -> Result<Self>;
 }
 
@@ -95,7 +96,7 @@ pub trait Extra: Sized + serde::Serialize + Clone {
 pub struct EmptyExtra {}
 
 impl Extra for EmptyExtra {
-    fn new(_coin_info: &CoinInfo, _seed: &Seed) -> Result<Self> {
+    fn new(_coin_info: &CoinInfo, _seed: &[u8]) -> Result<Self> {
         Ok(EmptyExtra {})
     }
     fn from_private_key(_coin_info: &CoinInfo, _prv_key: &str) -> Result<Self> {
@@ -122,12 +123,26 @@ pub struct HdKeystore {
     pub key_type: KeyType,
     pub crypto: Crypto<Pbkdf2Params>,
     pub active_accounts: Vec<Account>,
+
     #[serde(rename = "imTokenMeta")]
     pub meta: Metadata,
+
+    #[serde(skip_serializing)]
+    seed: Option<Vec<u8>>,
 }
 
 impl HdKeystore {
     pub const VERSION: i32 = 11000i32;
+
+    pub fn lock(&mut self) {
+        self.seed = None;
+    }
+
+    pub(crate) fn unlock_by_password(&mut self, password: &str) -> Result<()> {
+        self.seed = Some(self.decrypt_seed(password)?);
+
+        Ok(())
+    }
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
         let mnemonic = generate_mnemonic();
@@ -139,6 +154,7 @@ impl HdKeystore {
             crypto,
             active_accounts: vec![],
             meta,
+            seed: None,
         }
     }
 
@@ -151,6 +167,7 @@ impl HdKeystore {
             crypto,
             active_accounts: vec![],
             meta,
+            seed: None,
         }
     }
 
@@ -165,13 +182,16 @@ impl HdKeystore {
             crypto,
             active_accounts: vec![],
             meta,
+            seed: None,
         }
     }
 
-    pub fn get_private_key(&self, path: &str, password: &str) -> Result<impl PrivateKey> {
-        let seed = self.seed(password)?;
+    pub fn get_private_key(&self, path: &str) -> Result<impl PrivateKey> {
+        tcx_ensure!(self.seed.is_some(), Error::KeystoreLocked);
 
-        let esk = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes())?;
+        let seed = self.seed.as_ref().unwrap().as_slice();
+
+        let esk = Bip32DeterministicPrivateKey::from_seed(seed)?;
         let p = DerivePath::from_str(path)?.into_iter();
 
         let sk = esk.derive(p)?;
@@ -187,12 +207,12 @@ impl HdKeystore {
         let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English)
             .map_err(|_| Error::InvalidMnemonic)?;
         let seed = bip39::Seed::new(&mnemonic, &"");
-        Self::derive_account_from_coin::<A, E>(coin_info, &seed)
+        Self::derive_account_from_coin::<A, E>(coin_info, seed.as_bytes())
     }
 
     fn derive_account_from_coin<A: Address, E: Extra>(
         coin_info: &CoinInfo,
-        seed: &Seed,
+        seed: &[u8],
     ) -> Result<Account> {
         let paths = vec![coin_info.derivation_path.clone()];
         let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
@@ -235,28 +255,29 @@ impl HdKeystore {
         Ok(mnemonic)
     }
 
-    pub fn private_key(&self, password: &str) -> Result<String> {
+    pub fn private_key(&self) -> Result<String> {
         tcx_ensure!(self.key_type == KeyType::PrivateKey, Error::InvalidKeyType);
-        let bytes = self.crypto.decrypt(password)?;
-        let priv_key = String::from_utf8(bytes)?;
+        tcx_ensure!(self.seed.is_some(), Error::KeystoreLocked);
+
+        let priv_key = String::from_utf8(self.seed.as_ref().unwrap().to_vec())?;
         Ok(priv_key)
     }
 
-    pub fn seed(&self, password: &str) -> Result<Seed> {
+    pub fn decrypt_seed(&self, password: &str) -> Result<Vec<u8>> {
         let mnemonic_str = self.mnemonic(password)?;
         let mnemonic = Mnemonic::from_phrase(mnemonic_str, Language::English)
             .map_err(|_| Error::InvalidMnemonic)?;
-        Ok(bip39::Seed::new(&mnemonic, &""))
+        Ok(bip39::Seed::new(&mnemonic, &"").as_bytes().to_vec())
     }
 
     fn key_at_paths_with_seed(
         curve: CurveType,
         paths: &[impl AsRef<str>],
-        seed: &Seed,
+        seed: &[u8],
     ) -> Result<Vec<Bip32DeterministicPrivateKey>> {
         match curve {
             CurveType::SECP256k1 => {
-                let private_key = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes())
+                let private_key = Bip32DeterministicPrivateKey::from_seed(seed)
                     .map_err(|_| Error::CanNotDerivePairFromSeed)?;
                 let children: Result<Vec<Bip32DeterministicPrivateKey>> = paths
                     .iter()
@@ -282,27 +303,32 @@ impl HdKeystore {
         &self,
         symbol: &str,
         paths: &[impl AsRef<str>],
-        password: &str,
     ) -> Result<Vec<Bip32DeterministicPrivateKey>> {
         let acc = self.account(symbol).ok_or(Error::AccountNotFound)?;
-        let seed = self.seed(password)?;
-        Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)
+
+        tcx_ensure!(self.seed.is_some(), Error::KeystoreLocked);
+
+        let seed = self.seed.as_ref().unwrap().as_slice();
+
+        Ok(Self::key_at_paths_with_seed(acc.curve, paths, seed)?)
     }
 
     /// Derive an account on a specific coin
-    pub fn derive_coin<A: Address, E: Extra>(
-        &mut self,
-        coin_info: &CoinInfo,
-        password: &str,
-    ) -> Result<&Account> {
+    pub fn derive_coin<A: Address, E: Extra>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
         // todo: keyType
-        let account = if self.meta.source != Source::Wif && self.meta.source != Source::Private {
-            let seed = self.seed(password)?;
-            Self::derive_account_from_coin::<A, E>(coin_info, &seed)?
-        } else {
+        tcx_ensure!(self.seed.is_some(), Error::KeystoreLocked);
+
+        let seed = self.seed.as_ref().unwrap().as_slice();
+
+        let account = Self::derive_account_from_coin::<A, E>(coin_info, seed)?;
+
+        /*
+        else
             let priv_key = self.private_key(password)?;
             Self::private_key_to_account::<A, E>(coin_info, &priv_key)?
         };
+        */
+
         self.active_accounts.push(account);
         Ok(self.active_accounts.last().unwrap())
     }
@@ -528,13 +554,14 @@ mod tests {
         assert_eq!(mnemonic, MNEMONIC);
 
         let expected_seed = "ee3fce3ccf05a2b58c851e321077a63ee2113235112a16fc783dc16279ff818a549ff735ac4406c624235db2d37108e34c6cbe853cbe09eb9e2369e6dd1c5aaa";
-        let seed = keystore.seed(PASSWORD).unwrap();
+
+        let seed = keystore.decrypt_seed(PASSWORD).unwrap();
         assert_eq!(seed.to_hex(), expected_seed);
 
         let wrong_password_err = keystore.mnemonic("WrongPassword").err().unwrap();
         assert_eq!(format!("{}", wrong_password_err), "password_incorrect");
 
-        let wrong_password_err = keystore.seed("WrongPassword").err().unwrap();
+        let wrong_password_err = keystore.decrypt_seed("WrongPassword").err().unwrap();
         assert_eq!(format!("{}", wrong_password_err), "password_incorrect");
     }
 
@@ -569,8 +596,10 @@ mod tests {
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
+        let _ = keystore.unlock_by_password(PASSWORD);
+
         let acc = keystore
-            .derive_coin::<MockAddress, EmptyExtra>(&coin_info, PASSWORD)
+            .derive_coin::<MockAddress, EmptyExtra>(&coin_info)
             .unwrap();
         let expected = Account {
             address: "mock_address".to_string(),
@@ -590,7 +619,9 @@ mod tests {
             "m/44'/0'/0'/1/0",
             "m/44'/0'/0'/1/1",
         ];
-        let private_keys = keystore.key_at_paths("BITCOIN", &paths, PASSWORD).unwrap();
+
+        let _ = keystore.unlock_by_password(PASSWORD);
+        let private_keys = keystore.key_at_paths("BITCOIN", &paths).unwrap();
         let pub_keys = private_keys
             .iter()
             .map(|epk| epk.private_key().public_key().to_bytes().to_hex())

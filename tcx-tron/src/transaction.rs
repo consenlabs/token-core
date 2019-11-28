@@ -46,13 +46,8 @@ impl TryInto<Value> for SignedTransaction {
 impl TraitSignedTransaction for SignedTransaction {}
 
 impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
-    fn sign_transaction(
-        &self,
-        tx: &Transaction,
-        password: Option<&str>,
-    ) -> Result<SignedTransaction> {
+    fn sign_transaction(&self, tx: &Transaction) -> Result<SignedTransaction> {
         let mut raw = tx.raw.clone();
-        tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
         let hash = Hash::hash(&hex::decode(
             raw["raw_data_hex"]
                 .as_str()
@@ -62,7 +57,7 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
             .account(&"TRON")
             .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
-        let sk = &self.get_private_key(path, password.unwrap())?;
+        let sk = &self.get_private_key(path)?;
         let sign_result = sk.sign_recoverable(&hash[..]);
 
         match sign_result {
@@ -95,8 +90,7 @@ pub struct SignedMessage {
 impl TraitSignedMessage for SignedMessage {}
 
 impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
-    fn sign_message(&self, message: &Message, password: Option<&str>) -> Result<SignedMessage> {
-        tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
+    fn sign_message(&self, message: &Message) -> Result<SignedMessage> {
         let data = match message.is_hex {
             true => {
                 let mut raw_hex: String = message.value.to_owned();
@@ -118,7 +112,7 @@ impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
             .account(&"TRON")
             .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
-        let sk = &self.get_private_key(path, password.unwrap())?;
+        let sk = &self.get_private_key(path)?;
         let mut sign_result = sk.sign_recoverable(&hash[..])?;
         sign_result[64] = sign_result[64] + 27;
         Ok(SignedMessage {
@@ -137,6 +131,7 @@ mod tests {
     use serde_json::Value;
     use std::convert::TryFrom;
     use tcx_chain::keystore::EmptyExtra;
+    use tcx_chain::keystore_guard::KeystoreGuard;
     use tcx_chain::{Metadata, TransactionSigner};
     use tcx_constants::CoinInfo;
     use tcx_constants::CurveType;
@@ -184,9 +179,13 @@ mod tests {
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
-        let _ = keystore.derive_coin::<Address, EmptyExtra>(&coin_info, &PASSWORD);
+        let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
 
-        let signed_tx = keystore.sign_transaction(&tx, Some(&PASSWORD))?;
+        let _ = guard
+            .keystore_mut()
+            .derive_coin::<Address, EmptyExtra>(&coin_info);
+
+        let signed_tx = guard.keystore_mut().sign_transaction(&tx)?;
 
         assert_eq!(signed_tx.raw["signature"][0].as_str().unwrap(), "beac4045c3ea5136b541a3d5ec2a3e5836d94f28a1371440a01258808612bc161b5417e6f5a342451303cda840f7e21bfaba1011fad5f63538cb8cc132a9768800", "signature must be correct");
 
