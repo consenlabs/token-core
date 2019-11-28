@@ -153,7 +153,7 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
     }
     let data = ret.as_mut_ptr();
     let len = ret.len();
-    std::mem::forget(buf);
+    std::mem::forget(ret);
     Buffer { data, len }
 }
 
@@ -456,7 +456,6 @@ fn import_wallet_from_mnemonic_pb_internal(data: &[u8]) -> Result<Vec<u8>> {
         name: ks.meta.name.to_owned(),
         chain_type: param.chain_type.to_owned(),
         address: ks.active_accounts.first().unwrap().address.to_owned(),
-        // todo: source
         source: "MNEMONIC".to_owned(),
         created_at: ks.meta.timestamp.clone(),
         extra: Some(extra),
