@@ -48,23 +48,7 @@ jobs:
   #         command: fmt
   #         args: --all -- --check
 
-  install:
-    name: Install dependencies
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: hecrj/setup-rust-action@v1
-      - name: Add iOS target
-        run: |
-          rustup target add aarch64-apple-ios armv7-apple-ios armv7s-apple-ios i386-apple-ios x86_64-apple-ios
-        shell: bash
-      - name: Install lipo
-        run: |
-          cargo install cargo-lipo
-          cargo install cbindgen
-
   e2e:
-    needs: install
     name: e2e
     runs-on: macos-latest
     steps:
@@ -73,9 +57,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      - uses: hecrj/setup-rust-action@v1
+      - name: Add iOS target
+        run: |
+          rustup target add aarch64-apple-ios armv7-apple-ios armv7s-apple-ios i386-apple-ios x86_64-apple-ios
+        shell: bash
+
       - name: Generate the compiled files
         run: |
+          cargo install cargo-lipo
+          cargo install cbindgen
           ./tools/ios-example-build.sh
+        shell: bash
 
       - name: Force xcode_11.2.1
         run: |
