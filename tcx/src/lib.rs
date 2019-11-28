@@ -1803,8 +1803,8 @@ mod tests {
         };
         let mut buf = BytesMut::with_capacity(1024);
         param.encode(&mut buf).unwrap();
-        assert_eq!("", buf);
-        let param = InitTokenCoreXParam::decode(&buf).unwrap();
+        let param: InitTokenCoreXParam = InitTokenCoreXParam::decode(&buf).unwrap();
+        assert_eq!("aaa", param.file_dir)
     }
 
     #[test]
@@ -1817,9 +1817,7 @@ mod tests {
         };
         let ret_buf = unsafe { call_tcx_api(param_buf) };
         let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
-        assert_eq!("", hex::encode(&ret_bytes));
-        //        let ret = "0a1b696d706f72745f77616c6c65745f66726f6d5f6d6e656d6f6e696312ca010a25696d546f6b656e2e496d706f727457616c6c657446726f6d4d6e656d6f6e6963506172616d12a0010a084c495445434f494e124573616c75746520736c757368206e6f7720736372697074206e657374206c61772061646d6974206163686965766520766f69636520736f6461206672756974206669656c641a11496e7365637572652050617373776f7264220f6d2f3434272f31272f30272f302f302a084d4e454d4f4e4943320c4c54432d57616c6c65742d313a074d41494e4e455442044e4f4e454a005001";
-        //        let buf =  BytesMut::from(hex::decode(ret).unwrap());
-        //        assert_eq!("", format!("{:#?}", WalletResult::decode(&buf).unwrap()));
+        let ret: WalletResult = WalletResult::decode(&ret_bytes).unwrap();
+        assert_eq!("LRB53mz8PmBPDBH8HFp3f5bVHxJ9Bqx8PH", ret.address);
     }
 }

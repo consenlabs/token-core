@@ -66,18 +66,18 @@ mod tests {
     #[test]
     fn encrypt_nopadding_test() {
         let data = "TokenCoreX".as_bytes();
-        let key: [u8; 16] = hex!("01020304010203040102030401020304");
-        let iv: [u8; 16] = hex!("01020304010203040102030401020304");
+        let key = hex::decode("01020304010203040102030401020304").unwrap();
+        let iv = hex::decode("01020304010203040102030401020304").unwrap();
         let ret = encrypt_nopadding(&data, &key, &iv).expect("encrypt nopadding data");
         let ret_hex = ret.to_hex();
 
         assert_eq!("e19e6c5923d33c587cf8", ret_hex);
 
-        let wrong_len_key: [u8; 12] = hex!("010203040102030401020304");
+        let wrong_len_key = hex::decode("010203040102030401020304").unwrap();
         let ret = encrypt_nopadding(&data, &wrong_len_key, &iv);
         assert!(ret.is_err());
 
-        let wrong_len_iv: [u8; 12] = hex!("010203040102030401020304");
+        let wrong_len_iv = hex::decode("010203040102030401020304").unwrap();
         let ret = encrypt_nopadding(&data, &key, &wrong_len_iv);
         assert!(ret.is_err());
     }
@@ -85,9 +85,9 @@ mod tests {
     #[test]
     fn decrypted_data_test() {
         let data = "TokenCoreX".as_bytes();
-        let encrypted_data = hex!("e19e6c5923d33c587cf8");
-        let key: [u8; 16] = hex!("01020304010203040102030401020304");
-        let iv: [u8; 16] = hex!("01020304010203040102030401020304");
+        let encrypted_data = hex::decode("e19e6c5923d33c587cf8").unwrap();
+        let key = hex::decode("01020304010203040102030401020304").unwrap();
+        let iv = hex::decode("01020304010203040102030401020304").unwrap();
         let ret = decrypt_nopadding(&encrypted_data, &key, &iv).expect("decrypted data error");
 
         assert_eq!(
@@ -95,11 +95,11 @@ mod tests {
             String::from_utf8(ret).expect("decrypted failed")
         );
 
-        let wrong_len_key: [u8; 12] = hex!("010203040102030401020304");
+        let wrong_len_key = hex::decode("010203040102030401020304").unwrap();
         let ret = decrypt_nopadding(&data, &wrong_len_key, &iv);
         assert!(ret.is_err());
 
-        let wrong_len_iv: [u8; 12] = hex!("010203040102030401020304");
+        let wrong_len_iv = hex::decode("010203040102030401020304").unwrap();
         let ret = decrypt_nopadding(&data, &key, &wrong_len_iv);
         assert!(ret.is_err());
     }
@@ -107,18 +107,18 @@ mod tests {
     #[test]
     fn encrypt_pkcs7_test() {
         let data = "TokenCoreX".as_bytes();
-        let key: [u8; 16] = hex!("01020304010203040102030401020304");
-        let iv: [u8; 16] = hex!("01020304010203040102030401020304");
+        let key = hex::decode("01020304010203040102030401020304").unwrap();
+        let iv = hex::decode("01020304010203040102030401020304").unwrap();
         let ret = encrypt_pkcs7(&data, &key, &iv).expect("encrypt_pkcs7");
         let ret_hex = ret.to_hex();
 
         assert_eq!("13d567987d7eced9c2154551bc37bc5f", ret_hex);
 
-        let wrong_len_key: [u8; 12] = hex!("010203040102030401020304");
+        let wrong_len_key = hex::decode("010203040102030401020304").unwrap();
         let ret = encrypt_pkcs7(&data, &wrong_len_key, &iv);
 
         assert!(ret.is_err());
-        let wrong_len_iv: [u8; 12] = hex!("010203040102030401020304");
+        let wrong_len_iv = hex::decode("010203040102030401020304").unwrap();
         let ret = encrypt_pkcs7(&data, &key, &wrong_len_iv);
         assert!(ret.is_err());
     }
