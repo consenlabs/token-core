@@ -53,16 +53,15 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
+      - uses: hecrj/setup-rust-action@v1
       - name: Add iOS target
         run: |
           rustup target add aarch64-apple-ios armv7-apple-ios armv7s-apple-ios i386-apple-ios x86_64-apple-ios
         shell: bash
+      - name: Install lipo
+        run: |
+          cargo install cargo-lipo
+          cargo install cbindgen
 
   e2e:
     needs: install
@@ -74,12 +73,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: actions-rs/cargo@v1
-
       - name: Generate the compiled files
         run: |
-          cargo install cargo-lipo
-          cargo install cbindgen
           ./tools/ios-example-build.sh
 
       - name: Force xcode_11.2.1
