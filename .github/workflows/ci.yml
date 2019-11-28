@@ -53,6 +53,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v1
+      - uses: actions-rs/cargo@v1
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -62,8 +63,6 @@ jobs:
       - name: Add iOS target
         run: |
           rustup target add aarch64-apple-ios armv7-apple-ios armv7s-apple-ios i386-apple-ios x86_64-apple-ios
-          cargo install cargo-lipo
-          cargo install cbindgen
         shell: bash
 
   e2e:
@@ -77,8 +76,11 @@ jobs:
           fetch-depth: 1
 
       - name: Generate the compiled files
+        uses: actions-rs/toolchain@v1
         run: |
-          make build-ios-example
+          cargo install cargo-lipo
+          cargo install cbindgen
+          ./tools/ios-example-build.sh
 
       - name: Force xcode_11.2.1
         run: |
