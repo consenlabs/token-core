@@ -103,21 +103,16 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent> Tra
 impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     TransactionSigner<BitcoinForkTransaction<S, T>, TxSignResult> for HdKeystore
 {
-    fn sign_transaction(
-        &self,
-        tx: &BitcoinForkTransaction<S, T>,
-        password: Option<&str>,
-    ) -> Result<TxSignResult> {
+    fn sign_transaction(&self, tx: &BitcoinForkTransaction<S, T>) -> Result<TxSignResult> {
         let account = self
             .account(tx.coin.to_uppercase().as_str())
             .ok_or_else(|| format_err!("account_not_found"))?;
-        tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
         if self.meta.source != Source::Wif {
             let path = &account.derivation_path;
             let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
             let paths = tx.collect_key_pair_paths(path)?;
             let sks = &self
-                .key_at_paths(tx.coin.to_uppercase().as_str(), &paths, password.unwrap())?
+                .key_at_paths(tx.coin.to_uppercase().as_str(), &paths)?
                 .iter()
                 .map(|esk| esk.private_key())
                 .collect::<Vec<Secp256k1PrivateKey>>();
@@ -127,7 +122,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             tx.sign_transaction(&sks, change_addr)
         } else {
             let change_addr = S::address_script_pub_key(&account.address)?;
-            let pk = self.private_key(password.unwrap())?;
+            let pk = self.private_key()?;
             // todo: more easy way to clone pair, will fix after refactor the pair
             let mut sks: Vec<Secp256k1PrivateKey> = vec![];
             for x in 0..tx.unspents.len() {

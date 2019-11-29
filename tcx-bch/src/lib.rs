@@ -30,6 +30,7 @@ mod tests {
 
     use serde_json::Value;
     use std::str::FromStr;
+    use tcx_chain::keystore_guard::KeystoreGuard;
     use tcx_chain::{HdKeystore, Metadata};
     use tcx_constants::CoinInfo;
     use tcx_constants::CurveType;
@@ -52,10 +53,14 @@ mod tests {
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
         };
-        let _ = keystore
-            .derive_coin::<BchAddress, BchExtra>(&bch_coin, PASSWORD)
+        let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
+
+        let _ = guard
+            .keystore_mut()
+            .derive_coin::<BchAddress, BchExtra>(&bch_coin)
             .unwrap();
-        let json_str = keystore.json();
+
+        let json_str = guard.keystore_mut().json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
 
         let active_accounts = v["activeAccounts"].as_array().unwrap();
@@ -82,10 +87,13 @@ mod tests {
             curve: CurveType::SECP256k1,
         };
 
-        let _ = keystore
-            .derive_coin::<BchAddress, BchExtra>(&bch_coin, PASSWORD)
+        let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
+
+        let _ = guard
+            .keystore_mut()
+            .derive_coin::<BchAddress, BchExtra>(&bch_coin)
             .unwrap();
-        let json_str = keystore.json();
+        let json_str = guard.keystore_mut().json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
 
         let active_accounts = v["activeAccounts"].as_array().unwrap();
