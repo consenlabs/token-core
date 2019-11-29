@@ -52,11 +52,11 @@ mod tests {
 
     #[test]
     fn tron_address_validation() {
-        assert!(Address::validate("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"));
-        assert!(!Address::validate("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acot"));
-        assert!(!Address::validate(
+        assert!(Address::is_valid("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"));
+        assert!(!Address::is_valid("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acot"));
+        assert!(!Address::is_valid(
             "qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
         ));
-        assert!(!Address::validate("mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN"));
+        assert!(!Address::is_valid("mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN"));
     }
 }
