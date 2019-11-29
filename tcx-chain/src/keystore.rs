@@ -72,6 +72,8 @@ pub trait Address {
     fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String>;
 
     fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String>;
+
+    fn is_valid(address: &str) -> bool;
 }
 
 /// Account that presents one blockchain wallet on a keystore
@@ -507,6 +509,10 @@ mod tests {
 
         fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String> {
             Ok("mock_address".to_string())
+        }
+
+        fn is_valid(address: &str) -> bool {
+            true
         }
     }
 
