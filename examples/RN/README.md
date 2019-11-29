@@ -21,8 +21,8 @@ yarn install
 ```
 
 2. install pod
-```
-pod install
+```bash
+(cd ios && pod install)
 ```
 
 ## run

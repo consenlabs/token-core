@@ -2,6 +2,9 @@ import { id, toHaveText, label } from '../../../utils.js'
 
 export default async function (params) {
   const { chainType, mnemonic, password, address } = params
+  // go to Mnemonic screen
+  await id('Mnemonic').tap()
+
   await id('mnemonicInput').tap()
   await id('mnemonicInput').clearText()
   await id('mnemonicInput').typeText(mnemonic)
@@ -22,4 +25,7 @@ export default async function (params) {
   await waitFor(id('mnemonicAddress')).toExist().withTimeout(2000)
 
   await toHaveText('mnemonicAddress', address)
+
+  // go back
+  await id('goBack').tap()
 }

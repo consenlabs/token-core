@@ -18,6 +18,20 @@ interface State {
 }
 
 class CMP extends React.Component<Props, State> {
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      title: 'Mnemonic',
+      headerLeft: () => (
+        <Button
+          testID="goBack"
+          onPress={() => navigation.goBack()}
+          title="goBack"
+          color="#333"
+        />
+      ),
+    };
+  }
+
   constructor(props: Props) {
     super(props)
     this.state = {
