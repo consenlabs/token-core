@@ -1,0 +1,23 @@
+syntax = "proto3";
+package api;
+
+message WalletKey {
+    string id = 1;
+    string password = 2;
+}
+
+message CacheDerivedKeyParam {
+    string id = 1;
+    string derivedKey = 2;
+    string tempPassword = 3;
+}
+
+message VerifyDerivedKeyParam {
+    string id = 1;
+    string derivedKey = 2;
+}
+
+message DerivedKeyResult {
+    string id = 1;
+    string derivedKey = 2;
+}
