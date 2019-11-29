@@ -23,6 +23,15 @@ impl TraitAddress for Address {
         let sk = Secp256k1PrivateKey::from_slice(&sk_bytes)?;
         Address::from_public_key(&sk.public_key().to_uncompressed(), coin)
     }
+
+    fn is_valid(address: &str) -> bool {
+        let decode_ret = base58::from_check(address);
+        if let Ok(data) = decode_ret {
+            data.len() == 21 && data[0] == 0x41
+        } else {
+            false
+        }
+    }
 }
 
 #[cfg(test)]
@@ -39,5 +48,15 @@ mod tests {
             Address::from_public_key(&bytes, None).unwrap(),
             "THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"
         );
+    }
+
+    #[test]
+    fn tron_address_validation() {
+        assert!(Address::validate("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"));
+        assert!(!Address::validate("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acot"));
+        assert!(!Address::validate(
+            "qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
+        ));
+        assert!(!Address::validate("mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN"));
     }
 }
