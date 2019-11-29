@@ -5,7 +5,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use tcx_crypto::{Crypto, Pbkdf2Params};
-use tcx_primitive::{derive, Derive, DerivePath, Pair, Public, Secp256k1Pair};
+use tcx_primitive::{
+    generate_mnemonic, Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive,
+    DerivePath, DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey,
+};
 
 use crate::Error;
 use crate::Result;
@@ -127,7 +130,7 @@ impl HdKeystore {
     pub const VERSION: i32 = 11000i32;
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
-        let mnemonic = derive::generate_mnemonic();
+        let mnemonic = generate_mnemonic();
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
@@ -165,6 +168,17 @@ impl HdKeystore {
         }
     }
 
+    pub fn get_private_key(&self, path: &str, password: &str) -> Result<impl PrivateKey> {
+        let seed = self.seed(password)?;
+
+        let esk = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes())?;
+        let p = DerivePath::from_str(path)?.into_iter();
+
+        let sk = esk.derive(p)?;
+
+        Ok(sk.private_key())
+    }
+
     /// Derive account from a mnemonic phase
     pub fn mnemonic_to_account<A: Address, E: Extra>(
         coin_info: &CoinInfo,
@@ -181,10 +195,10 @@ impl HdKeystore {
         seed: &Seed,
     ) -> Result<Account> {
         let paths = vec![coin_info.derivation_path.clone()];
-        let keys = Self::key_pair_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
+        let keys = Self::key_at_paths_with_seed(coin_info.curve, &paths, &seed)?;
         let key = keys.first().ok_or_else(|| format_err!("derivate_failed"))?;
-        let pub_key = key.public_key();
-        let bytes = pub_key.to_bytes()?;
+        let pub_key = key.private_key().public_key();
+        let bytes = pub_key.to_bytes();
         let address = A::from_public_key(&bytes, Some(&coin_info.symbol))?;
 
         let extra = E::new(coin_info, seed)?;
@@ -235,60 +249,44 @@ impl HdKeystore {
         Ok(bip39::Seed::new(&mnemonic, &""))
     }
 
-    fn key_pair_at_paths_with_seed(
+    fn key_at_paths_with_seed(
         curve: CurveType,
         paths: &[impl AsRef<str>],
         seed: &Seed,
-    ) -> Result<Vec<impl Pair>> {
+    ) -> Result<Vec<Bip32DeterministicPrivateKey>> {
         match curve {
             CurveType::SECP256k1 => {
-                let pair = Secp256k1Pair::from_seed_slice(seed.as_bytes())
+                let private_key = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes())
                     .map_err(|_| Error::CanNotDerivePairFromSeed)?;
-                let pairs: Result<Vec<Secp256k1Pair>> = paths
+                let children: Result<Vec<Bip32DeterministicPrivateKey>> = paths
                     .iter()
                     .map(|path| {
                         let path = DerivePath::from_str(path.as_ref())
                             .map_err(|_| Error::CannotDeriveKey)?;
-                        let child_pair = pair
+                        let child_private_key = private_key
                             .derive(path.into_iter())
                             .map_err(|_| Error::CannotDeriveKey)?;
-                        Ok(child_pair)
+                        Ok(child_private_key)
                     })
                     .collect();
-                pairs
+
+                children
             }
 
             _ => Err(Error::UnsupportedCurve.into()),
         }
     }
 
-    pub fn get_pair<T: Pair>(&self, path: &str, password: &str) -> Result<T> {
-        let seed = self.seed(password)?;
-
-        match T::from_seed_slice(seed.as_bytes()) {
-            Ok(r) => {
-                if let Ok(p) = DerivePath::from_str(path) {
-                    if let Ok(ret) = r.derive(p.into_iter()) {
-                        return Ok(ret);
-                    }
-                }
-
-                Err(Error::CanNotDerivePairFromSeed.into())
-            }
-            _ => Err(Error::CanNotDerivePairFromSeed.into()),
-        }
-    }
-
     /// Derive a private key at a specific path, it's coin independent
-    pub fn key_pair_at_paths(
+    pub fn key_at_paths(
         &self,
         symbol: &str,
         paths: &[impl AsRef<str>],
         password: &str,
-    ) -> Result<Vec<impl Pair>> {
+    ) -> Result<Vec<Bip32DeterministicPrivateKey>> {
         let acc = self.account(symbol).ok_or(Error::AccountNotFound)?;
         let seed = self.seed(password)?;
-        Ok(Self::key_pair_at_paths_with_seed(acc.curve, paths, &seed)?)
+        Ok(Self::key_at_paths_with_seed(acc.curve, paths, &seed)?)
     }
 
     /// Derive an account on a specific coin
@@ -392,7 +390,7 @@ mod tests {
     use super::*;
     use bitcoin_hashes::hex::ToHex;
     use serde_json::Map;
-    use tcx_primitive::Public;
+    use tcx_primitive::PublicKey;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
@@ -592,12 +590,10 @@ mod tests {
             "m/44'/0'/0'/1/0",
             "m/44'/0'/0'/1/1",
         ];
-        let pairs = keystore
-            .key_pair_at_paths("BITCOIN", &paths, PASSWORD)
-            .unwrap();
-        let pub_keys = pairs
+        let private_keys = keystore.key_at_paths("BITCOIN", &paths, PASSWORD).unwrap();
+        let pub_keys = private_keys
             .iter()
-            .map(|pair| pair.public_key().to_bytes().unwrap().to_hex())
+            .map(|epk| epk.private_key().public_key().to_bytes().to_hex())
             .collect::<Vec<String>>();
         let expected_pub_keys = vec![
             "026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868",

@@ -1,32 +1,27 @@
-use crate::KeyError;
+use crate::ecc::KeyError;
 use crate::Result;
-use bip39::{Language, Mnemonic, MnemonicType};
 
 use bitcoin::util::bip32::ChildNumber;
 
 use std::convert::TryInto;
 use std::str::FromStr;
 
-#[allow(dead_code)]
-pub fn generate_mnemonic() -> String {
-    Mnemonic::new(MnemonicType::Words12, Language::English).to_string()
-}
-
 pub fn get_account_path(path: &str) -> Result<String> {
     // example: m/44'/60'/0'/0/0
     let _ = bitcoin::util::bip32::DerivationPath::from_str(path)?;
-    let mut childs: Vec<&str> = path.split('/').collect();
+    let mut children: Vec<&str> = path.split('/').collect();
 
-    ensure!(childs.len() >= 4, format!("{} path is too short", path));
-    while childs.len() > 4 {
-        childs.remove(childs.len() - 1);
+    ensure!(children.len() >= 4, format!("{} path is too short", path));
+
+    while children.len() > 4 {
+        children.remove(children.len() - 1);
     }
-    Ok(childs.join("/"))
+    Ok(children.join("/"))
 }
 
 pub fn relative_path_to_child_nums(path: &str) -> Result<Vec<ChildNumber>> {
-    let childs: Vec<&str> = path.split('/').collect();
-    childs
+    let children: Vec<&str> = path.split('/').collect();
+    children
         .iter()
         .filter(|child| **child != "")
         .map(|child| {
@@ -53,8 +48,6 @@ pub enum DeriveJunction {
 }
 
 pub trait Derive: Sized {
-    type Error;
-
     fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self>;
 }
 
@@ -155,7 +148,8 @@ impl AsRef<[DeriveJunction]> for DerivePath {
 #[cfg(test)]
 mod tests {
     use super::DerivePath;
-    use crate::derive::{generate_mnemonic, get_account_path, relative_path_to_child_nums};
+    use crate::derive::{get_account_path, relative_path_to_child_nums};
+    use crate::generate_mnemonic;
     use crate::DeriveJunction;
     use bitcoin::util::bip32::ChildNumber;
     use std::str::FromStr;

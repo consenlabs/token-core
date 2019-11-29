@@ -24,18 +24,18 @@ extern crate tcx_chain;
 pub type Result<T> = result::Result<T, failure::Error>;
 
 use tcx_crypto::aes::cbc::{decrypt_pkcs7, encrypt_pkcs7};
-use tcx_primitive::derive::get_account_path;
 
 pub use transaction::{BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkTransaction, Utxo};
 
 pub use address::{BtcForkAddress, PubKeyScript};
-use bitcoin::util::bip32::ExtendedPubKey;
 use serde::export::PhantomData;
 use serde_json::Value;
 use tcx_constants::{CoinInfo, CurveType};
-use tcx_primitive::{Derive, Ss58Codec};
-use tcx_primitive::{DerivePath, Secp256k1Pair};
-use tcx_primitive::{Pair, Secp256k1PublicKey};
+use tcx_primitive::{
+    get_account_path, Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive,
+    DerivePath, DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey,
+    Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec,
+};
 pub use transaction::ScriptPubKeyComponent;
 
 #[derive(Fail, Debug)]
@@ -77,11 +77,14 @@ where
             "BCH must be at secp256k1"
         );
         let account_path = get_account_path(&coin_info.derivation_path)?;
-        let pair = Secp256k1Pair::from_seed_slice(seed.as_bytes())?;
+        let esk = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes())?;
         let derive_path = DerivePath::from_str(&account_path)?;
-        let account_pair = pair.derive(derive_path.into_iter())?;
-        let xpub_key = account_pair.extended_pub_key()?;
-        let xpub = BtcForkAddress::extended_public_key(&xpub_key, coin_info)?;
+        let account = esk
+            .derive(derive_path.into_iter())?
+            .deterministic_public_key()?;
+
+        let xpub = BtcForkAddress::extended_public_key(&account, coin_info)?;
+
         ExtendedPubKeyExtra::from_xpub(&xpub, &coin_info.symbol)
     }
 
@@ -99,8 +102,7 @@ impl<T: Address> ExtendedPubKeyExtra<T> {
     }
 
     fn _calc_external_address(xpub: &str, idx: i64, coin: &str) -> Result<ExternalAddress> {
-        //        let extended_pub_key = ExtendedPubKey::from_ss58check(xpub)?;
-        let extended_pub_key = Secp256k1PublicKey::from_extended(xpub)?;
+        let extended_pub_key = Bip32DeterministicPublicKey::from_ss58check(&xpub)?;
         let child_path = format!("{}/{}", 0, idx as u32);
         let index_pub = extended_pub_key.derive(DerivePath::from_str(&child_path)?.into_iter())?;
         let address = T::from_public_key(&index_pub.public_key().to_bytes(), Some(coin))?;
