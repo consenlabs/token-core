@@ -20,6 +20,7 @@ extern crate failure;
 extern crate regex;
 
 pub mod keystore;
+pub mod keystore_guard;
 pub mod signer;
 
 pub use keystore::{Account, HdKeystore, Metadata, Source};
@@ -46,4 +47,6 @@ pub enum Error {
     CanNotDerivePairFromSeed,
     #[fail(display = "can_not_derive_key")]
     CannotDeriveKey,
+    #[fail(display = "keystore_locked")]
+    KeystoreLocked,
 }

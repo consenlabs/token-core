@@ -34,8 +34,7 @@ mod tests {
     use bch_addr::Converter;
     use std::marker::PhantomData;
     use std::str::FromStr;
-    use tcx_primitive::Pair;
-    use tcx_primitive::Secp256k1Pair;
+    use tcx_primitive::{PrivateKey, Secp256k1PrivateKey};
 
     #[test]
     pub fn bch_signer() {
@@ -62,7 +61,7 @@ mod tests {
                 _marker_t: PhantomData,
             };
         //
-        let prv_key = Secp256k1Pair::from_slice(
+        let prv_key = Secp256k1PrivateKey::from_slice(
             &hex::decode("b0dabbf9ffed224fbca3b41a9e446b3d0b6240c6d2957197a8ab75bbf2e1a5d4")
                 .unwrap(),
         )

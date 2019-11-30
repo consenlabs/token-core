@@ -2,7 +2,7 @@ use bitcoin::util::base58;
 
 use crate::keccak;
 use tcx_chain::keystore::Address as TraitAddress;
-use tcx_primitive::{Pair, Public, Secp256k1Pair, Secp256k1PublicKey};
+use tcx_primitive::{PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey};
 
 pub struct Address(pub String);
 
@@ -19,9 +19,18 @@ impl TraitAddress for Address {
     }
 
     fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String, failure::Error> {
-        let pk_bytes = hex::decode(private_key)?;
-        let pair = Secp256k1Pair::from_slice(&pk_bytes)?;
-        Address::from_public_key(&pair.public_key().to_uncompressed(), coin)
+        let sk_bytes = hex::decode(private_key)?;
+        let sk = Secp256k1PrivateKey::from_slice(&sk_bytes)?;
+        Address::from_public_key(&sk.public_key().to_uncompressed(), coin)
+    }
+
+    fn is_valid(address: &str) -> bool {
+        let decode_ret = base58::from_check(address);
+        if let Ok(data) = decode_ret {
+            data.len() == 21 && data[0] == 0x41
+        } else {
+            false
+        }
     }
 }
 
@@ -29,8 +38,7 @@ impl TraitAddress for Address {
 mod tests {
     use super::Address;
     use tcx_chain::keystore::Address as TraitAddress;
-    use tcx_primitive::Public;
-    use tcx_primitive::Secp256k1PublicKey;
+    use tcx_primitive::{PublicKey, Secp256k1PublicKey};
 
     #[test]
     fn tron_address() {
@@ -40,5 +48,15 @@ mod tests {
             Address::from_public_key(&bytes, None).unwrap(),
             "THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"
         );
+    }
+
+    #[test]
+    fn tron_address_validation() {
+        assert!(Address::is_valid("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"));
+        assert!(!Address::is_valid("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acot"));
+        assert!(!Address::is_valid(
+            "qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
+        ));
+        assert!(!Address::is_valid("mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN"));
     }
 }

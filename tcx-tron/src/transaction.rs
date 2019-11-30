@@ -9,8 +9,7 @@ use bitcoin_hashes::Hash as TraitHash;
 
 use serde_json::Value;
 use std::convert::{TryFrom, TryInto};
-use tcx_primitive::Pair;
-use tcx_primitive::Secp256k1Pair;
+use tcx_primitive::{PrivateKey, Secp256k1PrivateKey};
 
 use failure::format_err;
 
@@ -47,13 +46,8 @@ impl TryInto<Value> for SignedTransaction {
 impl TraitSignedTransaction for SignedTransaction {}
 
 impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
-    fn sign_transaction(
-        &self,
-        tx: &Transaction,
-        password: Option<&str>,
-    ) -> Result<SignedTransaction> {
+    fn sign_transaction(&self, tx: &Transaction) -> Result<SignedTransaction> {
         let mut raw = tx.raw.clone();
-        tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
         let hash = Hash::hash(&hex::decode(
             raw["raw_data_hex"]
                 .as_str()
@@ -63,8 +57,8 @@ impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
             .account(&"TRON")
             .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
-        let pair = &self.get_pair::<Secp256k1Pair>(path, password.unwrap())?;
-        let sign_result = pair.sign_recoverable(&hash[..]);
+        let sk = &self.get_private_key(path)?;
+        let sign_result = sk.sign_recoverable(&hash[..]);
 
         match sign_result {
             Ok(r) => {
@@ -96,8 +90,7 @@ pub struct SignedMessage {
 impl TraitSignedMessage for SignedMessage {}
 
 impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
-    fn sign_message(&self, message: &Message, password: Option<&str>) -> Result<SignedMessage> {
-        tcx_ensure!(password.is_some(), tcx_crypto::Error::PasswordIncorrect);
+    fn sign_message(&self, message: &Message) -> Result<SignedMessage> {
         let data = match message.is_hex {
             true => {
                 let mut raw_hex: String = message.value.to_owned();
@@ -119,8 +112,8 @@ impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
             .account(&"TRON")
             .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
-        let pair = &self.get_pair::<Secp256k1Pair>(path, password.unwrap())?;
-        let mut sign_result = pair.sign_recoverable(&hash[..])?;
+        let sk = &self.get_private_key(path)?;
+        let mut sign_result = sk.sign_recoverable(&hash[..])?;
         sign_result[64] = sign_result[64] + 27;
         Ok(SignedMessage {
             signature: hex::encode(sign_result),
@@ -138,6 +131,7 @@ mod tests {
     use serde_json::Value;
     use std::convert::TryFrom;
     use tcx_chain::keystore::EmptyExtra;
+    use tcx_chain::keystore_guard::KeystoreGuard;
     use tcx_chain::{Metadata, TransactionSigner};
     use tcx_constants::CoinInfo;
     use tcx_constants::CurveType;
@@ -185,9 +179,13 @@ mod tests {
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
-        let _ = keystore.derive_coin::<Address, EmptyExtra>(&coin_info, &PASSWORD);
+        let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
 
-        let signed_tx = keystore.sign_transaction(&tx, Some(&PASSWORD))?;
+        let _ = guard
+            .keystore_mut()
+            .derive_coin::<Address, EmptyExtra>(&coin_info);
+
+        let signed_tx = guard.keystore_mut().sign_transaction(&tx)?;
 
         assert_eq!(signed_tx.raw["signature"][0].as_str().unwrap(), "beac4045c3ea5136b541a3d5ec2a3e5836d94f28a1371440a01258808612bc161b5417e6f5a342451303cda840f7e21bfaba1011fad5f63538cb8cc132a9768800", "signature must be correct");
 
@@ -196,15 +194,16 @@ mod tests {
 
     #[test]
     fn sign_message() {
-        let pair = Secp256k1Pair::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
-            .unwrap();
+        let sk =
+            Secp256k1PrivateKey::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
+                .unwrap();
         let message =
             hex_bytes("645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76").unwrap();
         let header = "\x19TRON Signed Message:\n32".as_bytes();
         let to_signed = [header.to_vec(), message].concat();
 
         let hash = keccak(&to_signed);
-        let mut signed = pair.sign_recoverable(&hash).unwrap();
+        let mut signed = sk.sign_recoverable(&hash).unwrap();
         signed[64] = signed[64] + 27;
         assert_eq!("7209610445e867cf2a36ea301bb5d1fbc3da597fd2ce4bb7fa64796fbf0620a4175e9f841cbf60d12c26737797217c0082fdb3caa8e44079e04ec3f93e86bbea1c", hex::encode(&signed))
     }
