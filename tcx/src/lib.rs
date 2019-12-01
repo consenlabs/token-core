@@ -1,116 +1,47 @@
-use std::ffi::{CStr, CString};
-
-use std::os::raw::c_char;
-
-use crate::error_handle::landingpad;
-use crate::error_handle::Result;
-use crate::error_handle::LAST_BACKTRACE;
-use crate::error_handle::LAST_ERROR;
-use std::fs::File;
-use std::io::{Read, Write};
-
-use core::borrow::Borrow;
-
-use serde_json::{Map, Value};
 use std::collections::HashMap;
-use std::convert::TryInto;
+use std::convert::{TryFrom, TryInto};
+use std::ffi::{CStr, CString};
+use std::fs;
+use std::io::Read;
+use std::os::raw::c_char;
 use std::path::Path;
 use std::str::FromStr;
-use std::sync::RwLock;
+
+use prost::Message;
+use serde_json::Value;
+
 use tcx_bch::{BchAddress, BchExtra, BchTransaction};
-use tcx_btc_fork::address::BtcForkAddress;
 use tcx_btc_fork::{
-    BtcForkExtra, BtcForkSegWitTransaction, BtcForkTransaction, ExternalAddress, Utxo,
+    address::BtcForkAddress, BtcForkExtra, BtcForkSegWitTransaction, BtcForkTransaction,
+    ExternalAddress, Utxo,
 };
 use tcx_chain::keystore::EmptyExtra;
+use tcx_chain::keystore_guard::KeystoreGuard;
 use tcx_chain::signer::TransactionSigner;
 use tcx_chain::{HdKeystore, MessageSigner, Metadata, Source, TxSignResult};
-use tcx_constants::coin_info::{
-    coin_info_from_symbol, coin_symbol_with_network, coin_symbol_with_param,
-};
+use tcx_constants::coin_info::{coin_info_from_symbol, coin_symbol_with_network};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
+use tcx_primitive::verify_wif;
 use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 
-use std::convert::TryFrom;
-use std::fs;
-use tcx_chain::keystore_guard::KeystoreGuard;
-use tcx_constants::network_from_coin;
-use tcx_primitive::{verify_wif, Secp256k1PrivateKey};
-
-use crate::api::{ImportWalletFromMnemonicParam, TcxAction, WalletResult};
-use api::InitTokenCoreXParam;
-use bytes::BytesMut;
-use log::MetadataBuilder;
-use prost;
-use prost::Message;
+mod api;
+use crate::api::TcxAction;
+pub mod error_handling;
+use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
+mod handler;
+use crate::handler::{hd_keystore_create, import_wallet_from_mnemonic_pb_internal, Buffer};
+mod filemanager;
+use crate::filemanager::{
+    cache_keystore, delete_keystore_file, find_keystore_id_by_address, flush_keystore,
+    KEYSTORE_MAP, WALLET_FILE_DIR,
+};
 
 #[macro_use]
 extern crate failure;
-
-#[macro_use]
-pub mod error_handle;
-
-#[macro_use]
-extern crate lazy_static;
 #[macro_use]
 extern crate serde_json;
-
-mod api;
-
-// Include the `items` module, which is generated from items.proto.
-//pub mod api {
-//    include!(concat!(env!("OUT_DIR"), "/api.rs"));
-//}
-
-lazy_static! {
-    static ref KEYSTORE_MAP: RwLock<HashMap<String, HdKeystore>> = RwLock::new(HashMap::new());
-    static ref WALLET_FILE_DIR: RwLock<String> = RwLock::new("../test-data".to_string());
-}
-
-fn cache_keystore(keystore: HdKeystore) {
-    KEYSTORE_MAP
-        .write()
-        .unwrap()
-        .insert(keystore.id.to_owned(), keystore);
-}
-
-fn find_keystore_id_by_address(address: &str) -> Option<String> {
-    let map = KEYSTORE_MAP.read().unwrap();
-    let mut k_id: Option<String> = None;
-    for (id, keystore) in map.borrow().iter() {
-        let mut iter = keystore.active_accounts.iter();
-        if iter.any(|a| a.address == address) {
-            k_id = Some(id.to_string());
-            break;
-        }
-    }
-    k_id
-}
-
-fn flush_keystore(ks: &HdKeystore) -> Result<()> {
-    let json = ks.json();
-
-    let file_dir = WALLET_FILE_DIR.read().unwrap();
-    let ks_path = format!("{}/{}.json", file_dir, ks.id);
-    let path = Path::new(&ks_path);
-    let mut file = File::create(path)?;
-    let _ = file.write_all(&json.as_bytes());
-    Ok(())
-}
-
-fn delete_keystore_file(wid: &str) -> Result<()> {
-    let file_dir = WALLET_FILE_DIR.read().unwrap();
-    let ks_path = format!("{}/{}.json", file_dir, wid);
-    let path = Path::new(&ks_path);
-    fs::remove_file(path)?;
-    Ok(())
-}
-
-#[repr(C)]
-pub struct Buffer {
-    pub data: *mut u8,
-    pub len: usize,
-}
+#[macro_use]
+extern crate lazy_static;
 
 #[no_mangle]
 pub unsafe extern "C" fn free_string(s: *mut c_char) {
@@ -130,11 +61,9 @@ pub unsafe extern "C" fn free_const_string(s: *const c_char) {
 
 #[no_mangle]
 pub unsafe extern "C" fn free_buf(buf: Buffer) {
-    let s = unsafe { std::slice::from_raw_parts_mut(buf.data, buf.len) };
+    let s = std::slice::from_raw_parts_mut(buf.data, buf.len);
     let s = s.as_mut_ptr();
-    unsafe {
-        Box::from_raw(s);
-    }
+    Box::from_raw(s);
 }
 
 fn parse_arguments(json_str: *const c_char) -> Value {
@@ -143,21 +72,28 @@ fn parse_arguments(json_str: *const c_char) -> Value {
     serde_json::from_str(json_str).expect("parse_arguments serde_json")
 }
 
+/// dispatch protobuf rpc call
 #[no_mangle]
 pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
     let data = std::slice::from_raw_parts_mut(buf.data, buf.len);
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
-    let mut ret: Vec<u8> = vec![];
+    let mut reply: Vec<u8> = vec![];
+
     if &action.method == "import_wallet_from_mnemonic" {
-        println!("call method right");
-        ret = landingpad(|| import_wallet_from_mnemonic_pb_internal(&action.param.unwrap().value));
+        reply =
+            landingpad(|| import_wallet_from_mnemonic_pb_internal(&action.param.unwrap().value));
+    } else if &action.method == "hd_keystore_create" {
+        reply = landingpad(|| hd_keystore_create(&action.param.unwrap().value));
     }
-    let data = ret.as_mut_ptr();
-    let len = ret.len();
-    std::mem::forget(ret);
+
+    // assemble result and clear result
+    let data = reply.as_mut_ptr();
+    let len = reply.len();
+    std::mem::forget(reply);
     Buffer { data, len }
 }
 
+/// c interface methods
 #[no_mangle]
 pub extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
     let v: Value = parse_arguments(json_str);
@@ -207,63 +143,7 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
             continue;
         }
 
-        let mut f = File::open(fp).expect("open file");
-        let mut contents = String::new();
-
-        let _ = f.read_to_string(&mut contents);
-        let v: Value = serde_json::from_str(&contents).expect("read json from content");
-
-        let version = v["version"].as_i64().expect("version");
-        if version != i64::from(HdKeystore::VERSION) {
-            continue;
-        }
-        let keystore: HdKeystore = serde_json::from_str(&contents)?;
-        cache_keystore(keystore);
-    }
-    Ok(())
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn init_token_core_x_pb(data: Buffer) {
-    //    let param: Vec<u8> = Vec::from(json_str);
-    //    let v = parse_arguments(json_str);
-    // !!! warning !!! just set_panic_hook when debug
-    // set_panic_hook();
-    landingpad(|| init_token_core_x_pb_internal(data));
-}
-
-fn init_token_core_x_pb_internal(buf: Buffer) -> Result<()> {
-    //    let file_dir = v["fileDir"].as_str().expect("fileDir");
-    //    let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
-    //    let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
-    //    let param = prost::de
-    //    let param: InitTokenCoreXParam = InitTokenCoreXParam::decode(&param).unwrap();
-    let data = unsafe { std::slice::from_raw_parts_mut(buf.data, buf.len) };
-    let InitTokenCoreXParam {
-        file_dir,
-        xpub_common_key,
-        xpub_common_iv,
-    } = InitTokenCoreXParam::decode(data).unwrap();
-    *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
-    *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
-    *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
-
-    let p = Path::new(&file_dir);
-    let walk_dir = std::fs::read_dir(p).expect("read dir");
-    for entry in walk_dir {
-        let entry = entry.expect("DirEntry");
-        let fp = entry.path();
-        if !fp
-            .file_name()
-            .expect("file_name")
-            .to_str()
-            .expect("file_name str")
-            .ends_with(".json")
-        {
-            continue;
-        }
-
-        let mut f = File::open(fp).expect("open file");
+        let mut f = fs::File::open(fp).expect("open file");
         let mut contents = String::new();
 
         let _ = f.read_to_string(&mut contents);
@@ -404,84 +284,6 @@ fn import_wallet_from_mnemonic_internal(v: &Value) -> Result<String> {
     cache_keystore(ks);
 
     Ok(json)
-}
-
-//#[no_mangle]
-//pub unsafe extern "C" fn import_wallet_from_mnemonic_pb(buf: Buffer) -> *const c_char {
-//    let data = unsafe { std::slice::from_raw_parts_mut(buf.data, buf.len) };
-//    let json = landingpad(|| import_wallet_from_mnemonic_pb_internal(data));
-//    CString::new(json).expect("ret json").into_raw()
-//}
-//
-fn import_wallet_from_mnemonic_pb_internal(data: &[u8]) -> Result<Vec<u8>> {
-    //    let password = v["password"].as_str().unwrap();
-    //    let mnemonic = v["mnemonic"].as_str().unwrap();
-    //    let path = v["path"].as_str().unwrap();
-    //    let overwrite = v["overwrite"].as_bool().unwrap();
-    let param: ImportWalletFromMnemonicParam =
-        ImportWalletFromMnemonicParam::decode(data).expect("import wallet from mnemonic");
-    let symbol = coin_symbol_with_param(&param.chain_type, &param.network, "", &param.seg_wit);
-
-    let mut meta = Metadata::default();
-    meta.name = param.name.to_owned();
-    meta.password_hint = param.password_hint.to_owned();
-    meta.source = Source::Mnemonic;
-
-    //    let meta: Metadata = serde_json::from_value(v.clone())?;
-    let mut ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta);
-
-    {
-        let mut guard_mut = KeystoreGuard::unlock_by_password(&mut ks, &param.password)?;
-
-        let mut coin_info = coin_info_from_symbol(&symbol)?;
-        coin_info.derivation_path = param.path.to_string();
-        let account = match symbol.as_str() {
-            "BITCOINCASH" | "BITCOINCASH-TESTNET" => guard_mut
-                .keystore_mut()
-                .derive_coin::<BchAddress, BchExtra>(&coin_info),
-            "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
-                guard_mut
-                    .keystore_mut()
-                    .derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info)
-            }
-            "TRON" => guard_mut
-                .keystore_mut()
-                .derive_coin::<TrxAddress, EmptyExtra>(&coin_info),
-            _ => Err(format_err!("{}", "chain_type_not_support")),
-        }?;
-
-        let exist_kid_opt = find_keystore_id_by_address(&account.address);
-        if let Some(exist_kid) = exist_kid_opt {
-            if !param.overwrite {
-                return Err(format_err!("{}", "wallet_exists"));
-            } else {
-                guard_mut.keystore_mut().id = exist_kid;
-            }
-        }
-    }
-
-    let json = format!("{}", ks);
-    println!("ks right: {}", json);
-    flush_keystore(&ks)?;
-
-    let extra = ::prost_types::Any {
-        type_url: "imToken.api.ImportWalletFromMnemonic".to_owned(),
-        value: vec![],
-    };
-    let wallet = WalletResult {
-        id: ks.id.to_owned(),
-        name: ks.meta.name.to_owned(),
-        chain_type: param.chain_type.to_owned(),
-        address: ks.active_accounts.first().unwrap().address.to_owned(),
-        source: "MNEMONIC".to_owned(),
-        created_at: ks.meta.timestamp.clone(),
-        extra: Some(extra),
-    };
-    let mut buf = BytesMut::with_capacity(wallet.encoded_len() * 3);
-    wallet.encode_raw(&mut buf);
-    cache_keystore(ks.clone());
-    println!("raw result: {}", hex::encode(buf.clone()));
-    Ok(buf.to_vec())
 }
 
 #[no_mangle]
@@ -746,7 +548,7 @@ fn sign_message_internal(json_str: &str) -> Result<String> {
     let symbol = coin_symbol_with_network(&v);
 
     let mut map = KEYSTORE_MAP.write().unwrap();
-    let mut keystore = match map.get_mut(w_id) {
+    let keystore = match map.get_mut(w_id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
@@ -962,6 +764,7 @@ mod tests {
     use std::str::FromStr;
 
     use crate::api::{InitTokenCoreXParam, WalletResult};
+    use crate::handler::init_token_core_x_pb_internal;
     use bytes::BytesMut;
     use prost::Message;
     use tcx_chain::HdKeystore;
