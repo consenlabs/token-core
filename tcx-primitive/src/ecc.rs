@@ -1,5 +1,6 @@
 use super::Result;
-use crate::Derive;
+use crate::ecc::KeyType::Secp256k1;
+use crate::{Derive, Secp256k1PrivateKey, Secp256k1PublicKey};
 use std::io;
 
 #[derive(Fail, Debug, PartialEq)]
@@ -46,30 +47,18 @@ pub enum KeyError {
     NotEnoughMemory,
     #[fail(display = "unknown")]
     Unknown,
+    #[fail(display = "invalid_key_type")]
+    InvalidKeyType,
 }
 
 /// An identifier for a type of cryptographic key.
-pub type KeyTypeId = u32;
-
-pub mod key_types {
-    use super::KeyTypeId;
-
-    pub const SECP256K1: KeyTypeId = 10;
-    pub const SECP256R1: KeyTypeId = 20;
+pub enum KeyType {
+    Secp256k1,
+    Secp256r1,
 }
 
 pub trait TypedKey {
-    const KEY_TYPE: KeyTypeId;
-}
-
-pub struct EcdsaSignature {
-    pub r: Vec<u8>,
-    pub s: Vec<u8>,
-    pub v: i8,
-}
-
-pub trait Ecdsa {
-    fn sign<T: AsRef<[u8]>>(&self, data: T) -> Result<EcdsaSignature>;
+    const KEY_TYPE: KeyType;
 }
 
 pub trait PublicKey: TypedKey + Sized {
@@ -107,4 +96,22 @@ pub trait DeterministicPrivateKey: Derive {
     fn private_key(&self) -> Self::PrivateKey;
 
     fn deterministic_public_key(&self) -> Result<Self::DeterministicPublicKey>;
+}
+
+pub struct KeyManage();
+
+impl KeyManage {
+    pub fn private_key_from_slice(key_type: KeyType, data: &[u8]) -> Result<impl PrivateKey> {
+        match key_type {
+            KeyType::Secp256k1 => Secp256k1PrivateKey::from_slice(data),
+            _ => Err(KeyError::InvalidKeyType.into()),
+        }
+    }
+
+    pub fn public_key_from_slice(key_type: KeyType, data: &[u8]) -> Result<impl PublicKey> {
+        match key_type {
+            KeyType::Secp256k1 => Secp256k1PublicKey::from_slice(data),
+            _ => Err(KeyError::InvalidKeyType.into()),
+        }
+    }
 }

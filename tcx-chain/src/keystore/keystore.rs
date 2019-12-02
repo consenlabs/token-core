@@ -13,11 +13,13 @@ use tcx_primitive::{
 use crate::keystore_guard::KeystoreGuard;
 use crate::Error;
 use crate::Result;
+use super::Address;
 use core::{fmt, result};
 use serde_json::{Map, Value};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_constants::{CoinInfo, CurveType};
+use crate::traits::Extra;
 
 /// Source to remember which format it comes from
 ///
@@ -66,13 +68,6 @@ impl Default for Metadata {
     }
 }
 
-/// Chain address interface, for encapsulate derivation
-pub trait Address {
-    // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
-    fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String>;
-
-    fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String>;
-}
 
 /// Account that presents one blockchain wallet on a keystore
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -85,11 +80,6 @@ pub struct Account {
     pub extra: Value,
 }
 
-/// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
-pub trait Extra: Sized + serde::Serialize + Clone {
-    fn new(coin_info: &CoinInfo, seed: &[u8]) -> Result<Self>;
-    fn from_private_key(coin_info: &CoinInfo, prv_key: &str) -> Result<Self>;
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -1,7 +1,6 @@
 use crate::constant::SECP256K1_ENGINE;
 use crate::ecc::{
-    key_types, KeyError, KeyTypeId, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey,
-    TypedKey,
+    KeyError, KeyType, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey, TypedKey,
 };
 
 use bitcoin::Network;
@@ -100,13 +99,13 @@ impl std::fmt::Display for Secp256k1PublicKey {
 }
 
 impl TraitPublicKey for Secp256k1PublicKey {
-    fn write_into<W: io::Write>(&self, mut writer: W) {
-        self.0.write_into(writer);
-    }
-
     fn from_slice(data: &[u8]) -> Result<Self> {
         let key = PublicKey::from_slice(data)?;
         Ok(Secp256k1PublicKey(key))
+    }
+
+    fn write_into<W: io::Write>(&self, mut writer: W) {
+        self.0.write_into(writer);
     }
 
     fn to_bytes(&self) -> Vec<u8> {
@@ -115,11 +114,11 @@ impl TraitPublicKey for Secp256k1PublicKey {
 }
 
 impl TypedKey for Secp256k1PublicKey {
-    const KEY_TYPE: KeyTypeId = key_types::SECP256K1;
+    const KEY_TYPE: KeyType = KeyType::Secp256k1;
 }
 
 impl TypedKey for Secp256k1PrivateKey {
-    const KEY_TYPE: KeyTypeId = key_types::SECP256K1;
+    const KEY_TYPE: KeyType = KeyType::Secp256k1;
 }
 
 impl Ss58Codec for Secp256k1PrivateKey {
