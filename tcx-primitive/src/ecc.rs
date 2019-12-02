@@ -1,7 +1,8 @@
 use super::Result;
-use crate::ecc::KeyType::Secp256k1;
 use crate::{Derive, Secp256k1PrivateKey, Secp256k1PublicKey};
 use std::io;
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum KeyError {
@@ -52,16 +53,18 @@ pub enum KeyError {
 }
 
 /// An identifier for a type of cryptographic key.
-pub enum KeyType {
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum CurveType {
     Secp256k1,
     Secp256r1,
 }
 
-pub trait TypedKey {
-    const KEY_TYPE: KeyType;
+pub trait TypedCurve {
+    const CURVE_TYPE: CurveType;
 }
 
-pub trait PublicKey: TypedKey + Sized {
+pub trait PublicKey: TypedCurve + Sized {
     fn from_slice(data: &[u8]) -> Result<Self>;
 
     fn write_into<W: io::Write>(&self, mut writer: W);
@@ -69,7 +72,7 @@ pub trait PublicKey: TypedKey + Sized {
     fn to_bytes(&self) -> Vec<u8>;
 }
 
-pub trait PrivateKey: TypedKey + Sized {
+pub trait PrivateKey: TypedCurve + Sized {
     type PublicKey: PublicKey;
 
     fn from_slice(data: &[u8]) -> Result<Self>;
@@ -101,16 +104,16 @@ pub trait DeterministicPrivateKey: Derive {
 pub struct KeyManage();
 
 impl KeyManage {
-    pub fn private_key_from_slice(key_type: KeyType, data: &[u8]) -> Result<impl PrivateKey> {
-        match key_type {
-            KeyType::Secp256k1 => Secp256k1PrivateKey::from_slice(data),
+    pub fn private_key_from_slice(curve_type: CurveType, data: &[u8]) -> Result<impl PrivateKey> {
+        match curve_type {
+            CurveType::Secp256k1 => Secp256k1PrivateKey::from_slice(data),
             _ => Err(KeyError::InvalidKeyType.into()),
         }
     }
 
-    pub fn public_key_from_slice(key_type: KeyType, data: &[u8]) -> Result<impl PublicKey> {
-        match key_type {
-            KeyType::Secp256k1 => Secp256k1PublicKey::from_slice(data),
+    pub fn public_key_from_slice(curve_type: CurveType, data: &[u8]) -> Result<impl PublicKey> {
+        match curve_type {
+            CurveType::Secp256k1 => Secp256k1PublicKey::from_slice(data),
             _ => Err(KeyError::InvalidKeyType.into()),
         }
     }
