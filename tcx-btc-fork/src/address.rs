@@ -1,4 +1,4 @@
-use crate::transaction::ScriptPubKeyComponent;
+use crate::signer::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
 
@@ -278,8 +278,8 @@ impl ScriptPubKeyComponent for BtcForkAddress {
 mod tests {
     use crate::address::BtcForkAddress;
 
+    use crate::signer::ScriptPubKeyComponent;
     use crate::tcx_chain::keystore::Address;
-    use crate::transaction::ScriptPubKeyComponent;
 
     use bitcoin::util::bip32::ExtendedPrivKey;
     use std::str::FromStr;

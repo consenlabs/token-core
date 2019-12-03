@@ -9,7 +9,14 @@ message InitTokenCoreXParam {
     string xpubCommonIv = 3;
 }
 
-message ImportWalletFromMnemonicParam {
+/// Hd Store
+
+message HdStoreCreateParam {
+    string password = 1;
+}
+
+
+message HdStoreImportParam {
     string chainType = 1;
     string mnemonic = 2;
     string password = 3;
@@ -20,6 +27,61 @@ message ImportWalletFromMnemonicParam {
     string segWit = 8;
     string passwordHint = 9;
     bool overwrite = 10;
+}
+
+message HdStoreDeriveParam {
+    string id = 1;
+    string password = 2;
+    repeated string chainTypes = 3;
+    repeated string paths = 4;
+    repeated google.protobuf.Any extras = 5;
+}
+
+
+message AccountResponse {
+    string chainType = 1;
+    string address = 2;
+    string path = 3;
+    google.protobuf.Any extra = 4;
+}
+
+message AccountsResponse {
+    repeated AccountResponse accounts = 1;
+}
+
+message HdStoreExtendedPublicKeyRequest {
+    string id = 1;
+    string password = 2;
+    string chainType = 3;
+    string address = 4;
+}
+
+message HdStoreExtendedPublicKeyResponse {
+    string extendedPublicKey = 1;
+}
+
+message HdStoreAccountsRequest {
+    string id = 1;
+}
+
+/// Private key store
+message PrivateKeyStoreImportRequest {
+    string privateKey = 1;
+    string password = 2;
+}
+
+/// Keystore Common
+message WalletKeyParam {
+    string id = 1;
+    string password = 2;
+}
+
+/// Sign Transaction
+message SignTxParam {
+    string id = 1;
+    string password = 2;
+    string chainType = 3;
+    google.protobuf.Any txInput = 4;
 }
 
 message WalletResult {

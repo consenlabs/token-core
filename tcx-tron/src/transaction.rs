@@ -1,7 +1,6 @@
 use tcx_chain::{
     HdKeystore, Message as TraitMessage, MessageSigner as TraitMessageSigner, Result,
-    SignedMessage as TraitSignedMessage, SignedTransaction as TraitSignedTransaction,
-    Transaction as TraitTransaction, TransactionSigner as TraitTransactionSigner,
+    SignedMessage as TraitSignedMessage, TransactionSigner as TraitTransactionSigner,
 };
 
 use bitcoin_hashes::sha256::Hash;
@@ -29,7 +28,7 @@ impl TryFrom<Value> for Transaction {
     }
 }
 
-impl TraitTransaction for Transaction {}
+//impl TraitTransaction for Transaction {}
 
 pub struct SignedTransaction {
     raw: Value,
@@ -43,7 +42,7 @@ impl TryInto<Value> for SignedTransaction {
     }
 }
 
-impl TraitSignedTransaction for SignedTransaction {}
+//impl TraitSignedTransaction for SignedTransaction {}
 
 impl TraitTransactionSigner<Transaction, SignedTransaction> for HdKeystore {
     fn sign_transaction(&self, tx: &Transaction) -> Result<SignedTransaction> {

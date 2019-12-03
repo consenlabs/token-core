@@ -2,6 +2,7 @@ use bip39::Seed;
 
 pub mod address;
 pub mod bip143_with_forkid;
+pub mod signer;
 pub mod transaction;
 
 use core::result;
@@ -25,18 +26,19 @@ pub type Result<T> = result::Result<T, failure::Error>;
 
 use tcx_crypto::aes::cbc::{decrypt_pkcs7, encrypt_pkcs7};
 
-pub use transaction::{BitcoinForkTransaction, BtcForkSegWitTransaction, BtcForkTransaction, Utxo};
+pub use signer::{BitcoinForkSinger, BtcForkSegWitTransaction, BtcForkTransaction};
+pub use transaction::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
 
 pub use address::{BtcForkAddress, PubKeyScript};
 use serde::export::PhantomData;
 use serde_json::Value;
+pub use signer::ScriptPubKeyComponent;
 use tcx_constants::{CoinInfo, CurveType};
 use tcx_primitive::{
     get_account_path, Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive,
     DerivePath, DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey,
     Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec,
 };
-pub use transaction::ScriptPubKeyComponent;
 
 #[derive(Fail, Debug)]
 pub enum Error {

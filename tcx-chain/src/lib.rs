@@ -24,10 +24,7 @@ pub mod keystore_guard;
 pub mod signer;
 
 pub use keystore::{Account, HdKeystore, Metadata, Source};
-pub use signer::{
-    Message, MessageSigner, SignedMessage, SignedTransaction, Transaction, TransactionSigner,
-    TxSignResult,
-};
+pub use signer::{Message, MessageSigner, SignedMessage, TransactionSigner};
 
 pub type Result<T> = result::Result<T, failure::Error>;
 

@@ -14,6 +14,10 @@ fn main() {
     )
     .unwrap();
 
+    // tcx-btc-fork
+    env::set_var("OUT_DIR", "../tcx-btc-fork/src");
+    prost_build::compile_protos(&["src/btc_fork.proto"], &["src/"]).unwrap();
+
     //    let targets = vec!["arm64-v8a", "armeabi-v7a", "x86", "x86_64"];
     //    for target in targets {
     //        println!("cargo:rustc-link-search=../../android/tokencore/build/intermediates/cmake/release/obj/{}/", target);
