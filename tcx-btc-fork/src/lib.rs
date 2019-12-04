@@ -9,8 +9,8 @@ use core::result;
 use serde::{Deserialize, Serialize};
 use std::iter::IntoIterator;
 use std::str::FromStr;
-use tcx_chain::keystore::Address;
-use tcx_chain::keystore::Extra;
+use tcx_chain::Address;
+use tcx_chain::Extra;
 
 #[macro_use]
 extern crate failure;
@@ -153,7 +153,7 @@ impl<T: Address> From<Value> for ExtendedPubKeyExtra<T> {
 mod tests {
     use crate::BtcForkExtra;
     use bip39::{Language, Mnemonic, Seed};
-    use tcx_chain::keystore::Extra;
+    use tcx_chain::Extra;
     use tcx_constants::{CoinInfo, CurveType};
 
     #[test]

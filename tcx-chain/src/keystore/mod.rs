@@ -10,7 +10,32 @@ use serde_json::Value;
 use tcx_constants::{CoinInfo, CurveType};
 
 pub use self::{guard::KeystoreGuard, hd::HdKeystore, private::PrivateKeystore};
-use tcx_primitive::{DeterministicPrivateKey, PrivateKey, TypedPrivateKey, TypedPublicKey};
+use tcx_primitive::{
+    DeterministicPrivateKey, PrivateKey, TypedDeterministicPrivateKey, TypedPrivateKey,
+    TypedPublicKey,
+};
+
+#[derive(Fail, Debug, PartialEq)]
+pub enum Error {
+    #[fail(display = "invalid_mnemonic")]
+    InvalidMnemonic,
+    #[fail(display = "invalid_key_type")]
+    InvalidKeyType,
+    #[fail(display = "invalid_secp256k1_public_key")]
+    InvalidSecp256k1PublicKey,
+    #[fail(display = "unsupported_curve")]
+    UnsupportedCurve,
+    #[fail(display = "account_not_found")]
+    AccountNotFound,
+    #[fail(display = "can_not_derive_pair_from_seed")]
+    CanNotDerivePairFromSeed,
+    #[fail(display = "can_not_derive_key")]
+    CannotDeriveKey,
+    #[fail(display = "keystore_locked")]
+    KeystoreLocked,
+    #[fail(display = "invalid_version")]
+    InvalidVersion,
+}
 
 /// Account that presents one blockchain wallet on a keystore
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -27,6 +52,8 @@ pub struct Account {
 pub trait Address {
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
     fn from_public_key(bytes: &[u8], coin: Option<&str>) -> Result<String>;
+
+    fn is_valid(address: &str) -> bool;
 }
 
 /// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
@@ -95,28 +122,160 @@ impl Extra for EmptyExtra {
     }
 }
 
-pub trait Keystore {
-    fn unlock_by_password(&mut self, password: &str) -> Result<()>;
-    fn lock(&mut self);
-    fn find_private_key(&self, address: &str) -> Result<TypedPrivateKey>;
+pub enum Keystore {
+    PrivateKey(PrivateKeystore),
+    Hd(HdKeystore),
 }
 
-#[derive(Fail, Debug, PartialEq)]
-pub enum Error {
-    #[fail(display = "invalid_mnemonic")]
-    InvalidMnemonic,
-    #[fail(display = "invalid_key_type")]
-    InvalidKeyType,
-    #[fail(display = "invalid_secp256k1_public_key")]
-    InvalidSecp256k1PublicKey,
-    #[fail(display = "unsupported_curve")]
-    UnsupportedCurve,
-    #[fail(display = "account_not_found")]
-    AccountNotFound,
-    #[fail(display = "can_not_derive_pair_from_seed")]
-    CanNotDerivePairFromSeed,
-    #[fail(display = "can_not_derive_key")]
-    CannotDeriveKey,
-    #[fail(display = "keystore_locked")]
-    KeystoreLocked,
+impl Keystore {
+    pub fn unlock_by_password(&mut self, password: &str) -> Result<()> {
+        match self {
+            Keystore::PrivateKey(ks) => ks.unlock_by_password(password),
+            Keystore::Hd(ks) => ks.unlock_by_password(password),
+        }
+    }
+
+    pub fn determinable(&self) -> bool {
+        match self {
+            Keystore::PrivateKey(_) => false,
+            Keystore::Hd(ks) => true,
+        }
+    }
+
+    pub fn lock(&mut self) {
+        match self {
+            Keystore::PrivateKey(ks) => ks.lock(),
+            Keystore::Hd(ks) => ks.lock(),
+        }
+    }
+
+    pub fn derive_coin<A: Address, E: Extra>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+        match self {
+            Keystore::PrivateKey(ks) => ks.derive_coin::<A, E>(coin_info),
+            Keystore::Hd(ks) => ks.derive_coin::<A, E>(coin_info),
+        }
+    }
+
+    pub fn find_private_key(&self, address: &str) -> Result<TypedPrivateKey> {
+        match self {
+            Keystore::PrivateKey(ks) => ks.find_private_key(address),
+            Keystore::Hd(ks) => ks.find_private_key(address),
+        }
+    }
+
+    /*
+    pub fn find_deterministic_private_key(&self, address: &str) -> Result<TypedDeterministicPrivateKey> {
+        match self {
+            Keystore::PrivateKey(ks) => Err(Error::CannotDeriveKey.into()),
+            Keystore::Hd(ks) => ks.find_deterministic_private_key(&self, address),
+        }
+    }
+    */
+
+    pub fn account(&self, symbol: &str) -> Option<&Account> {
+        match self {
+            Keystore::PrivateKey(ks) => ks.account(symbol),
+            Keystore::Hd(ks) => ks.account(symbol),
+        }
+    }
+
+    pub fn verify_password(&self, password: &str) -> bool {
+        match self {
+            Keystore::PrivateKey(ks) => ks.verify_password(password),
+            Keystore::Hd(ks) => ks.verify_password(password),
+        }
+    }
+
+    pub fn from_json(json: &str) -> Result<Keystore> {
+        let value: Value = serde_json::from_str(json)?;
+        let version = value["version"].as_i64();
+
+        if version.is_some() {
+            match version.unwrap() {
+                PrivateKeystore::VERSION => Ok(Keystore::PrivateKey(serde_json::from_value::<
+                    PrivateKeystore,
+                >(value)?)),
+                HdKeystore::VERSION => {
+                    Ok(Keystore::Hd(serde_json::from_value::<HdKeystore>(value)?))
+                }
+                _ => Err(Error::InvalidVersion.into()),
+            }
+        } else {
+            Err(Error::InvalidVersion.into())
+        }
+    }
+
+    pub fn to_json(&self) -> String {
+        match self {
+            Keystore::PrivateKey(ks) => serde_json::to_string(ks).unwrap(),
+            Keystore::Hd(ks) => serde_json::to_string(ks).unwrap(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Keystore;
+    use serde_json::Value;
+    use std::str::FromStr;
+
+    fn from_json() {
+        let json = r#"
+        {
+    "id": "41923f0c-427b-4e5f-a55c-a6a30d2ee0a5",
+    "version": 11000,
+    "crypto": {
+        "cipher": "aes-128-ctr",
+        "cipherparams": {
+            "iv": "9374c8d7b04f9a7649a80142a83873e6"
+        },
+        "ciphertext": "8ce8dcc303dc02c2de0d8bad566c44b152543b61f12961c1bdcab08a7d83424f19d5beaf7251e28ddf00ccf5e3f3358ecc3eb10b1761bf1cd3b108806f6ff34158102602c6cdd6adceb09eb2db8c3244",
+        "kdf": "pbkdf2",
+        "kdfparams": {
+          "c": 65535,
+          "dklen": 32,
+          "prf": "hmac-sha256",
+          "salt": "33c8f2d27fe994a1e7d51108c7811cdaa2b821cc6760ed760954b4b67a1bcd8c"
+        },
+        "mac": "6b86a18f4ba9f3f428e256e72a3d832dcf0cd1cb820ec61e413a64d83b012059"
+    },
+    "activeAccounts": [
+        {
+            "address": "bc1q32nssyaw5ph0skae5nja0asmw2y2a6qw8f0p38",
+            "derivationPath": "m/84'/0'/0'/0/0",
+            "curve": "SECP256k1",
+            "coin": "BITCOIN",
+            "extra": {}
+        },
+        {
+            "address": "tokencorex66",
+            "derivationPath": "m/84'/0'/0'/0/0",
+            "curve": "SECP256k1",
+            "coin": "EOS",
+            "extra": [
+                {
+                "encPrivate": {
+                    "encStr": "8657459f1ad4b7b8d2db4850b9072dab1da6d08cf248070068dc910df73c1dc5",
+                    "nonce": "cb64438515ef2565b7d0d1a036297bbd"
+                },
+                "publicKey": "EOS8W4CoVEhTj6RHhazfw6wqtrHGk4kE4fYb2VzCexAk81SjPU1mL"
+                }
+            ]
+        }
+    ],
+    "imTokenMeta": {
+        "name": "Multi Chain Keystore",
+        "passwordHint": "",
+        "source": "MNEMONIC",
+        "timestamp": 1519611221
+    }
+}
+"#;
+        let keystore: Keystore = Keystore::from_json(json).unwrap();
+
+        assert_eq!(
+            Value::from_str(&keystore.to_json()).unwrap(),
+            Value::from_str(json).unwrap()
+        );
+    }
 }

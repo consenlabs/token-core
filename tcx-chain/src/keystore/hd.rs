@@ -28,7 +28,7 @@ use tcx_primitive::{
 #[serde(rename_all = "camelCase")]
 pub struct HdKeystore {
     pub id: String,
-    pub version: i32,
+    pub version: i64,
     pub crypto: Crypto<Pbkdf2Params>,
     pub active_accounts: Vec<Account>,
 
@@ -39,31 +39,29 @@ pub struct HdKeystore {
     seed: Option<Vec<u8>>,
 }
 
-impl Keystore for HdKeystore {
-    fn unlock_by_password(&mut self, password: &str) -> Result<()> {
+impl HdKeystore {
+    pub const VERSION: i64 = 11000i64;
+
+    pub fn unlock_by_password(&mut self, password: &str) -> Result<()> {
         self.seed = Some(self.decrypt_seed(password)?);
 
         Ok(())
     }
 
-    fn lock(&mut self) {
+    pub fn lock(&mut self) {
         self.seed = None;
     }
 
-    fn find_private_key(&self, address: &str) -> Result<TypedPrivateKey> {
+    pub fn find_private_key(&self, address: &str) -> Result<TypedPrivateKey> {
         unimplemented!()
     }
-}
-
-impl HdKeystore {
-    pub const VERSION: i32 = 11000i32;
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
         let mnemonic = generate_mnemonic();
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
-            version: 11000,
+            version: Self::VERSION,
             crypto,
             active_accounts: vec![],
             meta,
@@ -75,7 +73,7 @@ impl HdKeystore {
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
-            version: 11000,
+            version: Self::VERSION,
             crypto,
             active_accounts: vec![],
             meta,
@@ -205,16 +203,6 @@ impl HdKeystore {
     pub fn verify_password(&self, password: &str) -> bool {
         self.crypto.verify_password(password)
     }
-
-    pub fn json(&self) -> String {
-        serde_json::to_string(&self).unwrap()
-    }
-
-    /// Load a json to create HD keystore instance
-    pub fn load(json: &str) -> Result<HdKeystore> {
-        let ret: HdKeystore = serde_json::from_str(json)?;
-        Ok(ret)
-    }
 }
 
 fn merge_value(a: &mut Value, b: &Value) {
@@ -286,67 +274,6 @@ mod tests {
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
-
-    #[test]
-    pub fn keystore_json_test() {
-        let json = r#"
-        {
-    "id": "41923f0c-427b-4e5f-a55c-a6a30d2ee0a5",
-    "version": 11000,
-    "crypto": {
-        "cipher": "aes-128-ctr",
-        "cipherparams": {
-            "iv": "9374c8d7b04f9a7649a80142a83873e6"
-        },
-        "ciphertext": "8ce8dcc303dc02c2de0d8bad566c44b152543b61f12961c1bdcab08a7d83424f19d5beaf7251e28ddf00ccf5e3f3358ecc3eb10b1761bf1cd3b108806f6ff34158102602c6cdd6adceb09eb2db8c3244",
-        "kdf": "pbkdf2",
-        "kdfparams": {
-          "c": 65535,
-          "dklen": 32,
-          "prf": "hmac-sha256",
-          "salt": "33c8f2d27fe994a1e7d51108c7811cdaa2b821cc6760ed760954b4b67a1bcd8c"
-        },
-        "mac": "6b86a18f4ba9f3f428e256e72a3d832dcf0cd1cb820ec61e413a64d83b012059"
-    },
-    "activeAccounts": [
-        {
-            "address": "bc1q32nssyaw5ph0skae5nja0asmw2y2a6qw8f0p38",
-            "derivationPath": "m/84'/0'/0'/0/0",
-            "curve": "SECP256k1",
-            "coin": "BITCOIN",
-            "extra": {}
-        },
-        {
-            "address": "tokencorex66",
-            "derivationPath": "m/84'/0'/0'/0/0",
-            "curve": "SECP256k1",
-            "coin": "EOS",
-            "extra": [
-                {
-                "encPrivate": {
-                    "encStr": "8657459f1ad4b7b8d2db4850b9072dab1da6d08cf248070068dc910df73c1dc5",
-                    "nonce": "cb64438515ef2565b7d0d1a036297bbd"
-                },
-                "publicKey": "EOS8W4CoVEhTj6RHhazfw6wqtrHGk4kE4fYb2VzCexAk81SjPU1mL"
-                }
-            ]
-        }
-    ],
-    "imTokenMeta": {
-        "name": "Multi Chain Keystore",
-        "passwordHint": "",
-        "source": "MNEMONIC",
-        "timestamp": 1519611221
-    }
-}
-"#;
-        let keystore: HdKeystore = HdKeystore::load(json).unwrap();
-        assert_eq!(keystore.active_accounts.len(), 2);
-        assert_eq!(
-            Value::from_str(&keystore.json()).unwrap(),
-            Value::from_str(json).unwrap()
-        );
-    }
 
     #[test]
     pub fn default_meta_test() {

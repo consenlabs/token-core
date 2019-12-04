@@ -14,7 +14,7 @@ use bitcoin_hashes::Hash;
 use core::result;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use tcx_chain::keystore::Address;
+use tcx_chain::Address;
 use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcForkNetwork};
 use tcx_constants::CoinInfo;
 use tcx_primitive::{
@@ -40,11 +40,6 @@ impl Address for BtcForkAddress {
             BtcForkAddress::p2pkh(public_key, &network)?.to_string()
         };
         Ok(addr.to_string())
-    }
-
-    fn from_private_key(wif: &str, coin: Option<&str>) -> Result<String> {
-        let sk = Secp256k1PrivateKey::from_wif(wif)?;
-        Self::from_public_key(&sk.public_key().to_compressed(), coin)
     }
 
     fn is_valid(address: &str) -> bool {
@@ -279,7 +274,7 @@ mod tests {
     use crate::address::BtcForkAddress;
 
     use crate::signer::ScriptPubKeyComponent;
-    use crate::tcx_chain::keystore::Address;
+    use crate::tcx_chain::Address;
 
     use bitcoin::util::bip32::ExtendedPrivKey;
     use std::str::FromStr;

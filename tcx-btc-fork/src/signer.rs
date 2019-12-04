@@ -25,7 +25,7 @@ use bitcoin::util::bip143::SighashComponents;
 use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin_hashes::hash160;
 use std::marker::PhantomData;
-use tcx_chain::keystore::Address;
+use tcx_chain::Address;
 use tcx_primitive::{get_account_path, PublicKey};
 
 const DUST: u64 = 546;
@@ -103,7 +103,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         let account = self
             .account(tx.coin.to_uppercase().as_str())
             .ok_or_else(|| format_err!("account_not_found"))?;
-        if self.meta.source != Source::Wif {
+
             let path = &account.derivation_path;
             let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
             let paths = tx.collect_key_pair_paths(path)?;
@@ -116,6 +116,8 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             let xpub = extra.xpub()?;
             let change_addr = tx.change_address(&xpub)?;
             tx.sign_transaction(&sks, change_addr)
+
+        /*
         } else {
             let change_addr = S::address_script_pub_key(&account.address)?;
             let pk = self.private_key()?;
@@ -127,6 +129,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
 
             tx.sign_transaction(&sks, change_addr)
         }
+        */
     }
 }
 

@@ -8,7 +8,7 @@ use core::result;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_btc_fork::{BtcForkAddress, PubKeyScript, ScriptPubKeyComponent};
-use tcx_chain::keystore::Address;
+use tcx_chain::Address;
 use tcx_constants::network_from_coin;
 use tcx_primitive::{PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey};
 
@@ -73,11 +73,6 @@ impl Address for BchAddress {
         _legacy_to_bch(&addr)
     }
 
-    fn from_private_key(wif: &str, coin: Option<&str>) -> Result<String> {
-        let sk = Secp256k1PrivateKey::from_wif(wif)?;
-        Self::from_public_key(&sk.public_key().to_compressed(), coin)
-    }
-
     fn is_valid(address: &str) -> bool {
         let converter = Converter::default();
         converter.is_legacy_addr(address) || converter.is_cash_addr(address)
@@ -117,7 +112,7 @@ mod tests {
 
     use bch_addr::{AddressFormat, Converter, Network};
     use bitcoin::consensus::encode::Error::Secp256k1;
-    use tcx_chain::keystore::Address;
+    use tcx_chain::Address;
     use tcx_primitive::{PrivateKey, Secp256k1PrivateKey};
 
     #[test]
