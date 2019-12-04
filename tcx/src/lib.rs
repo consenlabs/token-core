@@ -22,11 +22,11 @@ use tcx_primitive::verify_wif;
 use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 
 mod api;
-use crate::api::TcxAction;
+use crate::api::{Response, TcxAction};
 pub mod error_handling;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 mod handler;
-use crate::handler::{hd_keystore_create, hd_store_import, sign_tx, Buffer};
+use crate::handler::{encode_message, hd_keystore_create, hd_store_import, sign_tx, Buffer};
 mod filemanager;
 use crate::filemanager::{
     cache_keystore, delete_keystore_file, find_keystore_id_by_address, flush_keystore,
@@ -87,9 +87,17 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
 
     // assemble result and clear result
 
-    let data = reply.as_mut_ptr();
-    let len = reply.len();
-    std::mem::forget(reply);
+    //    let data = reply.as_mut_ptr();
+    //    let len = reply.len();
+    //    std::mem::forget(reply);
+    //    Buffer { data, len }
+    wrap_buffer(&mut reply)
+}
+
+fn wrap_buffer(to_wrap: &mut Vec<u8>) -> Buffer {
+    let data = to_wrap.as_mut_ptr();
+    let len = to_wrap.len();
+    std::mem::forget(to_wrap);
     Buffer { data, len }
 }
 
@@ -750,6 +758,23 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
             CString::new(msg).unwrap().into_raw()
         } else {
             CString::new("").unwrap().into_raw()
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_last_err() -> Buffer {
+    LAST_ERROR.with(|e| {
+        if let Some(ref err) = *e.borrow() {
+            let rsp = Response {
+                is_success: false,
+                error: err.to_string(),
+            };
+            let mut rsp_bytes = encode_message(rsp).expect("encode error");
+            wrap_buffer(&mut rsp_bytes)
+        } else {
+            let mut rsp: Vec<u8> = vec![];
+            wrap_buffer(&mut rsp)
         }
     })
 }

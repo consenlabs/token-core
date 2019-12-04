@@ -181,6 +181,25 @@ pub struct WalletResult {
     #[prost(message, optional, tag = "7")]
     pub extra: ::std::option::Option<::prost_types::Any>,
 }
+/// btc-fork
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExternalAddressParam {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(string, tag = "2")]
+    pub chain_type: std::string::String,
+    #[prost(uint32, tag = "3")]
+    pub external_idx: u32,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExternalAddressResult {
+    #[prost(string, tag = "1")]
+    pub address: std::string::String,
+    #[prost(string, tag = "2")]
+    pub derived_path: std::string::String,
+    #[prost(string, tag = "3")]
+    pub r#type: std::string::String,
+}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExternalAddressExtra {
     #[prost(string, tag = "1")]
