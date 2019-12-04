@@ -14,6 +14,14 @@ fn main() {
     )
     .unwrap();
 
+    //    // tcx-chain
+    //    env::set_var("OUT_DIR", "../tcx-chain/src");
+    //    prost_build::compile_protos(&["src/tron.proto"], &["src/"]).unwrap();
+
+    // tcx-tron
+    env::set_var("OUT_DIR", "../tcx-tron/src");
+    prost_build::compile_protos(&["src/tron.proto"], &["src/"]).unwrap();
+
     // tcx-btc-fork
     env::set_var("OUT_DIR", "../tcx-btc-fork/src");
     prost_build::compile_protos(&["src/btc_fork.proto"], &["src/"]).unwrap();

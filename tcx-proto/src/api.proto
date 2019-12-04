@@ -7,3 +7,9 @@ message TcxAction {
     string method = 1;
     google.protobuf.Any param = 2;
 }
+
+
+message Response {
+    bool isSuccess = 1;
+    string error = 2;
+}

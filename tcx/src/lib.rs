@@ -10,11 +10,8 @@ use std::str::FromStr;
 use prost::Message;
 use serde_json::Value;
 
-use tcx_bch::{BchAddress, BchExtra, BchTransaction};
-use tcx_btc_fork::{
-    address::BtcForkAddress, BtcForkExtra, BtcForkSegWitTransaction, BtcForkTransaction,
-    BtcForkTxInput, ExternalAddress, Utxo,
-};
+use tcx_bch::{BchAddress, BchExtra};
+use tcx_btc_fork::{address::BtcForkAddress, BtcForkExtra, ExternalAddress};
 use tcx_chain::keystore::EmptyExtra;
 use tcx_chain::keystore_guard::KeystoreGuard;
 use tcx_chain::signer::TransactionSigner;
@@ -29,7 +26,7 @@ use crate::api::TcxAction;
 pub mod error_handling;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 mod handler;
-use crate::handler::{hd_keystore_create, hd_store_import, Buffer};
+use crate::handler::{hd_keystore_create, hd_store_import, sign_tx, Buffer};
 mod filemanager;
 use crate::filemanager::{
     cache_keystore, delete_keystore_file, find_keystore_id_by_address, flush_keystore,
@@ -78,12 +75,18 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
     let data = std::slice::from_raw_parts_mut(buf.data, buf.len);
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
     let mut reply: Vec<u8> = match action.method.to_lowercase().as_str() {
-        "hd_store_create" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
+        "init_token_core_x" => landingpad(|| {
+            handler::init_token_core_x(&action.param.unwrap().value);
+            Ok(vec![])
+        }),
+        //        "hd_store_create" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
         "hd_store_import" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
+        "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
         _ => landingpad(|| hd_keystore_create(&action.param.unwrap().value)),
     };
 
     // assemble result and clear result
+
     let data = reply.as_mut_ptr();
     let len = reply.len();
     std::mem::forget(reply);
@@ -524,13 +527,13 @@ fn verify_password_internal(v: &Value) -> Result<String> {
 //    Ok(serde_json::to_string(&ret)?)
 //}
 
-fn sign_trx_transaction(json: &str, keystore: &HdKeystore) -> Result<String> {
-    let v = Value::from_str(json)?;
-    let tx = TrxTransaction::try_from(v)?;
-    let signed: TrxSignedTransaction = keystore.sign_transaction(&tx)?;
-    let signed_v: Value = signed.try_into()?;
-    Ok(signed_v.to_string())
-}
+//fn sign_trx_transaction(json: &str, keystore: &HdKeystore) -> Result<String> {
+//    let v = Value::from_str(json)?;
+//    let tx = TrxTransaction::try_from(v)?;
+//    let signed: TrxSignedTransaction = keystore.sign_transaction(&tx)?;
+//    let signed_v: Value = signed.try_into()?;
+//    Ok(signed_v.to_string())
+//}
 
 #[no_mangle]
 pub unsafe extern "C" fn sign_message(json_str: *const c_char) -> *const c_char {

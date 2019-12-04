@@ -55,6 +55,7 @@ pub fn coin_info_from_symbol(symbol: &str) -> Result<CoinInfo> {
 
 const NETWORK_COINS: [&str; 3] = ["BITCOINCASH", "LITECOIN", "BITCOIN"];
 
+// todo: remove
 pub fn coin_symbol_with_param(
     chain_type: &str,
     network: &str,

@@ -32,11 +32,22 @@ message HdStoreImportParam {
 message HdStoreDeriveParam {
     string id = 1;
     string password = 2;
-    repeated string chainTypes = 3;
-    repeated string paths = 4;
-    repeated google.protobuf.Any extras = 5;
+    message Derivation {
+        string chainType = 1;
+        string path = 2;
+        string network = 3;
+        string segWit = 4;
+        string chainId = 5;
+    }
+    repeated Derivation derivations= 3;
 }
 
+
+
+message BtcForkDeriveExtraParam {
+    string network = 1;
+    string segWit = 2;
+}
 
 message AccountResponse {
     string chainType = 1;
@@ -74,6 +85,16 @@ message PrivateKeyStoreImportRequest {
 message WalletKeyParam {
     string id = 1;
     string password = 2;
+}
+
+message KeystoreCommonExportResult {
+    string id = 1;
+    enum ExportType {
+        MNEMONIC = 0;
+        PRIVATE_KEY = 1;
+    }
+    ExportType type = 2;
+    string value = 3;
 }
 
 /// Sign Transaction

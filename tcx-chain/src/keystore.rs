@@ -212,7 +212,7 @@ impl HdKeystore {
         Self::derive_account_from_coin::<A, E>(coin_info, seed.as_bytes())
     }
 
-    fn derive_account_from_coin<A: Address, E: Extra>(
+    pub fn derive_account_from_coin<A: Address, E: Extra>(
         coin_info: &CoinInfo,
         seed: &[u8],
     ) -> Result<Account> {

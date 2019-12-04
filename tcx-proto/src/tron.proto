@@ -1,0 +1,10 @@
+syntax = "proto3";
+package transaction;
+
+message TronTxInput {
+    bytes rawData = 1;
+}
+
+message TronTxOutput {
+    bytes signature = 1;
+}

@@ -6,6 +6,13 @@ pub struct TcxAction {
     pub param: ::std::option::Option<::prost_types::Any>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Response {
+    #[prost(bool, tag = "1")]
+    pub is_success: bool,
+    #[prost(string, tag = "2")]
+    pub error: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InitTokenCoreXParam {
     #[prost(string, tag = "1")]
     pub file_dir: std::string::String,
@@ -50,12 +57,30 @@ pub struct HdStoreDeriveParam {
     pub id: std::string::String,
     #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(string, repeated, tag = "3")]
-    pub chain_types: ::std::vec::Vec<std::string::String>,
-    #[prost(string, repeated, tag = "4")]
-    pub paths: ::std::vec::Vec<std::string::String>,
-    #[prost(message, repeated, tag = "5")]
-    pub extras: ::std::vec::Vec<::prost_types::Any>,
+    #[prost(message, repeated, tag = "3")]
+    pub derivations: ::std::vec::Vec<hd_store_derive_param::Derivation>,
+}
+pub mod hd_store_derive_param {
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Derivation {
+        #[prost(string, tag = "1")]
+        pub chain_type: std::string::String,
+        #[prost(string, tag = "2")]
+        pub path: std::string::String,
+        #[prost(string, tag = "3")]
+        pub network: std::string::String,
+        #[prost(string, tag = "4")]
+        pub seg_wit: std::string::String,
+        #[prost(string, tag = "5")]
+        pub chain_id: std::string::String,
+    }
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BtcForkDeriveExtraParam {
+    #[prost(string, tag = "1")]
+    pub network: std::string::String,
+    #[prost(string, tag = "2")]
+    pub seg_wit: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AccountResponse {
@@ -109,6 +134,23 @@ pub struct WalletKeyParam {
     pub id: std::string::String,
     #[prost(string, tag = "2")]
     pub password: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct KeystoreCommonExportResult {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(enumeration = "keystore_common_export_result::ExportType", tag = "2")]
+    pub r#type: i32,
+    #[prost(string, tag = "3")]
+    pub value: std::string::String,
+}
+pub mod keystore_common_export_result {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ExportType {
+        Mnemonic = 0,
+        PrivateKey = 1,
+    }
 }
 //// Sign Transaction
 #[derive(Clone, PartialEq, ::prost::Message)]
