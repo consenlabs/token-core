@@ -1,6 +1,12 @@
 use super::Result;
-use crate::Derive;
+use crate::{
+    Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, Secp256k1PrivateKey,
+    Secp256k1PublicKey,
+};
 use std::io;
+
+use serde::{Deserialize, Serialize};
+use tcx_constants::CurveType;
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum KeyError {
@@ -46,33 +52,18 @@ pub enum KeyError {
     NotEnoughMemory,
     #[fail(display = "unknown")]
     Unknown,
+    #[fail(display = "invalid_curve_type")]
+    InvalidCurveType,
 }
 
 /// An identifier for a type of cryptographic key.
-pub type KeyTypeId = u32;
-
-pub mod key_types {
-    use super::KeyTypeId;
-
-    pub const SECP256K1: KeyTypeId = 10;
-    pub const SECP256R1: KeyTypeId = 20;
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum DeterministicType {
+    BIP32,
 }
 
-pub trait TypedKey {
-    const KEY_TYPE: KeyTypeId;
-}
-
-pub struct EcdsaSignature {
-    pub r: Vec<u8>,
-    pub s: Vec<u8>,
-    pub v: i8,
-}
-
-pub trait Ecdsa {
-    fn sign<T: AsRef<[u8]>>(&self, data: T) -> Result<EcdsaSignature>;
-}
-
-pub trait PublicKey: TypedKey + Sized {
+pub trait PublicKey: Sized {
     fn from_slice(data: &[u8]) -> Result<Self>;
 
     fn write_into<W: io::Write>(&self, mut writer: W);
@@ -80,7 +71,7 @@ pub trait PublicKey: TypedKey + Sized {
     fn to_bytes(&self) -> Vec<u8>;
 }
 
-pub trait PrivateKey: TypedKey + Sized {
+pub trait PrivateKey: Sized {
     type PublicKey: PublicKey;
 
     fn from_slice(data: &[u8]) -> Result<Self>;
@@ -90,6 +81,8 @@ pub trait PrivateKey: TypedKey + Sized {
     fn sign(&self, _: &[u8]) -> Result<Vec<u8>>;
 
     fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>>;
+
+    fn to_bytes(&self) -> Vec<u8>;
 }
 
 pub trait DeterministicPublicKey: Derive {
@@ -107,4 +100,88 @@ pub trait DeterministicPrivateKey: Derive {
     fn private_key(&self) -> Self::PrivateKey;
 
     fn deterministic_public_key(&self) -> Result<Self::DeterministicPublicKey>;
+}
+
+pub struct KeyManage();
+
+pub enum TypedPrivateKey {
+    Secp256k1(Secp256k1PrivateKey),
+}
+
+impl TypedPrivateKey {
+    fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => sk.sign(data),
+            _ => panic!("invalid curve type"),
+        }
+    }
+
+    fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>> {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => sk.sign_recoverable(data),
+            _ => panic!("invalid curve type"),
+        }
+    }
+
+    pub fn public_key(&self) -> Result<TypedPublicKey> {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => Ok(TypedPublicKey::Secp256k1(sk.public_key())),
+            _ => panic!("invalid curve type"),
+        }
+    }
+
+    fn curve_type(&self) -> CurveType {
+        match self {
+            TypedPrivateKey::Secp256k1(_) => CurveType::SECP256k1,
+            _ => panic!("invalid curve type"),
+        }
+    }
+}
+
+pub enum TypedPublicKey {
+    Secp256k1(Secp256k1PublicKey),
+}
+
+impl TypedPublicKey {
+    pub fn to_bytes(&self) -> Vec<u8> {
+        match self {
+            TypedPublicKey::Secp256k1(pk) => pk.to_bytes(),
+            _ => panic!("invalid curve type"),
+        }
+    }
+
+    fn curve_type(&self) -> CurveType {
+        match self {
+            TypedPublicKey::Secp256k1(_) => CurveType::SECP256k1,
+            _ => panic!("invalid curve type"),
+        }
+    }
+}
+
+pub enum TypedDeterministicPrivateKey {
+    Bip32Sepc256k1(Bip32DeterministicPrivateKey),
+}
+
+pub enum TypedDeterministicPublicKey {
+    Bip32Sepc256k1(Bip32DeterministicPublicKey),
+}
+
+impl KeyManage {
+    pub fn private_key_from_slice(curve_type: CurveType, data: &[u8]) -> Result<TypedPrivateKey> {
+        match curve_type {
+            CurveType::SECP256k1 => Ok(TypedPrivateKey::Secp256k1(
+                Secp256k1PrivateKey::from_slice(data)?,
+            )),
+            _ => panic!("invalid curve type"),
+        }
+    }
+
+    pub fn public_key_from_slice(curve_type: CurveType, data: &[u8]) -> Result<TypedPublicKey> {
+        match curve_type {
+            CurveType::SECP256k1 => Ok(TypedPublicKey::Secp256k1(Secp256k1PublicKey::from_slice(
+                data,
+            )?)),
+            _ => panic!("invalid curve type"),
+        }
+    }
 }

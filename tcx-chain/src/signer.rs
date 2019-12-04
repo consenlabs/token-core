@@ -26,7 +26,9 @@ pub trait TransactionSigner<Input, Output> {
 }
 
 pub trait Message: Sized {}
+
 pub trait SignedMessage: Sized {}
+
 pub trait MessageSigner<Input: Message, Output: SignedMessage> {
     fn sign_message(&self, message: &Input) -> Result<Output>;
 }
