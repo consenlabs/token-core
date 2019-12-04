@@ -1,4 +1,4 @@
-use tcx_chain::{HdKeystore, Source, TransactionSigner};
+use tcx_chain::{HdKeystore, Keystore, Source, TransactionSigner};
 
 use bitcoin::{OutPoint, Script, Transaction, TxIn, TxOut};
 use bitcoin_hashes::hex::FromHex;
@@ -17,6 +17,7 @@ use crate::address::BtcForkAddress;
 use tcx_primitive::{
     Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPrivateKey,
     DeterministicPublicKey, PrivateKey, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec,
+    TypedPrivateKey,
 };
 
 use crate::transaction::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
@@ -97,39 +98,44 @@ pub struct BitcoinForkSinger<S: ScriptPubKeyComponent + Address, T: BitcoinTrans
 //}
 
 impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
-    TransactionSigner<BitcoinForkSinger<S, T>, BtcForkSignedTxOutput> for HdKeystore
+    TransactionSigner<BitcoinForkSinger<S, T>, BtcForkSignedTxOutput> for Keystore
 {
     fn sign_transaction(&self, tx: &BitcoinForkSinger<S, T>) -> Result<BtcForkSignedTxOutput> {
         let account = self
             .account(tx.coin.to_uppercase().as_str())
             .ok_or_else(|| format_err!("account_not_found"))?;
 
-            let path = &account.derivation_path;
-            let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
-            let paths = tx.collect_key_pair_paths(path)?;
-            let sks = &self
-                .key_at_paths(tx.coin.to_uppercase().as_str(), &paths)?
-                .iter()
-                .map(|esk| esk.private_key())
-                .collect::<Vec<Secp256k1PrivateKey>>();
+        match self {
+            Keystore::PrivateKey(ks) => {
+                let change_addr = S::address_script_pub_key(&account.address)?;
+                let sk = ks.private_key()?;
+                // todo: more easy way to clone pair, will fix after refactor the pair
+                let mut sks: Vec<Secp256k1PrivateKey> = vec![];
+                let k = match sk {
+                    TypedPrivateKey::Secp256k1(k) => k,
+                };
 
-            let xpub = extra.xpub()?;
-            let change_addr = tx.change_address(&xpub)?;
-            tx.sign_transaction(&sks, change_addr)
+                for x in 0..tx.tx_input.unspents.len() {
+                    sks.push(k.clone());
+                }
 
-        /*
-        } else {
-            let change_addr = S::address_script_pub_key(&account.address)?;
-            let pk = self.private_key()?;
-            // todo: more easy way to clone pair, will fix after refactor the pair
-            let mut sks: Vec<Secp256k1PrivateKey> = vec![];
-            for x in 0..tx.tx_input.unspents.len() {
-                sks.push(Secp256k1PrivateKey::from_wif(&pk)?);
+                tx.sign_transaction(&sks, change_addr)
             }
+            Keystore::Hd(ks) => {
+                let path = &account.derivation_path;
+                let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
+                let paths = tx.collect_key_pair_paths(path)?;
+                let sks = &ks
+                    .key_at_paths(tx.coin.to_uppercase().as_str(), &paths)?
+                    .iter()
+                    .map(|esk| esk.private_key())
+                    .collect::<Vec<Secp256k1PrivateKey>>();
 
-            tx.sign_transaction(&sks, change_addr)
+                let xpub = extra.xpub()?;
+                let change_addr = tx.change_address(&xpub)?;
+                tx.sign_transaction(&sks, change_addr)
+            }
         }
-        */
     }
 }
 

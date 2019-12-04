@@ -7,3 +7,4 @@ pub struct TronTxInput {
 pub struct TronTxOutput {
     #[prost(bytes, tag = "1")]
     pub signature: std::vec::Vec<u8>,
+}

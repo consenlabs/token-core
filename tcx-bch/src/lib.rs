@@ -31,7 +31,7 @@ mod tests {
     use serde_json::Value;
     use std::str::FromStr;
     use tcx_chain::KeystoreGuard;
-    use tcx_chain::{HdKeystore, Metadata};
+    use tcx_chain::{HdKeystore, Keystore, Metadata};
     use tcx_constants::CoinInfo;
     use tcx_constants::CurveType;
 
@@ -45,7 +45,7 @@ mod tests {
         let mut meta = Metadata::default();
         meta.name = "CreateTest".to_string();
 
-        let mut keystore = HdKeystore::new("Insecure Password", meta);
+        let mut keystore = Keystore::Hd(HdKeystore::new("Insecure Password", meta));
 
         //        let coin = BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut keystore, PASSWORD, BIP_PATH);
         let bch_coin = CoinInfo {
@@ -60,7 +60,7 @@ mod tests {
             .derive_coin::<BchAddress, BchExtra>(&bch_coin)
             .unwrap();
 
-        let json_str = guard.keystore_mut().json();
+        let json_str = guard.keystore_mut().to_json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
 
         let active_accounts = v["activeAccounts"].as_array().unwrap();
@@ -79,7 +79,7 @@ mod tests {
         let mut meta = Metadata::default();
         meta.name = "RecoverTest".to_string();
 
-        let mut keystore = HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta);
+        let mut keystore = Keystore::Hd(HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta));
 
         let bch_coin = CoinInfo {
             symbol: "BITCOINCASH".to_string(),
@@ -93,7 +93,7 @@ mod tests {
             .keystore_mut()
             .derive_coin::<BchAddress, BchExtra>(&bch_coin)
             .unwrap();
-        let json_str = guard.keystore_mut().json();
+        let json_str = guard.keystore_mut().to_json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
 
         let active_accounts = v["activeAccounts"].as_array().unwrap();
