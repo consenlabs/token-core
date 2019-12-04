@@ -4,105 +4,24 @@ use serde_json::json;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
-use tcx_crypto::{Crypto, Pbkdf2Params};
-use tcx_primitive::{
-    generate_mnemonic, Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive,
-    DerivePath, DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey,
-};
-
-use crate::keystore_guard::KeystoreGuard;
-use crate::Error;
-use crate::Result;
+use super::guard::KeystoreGuard;
 use super::Address;
+use super::Result;
+use super::{Account, Extra};
+use super::{Error, Metadata, Source};
+
+use crate::keystore::Keystore;
 use core::{fmt, result};
 use serde_json::{Map, Value};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_constants::{CoinInfo, CurveType};
-use crate::traits::Extra;
-
-/// Source to remember which format it comes from
-///
-/// NOTE: Identity related type is only for imToken App v2.x
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum Source {
-    Wif,
-    Private,
-    Keystore,
-    Mnemonic,
-    NewIdentity,
-    RecoveredIdentity,
-}
-
-/// Metadata of keystore, for presenting wallet data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Metadata {
-    pub name: String,
-    pub password_hint: String,
-    #[serde(default = "metadata_default_time")]
-    pub timestamp: i64,
-    #[serde(default = "metadata_default_source")]
-    pub source: Source,
-}
-
-fn metadata_default_time() -> i64 {
-    let start = SystemTime::now();
-    let since_the_epoch = start.duration_since(UNIX_EPOCH).expect("get timestamp");
-    since_the_epoch.as_secs() as i64
-}
-
-fn metadata_default_source() -> Source {
-    Source::Mnemonic
-}
-
-impl Default for Metadata {
-    fn default() -> Self {
-        Metadata {
-            name: String::from("Unknown"),
-            password_hint: String::new(),
-            timestamp: metadata_default_time(),
-            source: Source::Mnemonic,
-        }
-    }
-}
-
-
-/// Account that presents one blockchain wallet on a keystore
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct Account {
-    pub address: String,
-    pub derivation_path: String,
-    pub curve: CurveType,
-    pub coin: String,
-    pub extra: Value,
-}
-
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct EmptyExtra {}
-
-impl Extra for EmptyExtra {
-    fn new(_coin_info: &CoinInfo, _seed: &[u8]) -> Result<Self> {
-        Ok(EmptyExtra {})
-    }
-    fn from_private_key(_coin_info: &CoinInfo, _prv_key: &str) -> Result<Self> {
-        Ok(EmptyExtra {})
-    }
-}
-
-/// Keystore type
-///
-/// NOTE: mnemonic for HD wallet
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum KeyType {
-    PrivateKey,
-    Mnemonic,
-}
+use tcx_crypto::{Crypto, Pbkdf2Params};
+use tcx_primitive::{
+    generate_mnemonic, Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive,
+    DerivePath, DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey,
+    TypedPrivateKey,
+};
 
 /// Primary keystore type to store a root seed for deriving multi chain accounts.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -110,7 +29,6 @@ pub enum KeyType {
 pub struct HdKeystore {
     pub id: String,
     pub version: i32,
-    pub key_type: KeyType,
     pub crypto: Crypto<Pbkdf2Params>,
     pub active_accounts: Vec<Account>,
 
@@ -121,18 +39,24 @@ pub struct HdKeystore {
     seed: Option<Vec<u8>>,
 }
 
-impl HdKeystore {
-    pub const VERSION: i32 = 11000i32;
-
-    pub fn lock(&mut self) {
-        self.seed = None;
-    }
-
-    pub(crate) fn unlock_by_password(&mut self, password: &str) -> Result<()> {
+impl Keystore for HdKeystore {
+    fn unlock_by_password(&mut self, password: &str) -> Result<()> {
         self.seed = Some(self.decrypt_seed(password)?);
 
         Ok(())
     }
+
+    fn lock(&mut self) {
+        self.seed = None;
+    }
+
+    fn find_private_key(&self, address: &str) -> Result<TypedPrivateKey> {
+        unimplemented!()
+    }
+}
+
+impl HdKeystore {
+    pub const VERSION: i32 = 11000i32;
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
         let mnemonic = generate_mnemonic();
@@ -140,7 +64,6 @@ impl HdKeystore {
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 11000,
-            key_type: KeyType::Mnemonic,
             crypto,
             active_accounts: vec![],
             meta,
@@ -153,22 +76,6 @@ impl HdKeystore {
         HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 11000,
-            key_type: KeyType::Mnemonic,
-            crypto,
-            active_accounts: vec![],
-            meta,
-            seed: None,
-        }
-    }
-
-    pub fn from_private_key(private_key: &str, password: &str, source: Source) -> HdKeystore {
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, private_key.as_bytes());
-        let mut meta = Metadata::default();
-        meta.source = source;
-        HdKeystore {
-            id: Uuid::new_v4().to_hyphenated().to_string(),
-            version: 11000,
-            key_type: KeyType::PrivateKey,
             crypto,
             active_accounts: vec![],
             meta,
@@ -222,35 +129,10 @@ impl HdKeystore {
         Ok(acc)
     }
 
-    pub fn private_key_to_account<A: Address, E: Extra>(
-        coin: &CoinInfo,
-        private_key: &str,
-    ) -> Result<Account> {
-        let extra = E::from_private_key(coin, private_key)?;
-        let addr = A::from_private_key(private_key, Some(&coin.symbol))?;
-        let acc = Account {
-            address: addr,
-            derivation_path: "".to_string(),
-            curve: coin.curve,
-            coin: coin.symbol.to_owned(),
-            extra: serde_json::to_value(extra.clone()).expect("extra_error"),
-        };
-        Ok(acc)
-    }
-
     pub fn mnemonic(&self, password: &str) -> Result<String> {
-        tcx_ensure!(self.key_type == KeyType::Mnemonic, Error::InvalidKeyType);
         let mnemonic_bytes = self.crypto.decrypt(password)?;
         let mnemonic = String::from_utf8(mnemonic_bytes)?;
         Ok(mnemonic)
-    }
-
-    pub fn private_key(&self) -> Result<String> {
-        tcx_ensure!(self.key_type == KeyType::PrivateKey, Error::InvalidKeyType);
-        tcx_ensure!(self.seed.is_some(), Error::KeystoreLocked);
-
-        let priv_key = String::from_utf8(self.seed.as_ref().unwrap().to_vec())?;
-        Ok(priv_key)
     }
 
     pub fn decrypt_seed(&self, password: &str) -> Result<Vec<u8>> {
@@ -305,19 +187,11 @@ impl HdKeystore {
 
     /// Derive an account on a specific coin
     pub fn derive_coin<A: Address, E: Extra>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
-        // todo: keyType
         tcx_ensure!(self.seed.is_some(), Error::KeystoreLocked);
 
         let seed = self.seed.as_ref().unwrap().as_slice();
 
         let account = Self::derive_account_from_coin::<A, E>(coin_info, seed)?;
-
-        /*
-        else
-            let priv_key = self.private_key(password)?;
-            Self::private_key_to_account::<A, E>(coin_info, &priv_key)?
-        };
-        */
 
         self.active_accounts.push(account);
         Ok(self.active_accounts.last().unwrap())
@@ -404,9 +278,10 @@ impl Display for HdKeystore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::keystore::{metadata_default_time, EmptyExtra};
     use bitcoin_hashes::hex::ToHex;
     use serde_json::Map;
-    use tcx_primitive::PublicKey;
+    use tcx_primitive::{PublicKey, TypedPublicKey};
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
@@ -418,7 +293,6 @@ mod tests {
         {
     "id": "41923f0c-427b-4e5f-a55c-a6a30d2ee0a5",
     "version": 11000,
-    "keyType": "MNEMONIC",
     "crypto": {
         "cipher": "aes-128-ctr",
         "cipherparams": {
@@ -491,11 +365,7 @@ mod tests {
 
     struct MockAddress {}
     impl Address for MockAddress {
-        fn from_public_key(_public_key: &[u8], _coin: Option<&str>) -> Result<String> {
-            Ok("mock_address".to_string())
-        }
-
-        fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String> {
+        fn from_public_key(_pk: &[u8], _coin: Option<&str>) -> Result<String> {
             Ok("mock_address".to_string())
         }
     }
@@ -526,7 +396,6 @@ mod tests {
         assert_eq!(keystore.version, 11000);
         assert_ne!(keystore.id, "");
         assert_eq!(keystore.active_accounts.len(), 0);
-        assert_eq!(keystore.key_type, KeyType::Mnemonic);
     }
 
     #[test]
@@ -538,7 +407,6 @@ mod tests {
         let decrypted_mnemonic = String::from_utf8(decrypted_bytes).unwrap();
         assert_eq!(decrypted_mnemonic, MNEMONIC);
         assert_eq!(keystore.active_accounts.len(), 0);
-        assert_eq!(keystore.key_type, KeyType::Mnemonic);
 
         let mnemonic = keystore.mnemonic(PASSWORD).unwrap();
         assert_eq!(mnemonic, MNEMONIC);
@@ -555,18 +423,6 @@ mod tests {
         assert_eq!(format!("{}", wrong_password_err), "password_incorrect");
     }
 
-    #[test]
-    pub fn from_private_key_test() {
-        let keystore = HdKeystore::from_private_key(
-            "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
-            PASSWORD,
-            Source::Private,
-        );
-        assert_eq!(keystore.version, 11000);
-        assert_ne!(keystore.id, "");
-        assert_eq!(keystore.active_accounts.len(), 0);
-        assert_eq!(keystore.key_type, KeyType::PrivateKey);
-    }
     //
     //    #[test]
     //    pub fn get_pair_test() {

@@ -1,7 +1,5 @@
 use crate::constant::SECP256K1_ENGINE;
-use crate::ecc::{
-    CurveType, KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey, TypedCurve,
-};
+use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
 
 use bitcoin::Network;
 
@@ -90,6 +88,10 @@ impl TraitPrivateKey for Secp256k1PrivateKey {
         let signed_bytes = [sign[..].to_vec(), vec![(recover_id.to_i32()) as u8]].concat();
         Ok(signed_bytes)
     }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        self.0.to_bytes()
+    }
 }
 
 impl std::fmt::Display for Secp256k1PublicKey {
@@ -111,14 +113,6 @@ impl TraitPublicKey for Secp256k1PublicKey {
     fn to_bytes(&self) -> Vec<u8> {
         self.0.to_bytes()
     }
-}
-
-impl TypedCurve for Secp256k1PublicKey {
-    const CURVE_TYPE: CurveType = CurveType::Secp256k1;
-}
-
-impl TypedCurve for Secp256k1PrivateKey {
-    const CURVE_TYPE: CurveType = CurveType::Secp256k1;
 }
 
 impl Ss58Codec for Secp256k1PrivateKey {
