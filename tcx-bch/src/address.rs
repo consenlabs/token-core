@@ -77,6 +77,11 @@ impl Address for BchAddress {
         let sk = Secp256k1PrivateKey::from_wif(wif)?;
         Self::from_public_key(&sk.public_key().to_compressed(), coin)
     }
+
+    fn is_valid(address: &str) -> bool {
+        let converter = Converter::default();
+        converter.is_legacy_addr(address) || converter.is_cash_addr(address)
+    }
 }
 
 impl Display for BchAddress {
@@ -196,5 +201,20 @@ mod tests {
             remove_bch_prefix(":qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"),
             "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
         );
+    }
+
+    #[test]
+    pub fn address_valid_test() {
+        assert!(BchAddress::is_valid(
+            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
+        ));
+        assert!(BchAddress::is_valid(
+            "bchtest:qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
+        ));
+        assert!(BchAddress::is_valid("2N54wJxopnWTvBfqgAPVWqXVEdaqoH7Suvf"));
+        assert!(!BchAddress::is_valid(
+            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ym"
+        ));
+        assert!(!BchAddress::is_valid("1234"));
     }
 }

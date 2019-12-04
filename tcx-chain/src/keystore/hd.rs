@@ -368,6 +368,10 @@ mod tests {
         fn from_public_key(_pk: &[u8], _coin: Option<&str>) -> Result<String> {
             Ok("mock_address".to_string())
         }
+
+        fn is_valid(address: &str) -> bool {
+            true
+        }
     }
 
     #[test]

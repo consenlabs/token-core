@@ -1,0 +1,60 @@
+syntax = "proto3";
+package api;
+
+import "google/protobuf/any.proto";
+
+message TcxAction {
+    string method = 1;
+    google.protobuf.Any param = 2;
+}
+
+message InitTokenCoreXParam {
+    string fileDir = 1;
+    string xpubCommonKey = 2;
+    string xpubCommonIv = 3;
+}
+
+message ImportWalletFromMnemonicParam {
+    string chainType = 1;
+    string mnemonic = 2;
+    string password = 3;
+    string path = 4;
+    string source = 5;
+    string name = 6;
+    string network = 7;
+    string segWit = 8;
+    string passwordHint = 9;
+    bool overwrite = 10;
+}
+
+message WalletResult {
+    string id = 1;
+    string name = 2;
+    string chainType = 3;
+    string address = 4;
+    string source = 5;
+    int64 createdAt = 6;
+    google.protobuf.Any extra = 7;
+}
+
+
+message ExternalAddressExtra {
+    string encXPub = 1;
+    message ExternalAddress {
+        string address = 1;
+        string derivedPath = 2;
+        string type = 3;
+    }
+    ExternalAddress externalAddress = 2;
+}
+
+message WalletKey {
+    string id = 1;
+    string password = 2;
+}
+
+message CacheDerivedKeyParam {
+    string id = 1;
+    string derivedKey = 2;
+    string tempPassword = 3;
+}

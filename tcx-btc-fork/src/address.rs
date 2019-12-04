@@ -1,4 +1,4 @@
-use crate::transaction::ScriptPubKeyComponent;
+use crate::signer::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
 
@@ -45,6 +45,10 @@ impl Address for BtcForkAddress {
     fn from_private_key(wif: &str, coin: Option<&str>) -> Result<String> {
         let sk = Secp256k1PrivateKey::from_wif(wif)?;
         Self::from_public_key(&sk.public_key().to_compressed(), coin)
+    }
+
+    fn is_valid(address: &str) -> bool {
+        BtcForkAddress::from_str(address).is_ok()
     }
 }
 
@@ -274,7 +278,8 @@ impl ScriptPubKeyComponent for BtcForkAddress {
 mod tests {
     use crate::address::BtcForkAddress;
 
-    use crate::transaction::ScriptPubKeyComponent;
+    use crate::signer::ScriptPubKeyComponent;
+    use crate::tcx_chain::keystore::Address;
 
     use bitcoin::util::bip32::ExtendedPrivKey;
     use std::str::FromStr;
@@ -460,5 +465,22 @@ mod tests {
 
         let script = hex::encode(script.as_bytes());
         assert_eq!("a914bc64b2d79807cd3d72101c3298b89117d32097fb87", script);
+    }
+
+    #[test]
+    pub fn address_valid_test() {
+        assert!(BtcForkAddress::is_valid(
+            "3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG"
+        ));
+        assert!(BtcForkAddress::is_valid(
+            "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP"
+        ));
+        assert!(BtcForkAddress::is_valid(
+            "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW"
+        ));
+        assert!(!BtcForkAddress::is_valid(
+            "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDf"
+        ));
+        assert!(!BtcForkAddress::is_valid("aaa"));
     }
 }

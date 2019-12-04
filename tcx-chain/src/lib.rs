@@ -22,13 +22,11 @@ extern crate regex;
 mod keystore;
 mod signer;
 
-pub use signer::{
-    Message, MessageSigner, SignedMessage, SignedTransaction, Transaction, TransactionSigner,
-    TxSignResult,
-};
-
-pub type Result<T> = result::Result<T, failure::Error>;
 pub use keystore::{
     Account, Address, EmptyExtra, Extra, HdKeystore, KeystoreGuard, Metadata, PrivateKeystore,
     Source,
 };
+pub use signer::{Message, MessageSigner, SignedMessage, TransactionSigner};
+
+pub type Result<T> = result::Result<T, failure::Error>;
+

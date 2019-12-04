@@ -1,94 +1,47 @@
-use std::ffi::{CStr, CString};
-
-use std::os::raw::c_char;
-
-use crate::error_handle::landingpad;
-use crate::error_handle::Result;
-use crate::error_handle::LAST_BACKTRACE;
-use crate::error_handle::LAST_ERROR;
-use std::fs::File;
-use std::io::{Read, Write};
-
-use core::borrow::Borrow;
-
-use serde_json::{Map, Value};
 use std::collections::HashMap;
-use std::convert::TryInto;
+use std::convert::{TryFrom, TryInto};
+use std::ffi::{CStr, CString};
+use std::fs;
+use std::io::Read;
+use std::os::raw::c_char;
 use std::path::Path;
 use std::str::FromStr;
-use std::sync::RwLock;
+
+use prost::Message;
+use serde_json::Value;
+
 use tcx_bch::{BchAddress, BchExtra, BchTransaction};
-use tcx_btc_fork::address::BtcForkAddress;
 use tcx_btc_fork::{
-    BtcForkExtra, BtcForkSegWitTransaction, BtcForkTransaction, ExternalAddress, Utxo,
+    address::BtcForkAddress, BtcForkExtra, BtcForkSegWitTransaction, BtcForkTransaction,
+    BtcForkTxInput, ExternalAddress, Utxo,
 };
 use tcx_chain::keystore::EmptyExtra;
+use tcx_chain::keystore_guard::KeystoreGuard;
 use tcx_chain::signer::TransactionSigner;
-use tcx_chain::{HdKeystore, MessageSigner, Metadata, Source, TxSignResult};
+use tcx_chain::{HdKeystore, MessageSigner, Metadata, Source};
 use tcx_constants::coin_info::{coin_info_from_symbol, coin_symbol_with_network};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
+use tcx_primitive::verify_wif;
 use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 
-use std::convert::TryFrom;
-use std::fs;
-use tcx_chain::keystore_guard::KeystoreGuard;
-use tcx_constants::network_from_coin;
-use tcx_primitive::{verify_wif, Secp256k1PrivateKey};
+mod api;
+use crate::api::TcxAction;
+pub mod error_handling;
+use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
+mod handler;
+use crate::handler::{hd_keystore_create, hd_store_import, Buffer};
+mod filemanager;
+use crate::filemanager::{
+    cache_keystore, delete_keystore_file, find_keystore_id_by_address, flush_keystore,
+    KEYSTORE_MAP, WALLET_FILE_DIR,
+};
 
 #[macro_use]
 extern crate failure;
-
-#[macro_use]
-pub mod error_handle;
-
-#[macro_use]
-extern crate lazy_static;
 #[macro_use]
 extern crate serde_json;
-
-lazy_static! {
-    static ref KEYSTORE_MAP: RwLock<HashMap<String, HdKeystore>> = RwLock::new(HashMap::new());
-    static ref WALLET_FILE_DIR: RwLock<String> = RwLock::new("../test-data".to_string());
-}
-
-fn cache_keystore(keystore: HdKeystore) {
-    KEYSTORE_MAP
-        .write()
-        .unwrap()
-        .insert(keystore.id.to_owned(), keystore);
-}
-
-fn find_keystore_id_by_address(address: &str) -> Option<String> {
-    let map = KEYSTORE_MAP.read().unwrap();
-    let mut k_id: Option<String> = None;
-    for (id, keystore) in map.borrow().iter() {
-        let mut iter = keystore.active_accounts.iter();
-        if iter.any(|a| a.address == address) {
-            k_id = Some(id.to_string());
-            break;
-        }
-    }
-    k_id
-}
-
-fn flush_keystore(ks: &HdKeystore) -> Result<()> {
-    let json = ks.json();
-
-    let file_dir = WALLET_FILE_DIR.read().unwrap();
-    let ks_path = format!("{}/{}.json", file_dir, ks.id);
-    let path = Path::new(&ks_path);
-    let mut file = File::create(path)?;
-    let _ = file.write_all(&json.as_bytes());
-    Ok(())
-}
-
-fn delete_keystore_file(wid: &str) -> Result<()> {
-    let file_dir = WALLET_FILE_DIR.read().unwrap();
-    let ks_path = format!("{}/{}.json", file_dir, wid);
-    let path = Path::new(&ks_path);
-    fs::remove_file(path)?;
-    Ok(())
-}
+#[macro_use]
+extern crate lazy_static;
 
 #[no_mangle]
 pub unsafe extern "C" fn free_string(s: *mut c_char) {
@@ -106,12 +59,38 @@ pub unsafe extern "C" fn free_const_string(s: *const c_char) {
     CStr::from_ptr(s);
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn free_buf(buf: Buffer) {
+    let s = std::slice::from_raw_parts_mut(buf.data, buf.len);
+    let s = s.as_mut_ptr();
+    Box::from_raw(s);
+}
+
 fn parse_arguments(json_str: *const c_char) -> Value {
     let json_c_str = unsafe { CStr::from_ptr(json_str) };
     let json_str = json_c_str.to_str().expect("parse_arguments to_str");
     serde_json::from_str(json_str).expect("parse_arguments serde_json")
 }
 
+/// dispatch protobuf rpc call
+#[no_mangle]
+pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
+    let data = std::slice::from_raw_parts_mut(buf.data, buf.len);
+    let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
+    let mut reply: Vec<u8> = match action.method.to_lowercase().as_str() {
+        "hd_store_create" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
+        "hd_store_import" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
+        _ => landingpad(|| hd_keystore_create(&action.param.unwrap().value)),
+    };
+
+    // assemble result and clear result
+    let data = reply.as_mut_ptr();
+    let len = reply.len();
+    std::mem::forget(reply);
+    Buffer { data, len }
+}
+
+/// c interface methods
 #[no_mangle]
 pub extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
     let v: Value = parse_arguments(json_str);
@@ -161,7 +140,7 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
             continue;
         }
 
-        let mut f = File::open(fp).expect("open file");
+        let mut f = fs::File::open(fp).expect("open file");
         let mut contents = String::new();
 
         let _ = f.read_to_string(&mut contents);
@@ -304,7 +283,6 @@ fn import_wallet_from_mnemonic_internal(v: &Value) -> Result<String> {
     Ok(json)
 }
 
-/*
 #[no_mangle]
 pub unsafe extern "C" fn import_wallet_from_private_key(json_str: *const c_char) -> *const c_char {
     let v = parse_arguments(json_str);
@@ -322,7 +300,7 @@ fn import_wallet_from_private_key_internal(v: &Value) -> Result<String> {
     verify_wif(priv_key, &symbol)?;
     let mut meta: Metadata = serde_json::from_value(v.clone())?;
     let chain_type = v["chainType"].as_str().unwrap();
-    if chain_type.to_uppercase() == "ETHEREUM" {
+    if &chain_type.to_uppercase() == "ETHEREUM" {
         meta.source = Source::Private;
     } else {
         meta.source = Source::Wif;
@@ -352,10 +330,10 @@ fn import_wallet_from_private_key_internal(v: &Value) -> Result<String> {
 
     flush_keystore(ks)?;
     let json = format!("{}", ks);
-    cache_keystore(ks);
+    cache_keystore(ks.clone());
 
     Ok(json)
-}*/
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn export_mnemonic(json_str: *const c_char) -> *const c_char {
@@ -428,120 +406,123 @@ fn verify_password_internal(v: &Value) -> Result<String> {
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
-    let json_c_str = CStr::from_ptr(json_str);
-    let json_str = json_c_str.to_str().unwrap();
-
-    let json = landingpad(|| sign_transaction_internal(json_str));
-    CString::new(json).expect("ret json").into_raw()
-}
-
-fn sign_transaction_internal(json_str: &str) -> Result<String> {
-    let v: Value = serde_json::from_str(json_str).unwrap();
-    let w_id = v["id"].as_str().expect("wid");
-    let password = v["password"].as_str().expect("password");
-    let symbol = coin_symbol_with_network(&v);
-
-    let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore = match map.get_mut(w_id) {
-        Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found")),
-    }?;
-
-    let guard = KeystoreGuard::unlock_by_password(keystore, password)?;
-
-    match symbol.as_str() {
-        "BITCOINCASH"
-        | "BITCOINCASH-TESTNET"
-        | "LITECOIN"
-        | "LITECOIN-P2WPKH"
-        | "LITECOIN-TESTNET"
-        | "LITECOIN-TESTNET-P2WPKH" => {
-            sign_btc_fork_transaction(json_str, &symbol, guard.keystore())
-        }
-        "TRON" => sign_trx_transaction(json_str, guard.keystore()),
-        _ => Err(format_err!("{}", "chain_type_not_support")),
-    }
-}
-
-fn sign_btc_fork_transaction(json: &str, coin: &str, keystore: &HdKeystore) -> Result<String> {
-    let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
-    let utxos = v["outputs"].as_array().expect("expect outputs");
-
-    let unspents: Vec<Utxo> = utxos
-        .iter()
-        .map(|v| Utxo {
-            tx_hash: v["txHash"].as_str().expect("utxo txHash").to_string(),
-            vout: v["vout"].as_f64().expect("utxo vout") as i32,
-            amount: v["amount"]
-                .as_str()
-                .expect("utxo amount")
-                .to_string()
-                .parse::<i64>()
-                .expect("utxo converter amount to i64"),
-            address: v["address"].as_str().expect("utxo address").to_string(),
-            script_pub_key: v["scriptPubKey"]
-                .as_str()
-                .expect("utxo scriptPubKey")
-                .to_string(),
-            derived_path: v["derivedPath"]
-                .as_str()
-                .expect("utxo derivedPath")
-                .to_string(),
-            sequence: 0,
-        })
-        .collect();
-    let internal_used = v["internalUsed"].as_i64();
-    let change_address = v["changeAddress"].as_str();
-    let to = v["to"].as_str().expect("to");
-    let seg_wit = v["segWit"].as_str().expect("segWit");
-    let is_seg_wit = seg_wit == "P2WPKH";
-    let amount = v["amount"]
-        .as_str()
-        .expect("amount")
-        .parse::<i64>()
-        .unwrap();
-    let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
-    let ret: TxSignResult;
-    if coin.starts_with("BITCOINCASH") {
-        let tran = BchTransaction::new(
-            to.to_owned(),
-            amount,
-            unspents,
-            fee,
-            internal_used.map(|x| (x + 1) as u32),
-            change_address.map(str::to_string),
-            coin.to_string(),
-        );
-        ret = keystore.sign_transaction(&tran)?;
-    } else if is_seg_wit {
-        let tran = BtcForkSegWitTransaction::new(
-            to.to_owned(),
-            amount,
-            unspents,
-            fee,
-            internal_used.map(|x| (x + 1) as u32),
-            change_address.map(str::to_string),
-            coin.to_string(),
-        );
-        ret = keystore.sign_transaction(&tran)?;
-    } else {
-        let tran = BtcForkTransaction::new(
-            to.to_owned(),
-            amount,
-            unspents,
-            fee,
-            internal_used.map(|x| (x + 1) as u32),
-            change_address.map(str::to_string),
-            coin.to_string(),
-        );
-
-        ret = keystore.sign_transaction(&tran)?;
-    }
-
-    Ok(serde_json::to_string(&ret)?)
-}
+//#[no_mangle]
+//pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
+//    let json_c_str = CStr::from_ptr(json_str);
+//    let json_str = json_c_str.to_str().unwrap();
+//
+//    let json = landingpad(|| sign_transaction_internal(json_str));
+//    CString::new(json).expect("ret json").into_raw()
+//}
+//
+//fn sign_transaction_internal(json_str: &str) -> Result<String> {
+//    let v: Value = serde_json::from_str(json_str).unwrap();
+//    let w_id = v["id"].as_str().expect("wid");
+//    let password = v["password"].as_str().expect("password");
+//    let symbol = coin_symbol_with_network(&v);
+//
+//    let mut map = KEYSTORE_MAP.write().unwrap();
+//    let keystore = match map.get_mut(w_id) {
+//        Some(keystore) => Ok(keystore),
+//        _ => Err(format_err!("{}", "wallet_not_found")),
+//    }?;
+//
+//    let guard = KeystoreGuard::unlock_by_password(keystore, password)?;
+//
+//    match symbol.as_str() {
+//        "BITCOINCASH"
+//        | "BITCOINCASH-TESTNET"
+//        | "LITECOIN"
+//        | "LITECOIN-P2WPKH"
+//        | "LITECOIN-TESTNET"
+//        | "LITECOIN-TESTNET-P2WPKH" => {
+//            sign_btc_fork_transaction(json_str, &symbol, guard.keystore())
+//        }
+//        "TRON" => sign_trx_transaction(json_str, guard.keystore()),
+//        _ => Err(format_err!("{}", "chain_type_not_support")),
+//    }
+//}
+//
+//fn sign_btc_fork_transaction(json: &str, coin: &str, keystore: &HdKeystore) -> Result<String> {
+//    let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
+//    let utxos = v["outputs"].as_array().expect("expect outputs");
+//
+//    let unspents: Vec<Utxo> = utxos
+//        .iter()
+//        .map(|v| Utxo {
+//            tx_hash: v["txHash"].as_str().expect("utxo txHash").to_string(),
+//            vout: v["vout"].as_f64().expect("utxo vout") as i32,
+//            amount: v["amount"]
+//                .as_str()
+//                .expect("utxo amount")
+//                .to_string()
+//                .parse::<i64>()
+//                .expect("utxo converter amount to i64"),
+//            address: v["address"].as_str().expect("utxo address").to_string(),
+//            script_pub_key: v["scriptPubKey"]
+//                .as_str()
+//                .expect("utxo scriptPubKey")
+//                .to_string(),
+//            derived_path: v["derivedPath"]
+//                .as_str()
+//                .expect("utxo derivedPath")
+//                .to_string(),
+//            sequence: 0,
+//        })
+//        .collect();
+//    let internal_used = v["internalUsed"].as_i64();
+//    let change_address = v["changeAddress"].as_str();
+//    let to = v["to"].as_str().expect("to");
+//    let seg_wit = v["segWit"].as_str().expect("segWit");
+//    let is_seg_wit = seg_wit == "P2WPKH";
+//    let amount = v["amount"]
+//        .as_str()
+//        .expect("amount")
+//        .parse::<i64>()
+//        .unwrap();
+//    let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
+//    let ret: TxSignResult;
+//    if coin.starts_with("BITCOINCASH") {
+//        let input = BitcoinForkTransactionInput {
+//
+//        }
+//        let tran = BchTransaction::new(
+//            to.to_owned(),
+//            amount,
+//            unspents,
+//            fee,
+//            internal_used.map(|x| (x + 1) as u32),
+//            change_address.map(str::to_string),
+//            coin.to_string(),
+//        );
+//        ret = keystore.sign_transaction(&tran)?;
+//    } else if is_seg_wit {
+//        let tran = BtcForkSegWitTransaction::new(
+//            to.to_owned(),
+//            amount,
+//            unspents,
+//            fee,
+//            internal_used.map(|x| (x + 1) as u32),
+//            change_address.map(str::to_string),
+//            coin.to_string(),
+//        );
+//        ret = keystore.sign_transaction(&tran)?;
+//    } else {
+//        let tran = BtcForkTransaction::new(
+//            to.to_owned(),
+//            amount,
+//            unspents,
+//            fee,
+//            internal_used.map(|x| (x + 1) as u32),
+//            change_address.map(str::to_string),
+//            coin.to_string(),
+//        );
+//
+//        ret = keystore.sign_transaction(&tran)?;
+//    }
+//
+//    Ok(serde_json::to_string(&ret)?)
+//}
 
 fn sign_trx_transaction(json: &str, keystore: &HdKeystore) -> Result<String> {
     let v = Value::from_str(json)?;
@@ -567,7 +548,7 @@ fn sign_message_internal(json_str: &str) -> Result<String> {
     let symbol = coin_symbol_with_network(&v);
 
     let mut map = KEYSTORE_MAP.write().unwrap();
-    let mut keystore = match map.get_mut(w_id) {
+    let keystore = match map.get_mut(w_id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
@@ -772,14 +753,7 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        cache_derived_key, calc_external_address, clear_derived_key, clear_err, export_mnemonic,
-        export_private_key, find_wallet_by_private_key, get_derived_key, get_last_err_message,
-        remove_wallet, sign_message, sign_transaction, verify_derived_key, verify_password,
-    };
-    use crate::{
-        create_wallet, find_wallet_by_mnemonic, import_wallet_from_mnemonic, init_token_core_x,
-    };
+    use super::*;
     use crate::{KEYSTORE_MAP, WALLET_FILE_DIR};
     use serde_json::Value;
     use std::ffi::{CStr, CString};
@@ -789,6 +763,10 @@ mod tests {
     use std::path::Path;
     use std::str::FromStr;
 
+    use crate::api::{InitTokenCoreXParam, WalletResult};
+    use crate::init_token_core_x;
+    use bytes::BytesMut;
+    use prost::Message;
     use tcx_chain::HdKeystore;
 
     static WALLET_ID: &'static str = "9c6cbc21-1c43-4c8b-bb7a-5e538f908819";
@@ -868,6 +846,30 @@ mod tests {
             assert_eq!(ks.id, WALLET_ID);
         });
     }
+
+    //    #[test]
+    //    fn init_token_core_x_pb_test() {
+    //        run_test(|| {
+    //            let hex = "0a0c2e2e2f746573742d646174611a203943304333303838394342434335453031414235423242423838373135373939";
+    //            let mut hex_bytes = hex::decode(hex).unwrap();
+    //            //            let mut buf = vec![0; 512].into_boxed_slice();
+    //            //            let data = buf.as_mut_ptr();
+    //            //            let len = buf.len();
+    //            //            std::mem::forget(buf);
+    //            //            Buffer { data, len }
+    //            let param = Buffer {
+    //                data: hex_bytes.as_mut_ptr(),
+    //                len: hex_bytes.len(),
+    //            };
+    //            unsafe {
+    //                init_token_core_x(param);
+    //            }
+    //
+    //            let map = KEYSTORE_MAP.read().unwrap();
+    //            let ks: &HdKeystore = map.get(WALLET_ID).unwrap();
+    //            assert_eq!(ks.id, WALLET_ID);
+    //        });
+    //    }
 
     #[test]
     fn create_wallet_test() {
@@ -1369,74 +1371,74 @@ mod tests {
         });
     }
 
-    #[test]
-    fn sign_trx_message_test() {
-        run_test(|| {
-            let param = r#"{
-            "chainType":"TRON",
-            "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
-            "name":"TRX-Wallet-1",
-            "overwrite":true,
-            "password":"Insecure Password",
-            "passwordHint":"",
-            "path":"m/44'/195'/0'/0/0",
-            "source":"MNEMONIC"
-            }"#;
-            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
-
-            let ret_v = Value::from_str(ret).unwrap();
-
-            let param = json!({
-                "id": ret_v["id"].as_str().expect("wallet_id"),
-                "chainType": "TRON",
-                "password": "Insecure Password",
-                "value": "0xaaaaaaaa",
-                "isHex": true,
-                "isTronHeader": true
-            });
-            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
-
-            assert_eq!("47fb89c1a3726de25f64b0d98dd8ca3c12079c12cec31a35ac71d7ce337cc4df02fec800ee1c149b9cb9f79e9f60f665a4a1bf00be20b7fbca7007f9a0076d731c", signed);
-
-            let param = json!({
-                "id": ret_v["id"].as_str().expect("wallet_id"),
-                "chainType": "TRON",
-                "password": "Insecure Password",
-                "value": "aaaaaaaa",
-                "isHex": true,
-                "isTronHeader": true
-            });
-            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
-
-            assert_eq!("47fb89c1a3726de25f64b0d98dd8ca3c12079c12cec31a35ac71d7ce337cc4df02fec800ee1c149b9cb9f79e9f60f665a4a1bf00be20b7fbca7007f9a0076d731c", signed);
-
-            let param = json!({
-                "id": ret_v["id"].as_str().expect("wallet_id"),
-                "chainType": "TRON",
-                "password": "Insecure Password",
-                "value": "abc",
-                "isHex": false,
-                "isTronHeader": true
-            });
-            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
-
-            assert_eq!("f61b5966ca46dd838586f96dddf3fe594980f04c783492c240edcb3a5dd6c49b5f9ca8172e222943a61e177debad0dc374f80d4fe90a0a52b8607a1447225fd21b", signed);
-
-            let param = json!({
-                "id": ret_v["id"].as_str().expect("wallet_id"),
-                "chainType": "TRON",
-                "password": "Insecure Password",
-                "value": "abc",
-                "isHex": false,
-                "isTronHeader": false
-            });
-            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
-
-            assert_eq!("b256bb5fa285d981fb424f997c34ff9575eca7c0ec26f47141dfae058ecc7ada40f2ee3916c183fc8b3e0c810051756a9f1307d9f4e9b883a98a8b4ebce74ce51b", signed);
-
-            remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
-        });
-    }
+    //    #[test]
+    //    fn sign_trx_message_test() {
+    //        run_test(|| {
+    //            let param = r#"{
+    //            "chainType":"TRON",
+    //            "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+    //            "name":"TRX-Wallet-1",
+    //            "overwrite":true,
+    //            "password":"Insecure Password",
+    //            "passwordHint":"",
+    //            "path":"m/44'/195'/0'/0/0",
+    //            "source":"MNEMONIC"
+    //            }"#;
+    //            let ret = unsafe { _to_str(import_wallet_from_mnemonic(_to_c_char(param))) };
+    //
+    //            let ret_v = Value::from_str(ret).unwrap();
+    //
+    //            let param = json!({
+    //                "id": ret_v["id"].as_str().expect("wallet_id"),
+    //                "chainType": "TRON",
+    //                "password": "Insecure Password",
+    //                "value": "0xaaaaaaaa",
+    //                "isHex": true,
+    //                "isTronHeader": true
+    //            });
+    //            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
+    //
+    //            assert_eq!("47fb89c1a3726de25f64b0d98dd8ca3c12079c12cec31a35ac71d7ce337cc4df02fec800ee1c149b9cb9f79e9f60f665a4a1bf00be20b7fbca7007f9a0076d731c", signed);
+    //
+    //            let param = json!({
+    //                "id": ret_v["id"].as_str().expect("wallet_id"),
+    //                "chainType": "TRON",
+    //                "password": "Insecure Password",
+    //                "value": "aaaaaaaa",
+    //                "isHex": true,
+    //                "isTronHeader": true
+    //            });
+    //            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
+    //
+    //            assert_eq!("47fb89c1a3726de25f64b0d98dd8ca3c12079c12cec31a35ac71d7ce337cc4df02fec800ee1c149b9cb9f79e9f60f665a4a1bf00be20b7fbca7007f9a0076d731c", signed);
+    //
+    //            let param = json!({
+    //                "id": ret_v["id"].as_str().expect("wallet_id"),
+    //                "chainType": "TRON",
+    //                "password": "Insecure Password",
+    //                "value": "abc",
+    //                "isHex": false,
+    //                "isTronHeader": true
+    //            });
+    //            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
+    //
+    //            assert_eq!("f61b5966ca46dd838586f96dddf3fe594980f04c783492c240edcb3a5dd6c49b5f9ca8172e222943a61e177debad0dc374f80d4fe90a0a52b8607a1447225fd21b", signed);
+    //
+    //            let param = json!({
+    //                "id": ret_v["id"].as_str().expect("wallet_id"),
+    //                "chainType": "TRON",
+    //                "password": "Insecure Password",
+    //                "value": "abc",
+    //                "isHex": false,
+    //                "isTronHeader": false
+    //            });
+    //            let signed = unsafe { _to_str(sign_message(_to_c_char(&param.to_string()))) };
+    //
+    //            assert_eq!("b256bb5fa285d981fb424f997c34ff9575eca7c0ec26f47141dfae058ecc7ada40f2ee3916c183fc8b3e0c810051756a9f1307d9f4e9b883a98a8b4ebce74ce51b", signed);
+    //
+    //            remove_created_wallet(ret_v["id"].as_str().expect("wallet_id"));
+    //        });
+    //    }
 
     #[test]
     fn export_mnemonic_test() {
@@ -1467,41 +1469,41 @@ mod tests {
         })
     }
 
-    #[test]
-    fn sign_transaction_test() {
-        run_test(|| {
-            let param = r#"
-            {
-                "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
-                "password": "Insecure Password",
-                "to": "qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
-                "amount": "93454",
-                "fee": "6000",
-                "internalUsed": 0,
-                "chainType": "BITCOINCASH",
-                "chainId": "145",
-                "segWit":"NONE",
-                "outputs": [
-                    {
-                        "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
-                        "vout": 0,
-                        "amount": "100000",
-                        "address": "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
-                        "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
-                        "derivedPath": "0/0"
-                    }
-                ]
-            }
-            "#;
-
-            unsafe { clear_err() }
-            let ret = unsafe { _to_str(sign_transaction(_to_c_char(param))) };
-            let ret_v = Value::from_str(ret).unwrap();
-            let expected = r#"{"sign":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","hash":"4d43cc66e9763a4e263fdb592591b9f19a6915ac821c92896d13f95beaca3b28","wtxId":""}"#;
-            let expected_v = Value::from_str(expected).unwrap();
-            assert_eq!(ret_v, expected_v);
-        })
-    }
+    //    #[test]
+    //    fn sign_transaction_test() {
+    //        run_test(|| {
+    //            let param = r#"
+    //            {
+    //                "id":"9c6cbc21-1c43-4c8b-bb7a-5e538f908819",
+    //                "password": "Insecure Password",
+    //                "to": "qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
+    //                "amount": "93454",
+    //                "fee": "6000",
+    //                "internalUsed": 0,
+    //                "chainType": "BITCOINCASH",
+    //                "chainId": "145",
+    //                "segWit":"NONE",
+    //                "outputs": [
+    //                    {
+    //                        "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
+    //                        "vout": 0,
+    //                        "amount": "100000",
+    //                        "address": "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+    //                        "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
+    //                        "derivedPath": "0/0"
+    //                    }
+    //                ]
+    //            }
+    //            "#;
+    //
+    //            unsafe { clear_err() }
+    //            let ret = unsafe { _to_str(sign_transaction(_to_c_char(param))) };
+    //            let ret_v = Value::from_str(ret).unwrap();
+    //            let expected = r#"{"sign":"0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000","hash":"4d43cc66e9763a4e263fdb592591b9f19a6915ac821c92896d13f95beaca3b28","wtxId":""}"#;
+    //            let expected_v = Value::from_str(expected).unwrap();
+    //            assert_eq!(ret_v, expected_v);
+    //        })
+    //    }
 
     #[test]
     fn cache_derived_key_test() {
@@ -1607,5 +1609,32 @@ mod tests {
             let v: Value = serde_json::from_str(ret).unwrap();
             assert!(v["ok"].as_bool().unwrap())
         })
+    }
+
+    #[test]
+    fn test_proto() {
+        let param = InitTokenCoreXParam {
+            file_dir: "aaa".to_string(),
+            xpub_common_key: "aaa".to_string(),
+            xpub_common_iv: "aaa".to_string(),
+        };
+        let mut buf = BytesMut::with_capacity(1024);
+        param.encode(&mut buf).unwrap();
+        let param: InitTokenCoreXParam = InitTokenCoreXParam::decode(&buf).unwrap();
+        assert_eq!("aaa", param.file_dir)
+    }
+
+    #[test]
+    fn test_call_tcx_api() {
+        let param_hex = "0a1b696d706f72745f77616c6c65745f66726f6d5f6d6e656d6f6e696312ca010a25696d546f6b656e2e496d706f727457616c6c657446726f6d4d6e656d6f6e6963506172616d12a0010a084c495445434f494e124573616c75746520736c757368206e6f7720736372697074206e657374206c61772061646d6974206163686965766520766f69636520736f6461206672756974206669656c641a11496e7365637572652050617373776f7264220f6d2f3434272f31272f30272f302f302a084d4e454d4f4e4943320c4c54432d57616c6c65742d313a074d41494e4e455442044e4f4e454a005001";
+        let mut param_bytes = hex::decode(param_hex).unwrap();
+        let param_buf = Buffer {
+            data: param_bytes.as_mut_ptr(),
+            len: param_bytes.len(),
+        };
+        let ret_buf = unsafe { call_tcx_api(param_buf) };
+        let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
+        let ret: WalletResult = WalletResult::decode(&ret_bytes).unwrap();
+        assert_eq!("LRB53mz8PmBPDBH8HFp3f5bVHxJ9Bqx8PH", ret.address);
     }
 }
