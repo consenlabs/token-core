@@ -21,10 +21,11 @@ use tcx_tron::TrxAddress;
 use crate::api::hd_store_derive_param::Derivation;
 use crate::api::keystore_common_export_result::ExportType;
 use crate::api::{
-    AccountResponse, AccountsResponse, HdStoreDeriveParam, HdStoreImportParam,
-    KeystoreCommonExportResult, Response, WalletKeyParam, WalletResult,
+    AccountResponse, AccountsResponse, ExternalAddressParam, HdStoreDeriveParam,
+    HdStoreImportParam, KeystoreCommonExportResult, Response, WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignTxParam};
+use crate::calc_external_address_internal;
 use crate::error_handling::Result;
 use crate::filemanager::{
     cache_keystore, find_keystore_id_by_address, flush_keystore, WALLET_FILE_DIR,
@@ -335,10 +336,12 @@ pub fn sign_tron_tx(param: &SignTxParam, guard: &KeystoreGuard) -> Result<Vec<u8
 
     encode_message(signed_tx)
 }
-
-//pub fn derive_external_address(data: &[u8]) -> Result<Vec<u8>> {
 //
+//pub fn derive_external_address(data: &[u8]) -> Result<Vec<u8>> {
+//    let param: ExternalAddressParam = ExternalAddressParam::decode(data).expect("ExternalAddressParam");
+//    calc_external_address_internal()
 //}
+
 #[cfg(test)]
 mod tests {
     use crate::api::{HdStoreImportParam, InitTokenCoreXParam, SignTxParam, WalletResult};

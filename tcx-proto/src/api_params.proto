@@ -116,6 +116,19 @@ message WalletResult {
 }
 
 
+// btc-fork
+message ExternalAddressParam {
+    string id = 1;
+    string chainType = 2;
+    uint32 externalIdx = 3;
+}
+
+message ExternalAddressResult {
+    string address = 1;
+    string derivedPath = 2;
+    string type = 3;
+}
+
 message ExternalAddressExtra {
     string encXPub = 1;
     message ExternalAddress {
