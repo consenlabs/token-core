@@ -180,7 +180,11 @@ impl HdKeystore {
 
         let address = A::from_public_key(&public_key, coin_info)?;
 
-        let ext_pub_key = root.derive(DerivePath::from_str(get_account_path(&coin_info.derivation_path)?.into_iter())).to_hex();
+        let ext_pub_key = root
+            .derive(DerivePath::from_str(
+                get_account_path(&coin_info.derivation_path)?.into_iter(),
+            ))
+            .to_hex();
 
         let account = Account {
             address,

@@ -4,11 +4,11 @@ use crate::keccak;
 use tcx_chain::Address as TraitAddress;
 use tcx_chain::Result;
 use tcx_constants::CoinInfo;
+use tcx_constants::CoinInfo;
+use tcx_primitive::{PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey};
 use tcx_primitive::{
     PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPublicKey,
 };
-use tcx_constants::CoinInfo;
-use tcx_primitive::{PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey};
 
 pub struct Address(pub String);
 

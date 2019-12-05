@@ -1,7 +1,7 @@
 use super::Result;
 use crate::{
-    Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DeriveJunction,
-    Secp256k1PrivateKey, Secp256k1PublicKey, Derive, FromHex, ToHex
+    Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, Derive, DeriveJunction,
+    FromHex, Secp256k1PrivateKey, Secp256k1PublicKey, ToHex,
 };
 use std::io;
 
