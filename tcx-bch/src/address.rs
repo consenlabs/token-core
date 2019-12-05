@@ -10,7 +10,9 @@ use std::str::FromStr;
 use tcx_btc_fork::{BtcForkAddress, PubKeyScript, ScriptPubKeyComponent};
 use tcx_chain::Address;
 use tcx_constants::{network_from_coin, CoinInfo};
-use tcx_primitive::{PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPrivateKey, TypedPublicKey};
+use tcx_primitive::{
+    PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPrivateKey, TypedPublicKey,
+};
 
 fn _legacy_to_bch(addr: &str) -> Result<String> {
     let convert = Converter::new();

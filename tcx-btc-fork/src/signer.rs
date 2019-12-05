@@ -11,7 +11,11 @@ use bitcoin::consensus::serialize;
 use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
-use tcx_primitive::{Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec, TypedPrivateKey, TypedDeterministicPublicKey};
+use tcx_primitive::{
+    Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPrivateKey,
+    DeterministicPublicKey, PrivateKey, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec,
+    TypedDeterministicPublicKey, TypedPrivateKey,
+};
 
 use crate::transaction::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
 use bitcoin::util::bip143::SighashComponents;
@@ -43,7 +47,12 @@ pub struct BitcoinForkSinger<S: ScriptPubKeyComponent + Address, T: BitcoinTrans
 impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     TransactionSigner<BitcoinForkSinger<S, T>, BtcForkSignedTxOutput> for Keystore
 {
-    fn sign_transaction(&mut self, symbol:&str, address:&str, tx: &BitcoinForkSinger<S, T>) -> Result<BtcForkSignedTxOutput> {
+    fn sign_transaction(
+        &mut self,
+        symbol: &str,
+        address: &str,
+        tx: &BitcoinForkSinger<S, T>,
+    ) -> Result<BtcForkSignedTxOutput> {
         let change_address = if self.determinable() {
             let dpk = self.find_deterministic_public_key(symbol, address)?;
             tx.change_address(&dpk)?
@@ -55,9 +64,17 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
 
         for x in tx.tx_input.unspents.iter() {
             if x.derived_path.len() > 0 {
-                sks.push(self.find_private_key_by_path(symbol, address, &x.derived_path)?.as_secp256k1()?.clone());
+                sks.push(
+                    self.find_private_key_by_path(symbol, address, &x.derived_path)?
+                        .as_secp256k1()?
+                        .clone(),
+                );
             } else {
-                sks.push(self.find_private_key(symbol, &x.address)?.as_secp256k1()?.clone());
+                sks.push(
+                    self.find_private_key(symbol, &x.address)?
+                        .as_secp256k1()?
+                        .clone(),
+                );
             }
         }
 

@@ -18,13 +18,12 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_constants::{CoinInfo, CurveType};
+use tcx_crypto::hash::str_sha256;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
-    generate_mnemonic, get_account_path, Derive, DerivePath, DeterministicType,
+    generate_mnemonic, get_account_path, Derive, DerivePath, DeterministicType, ToHex,
     TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
-    ToHex
 };
-use tcx_crypto::hash::str_sha256;
 
 struct Cache {
     mnemonic: String,
@@ -98,7 +97,11 @@ impl HdKeystore {
             .private_key())
     }
 
-    pub fn find_deterministic_public_key(&mut self, symbol: &str, address: &str) -> Result<TypedDeterministicPublicKey> {
+    pub fn find_deterministic_public_key(
+        &mut self,
+        symbol: &str,
+        address: &str,
+    ) -> Result<TypedDeterministicPublicKey> {
         let account = self
             .account(symbol, address)
             .ok_or(Error::AccountNotFound)?;
@@ -200,8 +203,11 @@ impl HdKeystore {
         let address = A::from_public_key(&public_key, coin_info)?;
 
         let ext_pub_key = root
-            .derive(DerivePath::from_str(
-                &get_account_path(&coin_info.derivation_path)?)?.into_iter())?.deterministic_public_key().to_hex();
+            .derive(
+                DerivePath::from_str(&get_account_path(&coin_info.derivation_path)?)?.into_iter(),
+            )?
+            .deterministic_public_key()
+            .to_hex();
 
         let account = Account {
             address,

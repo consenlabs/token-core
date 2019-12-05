@@ -13,11 +13,11 @@ use serde_json::Value;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::iter::Map;
+use tcx_crypto::hash::str_sha256;
 use tcx_primitive::{
     KeyManage, PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPrivateKey,
 };
 use uuid::Uuid;
-use tcx_crypto::hash::str_sha256;
 
 pub struct PrivateKeystore {
     store: Store,
@@ -128,7 +128,7 @@ impl PrivateKeystore {
             coin: coin.coin.to_owned(),
             network: coin.network.to_string(),
             seg_wit: coin.seg_wit.to_string(),
-            ext_pub_key: "".to_string()
+            ext_pub_key: "".to_string(),
         };
 
         Ok(acc)
