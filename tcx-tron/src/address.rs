@@ -7,6 +7,8 @@ use tcx_constants::CoinInfo;
 use tcx_primitive::{
     PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPublicKey,
 };
+use tcx_constants::CoinInfo;
+use tcx_primitive::{PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey};
 
 pub struct Address(pub String);
 

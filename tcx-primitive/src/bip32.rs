@@ -3,7 +3,9 @@ use super::Result;
 use crate::constant::SECP256K1_ENGINE;
 use crate::ecc::{DeterministicPrivateKey, DeterministicPublicKey, KeyError};
 
-use crate::{Derive, DeriveJunction, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec};
+use crate::{
+    Derive, DeriveJunction, FromHex, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec, ToHex,
+};
 use bitcoin::util::key::PublicKey;
 
 use bitcoin::util::base58;
@@ -98,6 +100,46 @@ impl DeterministicPublicKey for Bip32DeterministicPublicKey {
 
     fn public_key(&self) -> Self::PublicKey {
         Secp256k1PublicKey::from(self.0.public_key.clone())
+    }
+}
+
+impl ToHex for Bip32DeterministicPublicKey {
+    fn to_hex(&self) -> String {
+        let mut ret = [0; 74];
+        let extended_key = self.0;
+        ret[0] = extended_key.depth as u8;
+        ret[1..5].copy_from_slice(&extended_key.parent_fingerprint[..]);
+
+        BigEndian::write_u32(&mut ret[5..9], u32::from(extended_key.child_number));
+
+        ret[9..41].copy_from_slice(&extended_key.chain_code[..]);
+        ret[41..74].copy_from_slice(&extended_key.public_key.key.serialize()[..]);
+        hex::encode(ret.to_vec())
+    }
+}
+
+impl FromHex for Bip32DeterministicPublicKey {
+    type Error = failure::Error;
+
+    fn from_hex(hex: &str) -> Result<Self> {
+        let data = hex::decode(hex)?;
+
+        if data.len() != 74 {
+            return Err(KeyError::InvalidBase58.into());
+        }
+        let cn_int: u32 = BigEndian::read_u32(&data[5..9]);
+        let child_number: ChildNumber = ChildNumber::from(cn_int);
+
+        let epk = ExtendedPubKey {
+            network: Network::Bitcoin,
+            depth: data[0],
+            parent_fingerprint: Fingerprint::from(&data[1..5]),
+            child_number,
+            chain_code: ChainCode::from(&data[9..41]),
+            public_key: PublicKey::from_slice(&data[41..74])
+                .map_err(|e| base58::Error::Other(e.to_string()))?,
+        };
+        Ok(Bip32DeterministicPublicKey(epk))
     }
 }
 

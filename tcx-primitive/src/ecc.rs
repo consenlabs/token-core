@@ -1,7 +1,7 @@
 use super::Result;
 use crate::{
     Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DeriveJunction,
-    Secp256k1PrivateKey, Secp256k1PublicKey,
+    Secp256k1PrivateKey, Secp256k1PublicKey, Derive, FromHex, ToHex
 };
 use std::io;
 
@@ -86,7 +86,7 @@ pub trait PrivateKey: Sized {
     fn to_bytes(&self) -> Vec<u8>;
 }
 
-pub trait DeterministicPublicKey: Derive {
+pub trait DeterministicPublicKey: Derive + ToHex + FromHex {
     type PublicKey: PublicKey;
 
     fn public_key(&self) -> Self::PublicKey;

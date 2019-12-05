@@ -1,8 +1,11 @@
+use crate::CoinInfo;
 use std::sync::RwLock;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BtcForkNetwork {
     pub coin: &'static str,
+    pub network: &'static str,
+    pub seg_wit: &'static str,
     pub hrp: &'static str,
     pub p2pkh_prefix: u8,
     pub p2sh_prefix: u8,
@@ -10,10 +13,6 @@ pub struct BtcForkNetwork {
     pub xpub_prefix: [u8; 4],
     pub xprv_prefix: [u8; 4],
 }
-
-//pub enum HdVersion {
-//    XPub
-//}
 
 pub struct HdVersion {
     pub_prefix: String,
@@ -27,6 +26,8 @@ lazy_static! {
         let mut networks = Vec::new();
         networks.push(BtcForkNetwork {
             coin: "LITECOIN",
+            network: "MAINNET",
+            seg_wit: "NONE",
             hrp: "ltc",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
@@ -35,7 +36,9 @@ lazy_static! {
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
         networks.push(BtcForkNetwork {
-            coin: "LITECOIN-P2WPKH",
+            coin: "LITECOIN",
+            network: "MAINNET",
+            seg_wit: "P2WPKH",
             hrp: "ltc",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
@@ -44,7 +47,9 @@ lazy_static! {
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
         networks.push(BtcForkNetwork {
-            coin: "LITECOIN-SEGWIT",
+            coin: "LITECOIN",
+            network: "MAINNET",
+            seg_wit: "SEGWIT",
             hrp: "ltc",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
@@ -53,7 +58,9 @@ lazy_static! {
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
         networks.push(BtcForkNetwork {
-            coin: "LITECOIN-TESTNET",
+            coin: "LITECOIN",
+            network: "TESTNET",
+            seg_wit: "NONE",
             hrp: "ltc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
@@ -64,7 +71,9 @@ lazy_static! {
             xprv_prefix: [0x04, 0x35, 0x83, 0x94],
         });
         networks.push(BtcForkNetwork {
-            coin: "LITECOIN-TESTNET-P2WPKH",
+            coin: "LITECOIN",
+            network: "TESTNET",
+            seg_wit: "P2WPKH",
             hrp: "ltc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
@@ -74,6 +83,8 @@ lazy_static! {
         });
         networks.push(BtcForkNetwork {
             coin: "BITCOIN",
+            network: "MAINNET",
+            seg_wit: "NONE",
             hrp: "bc",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
@@ -82,7 +93,9 @@ lazy_static! {
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
         networks.push(BtcForkNetwork {
-            coin: "BITCOIN-P2WPKH",
+            coin: "BITCOIN",
+            network: "MAINNET",
+            seg_wit: "P2WPKH",
             hrp: "bc",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
@@ -91,7 +104,9 @@ lazy_static! {
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
         networks.push(BtcForkNetwork {
-            coin: "BITCOIN-SEGWIT",
+            coin: "BITCOIN",
+            network: "MAINNET",
+            seg_wit: "SEGWIT",
             hrp: "bc",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
@@ -101,6 +116,8 @@ lazy_static! {
         });
         networks.push(BtcForkNetwork {
             coin: "BITCOIN-TESTNET",
+            network: "TESTNET",
+            seg_wit: "NONE",
             hrp: "bc",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0xc4,
@@ -111,6 +128,8 @@ lazy_static! {
         //Definition of BitcoinCash networks https://github.com/bitpay/bitcore/blob/master/packages/bitcore-lib-cash/lib/networks.js#L168
         networks.push(BtcForkNetwork {
             coin: "BITCOINCASH",
+            network: "MAINNET",
+            seg_wit: "NONE",
             hrp: "bitcoincash",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
@@ -119,7 +138,9 @@ lazy_static! {
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
         networks.push(BtcForkNetwork {
-            coin: "BITCOINCASH-TESTNET",
+            coin: "BITCOINCASH",
+            network: "TESTNET",
+            seg_wit: "NONE",
             hrp: "bitcoincash",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0xc4,
@@ -152,22 +173,35 @@ lazy_static! {
 // hrp: https://github.com/satoshilabs/slips/blob/master/slip-0173.md
 // BTC https://en.bitcoin.it/wiki/List_of_address_prefixes
 
-pub fn network_from_coin(coin: &str) -> Option<BtcForkNetwork> {
+pub fn network_from_coin(coin_info: &CoinInfo) -> Option<BtcForkNetwork> {
+    network_from_param(&coin_info.coin, &coin_info.network, &coin_info.seg_wit)
+}
+
+pub fn network_from_param(
+    chain_type: &str,
+    network: &str,
+    seg_wit: &str,
+) -> Option<BtcForkNetwork> {
     let networks = BTC_FORK_NETWORKS.read().unwrap();
-    let coin_uppercase = coin.to_uppercase();
-    networks
+    //    let coin_uppercase = coin.to_uppercase();
+    let mut ret: Vec<BtcForkNetwork> = networks
         .iter()
-        .find(|x| x.coin.eq(&coin_uppercase))
+        .filter(|x| x.coin.eq(&chain_type.to_uppercase()))
+        .filter(|x| x.network.eq(&network.to_uppercase()))
+        .filter(|x| x.seg_wit.eq(&seg_wit.to_uppercase()))
         .map(|x| x.clone())
+        .collect::<Vec<BtcForkNetwork>>();
+    ret.pop()
 }
 
 pub fn network_form_hrp(hrp: &str) -> Option<BtcForkNetwork> {
-    match hrp {
-        "bitcoincash" => network_from_coin("BITCOINCASH"),
-        "ltc" => network_from_coin("LITECOIN-SEGWIT"),
-        "bc" => network_from_coin("BITCOIN-SEGWIT"),
-        _ => None,
-    }
+    let networks = BTC_FORK_NETWORKS.read().unwrap();
+    let mut ret: Vec<BtcForkNetwork> = networks
+        .iter()
+        .filter(|x| x.hrp.eq(hrp))
+        .map(|x| x.clone())
+        .collect::<Vec<BtcForkNetwork>>();
+    ret.pop()
 }
 
 pub fn coin_from_xpub_prefix(prefix: &[u8]) -> Option<String> {

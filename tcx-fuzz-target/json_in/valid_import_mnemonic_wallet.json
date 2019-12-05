@@ -1,8 +1,8 @@
 {
     "type": "api.TcxAction",
-    "method": "import_wallet_from_mnemonic",
+    "method": "hd_store_import",
     "param": {
-        "type": "api.ImportWalletFromMnemonicParam",
+        "type": "api.HdStoreImportParam",
         "chainType":"LITECOIN",
         "mnemonic":"salute slush now script nest law admit achieve voice soda fruit field",
         "name":"LTC-Wallet-1",

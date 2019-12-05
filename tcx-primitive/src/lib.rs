@@ -35,3 +35,12 @@ pub trait Ss58Codec: Sized {
     /// Return the ss58-check string for this key.
     fn to_ss58check_with_version(&self, version: &[u8]) -> String;
 }
+
+pub trait ToHex: Sized {
+    fn to_hex(&self) -> String;
+}
+
+pub trait FromHex: Sized {
+    type Error;
+    fn from_hex(hex: &str) -> result::Result<Self, Self::Error>;
+}

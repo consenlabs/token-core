@@ -180,12 +180,16 @@ impl HdKeystore {
 
         let address = A::from_public_key(&public_key, coin_info)?;
 
+        let ext_pub_key = root.derive(DerivePath::from_str(get_account_path(&coin_info.derivation_path)?.into_iter())).to_hex();
+
         let account = Account {
             address,
-            derivation_path: coin_info.derivation_path.clone(),
+            derivation_path: coin_info.derivation_path.to_string(),
             curve: coin_info.curve,
-            coin: coin_info.symbol.clone(),
-            extra: Default::default(),
+            coin: coin_info.coin.to_string(),
+            network: coin_info.network.to_string(),
+            ext_pub_key,
+            seg_wit: coin_info.seg_wit.to_string(),
         };
 
         self.store.active_accounts.push(account);
@@ -205,6 +209,7 @@ impl HdKeystore {
     }
 }
 
+/*
 fn merge_value(a: &mut Value, b: &Value) {
     match (a, b) {
         (&mut Value::Object(ref mut a), &Value::Object(ref b)) => {
@@ -218,7 +223,6 @@ fn merge_value(a: &mut Value, b: &Value) {
     }
 }
 
-/*
 impl Display for HdKeystore {
     fn fmt(&self, f: &mut Formatter<'_>) -> result::Result<(), fmt::Error> {
         let mut pw = Map::new();

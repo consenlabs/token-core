@@ -21,6 +21,7 @@ use tcx_primitive::{
 pub(crate) struct Store {
     pub id: String,
     pub version: i64,
+    pub key_hash: String,
     pub crypto: Crypto<Pbkdf2Params>,
     pub active_accounts: Vec<Account>,
 
@@ -58,7 +59,9 @@ pub struct Account {
     pub derivation_path: String,
     pub curve: CurveType,
     pub coin: String,
-    pub extra: Value,
+    pub network: String,
+    pub seg_wit: String,
+    pub ext_pub_key: String,
 }
 
 /// Chain address interface, for encapsulate derivation

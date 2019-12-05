@@ -3,10 +3,6 @@ pub mod signer;
 pub mod transaction;
 
 pub use crate::address::Address as TrxAddress;
-pub use crate::signer::{
-    Message as TrxMessage, SignedMessage as TrxSignedMessage,
-    SignedTransaction as TrxSignedTransaction, Transaction as TrxTransaction,
-};
 
 #[macro_use]
 extern crate tcx_chain;
