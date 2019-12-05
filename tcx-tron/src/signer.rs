@@ -46,34 +46,6 @@ use tcx_constants::coin_info::coin_info_from_param;
 //"chainType": "TRON"
 //}
 
-//pub struct Transaction {
-//    raw: Value,
-//}
-//
-//impl TryFrom<Value> for Transaction {
-//    type Error = failure::Error;
-//
-//    fn try_from(tx: Value) -> Result<Self> {
-//        Ok(Transaction { raw: tx })
-//    }
-//}
-
-//impl TraitTransaction for Transaction {}
-//
-//pub struct SignedTransaction {
-//    raw: Value,
-//}
-//
-//impl TryInto<Value> for SignedTransaction {
-//    type Error = failure::Error;
-//
-//    fn try_into(self) -> Result<Value> {
-//        Ok(self.raw)
-//    }
-//}
-
-//impl TraitSignedTransaction for SignedTransaction {}
-
 impl TraitTransactionSigner<TronTxInput, TronTxOutput> for HdKeystore {
     fn sign_transaction(&self, tx: &TronTxInput) -> Result<TronTxOutput> {
         //        let mut raw = tx.raw.clone();
@@ -92,22 +64,6 @@ impl TraitTransactionSigner<TronTxInput, TronTxOutput> for HdKeystore {
         }
     }
 }
-
-//#[derive(Debug, Clone, Serialize, Deserialize)]
-//#[serde(rename_all = "camelCase")]
-//pub struct Message {
-//    value: String,
-//    is_hex: bool,
-//    is_tron_header: bool,
-//}
-
-//impl TraitMessage for Message {}
-
-//pub struct SignedMessage {
-//    pub signature: String,
-//}
-//
-//impl TraitSignedMessage for SignedMessage {}
 
 impl TraitMessageSigner<TronMessageInput, TronMessageOutput> for HdKeystore {
     fn sign_message(&self, message: &TronMessageInput) -> Result<TronMessageOutput> {

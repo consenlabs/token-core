@@ -9,10 +9,7 @@ pub type Result<T> = result::Result<T, failure::Error>;
 extern crate failure;
 
 pub use address::BchAddress;
-//use tcx_btc_fork::ExtendedPubKeyExtra;
 pub use transaction::BchTransaction;
-
-//pub type BchExtra = ExtendedPubKeyExtra<BchAddress>;
 
 #[derive(Fail, Debug)]
 pub enum Error {

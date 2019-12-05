@@ -89,27 +89,7 @@ pub struct Account {
     pub network: String,
     pub seg_wit: String,
     pub ext_pub_key: String,
-    //    pub extra: Value,
 }
-
-///// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
-//pub trait Extra: Sized + serde::Serialize + Clone {
-//    fn new(coin_info: &CoinInfo, seed: &[u8]) -> Result<Self>;
-//    fn from_private_key(coin_info: &CoinInfo, prv_key: &str) -> Result<Self>;
-//}
-
-//#[derive(Debug, Clone, Serialize, Deserialize)]
-//#[serde(rename_all = "camelCase")]
-//pub struct EmptyExtra {}
-//
-//impl Extra for EmptyExtra {
-//    fn new(_coin_info: &CoinInfo, _seed: &[u8]) -> Result<Self> {
-//        Ok(EmptyExtra {})
-//    }
-//    fn from_private_key(_coin_info: &CoinInfo, _prv_key: &str) -> Result<Self> {
-//        Ok(EmptyExtra {})
-//    }
-//}
 
 /// Keystore type
 ///
@@ -241,7 +221,6 @@ impl HdKeystore {
 
         let ext_pub_key = account.to_hex();
 
-        //        let extra = E::new(coin_info, seed)?;
         let acc = Account {
             address,
             derivation_path: coin_info.derivation_path.to_string(),
@@ -258,7 +237,6 @@ impl HdKeystore {
         coin: &CoinInfo,
         private_key: &str,
     ) -> Result<Account> {
-        //        let extra = E::from_private_key(coin, private_key)?;
         let addr = A::from_private_key(private_key, Some(&coin))?;
         let acc = Account {
             address: addr,
@@ -391,51 +369,6 @@ fn merge_value(a: &mut Value, b: &Value) {
         }
     }
 }
-
-//impl Display for HdKeystore {
-//    fn fmt(&self, f: &mut Formatter<'_>) -> result::Result<(), fmt::Error> {
-//        let mut pw = Map::new();
-//        pw.insert("id".to_string(), json!(&self.id.to_string()));
-//        pw.insert("name".to_string(), json!(&self.meta.name));
-//        pw.insert("passwordHint".to_string(), json!(&self.meta.password_hint));
-//        pw.insert("createdAt".to_string(), json!(&self.meta.timestamp));
-//        pw.insert("source".to_string(), json!(&self.meta.source));
-//
-//        if !&self.active_accounts.is_empty() {
-//            if self.active_accounts.len() > 1usize {
-//                panic!("Only one account in token 2.5");
-//            }
-//            let acc = &self
-//                .active_accounts
-//                .first()
-//                .expect("get first account from hdkeystore");
-//            pw.insert("address".to_string(), json!(acc.address.to_string()));
-//            let coin_split: Vec<&str> = acc.coin.split('-').collect();
-//            coin_split.iter().enumerate().for_each(|(i, s)| {
-//                if i == 0 {
-//                    pw.insert("chainType".to_string(), json!(s));
-//                } else if vec!["NONE", "P2WPKH"].contains(s) {
-//                    pw.insert("segWit".to_string(), json!(s));
-//                }
-//            });
-//            let mut obj = Value::Object(pw);
-//            if let Some(extra) = acc.extra.as_object() {
-//                merge_value(&mut obj, &Value::Object(extra.clone()))
-//            }
-//            write!(
-//                f,
-//                "{}",
-//                serde_json::to_string(&obj).expect("present err when convert to json")
-//            )
-//        } else {
-//            write!(
-//                f,
-//                "{}",
-//                serde_json::to_string(&pw).expect("present err when convert to json")
-//            )
-//        }
-//    }
-//}
 
 #[cfg(test)]
 mod tests {

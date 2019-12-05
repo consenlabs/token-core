@@ -109,12 +109,6 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
         }),
     };
 
-    // assemble result and clear result
-
-    //        let data = reply.as_mut_ptr();
-    //        let len = reply.len();
-    //        std::mem::forget(reply);
-    //        Buffer { data, len }
     wrap_buffer(reply)
 }
 
@@ -125,25 +119,6 @@ pub fn wrap_buffer(to_wrap: Vec<u8>) -> Buffer {
     std::mem::forget(to_wrap);
     Buffer { data, len }
 }
-
-/// c interface methods
-//#[no_mangle]
-//pub extern "C" fn create_wallet(json_str: *const c_char) -> *const c_char {
-//    let v: Value = parse_arguments(json_str);
-//    let json = unsafe { landingpad(|| create_wallet_internal(&v)) };
-//    CString::new(json).expect("ret json").into_raw()
-//}
-//
-//fn create_wallet_internal(v: &Value) -> Result<String> {
-//    let meta: Metadata = serde_json::from_value(v.clone())?;
-//    let password = v["password"].as_str().unwrap();
-//    let keystore = HdKeystore::new(password, meta);
-//    let _json = keystore.json();
-//    let _ = flush_keystore(&keystore);
-//    let ret = format!("{}", &keystore);
-//    cache_keystore(keystore);
-//    Ok(ret)
-//}
 
 #[no_mangle]
 pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
@@ -192,572 +167,102 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
     Ok(())
 }
 
-//#[no_mangle]
-//pub unsafe extern "C" fn find_wallet_by_mnemonic(json_str: *const c_char) -> *const c_char {
-//    let v = parse_arguments(json_str);
-//    let json = landingpad(|| find_wallet_by_mnemonic_internal(&v));
-//    CString::new(json).expect("ret json").into_raw()
-//}
-//
-//fn find_wallet_by_mnemonic_internal(v: &Value) -> Result<String> {
-//    let mnemonic = v["mnemonic"].as_str().unwrap();
-//    let path = v["path"].as_str().unwrap();
-//    let symbol = coin_symbol_with_network(v);
-//
-//    let mut coin_info = coin_info_from_symbol(&symbol)?;
-//    coin_info.derivation_path = path.to_string();
-//    let acc = match symbol.as_str() {
-//        "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
-//            HdKeystore::mnemonic_to_account::<BchAddress, BchExtra>(&coin_info, mnemonic)
-//        }
-//        "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
-//            HdKeystore::mnemonic_to_account::<BtcForkAddress, BtcForkExtra>(&coin_info, mnemonic)
-//        }
-//        "TRON" => HdKeystore::mnemonic_to_account::<TrxAddress, EmptyExtra>(&coin_info, mnemonic),
-//        _ => Err(format_err!("{}", "chain_type_not_support")),
-//    }?;
-//    let address = acc.address;
-//    let kid = find_keystore_id_by_address(&address);
-//    if let Some(id) = kid {
-//        let map = KEYSTORE_MAP.read().unwrap();
-//        let ks: &HdKeystore = map.get(&id).unwrap();
-//        Ok(format!("{}", &ks))
-//    } else {
-//        Ok("{}".to_owned())
-//    }
-//}
-
-//#[no_mangle]
-//pub unsafe extern "C" fn find_wallet_by_private_key(json_str: *const c_char) -> *const c_char {
-//    let v = parse_arguments(json_str);
-//    let json = landingpad(|| find_wallet_by_private_key_internal(&v));
-//    CString::new(json).expect("ret json").into_raw()
-//}
-//
-//fn find_wallet_by_private_key_internal(v: &Value) -> Result<String> {
-//    let priv_key = v["privateKey"].as_str().unwrap();
-//    let symbol = coin_symbol_with_network(v);
-//
-//    verify_wif(priv_key, &symbol)?;
-//
-//    let coin_info = coin_info_from_symbol(&symbol)?;
-//    let acc = match symbol.as_str() {
-//        "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
-//            HdKeystore::private_key_to_account::<BchAddress, EmptyExtra>(&coin_info, priv_key)
-//        }
-//        "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
-//            HdKeystore::private_key_to_account::<BtcForkAddress, EmptyExtra>(&coin_info, priv_key)
-//        }
-//        "TRON" => {
-//            HdKeystore::private_key_to_account::<TrxAddress, EmptyExtra>(&coin_info, priv_key)
-//        }
-//        _ => Err(format_err!("{}", "chain_type_not_support")),
-//    }?;
-//    let address = acc.address;
-//    let kid = find_keystore_id_by_address(&address);
-//    if let Some(id) = kid {
-//        let map = KEYSTORE_MAP.read().unwrap();
-//        let ks: &HdKeystore = map.get(&id).unwrap();
-//        Ok(format!("{}", &ks))
-//    } else {
-//        Ok("{}".to_owned())
-//    }
-//}
-
-//#[no_mangle]
-//pub unsafe extern "C" fn import_wallet_from_mnemonic(json_str: *const c_char) -> *const c_char {
-//    let v = parse_arguments(json_str);
-//    let json = landingpad(|| import_wallet_from_mnemonic_internal(&v));
-//    CString::new(json).expect("ret json").into_raw()
-//}
-//
-//fn import_wallet_from_mnemonic_internal(v: &Value) -> Result<String> {
-//    let password = v["password"].as_str().unwrap();
-//    let mnemonic = v["mnemonic"].as_str().unwrap();
-//    let path = v["path"].as_str().unwrap();
-//    let overwrite = v["overwrite"].as_bool().unwrap();
-//    let symbol = coin_symbol_with_network(v);
-//
-//    let meta: Metadata = serde_json::from_value(v.clone())?;
-//    // todo: mnemonic not valid
-//    let mut ks = HdKeystore::from_mnemonic(mnemonic, password, meta);
-//
-//    {
-//        let mut guard = KeystoreGuard::unlock_by_password(&mut ks, password)?;
-//
-//        let mut coin_info = coin_info_from_symbol(&symbol)?;
-//        coin_info.derivation_path = path.to_string();
-//        let account = match symbol.as_str() {
-//            "BITCOINCASH" | "BITCOINCASH-TESTNET" => guard
-//                .keystore_mut()
-//                .derive_coin::<BchAddress, BchExtra>(&coin_info),
-//            "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
-//                guard
-//                    .keystore_mut()
-//                    .derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info)
-//            }
-//            "TRON" => guard
-//                .keystore_mut()
-//                .derive_coin::<TrxAddress, EmptyExtra>(&coin_info),
-//            _ => Err(format_err!("{}", "chain_type_not_support")),
-//        }?;
-//
-//        let exist_kid_opt = find_keystore_id_by_address(&account.address);
-//        if let Some(exist_kid) = exist_kid_opt {
-//            if !overwrite {
-//                return Err(format_err!("{}", "wallet_exists"));
-//            } else {
-//                guard.keystore_mut().id = exist_kid;
-//            }
-//        }
-//    }
-//
-//    flush_keystore(&ks)?;
-//    let json = format!("{}", ks);
-//    cache_keystore(ks);
-//
-//    Ok(json)
-//}
-
-//#[no_mangle]
-//pub unsafe extern "C" fn import_wallet_from_private_key(json_str: *const c_char) -> *const c_char {
-//    let v = parse_arguments(json_str);
-//    let json = landingpad(|| import_wallet_from_private_key_internal(&v));
-//    CString::new(json).expect("ret json").into_raw()
-//}
-//
-//fn import_wallet_from_private_key_internal(v: &Value) -> Result<String> {
-//    let password = v["password"].as_str().unwrap();
-//    let priv_key = v["privateKey"].as_str().unwrap();
-//
-//    let overwrite = v["overwrite"].as_bool().unwrap();
-//    let symbol = coin_symbol_with_network(v);
-//
-//    verify_wif(priv_key, &symbol)?;
-//    let mut meta: Metadata = serde_json::from_value(v.clone())?;
-//    let chain_type = v["chainType"].as_str().unwrap();
-//    if &chain_type.to_uppercase() == "ETHEREUM" {
-//        meta.source = Source::Private;
-//    } else {
-//        meta.source = Source::Wif;
-//    }
-//    let ks = &mut HdKeystore::from_private_key(priv_key, password, meta.source);
-//
-//    let coin_info = coin_info_from_symbol(&symbol)?;
-//    let account = match symbol.as_str() {
-//        "BITCOINCASH" | "BITCOINCASH-TESTNET" => {
-//            ks.derive_coin::<BchAddress, EmptyExtra>(&coin_info)
-//        }
-//        "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
-//            ks.derive_coin::<BtcForkAddress, EmptyExtra>(&coin_info)
-//        }
-//        "TRON" => ks.derive_coin::<TrxAddress, EmptyExtra>(&coin_info),
-//        _ => Err(format_err!("{}", "chain_type_not_support")),
-//    }?;
-//
-//    let exist_kid_opt = find_keystore_id_by_address(&account.address);
-//    if let Some(exist_kid) = exist_kid_opt {
-//        if !overwrite {
-//            return Err(format_err!("{}", "wallet_exists"));
-//        } else {
-//            ks.id = exist_kid;
-//        }
-//    }
-//
-//    flush_keystore(ks)?;
-//    let json = format!("{}", ks);
-//    cache_keystore(ks.clone());
-//
-//    Ok(json)
-//}
-
-#[no_mangle]
-pub unsafe extern "C" fn export_mnemonic(json_str: *const c_char) -> *const c_char {
-    let v: Value = parse_arguments(json_str);
-    let json = landingpad(|| export_mnemonic_internal(&v));
-    CString::new(json).expect("ret json").into_raw()
-}
-
-fn export_mnemonic_internal(v: &Value) -> Result<String> {
-    let wid = v["id"].as_str().expect("id");
-    let password = v["password"].as_str().expect("password");
-
-    let map = KEYSTORE_MAP.read().unwrap();
-    let keystore = match map.get(wid) {
-        Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found")),
-    }?;
-    let mnemonic = keystore.mnemonic(password)?;
-    Ok(serde_json::to_string(
-        &json!({"ok": true, "mnemonic": mnemonic}),
-    )?)
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn export_private_key(json_str: *const c_char) -> *const c_char {
-    let v: Value = parse_arguments(json_str);
-    let json = landingpad(|| export_private_key_internal(&v));
-    CString::new(json).expect("ret json").into_raw()
-}
-
-fn export_private_key_internal(v: &Value) -> Result<String> {
-    let wid = v["id"].as_str().expect("id");
-    let password = v["password"].as_str().expect("password");
-
-    let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore = match map.get_mut(wid) {
-        Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found")),
-    }?;
-
-    let mut guard = KeystoreGuard::unlock_by_password(keystore, password)?;
-    let pk = guard.keystore_mut().private_key()?;
-    Ok(serde_json::to_string(
-        &json!({"ok": true, "privateKey": pk}),
-    )?)
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn verify_password(json_str: *const c_char) -> *const c_char {
-    let v: Value = parse_arguments(json_str);
-    let json = landingpad(|| verify_password_internal(&v));
-    CString::new(json).expect("ret json").into_raw()
-}
-
-fn verify_password_internal(v: &Value) -> Result<String> {
-    let wid = v["id"].as_str().expect("id");
-    let password = v["password"].as_str().expect("password");
-
-    let map = KEYSTORE_MAP.read().unwrap();
-    let keystore: &HdKeystore = match map.get(wid) {
-        Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found")),
-    }?;
-    if !keystore.verify_password(password) {
-        Err(format_err!("{}", "password_incorrect"))
-    } else {
-        Ok(serde_json::to_string(
-            &json!({"ok": true, "id": wid.to_string()}),
-        )?)
-    }
-}
-
-//#[no_mangle]
-//pub unsafe extern "C" fn sign_transaction(json_str: *const c_char) -> *const c_char {
-//    let json_c_str = CStr::from_ptr(json_str);
-//    let json_str = json_c_str.to_str().unwrap();
-//
-//    let json = landingpad(|| sign_transaction_internal(json_str));
-//    CString::new(json).expect("ret json").into_raw()
-//}
-//
-//fn sign_transaction_internal(json_str: &str) -> Result<String> {
-//    let v: Value = serde_json::from_str(json_str).unwrap();
-//    let w_id = v["id"].as_str().expect("wid");
-//    let password = v["password"].as_str().expect("password");
-//    let symbol = coin_symbol_with_network(&v);
-//
-//    let mut map = KEYSTORE_MAP.write().unwrap();
-//    let keystore = match map.get_mut(w_id) {
-//        Some(keystore) => Ok(keystore),
-//        _ => Err(format_err!("{}", "wallet_not_found")),
-//    }?;
-//
-//    let guard = KeystoreGuard::unlock_by_password(keystore, password)?;
-//
-//    match symbol.as_str() {
-//        "BITCOINCASH"
-//        | "BITCOINCASH-TESTNET"
-//        | "LITECOIN"
-//        | "LITECOIN-P2WPKH"
-//        | "LITECOIN-TESTNET"
-//        | "LITECOIN-TESTNET-P2WPKH" => {
-//            sign_btc_fork_transaction(json_str, &symbol, guard.keystore())
-//        }
-//        "TRON" => sign_trx_transaction(json_str, guard.keystore()),
-//        _ => Err(format_err!("{}", "chain_type_not_support")),
-//    }
-//}
-//
-//fn sign_btc_fork_transaction(json: &str, coin: &str, keystore: &HdKeystore) -> Result<String> {
-//    let v: Value = serde_json::from_str(json).expect("sign_transaction_json");
-//    let utxos = v["outputs"].as_array().expect("expect outputs");
-//
-//    let unspents: Vec<Utxo> = utxos
-//        .iter()
-//        .map(|v| Utxo {
-//            tx_hash: v["txHash"].as_str().expect("utxo txHash").to_string(),
-//            vout: v["vout"].as_f64().expect("utxo vout") as i32,
-//            amount: v["amount"]
-//                .as_str()
-//                .expect("utxo amount")
-//                .to_string()
-//                .parse::<i64>()
-//                .expect("utxo converter amount to i64"),
-//            address: v["address"].as_str().expect("utxo address").to_string(),
-//            script_pub_key: v["scriptPubKey"]
-//                .as_str()
-//                .expect("utxo scriptPubKey")
-//                .to_string(),
-//            derived_path: v["derivedPath"]
-//                .as_str()
-//                .expect("utxo derivedPath")
-//                .to_string(),
-//            sequence: 0,
-//        })
-//        .collect();
-//    let internal_used = v["internalUsed"].as_i64();
-//    let change_address = v["changeAddress"].as_str();
-//    let to = v["to"].as_str().expect("to");
-//    let seg_wit = v["segWit"].as_str().expect("segWit");
-//    let is_seg_wit = seg_wit == "P2WPKH";
-//    let amount = v["amount"]
-//        .as_str()
-//        .expect("amount")
-//        .parse::<i64>()
-//        .unwrap();
-//    let fee = v["fee"].as_str().expect("fee").parse::<i64>().unwrap();
-//    let ret: TxSignResult;
-//    if coin.starts_with("BITCOINCASH") {
-//        let input = BitcoinForkTransactionInput {
-//
-//        }
-//        let tran = BchTransaction::new(
-//            to.to_owned(),
-//            amount,
-//            unspents,
-//            fee,
-//            internal_used.map(|x| (x + 1) as u32),
-//            change_address.map(str::to_string),
-//            coin.to_string(),
-//        );
-//        ret = keystore.sign_transaction(&tran)?;
-//    } else if is_seg_wit {
-//        let tran = BtcForkSegWitTransaction::new(
-//            to.to_owned(),
-//            amount,
-//            unspents,
-//            fee,
-//            internal_used.map(|x| (x + 1) as u32),
-//            change_address.map(str::to_string),
-//            coin.to_string(),
-//        );
-//        ret = keystore.sign_transaction(&tran)?;
-//    } else {
-//        let tran = BtcForkTransaction::new(
-//            to.to_owned(),
-//            amount,
-//            unspents,
-//            fee,
-//            internal_used.map(|x| (x + 1) as u32),
-//            change_address.map(str::to_string),
-//            coin.to_string(),
-//        );
-//
-//        ret = keystore.sign_transaction(&tran)?;
-//    }
-//
-//    Ok(serde_json::to_string(&ret)?)
-//}
-
-//fn sign_trx_transaction(json: &str, keystore: &HdKeystore) -> Result<String> {
-//    let v = Value::from_str(json)?;
-//    let tx = TrxTransaction::try_from(v)?;
-//    let signed: TrxSignedTransaction = keystore.sign_transaction(&tx)?;
-//    let signed_v: Value = signed.try_into()?;
-//    Ok(signed_v.to_string())
-//}
-//
-//#[no_mangle]
-//pub unsafe extern "C" fn sign_message(json_str: *const c_char) -> *const c_char {
-//    let json_c_str = CStr::from_ptr(json_str);
-//    let json_str = json_c_str.to_str().unwrap();
-//
-//    let json = landingpad(|| sign_message_internal(json_str));
-//    CString::new(json).expect("ret json").into_raw()
-//}
-//
-//fn sign_message_internal(json_str: &str) -> Result<String> {
-//    let v: Value = serde_json::from_str(json_str).unwrap();
-//    let w_id = v["id"].as_str().expect("wid");
-//    let password = v["password"].as_str().expect("password");
-//    let symbol = coin_symbol_with_network(&v);
-//
-//    let mut map = KEYSTORE_MAP.write().unwrap();
-//    let keystore = match map.get_mut(w_id) {
-//        Some(keystore) => Ok(keystore),
-//        _ => Err(format_err!("{}", "wallet_not_found")),
-//    }?;
-//
-//    let guard = KeystoreGuard::unlock_by_password(keystore, password)?;
-//
-//    match symbol.as_str() {
-//        "TRON" => sign_trx_message(json_str, guard.keystore()),
-//        _ => Err(format_err!("{}", "chain_type_not_support")),
-//    }
-//}
-//
-//fn sign_trx_message(json: &str, keystore: &HdKeystore) -> Result<String> {
-//    let message = serde_json::from_str::<TrxMessage>(json)?;
-//    let signed = keystore.sign_message(&message)?;
-//    Ok(signed.signature)
-//}
-
-//#[no_mangle]
-//pub unsafe extern "C" fn calc_external_address(json_str: *const c_char) -> *const c_char {
-//    let v = parse_arguments(json_str);
-//    let json = landingpad(|| calc_external_address_internal(&v));
-//    CString::new(json).expect("ret json").into_raw()
-//}
-//
-//fn calc_external_address_internal(v: &Value) -> Result<String> {
-//    let w_id = v["id"].as_str().expect("wallet_id");
-//    let external_id = v["externalIdx"].as_i64().expect("external_id");
-//    let symbol = coin_symbol_with_network(v);
-//
-//    let mut map = KEYSTORE_MAP.write().unwrap();
-//    let keystore = match map.get_mut(w_id) {
-//        Some(keystore) => Ok(keystore),
-//        _ => Err(format_err!("{}", "wallet_not_found")),
-//    }?;
-//
-//    let account = keystore
-//        .account(&symbol)
-//        .ok_or_else(|| format_err!("account_not_found, chainType: {}", &symbol))?;
-//    let external_addr: ExternalAddress;
-//    if symbol.starts_with("BITCOINCASH") {
-//        let extra = BchExtra::from(account.extra.clone());
-//        external_addr = extra.calc_external_address(external_id, &symbol)?;
-//    } else {
-//        let extra = BtcForkExtra::from(account.extra.clone());
-//        external_addr = extra.calc_external_address(external_id, &symbol)?;
-//    }
-//
-//    Ok(serde_json::to_string(&external_addr)?)
-//}
-
-#[no_mangle]
-pub unsafe extern "C" fn remove_wallet(json_str: *const c_char) -> *const c_char {
-    let v = parse_arguments(json_str);
-    let json = landingpad(|| remove_wallet_internal(&v));
-    CString::new(json).expect("ret json").into_raw()
-}
-
-fn remove_wallet_internal(v: &Value) -> Result<String> {
-    let w_id = v["id"].as_str().expect("wallet_id");
-    let password = v["password"].as_str().expect("password");
-
-    let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore: &HdKeystore = match map.get(w_id) {
-        Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found")),
-    }?;
-
-    if keystore.verify_password(password) {
-        delete_keystore_file(w_id)?;
-        map.remove(w_id);
-        Ok(serde_json::to_string(&json!({ "id": w_id }))?)
-    } else {
-        Err(format_err!("{}", "password_incorrect"))
-    }
-}
-
 // get_derived_key and cache_derived_key functions are one way to speed decrypt data,
 // you should cache the derived_key in some secure place like keystore in iOS, and protect it by biometric.
-#[no_mangle]
-pub unsafe extern "C" fn get_derived_key(json_str: *const c_char) -> *const c_char {
-    let v = parse_arguments(json_str);
-    let json = landingpad(|| get_derived_key_internal(&v));
-    CString::new(json).expect("ret json").into_raw()
-}
-
-fn get_derived_key_internal(v: &Value) -> Result<String> {
-    let w_id = v["id"].as_str().expect("wallet_id");
-    let password = v["password"].as_str().expect("password");
-
-    let map = KEYSTORE_MAP.read().unwrap();
-    let keystore: &HdKeystore = match map.get(w_id) {
-        Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found")),
-    }?;
-
-    let derived_key = keystore.crypto.generate_derived_key(password)?;
-
-    Ok(hex::encode(derived_key))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn verify_derived_key(json_str: *const c_char) -> *const c_char {
-    let v = parse_arguments(json_str);
-    let json = landingpad(|| verify_derived_key_internal(&v));
-    CString::new(json).expect("ret json").into_raw()
-}
-
-fn verify_derived_key_internal(v: &Value) -> Result<String> {
-    let w_id = v["id"].as_str().expect("wallet_id");
-    let derived_key = v["derivedKey"].as_str().expect("derivedKey");
-
-    let map = KEYSTORE_MAP.read().unwrap();
-    let keystore: &HdKeystore = match map.get(w_id) {
-        Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found")),
-    }?;
-    let derived_key_bytes: Vec<u8> = hex::decode(derived_key)?;
-    if !keystore.crypto.verify_derived_key(&derived_key_bytes) {
-        Err(format_err!("{}", "invalid_cached_derived_key"))
-    } else {
-        Ok(serde_json::to_string(
-            &json!({ "id": w_id, "derivedKey": derived_key }),
-        )?)
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn cache_derived_key(json_str: *const c_char) -> *const c_char {
-    let v = parse_arguments(json_str);
-    let json = landingpad(|| cache_derived_key_internal(&v));
-    CString::new(json).expect("ret json").into_raw()
-}
-
-fn cache_derived_key_internal(v: &Value) -> Result<String> {
-    let w_id = v["id"].as_str().expect("wallet_id");
-    let derived_key = v["derivedKey"].as_str().expect("derivedKey");
-    let tmp_password = v["tempPassword"].as_str().expect("tempPassword");
-
-    let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore: &mut HdKeystore = match map.get_mut(w_id) {
-        Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found")),
-    }?;
-    let derived_key_bytes: Vec<u8> = hex::decode(derived_key)?;
-    if !keystore.crypto.verify_derived_key(&derived_key_bytes) {
-        Err(format_err!("{}", "invalid_cached_derived_key"))
-    } else {
-        keystore
-            .crypto
-            .cache_derived_key(tmp_password, &derived_key_bytes);
-        Ok(serde_json::to_string(
-            &json!({ "id": w_id, "derivedKey": derived_key }),
-        )?)
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn clear_derived_key() -> *const c_char {
-    //    let v = parse_arguments(json_str);
-    let json = landingpad(clear_derived_key_internal);
-    CString::new(json).expect("ret json").into_raw()
-}
-
-fn clear_derived_key_internal() -> Result<String> {
-    let map: &mut HashMap<String, HdKeystore> = &mut KEYSTORE_MAP.write().unwrap();
-    map.values_mut()
-        .map(|keystore| {
-            keystore.crypto.clear_cache_derived_key();
-        })
-        .collect::<()>();
-    Ok(serde_json::to_string(&json!({ "ok": true }))?)
-}
+//#[no_mangle]
+//pub unsafe extern "C" fn get_derived_key(json_str: *const c_char) -> *const c_char {
+//    let v = parse_arguments(json_str);
+//    let json = landingpad(|| get_derived_key_internal(&v));
+//    CString::new(json).expect("ret json").into_raw()
+//}
+//
+//fn get_derived_key_internal(v: &Value) -> Result<String> {
+//    let w_id = v["id"].as_str().expect("wallet_id");
+//    let password = v["password"].as_str().expect("password");
+//
+//    let map = KEYSTORE_MAP.read().unwrap();
+//    let keystore: &HdKeystore = match map.get(w_id) {
+//        Some(keystore) => Ok(keystore),
+//        _ => Err(format_err!("{}", "wallet_not_found")),
+//    }?;
+//
+//    let derived_key = keystore.crypto.generate_derived_key(password)?;
+//
+//    Ok(hex::encode(derived_key))
+//}
+//
+//#[no_mangle]
+//pub unsafe extern "C" fn verify_derived_key(json_str: *const c_char) -> *const c_char {
+//    let v = parse_arguments(json_str);
+//    let json = landingpad(|| verify_derived_key_internal(&v));
+//    CString::new(json).expect("ret json").into_raw()
+//}
+//
+//fn verify_derived_key_internal(v: &Value) -> Result<String> {
+//    let w_id = v["id"].as_str().expect("wallet_id");
+//    let derived_key = v["derivedKey"].as_str().expect("derivedKey");
+//
+//    let map = KEYSTORE_MAP.read().unwrap();
+//    let keystore: &HdKeystore = match map.get(w_id) {
+//        Some(keystore) => Ok(keystore),
+//        _ => Err(format_err!("{}", "wallet_not_found")),
+//    }?;
+//    let derived_key_bytes: Vec<u8> = hex::decode(derived_key)?;
+//    if !keystore.crypto.verify_derived_key(&derived_key_bytes) {
+//        Err(format_err!("{}", "invalid_cached_derived_key"))
+//    } else {
+//        Ok(serde_json::to_string(
+//            &json!({ "id": w_id, "derivedKey": derived_key }),
+//        )?)
+//    }
+//}
+//
+//#[no_mangle]
+//pub unsafe extern "C" fn cache_derived_key(json_str: *const c_char) -> *const c_char {
+//    let v = parse_arguments(json_str);
+//    let json = landingpad(|| cache_derived_key_internal(&v));
+//    CString::new(json).expect("ret json").into_raw()
+//}
+//
+//fn cache_derived_key_internal(v: &Value) -> Result<String> {
+//    let w_id = v["id"].as_str().expect("wallet_id");
+//    let derived_key = v["derivedKey"].as_str().expect("derivedKey");
+//    let tmp_password = v["tempPassword"].as_str().expect("tempPassword");
+//
+//    let mut map = KEYSTORE_MAP.write().unwrap();
+//    let keystore: &mut HdKeystore = match map.get_mut(w_id) {
+//        Some(keystore) => Ok(keystore),
+//        _ => Err(format_err!("{}", "wallet_not_found")),
+//    }?;
+//    let derived_key_bytes: Vec<u8> = hex::decode(derived_key)?;
+//    if !keystore.crypto.verify_derived_key(&derived_key_bytes) {
+//        Err(format_err!("{}", "invalid_cached_derived_key"))
+//    } else {
+//        keystore
+//            .crypto
+//            .cache_derived_key(tmp_password, &derived_key_bytes);
+//        Ok(serde_json::to_string(
+//            &json!({ "id": w_id, "derivedKey": derived_key }),
+//        )?)
+//    }
+//}
+//
+//#[no_mangle]
+//pub unsafe extern "C" fn clear_derived_key() -> *const c_char {
+//    //    let v = parse_arguments(json_str);
+//    let json = landingpad(clear_derived_key_internal);
+//    CString::new(json).expect("ret json").into_raw()
+//}
+//
+//fn clear_derived_key_internal() -> Result<String> {
+//    let map: &mut HashMap<String, HdKeystore> = &mut KEYSTORE_MAP.write().unwrap();
+//    map.values_mut()
+//        .map(|keystore| {
+//            keystore.crypto.clear_cache_derived_key();
+//        })
+//        .collect::<()>();
+//    Ok(serde_json::to_string(&json!({ "ok": true }))?)
+//}
 
 #[no_mangle]
 pub unsafe extern "C" fn clear_err() {
@@ -767,24 +272,6 @@ pub unsafe extern "C" fn clear_err() {
     LAST_BACKTRACE.with(|e| {
         *e.borrow_mut() = None;
     });
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
-    LAST_ERROR.with(|e| {
-        if let Some(ref err) = *e.borrow() {
-            let msg = err.to_string();
-            // todo: follow cause
-            //            let mut cause = err.cause();
-            //            while let Some(the_cause) = cause {
-            //                write!(&mut msg, "\n  caused by: {}", the_cause).ok();
-            //                cause = &the_cause.cause();
-            //            }
-            CString::new(msg).unwrap().into_raw()
-        } else {
-            CString::new("").unwrap().into_raw()
-        }
-    })
 }
 
 #[no_mangle]

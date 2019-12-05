@@ -52,16 +52,6 @@ pub fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
     msg.encode(&mut buf)?;
     Ok(buf.to_vec())
 }
-//
-//fn coin_info_from_derivation(derivation: &Derivation) -> Result<CoinInfo> {
-//    let symbol = coin_symbol_with_param(
-//        &derivation.chain_type,
-//        &derivation.network,
-//        &derivation.chain_id,
-//        &derivation.seg_wit,
-//    );
-//    coin_info_from_symbol(&symbol)
-//}
 
 fn derive_account(seed: &[u8], derivation: &Derivation) -> Result<Account> {
     let mut coin_info = coin_info_from_param(

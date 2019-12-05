@@ -29,46 +29,6 @@ use tcx_primitive::{get_account_path, PublicKey};
 
 const DUST: u64 = 546;
 const SIGHASH_ALL: u8 = 0x01;
-//
-//#[derive(Debug, Clone, Serialize, Deserialize)]
-//#[serde(rename_all = "camelCase")]
-//pub struct Utxo {
-//    pub tx_hash: String,
-//    pub vout: i32,
-//    #[serde(with = "stringify")]
-//    pub amount: i64,
-//    pub address: String,
-//    pub script_pub_key: String,
-//    pub derived_path: String,
-//    #[serde(default)]
-//    pub sequence: i64,
-//}
-//
-//mod stringify {
-//    use std::fmt::Display;
-//    use std::str::FromStr;
-//
-//    use serde::{de, Deserialize, Deserializer, Serializer};
-//
-//    pub fn serialize<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
-//    where
-//        T: Display,
-//        S: Serializer,
-//    {
-//        serializer.collect_str(value)
-//    }
-//
-//    pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
-//    where
-//        T: FromStr,
-//        T::Err: Display,
-//        D: Deserializer<'de>,
-//    {
-//        String::deserialize(deserializer)?
-//            .parse()
-//            .map_err(de::Error::custom)
-//    }
-//}
 
 pub trait ScriptPubKeyComponent {
     fn address_script_like(target_addr: &str, pub_key: &bitcoin::PublicKey) -> Result<Script>;
@@ -77,23 +37,11 @@ pub trait ScriptPubKeyComponent {
 
 pub struct BitcoinForkSinger<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
 {
-    //    pub to: String,
-    //    pub amount: i64,
-    //    pub unspents: Vec<Utxo>,
-    //    pub memo: String,
-    //    pub fee: i64,
-    //    pub change_idx: Option<u32>,
-    //    pub change_address: Option<String>,
     pub tx_input: BtcForkTxInput,
     pub coin_info: CoinInfo,
     pub _marker_s: PhantomData<S>,
     pub _marker_t: PhantomData<T>,
 }
-
-//impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent> TraitTransaction
-//    for BitcoinForkSinger<S, T>
-//{
-//}
 
 impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     TransactionSigner<BitcoinForkSinger<S, T>, BtcForkSignedTxOutput> for HdKeystore

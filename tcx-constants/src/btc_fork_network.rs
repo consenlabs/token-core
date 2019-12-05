@@ -14,10 +14,6 @@ pub struct BtcForkNetwork {
     pub xprv_prefix: [u8; 4],
 }
 
-//pub enum HdVersion {
-//    XPub
-//}
-
 pub struct HdVersion {
     pub_prefix: String,
     prv_prefix: String,
@@ -200,19 +196,12 @@ pub fn network_from_param(
 
 pub fn network_form_hrp(hrp: &str) -> Option<BtcForkNetwork> {
     let networks = BTC_FORK_NETWORKS.read().unwrap();
-    //    let coin_uppercase = coin.to_uppercase();
     let mut ret: Vec<BtcForkNetwork> = networks
         .iter()
         .filter(|x| x.hrp.eq(hrp))
         .map(|x| x.clone())
         .collect::<Vec<BtcForkNetwork>>();
     ret.pop()
-    //    match hrp {
-    //        "bitcoincash" => network_from_coin("BITCOINCASH"),
-    //        "ltc" => network_from_coin("LITECOIN-SEGWIT"),
-    //        "bc" => network_from_coin("BITCOIN-SEGWIT"),
-    //        _ => None,
-    //    }
 }
 
 pub fn coin_from_xpub_prefix(prefix: &[u8]) -> Option<String> {
