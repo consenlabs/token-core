@@ -21,12 +21,15 @@ pub struct InitTokenCoreXParam {
     #[prost(string, tag = "3")]
     pub xpub_common_iv: std::string::String,
 }
-/// Hd Store
-
+//// Hd Store
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HdStoreCreateParam {
     #[prost(string, tag = "1")]
     pub password: std::string::String,
+    #[prost(string, tag = "2")]
+    pub password_hint: std::string::String,
+    #[prost(string, tag = "3")]
+    pub name: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HdStoreImportParam {
@@ -115,7 +118,7 @@ pub struct HdStoreExtendedPublicKeyResponse {
     pub extended_public_key: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct HdStoreAccountsRequest {
+pub struct KeystoreCommonAccountsParam {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
 }
@@ -151,6 +154,30 @@ pub mod keystore_common_export_result {
         Mnemonic = 0,
         PrivateKey = 1,
     }
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct KeystoreCommonExistsParam {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(enumeration = "keystore_common_exists_param::ExportType", tag = "2")]
+    pub r#type: i32,
+    #[prost(string, tag = "3")]
+    pub value: std::string::String,
+}
+pub mod keystore_common_exists_param {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ExportType {
+        Mnemonic = 0,
+        PrivateKey = 1,
+    }
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct KeystoreCommonExistsResult {
+    #[prost(bool, tag = "1")]
+    pub is_exists: bool,
+    #[prost(string, tag = "2")]
+    pub id: std::string::String,
 }
 //// Sign Transaction
 #[derive(Clone, PartialEq, ::prost::Message)]

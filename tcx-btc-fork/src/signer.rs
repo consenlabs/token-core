@@ -8,24 +8,21 @@ use crate::bip143_with_forkid::SighashComponentsWithForkId;
 use crate::Result;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::consensus::serialize;
-use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
 use tcx_primitive::{
     Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPrivateKey,
-    DeterministicPublicKey, PrivateKey, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec,
+    DeterministicPublicKey, PrivateKey, Secp256k1PrivateKey,
 };
 
 use crate::transaction::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
 use bitcoin::util::bip143::SighashComponents;
-use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin_hashes::hash160;
 use bitcoin_hashes::hex::FromHex as HashFromHex;
 use bitcoin_hashes::hex::ToHex as HashToHex;
 use std::marker::PhantomData;
 use tcx_chain::keystore::Address;
-use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CoinInfo;
 use tcx_primitive::FromHex;
 use tcx_primitive::{get_account_path, PublicKey};

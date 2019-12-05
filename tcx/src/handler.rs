@@ -21,8 +21,9 @@ use tcx_tron::TrxAddress;
 use crate::api::hd_store_derive_param::Derivation;
 use crate::api::keystore_common_export_result::ExportType;
 use crate::api::{
-    AccountResponse, AccountsResponse, ExternalAddressParam, HdStoreDeriveParam,
-    HdStoreImportParam, KeystoreCommonExportResult, Response, WalletKeyParam, WalletResult,
+    AccountResponse, AccountsResponse, ExternalAddressParam, HdStoreCreateParam,
+    HdStoreDeriveParam, HdStoreImportParam, KeystoreCommonAccountsParam, KeystoreCommonExistsParam,
+    KeystoreCommonExistsResult, KeystoreCommonExportResult, Response, WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 //use crate::calc_external_address_internal;
@@ -31,10 +32,12 @@ use crate::filemanager::{
     cache_keystore, find_keystore_id_by_address, flush_keystore, WALLET_FILE_DIR,
 };
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
+use std::collections::HashMap;
 use tcx_chain::signer::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CoinInfo;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
+use tcx_crypto::hash::str_sha256;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
@@ -116,9 +119,30 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub fn hd_keystore_create(data: &[u8]) -> Result<Vec<u8>> {
-    let buf = BytesMut::with_capacity(0);
-    Ok(buf.to_vec())
+pub fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
+    let param: HdStoreCreateParam =
+        HdStoreCreateParam::decode(data).expect("import wallet from mnemonic");
+
+    let mut meta = Metadata::default();
+    meta.name = param.name.to_owned();
+    meta.password_hint = param.password_hint.to_owned();
+    meta.source = Source::Mnemonic;
+
+    //    let meta: Metadata = serde_json::from_value(v.clone())?;
+    let ks = HdKeystore::new(&param.password, meta);
+
+    flush_keystore(&ks)?;
+
+    let wallet = WalletResult {
+        id: ks.id.to_owned(),
+        name: ks.meta.name.to_owned(),
+        source: "MNEMONIC".to_owned(),
+        accounts: vec![],
+        created_at: ks.meta.timestamp.clone(),
+    };
+    let ret = encode_message(wallet)?;
+    cache_keystore(ks.clone());
+    Ok(ret)
 }
 
 pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
@@ -188,7 +212,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     Ok(ret)
 }
 
-pub fn enc_xpub(xpub: &str, network: &str) -> Result<String> {
+fn enc_xpub(xpub: &str, network: &str) -> Result<String> {
     let xpk = Bip32DeterministicPublicKey::from_hex(xpub)?;
     let ext_pub_key: String;
     if network == "MAINNET" {
@@ -278,7 +302,7 @@ pub fn keystore_common_export(data: &[u8]) -> Result<Vec<u8>> {
 
 pub fn keystore_common_verify(data: &[u8]) -> Result<Vec<u8>> {
     let param: WalletKeyParam = WalletKeyParam::decode(data).expect("keystore_common_delete");
-    let map = KEYSTORE_MAP.write().unwrap();
+    let map = KEYSTORE_MAP.read().unwrap();
     let keystore: &HdKeystore = match map.get(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
@@ -315,6 +339,54 @@ pub fn keystore_common_delete(data: &[u8]) -> Result<Vec<u8>> {
     } else {
         Err(format_err!("{}", "password_incorrect"))
     }
+}
+
+pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
+    let param: KeystoreCommonExistsParam =
+        KeystoreCommonExistsParam::decode(data).expect("keystore_common_exists params");
+    let key_hash = str_sha256(&param.value);
+    let map: &mut HashMap<String, HdKeystore> = &mut KEYSTORE_MAP.write().unwrap();
+
+    // todo: check the key_type
+    let founded: Option<&HdKeystore> = map.values().find(|keystore| keystore.key_hash == key_hash);
+    let result: KeystoreCommonExistsResult;
+    if let Some(ks) = founded {
+        result = KeystoreCommonExistsResult {
+            is_exists: true,
+            id: ks.id.to_owned(),
+        }
+    } else {
+        result = KeystoreCommonExistsResult {
+            is_exists: false,
+            id: "".to_owned(),
+        }
+    }
+    encode_message(result)
+}
+
+pub fn keystore_common_accounts(data: &[u8]) -> Result<Vec<u8>> {
+    let param: KeystoreCommonAccountsParam =
+        KeystoreCommonAccountsParam::decode(data).expect("keystore_common_accounts params");
+    let map = KEYSTORE_MAP.read().unwrap();
+    let keystore: &HdKeystore = match map.get(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let mut accounts: Vec<AccountResponse> = vec![];
+    for account in &keystore.active_accounts {
+        let enc_xpub = enc_xpub(&account.ext_pub_key, &account.network)?;
+        let acc_rsp = AccountResponse {
+            chain_type: account.coin.to_owned(),
+            address: account.address.to_owned(),
+            path: account.derivation_path.to_owned(),
+            extended_xpub_key: enc_xpub.to_owned(),
+        };
+        accounts.push(acc_rsp);
+    }
+
+    let accounts_rsp = AccountsResponse { accounts };
+    encode_message(accounts_rsp)
 }
 
 pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
@@ -378,14 +450,6 @@ pub fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
     let signed_tx = guard.keystore().sign_message(&input)?;
     encode_message(signed_tx)
 }
-
-//pub fn tron_sign_message(param: &SignTxParam, guard: &KeystoreGuard) -> Result<Vec<u8>> {
-//    let input: TronMessageInput =
-//        TronMessageInput::decode(&param.tx_input.as_ref().expect("tx_input").value.clone())
-//            .expect("TronMessageInput");
-//    let signed_tx = guard.keystore().sign_message(&input)?;
-//    encode_message(signed_tx)
-//}
 
 #[cfg(test)]
 mod tests {

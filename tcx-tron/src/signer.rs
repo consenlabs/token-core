@@ -9,13 +9,11 @@ use bitcoin_hashes::Hash as TraitHash;
 
 use serde_json::Value;
 use std::convert::{TryFrom, TryInto};
-use tcx_primitive::{PrivateKey, Secp256k1PrivateKey};
+use tcx_primitive::PrivateKey;
 
 use failure::format_err;
 
 use crate::keccak;
-use serde::{Deserialize, Serialize};
-use serde_json::json;
 use tcx_constants::coin_info::coin_info_from_param;
 
 // http://jsoneditoronline.org/index.html?id=2b86a8503ba641bebed73f32b4ac9c42
@@ -48,31 +46,31 @@ use tcx_constants::coin_info::coin_info_from_param;
 //"chainType": "TRON"
 //}
 
-pub struct Transaction {
-    raw: Value,
-}
-
-impl TryFrom<Value> for Transaction {
-    type Error = failure::Error;
-
-    fn try_from(tx: Value) -> Result<Self> {
-        Ok(Transaction { raw: tx })
-    }
-}
+//pub struct Transaction {
+//    raw: Value,
+//}
+//
+//impl TryFrom<Value> for Transaction {
+//    type Error = failure::Error;
+//
+//    fn try_from(tx: Value) -> Result<Self> {
+//        Ok(Transaction { raw: tx })
+//    }
+//}
 
 //impl TraitTransaction for Transaction {}
-
-pub struct SignedTransaction {
-    raw: Value,
-}
-
-impl TryInto<Value> for SignedTransaction {
-    type Error = failure::Error;
-
-    fn try_into(self) -> Result<Value> {
-        Ok(self.raw)
-    }
-}
+//
+//pub struct SignedTransaction {
+//    raw: Value,
+//}
+//
+//impl TryInto<Value> for SignedTransaction {
+//    type Error = failure::Error;
+//
+//    fn try_into(self) -> Result<Value> {
+//        Ok(self.raw)
+//    }
+//}
 
 //impl TraitSignedTransaction for SignedTransaction {}
 

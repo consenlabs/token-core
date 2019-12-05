@@ -2,12 +2,10 @@ use crate::signer::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
 
-use bech32::FromBase32;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Error as BtcAddressError;
 use bitcoin::util::address::Payload;
 use bitcoin::util::base58;
-use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::{Address as BtcAddress, Script};
 use bitcoin_hashes::hash160;
 use bitcoin_hashes::Hash;
@@ -19,8 +17,7 @@ use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcFo
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CoinInfo;
 use tcx_primitive::{
-    DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey, Secp256k1PrivateKey,
-    Secp256k1PublicKey, Ss58Codec,
+    DeterministicPublicKey, PrivateKey, PublicKey, Secp256k1PrivateKey, Ss58Codec,
 };
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

@@ -1,11 +1,9 @@
 use std::collections::HashMap;
-use std::convert::{TryFrom, TryInto};
 use std::ffi::{CStr, CString};
 use std::fs;
 use std::io::Read;
 use std::os::raw::c_char;
 use std::path::Path;
-use std::str::FromStr;
 
 use prost::Message;
 use serde_json::Value;
@@ -17,7 +15,7 @@ use tcx_chain::signer::TransactionSigner;
 use tcx_chain::{HdKeystore, MessageSigner, Metadata, Source};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_primitive::verify_wif;
-use tcx_tron::{TrxAddress, TrxSignedTransaction, TrxTransaction};
+use tcx_tron::TrxAddress;
 
 mod api;
 use crate::api::{Response, TcxAction};
@@ -25,8 +23,9 @@ pub mod error_handling;
 pub mod handler;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
-    encode_message, hd_keystore_create, hd_store_derive, hd_store_import, keystore_common_delete,
-    keystore_common_export, keystore_common_verify, sign_tx, tron_sign_message, Buffer,
+    encode_message, hd_store_create, hd_store_derive, hd_store_import, keystore_common_delete,
+    keystore_common_exists, keystore_common_export, keystore_common_verify, sign_tx,
+    tron_sign_message, Buffer,
 };
 mod filemanager;
 use crate::filemanager::{
@@ -80,7 +79,7 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
             handler::init_token_core_x(&action.param.unwrap().value);
             Ok(vec![])
         }),
-        //        "hd_store_create" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
+        "hd_store_create" => landingpad(|| hd_store_create(&action.param.unwrap().value)),
         "hd_store_import" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
         "hd_store_derive" => landingpad(|| hd_store_derive(&action.param.unwrap().value)),
         "keystore_common_export" => {
@@ -91,6 +90,12 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
         }
         "keystore_common_delete" => {
             landingpad(|| keystore_common_delete(&action.param.unwrap().value))
+        }
+        "keystore_common_exists" => {
+            landingpad(|| keystore_common_exists(&action.param.unwrap().value))
+        }
+        "keystore_common_accounts" => {
+            landingpad(|| keystore_common_exists(&action.param.unwrap().value))
         }
 
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),

@@ -10,9 +10,10 @@ message InitTokenCoreXParam {
 }
 
 /// Hd Store
-
 message HdStoreCreateParam {
     string password = 1;
+    string passwordHint = 2;
+    string name = 3;
 }
 
 
@@ -71,7 +72,7 @@ message HdStoreExtendedPublicKeyResponse {
     string extendedPublicKey = 1;
 }
 
-message HdStoreAccountsRequest {
+message KeystoreCommonAccountsParam{
     string id = 1;
 }
 
@@ -95,6 +96,22 @@ message KeystoreCommonExportResult {
     }
     ExportType type = 2;
     string value = 3;
+}
+
+message KeystoreCommonExistsParam {
+    string id = 1;
+    enum ExportType {
+        MNEMONIC = 0;
+        PRIVATE_KEY = 1;
+    }
+    ExportType type = 2;
+    string value = 3;
+}
+
+
+message KeystoreCommonExistsResult {
+    bool isExists = 1;
+    string id = 2;
 }
 
 /// Sign Transaction

@@ -19,6 +19,7 @@ use serde_json::{Map, Value};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_constants::{CoinInfo, CurveType};
+use tcx_crypto::hash::str_sha256;
 
 /// Source to remember which format it comes from
 ///
@@ -128,6 +129,7 @@ pub struct HdKeystore {
     pub version: i32,
     pub key_type: KeyType,
     pub crypto: Crypto<Pbkdf2Params>,
+    pub key_hash: String,
     pub active_accounts: Vec<Account>,
 
     #[serde(rename = "imTokenMeta")]
@@ -158,6 +160,7 @@ impl HdKeystore {
             version: 11000,
             key_type: KeyType::Mnemonic,
             crypto,
+            key_hash: str_sha256(&mnemonic),
             active_accounts: vec![],
             meta,
             seed: None,
@@ -170,6 +173,7 @@ impl HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 11000,
             key_type: KeyType::Mnemonic,
+            key_hash: str_sha256(mnemonic),
             crypto,
             active_accounts: vec![],
             meta,
@@ -185,6 +189,7 @@ impl HdKeystore {
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: 11000,
             key_type: KeyType::PrivateKey,
+            key_hash: str_sha256(&private_key),
             crypto,
             active_accounts: vec![],
             meta,
@@ -541,6 +546,8 @@ mod tests {
             coin: "BITCOINCASH".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
+            network: "".to_string(),
+            seg_wit: "".to_string(),
         };
         let account = HdKeystore::mnemonic_to_account::<MockAddress>(&coin_info, MNEMONIC).unwrap();
         let expected = Account {
@@ -548,8 +555,9 @@ mod tests {
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOINCASH".to_string(),
-            option: "".to_string(),
+            network: "MAINNET".to_string(),
             ext_pub_key: "".to_string(),
+            seg_wit: "".to_string(),
         };
         assert_eq!(account, expected);
     }
@@ -619,6 +627,8 @@ mod tests {
             coin: "BITCOIN".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
+            network: "MAINNET".to_string(),
+            seg_wit: "".to_string(),
         };
         let _ = keystore.unlock_by_password(PASSWORD);
 
@@ -628,7 +638,8 @@ mod tests {
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOIN".to_string(),
-            option: "".to_string(),
+            network: "".to_string(),
+            seg_wit: "".to_string(),
             ext_pub_key: "".to_string(),
         };
 
