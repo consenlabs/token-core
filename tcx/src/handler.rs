@@ -6,15 +6,14 @@ use bytes::BytesMut;
 use prost::Message;
 use serde_json::Value;
 
-use tcx_bch::{BchAddress, BchExtra, BchTransaction};
+use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
-    address::BtcForkAddress, BtcForkExtra, BtcForkSegWitTransaction, BtcForkSignedTxOutput,
-    BtcForkTransaction, BtcForkTxInput,
+    address::BtcForkAddress, BtcForkSegWitTransaction, BtcForkSignedTxOutput, BtcForkTransaction,
+    BtcForkTxInput,
 };
-use tcx_chain::keystore::{EmptyExtra, KeyType};
+use tcx_chain::keystore::KeyType;
 use tcx_chain::keystore_guard::KeystoreGuard;
 use tcx_chain::{Account, HdKeystore, Metadata, Source};
-use tcx_constants::coin_info::{coin_info_from_symbol, coin_symbol_with_param};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::TrxAddress;
 
@@ -25,13 +24,14 @@ use crate::api::{
     HdStoreImportParam, KeystoreCommonExportResult, Response, WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignTxParam};
-use crate::calc_external_address_internal;
+//use crate::calc_external_address_internal;
 use crate::error_handling::Result;
 use crate::filemanager::{
     cache_keystore, find_keystore_id_by_address, flush_keystore, WALLET_FILE_DIR,
 };
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 use tcx_chain::signer::TransactionSigner;
+use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CoinInfo;
 use tcx_tron::transaction::TronTxInput;
 
@@ -46,28 +46,28 @@ pub fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
     msg.encode(&mut buf)?;
     Ok(buf.to_vec())
 }
-
-fn coin_info_from_derivation(derivation: &Derivation) -> Result<CoinInfo> {
-    let symbol = coin_symbol_with_param(
-        &derivation.chain_type,
-        &derivation.network,
-        &derivation.chain_id,
-        &derivation.seg_wit,
-    );
-    coin_info_from_symbol(&symbol)
-}
+//
+//fn coin_info_from_derivation(derivation: &Derivation) -> Result<CoinInfo> {
+//    let symbol = coin_symbol_with_param(
+//        &derivation.chain_type,
+//        &derivation.network,
+//        &derivation.chain_id,
+//        &derivation.seg_wit,
+//    );
+//    coin_info_from_symbol(&symbol)
+//}
 
 fn derive_account(seed: &[u8], derivation: &Derivation) -> Result<Account> {
-    let mut coin_info = coin_info_from_derivation(&derivation)?;
+    let mut coin_info = coin_info_from_param(
+        &derivation.chain_type,
+        &derivation.network,
+        &derivation.seg_wit,
+    )?;
     coin_info.derivation_path = derivation.path.to_owned();
     match derivation.chain_type.as_str() {
-        "BITCOINCASH" => {
-            HdKeystore::derive_account_from_coin::<BchAddress, BchExtra>(&coin_info, seed)
-        }
-        "LITECOIN" => {
-            HdKeystore::derive_account_from_coin::<BtcForkAddress, BtcForkExtra>(&coin_info, seed)
-        }
-        "TRON" => HdKeystore::derive_account_from_coin::<TrxAddress, EmptyExtra>(&coin_info, seed),
+        "BITCOINCASH" => HdKeystore::derive_account_from_coin::<BchAddress>(&coin_info, seed),
+        "LITECOIN" => HdKeystore::derive_account_from_coin::<BtcForkAddress>(&coin_info, seed),
+        "TRON" => HdKeystore::derive_account_from_coin::<TrxAddress>(&coin_info, seed),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -121,7 +121,6 @@ pub fn hd_keystore_create(data: &[u8]) -> Result<Vec<u8>> {
 pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let param: HdStoreImportParam =
         HdStoreImportParam::decode(data).expect("import wallet from mnemonic");
-    let symbol = coin_symbol_with_param(&param.chain_type, &param.network, "", &param.seg_wit);
 
     let mut meta = Metadata::default();
     meta.name = param.name.to_owned();
@@ -134,20 +133,19 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     {
         let mut guard_mut = KeystoreGuard::unlock_by_password(&mut ks, &param.password)?;
 
-        let mut coin_info = coin_info_from_symbol(&symbol)?;
+        let mut coin_info =
+            coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
         coin_info.derivation_path = param.path.to_string();
-        let account = match symbol.as_str() {
-            "BITCOINCASH" | "BITCOINCASH-TESTNET" => guard_mut
+        let account = match param.chain_type.as_str() {
+            "BITCOINCASH" => guard_mut
                 .keystore_mut()
-                .derive_coin::<BchAddress, BchExtra>(&coin_info),
-            "LITECOIN" | "LITECOIN-P2WPKH" | "LITECOIN-TESTNET" | "LITECOIN-TESTNET-P2WPKH" => {
-                guard_mut
-                    .keystore_mut()
-                    .derive_coin::<BtcForkAddress, BtcForkExtra>(&coin_info)
-            }
+                .derive_coin::<BchAddress>(&coin_info),
+            "LITECOIN" => guard_mut
+                .keystore_mut()
+                .derive_coin::<BtcForkAddress>(&coin_info),
             "TRON" => guard_mut
                 .keystore_mut()
-                .derive_coin::<TrxAddress, EmptyExtra>(&coin_info),
+                .derive_coin::<TrxAddress>(&coin_info),
             _ => Err(format_err!("{}", "chain_type_not_support")),
         }?;
 
@@ -167,15 +165,24 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     //        type_url: "imToken.api.ImportWalletFromMnemonic".to_owned(),
     //        value: vec![],
     //    };
+    let mut accounts: Vec<AccountResponse> = vec![];
+    for account in &ks.active_accounts {
+        let acc_rsp = AccountResponse {
+            chain_type: account.coin.to_string(),
+            address: account.address.to_string(),
+            path: account.derivation_path.to_string(),
+            // todo:enc xpub
+            extended_xpub_key: account.ext_pub_key.to_string(),
+        };
+        accounts.push(acc_rsp);
+    }
 
     let wallet = WalletResult {
         id: ks.id.to_owned(),
         name: ks.meta.name.to_owned(),
-        chain_type: param.chain_type.to_owned(),
-        address: ks.active_accounts.first().unwrap().address.to_owned(),
         source: "MNEMONIC".to_owned(),
+        accounts,
         created_at: ks.meta.timestamp.clone(),
-        extra: None,
     };
     let ret = encode_message(wallet)?;
     cache_keystore(ks.clone());
@@ -202,12 +209,12 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
             chain_type: derivation.chain_type.to_owned(),
             address: account.address.to_owned(),
             path: account.derivation_path.to_owned(),
-            extra: None,
+            // todo: enc
+            extended_xpub_key: account.ext_pub_key.to_string(),
         };
         account_responses.push(account_rsp);
 
         accounts.push(account);
-        // todo: remove extra and add the encXPub
     }
 
     guard.keystore_mut().active_accounts.append(&mut accounts);
@@ -315,7 +322,7 @@ pub fn sign_btc_fork_transaction(param: &SignTxParam, guard: &KeystoreGuard) -> 
     let input: BtcForkTxInput =
         BtcForkTxInput::decode(&param.tx_input.as_ref().expect("tx_input").value.clone())
             .expect("BitcoinForkTransactionInput");
-    let coin = coin_symbol_with_param(&param.chain_type, &input.network, "", &input.seg_wit);
+    let coin = coin_info_from_param(&param.chain_type, &input.network, &input.seg_wit)?;
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
         let tran = BchTransaction::new(input, coin);
         guard.keystore().sign_transaction(&tran)?

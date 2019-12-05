@@ -90,8 +90,8 @@ pub struct AccountResponse {
     pub address: std::string::String,
     #[prost(string, tag = "3")]
     pub path: std::string::String,
-    #[prost(message, optional, tag = "4")]
-    pub extra: ::std::option::Option<::prost_types::Any>,
+    #[prost(string, tag = "4")]
+    pub extended_xpub_key: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AccountsResponse {
@@ -171,15 +171,11 @@ pub struct WalletResult {
     #[prost(string, tag = "2")]
     pub name: std::string::String,
     #[prost(string, tag = "3")]
-    pub chain_type: std::string::String,
-    #[prost(string, tag = "4")]
-    pub address: std::string::String,
-    #[prost(string, tag = "5")]
     pub source: std::string::String,
-    #[prost(int64, tag = "6")]
+    #[prost(message, repeated, tag = "4")]
+    pub accounts: ::std::vec::Vec<AccountResponse>,
+    #[prost(int64, tag = "5")]
     pub created_at: i64,
-    #[prost(message, optional, tag = "7")]
-    pub extra: ::std::option::Option<::prost_types::Any>,
 }
 /// btc-fork
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -203,7 +199,7 @@ pub struct ExternalAddressResult {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExternalAddressExtra {
     #[prost(string, tag = "1")]
-    pub enc_x_pub: std::string::String,
+    pub enc_xpub: std::string::String,
     #[prost(message, optional, tag = "2")]
     pub external_address: ::std::option::Option<external_address_extra::ExternalAddress>,
 }

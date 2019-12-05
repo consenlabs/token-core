@@ -16,6 +16,7 @@ use failure::format_err;
 use crate::keccak;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use tcx_constants::coin_info::coin_info_from_param;
 
 // http://jsoneditoronline.org/index.html?id=2b86a8503ba641bebed73f32b4ac9c42
 //{
@@ -78,9 +79,10 @@ impl TryInto<Value> for SignedTransaction {
 impl TraitTransactionSigner<TronTxInput, TronTxOutput> for HdKeystore {
     fn sign_transaction(&self, tx: &TronTxInput) -> Result<TronTxOutput> {
         //        let mut raw = tx.raw.clone();
+        let coin_info = coin_info_from_param(&"TRON", "", "")?;
         let hash = Hash::hash(&tx.raw_data);
         let account = self
-            .account(&"TRON")
+            .account(&coin_info)
             .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
         let sk = &self.get_private_key(path)?;
@@ -111,6 +113,7 @@ impl TraitSignedMessage for SignedMessage {}
 
 impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
     fn sign_message(&self, message: &Message) -> Result<SignedMessage> {
+        let coin_info = coin_info_from_param(&"TRON", "", "")?;
         let data = match message.is_hex {
             true => {
                 let mut raw_hex: String = message.value.to_owned();
@@ -129,7 +132,7 @@ impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
 
         let hash = keccak(&to_hash);
         let account = self
-            .account(&"TRON")
+            .account(&coin_info)
             .ok_or_else(|| format_err!("account_not_found"))?;
         let path = &account.derivation_path;
         let sk = &self.get_private_key(path)?;
@@ -195,15 +198,15 @@ mod tests {
         let mut keystore = HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta);
 
         let coin_info = CoinInfo {
-            symbol: "TRON".to_string(),
+            coin: "TRON".to_string(),
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
+            network: "".to_string(),
+            seg_wit: "".to_string(),
         };
         let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
 
-        let _ = guard
-            .keystore_mut()
-            .derive_coin::<Address, EmptyExtra>(&coin_info);
+        let _ = guard.keystore_mut().derive_coin::<Address>(&coin_info);
 
         let signed_tx = guard.keystore_mut().sign_transaction(&tx)?;
 

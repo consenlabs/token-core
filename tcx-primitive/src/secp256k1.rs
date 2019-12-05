@@ -13,7 +13,7 @@ use bitcoin::util::base58;
 
 use bitcoin::secp256k1::Message;
 use std::io;
-use tcx_constants::network_from_coin;
+use tcx_constants::{network_from_coin, CoinInfo};
 
 fn transform_secp256k1_error(err: secp256k1::Error) -> KeyError {
     match err {
@@ -156,7 +156,7 @@ impl Ss58Codec for Secp256k1PrivateKey {
     }
 }
 
-pub fn verify_wif(wif: &str, coin: &str) -> Result<String> {
+pub fn verify_wif(wif: &str, coin: &CoinInfo) -> Result<String> {
     if let Some(network) = network_from_coin(coin) {
         let (pk, version) = Secp256k1PrivateKey::from_ss58check_with_version(wif)?;
         if version[0] != network.private_prefix {

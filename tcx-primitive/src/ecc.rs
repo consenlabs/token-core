@@ -1,5 +1,5 @@
 use super::Result;
-use crate::Derive;
+use crate::{Derive, FromHex, ToHex};
 use std::io;
 
 #[derive(Fail, Debug, PartialEq)]
@@ -92,7 +92,7 @@ pub trait PrivateKey: TypedKey + Sized {
     fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>>;
 }
 
-pub trait DeterministicPublicKey: Derive {
+pub trait DeterministicPublicKey: Derive + ToHex + FromHex {
     type PublicKey: PublicKey;
 
     fn public_key(&self) -> Self::PublicKey;

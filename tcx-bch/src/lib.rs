@@ -9,10 +9,10 @@ pub type Result<T> = result::Result<T, failure::Error>;
 extern crate failure;
 
 pub use address::BchAddress;
-use tcx_btc_fork::ExtendedPubKeyExtra;
+//use tcx_btc_fork::ExtendedPubKeyExtra;
 pub use transaction::BchTransaction;
 
-pub type BchExtra = ExtendedPubKeyExtra<BchAddress>;
+//pub type BchExtra = ExtendedPubKeyExtra<BchAddress>;
 
 #[derive(Fail, Debug)]
 pub enum Error {
@@ -26,7 +26,7 @@ pub enum Error {
 
 #[cfg(test)]
 mod tests {
-    use crate::{BchAddress, BchExtra};
+    use crate::BchAddress;
 
     use serde_json::Value;
     use std::str::FromStr;
@@ -49,7 +49,7 @@ mod tests {
 
         //        let coin = BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut keystore, PASSWORD, BIP_PATH);
         let bch_coin = CoinInfo {
-            symbol: "BITCOINCASH".to_string(),
+            coin: "BITCOINCASH".to_string(),
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
         };
@@ -82,7 +82,7 @@ mod tests {
         let mut keystore = HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta);
 
         let bch_coin = CoinInfo {
-            symbol: "BITCOINCASH".to_string(),
+            coin: "BITCOINCASH".to_string(),
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
         };

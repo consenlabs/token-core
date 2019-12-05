@@ -1,7 +1,6 @@
 use tcx_chain::{HdKeystore, Source, TransactionSigner};
 
 use bitcoin::{OutPoint, Script, Transaction, TxIn, TxOut};
-use bitcoin_hashes::hex::FromHex;
 use bitcoin_hashes::sha256d::Hash as Hash256;
 use bitcoin_hashes::{sha256d, Hash};
 
@@ -9,7 +8,6 @@ use crate::bip143_with_forkid::SighashComponentsWithForkId;
 use crate::Result;
 use bitcoin::blockdata::script::Builder;
 use bitcoin::consensus::serialize;
-use bitcoin_hashes::hex::ToHex;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -20,12 +18,17 @@ use tcx_primitive::{
 };
 
 use crate::transaction::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
-use crate::ExtendedPubKeyExtra;
+//use crate::ExtendedPubKeyExtra;
 use bitcoin::util::bip143::SighashComponents;
 use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin_hashes::hash160;
+use bitcoin_hashes::hex::FromHex as HashFromHex;
+use bitcoin_hashes::hex::ToHex as HashToHex;
 use std::marker::PhantomData;
 use tcx_chain::keystore::Address;
+use tcx_constants::coin_info::coin_info_from_param;
+use tcx_constants::CoinInfo;
+use tcx_primitive::FromHex;
 use tcx_primitive::{get_account_path, PublicKey};
 
 const DUST: u64 = 546;
@@ -86,7 +89,7 @@ pub struct BitcoinForkSinger<S: ScriptPubKeyComponent + Address, T: BitcoinTrans
     //    pub change_idx: Option<u32>,
     //    pub change_address: Option<String>,
     pub tx_input: BtcForkTxInput,
-    pub coin: String,
+    pub coin_info: CoinInfo,
     pub _marker_s: PhantomData<S>,
     pub _marker_t: PhantomData<T>,
 }
@@ -100,20 +103,22 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     TransactionSigner<BitcoinForkSinger<S, T>, BtcForkSignedTxOutput> for HdKeystore
 {
     fn sign_transaction(&self, tx: &BitcoinForkSinger<S, T>) -> Result<BtcForkSignedTxOutput> {
+        //        let coin_info = coin_info_from_param(&tx.coin, &tx.tx_input.network, &tx.tx_input.seg_wit)?;
         let account = self
-            .account(tx.coin.to_uppercase().as_str())
+            .account(&tx.coin_info)
             .ok_or_else(|| format_err!("account_not_found"))?;
         if self.meta.source != Source::Wif {
             let path = &account.derivation_path;
-            let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
+            //            let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
             let paths = tx.collect_key_pair_paths(path)?;
             let sks = &self
-                .key_at_paths(tx.coin.to_uppercase().as_str(), &paths)?
+                .key_at_paths(&tx.coin_info, &paths)?
                 .iter()
                 .map(|esk| esk.private_key())
                 .collect::<Vec<Secp256k1PrivateKey>>();
 
-            let xpub = extra.xpub()?;
+            //            let xpub = extra.xpub()?;
+            let xpub = account.ext_pub_key.clone();
             let change_addr = tx.change_address(&xpub)?;
             tx.sign_transaction(&sks, change_addr)
         } else {
@@ -133,10 +138,10 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
 impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     BitcoinForkSinger<S, T>
 {
-    pub fn new(input: BtcForkTxInput, coin: String) -> Self {
+    pub fn new(input: BtcForkTxInput, coin: CoinInfo) -> Self {
         BitcoinForkSinger::<S, T> {
             tx_input: input,
-            coin,
+            coin_info: coin,
             _marker_s: PhantomData,
             _marker_t: PhantomData,
         }
@@ -174,7 +179,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     }
 
     pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
-        let epk = Bip32DeterministicPublicKey::from_ss58check(xpub)?;
+        let epk = Bip32DeterministicPublicKey::from_hex(xpub)?;
 
         let index_ext_pub_key = epk.derive(DerivePath::from_str(child_path)?.into_iter())?;
 

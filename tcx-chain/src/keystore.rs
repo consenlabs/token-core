@@ -6,8 +6,9 @@ use uuid::Uuid;
 
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
-    generate_mnemonic, Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive,
-    DerivePath, DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey,
+    generate_mnemonic, get_account_path, Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey,
+    Derive, DerivePath, DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey,
+    Ss58Codec, ToHex,
 };
 
 use crate::keystore_guard::KeystoreGuard;
@@ -69,9 +70,9 @@ impl Default for Metadata {
 /// Chain address interface, for encapsulate derivation
 pub trait Address {
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
-    fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String>;
+    fn from_public_key(public_key: &[u8], coin: Option<&CoinInfo>) -> Result<String>;
 
-    fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String>;
+    fn from_private_key(private_key: &str, coin: Option<&CoinInfo>) -> Result<String>;
 
     fn is_valid(address: &str) -> bool;
 }
@@ -84,29 +85,30 @@ pub struct Account {
     pub derivation_path: String,
     pub curve: CurveType,
     pub coin: String,
-    //    pub option: String,
-    //    pub extended_pub_key: String,
-    pub extra: Value,
+    pub network: String,
+    pub seg_wit: String,
+    pub ext_pub_key: String,
+    //    pub extra: Value,
 }
 
-/// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
-pub trait Extra: Sized + serde::Serialize + Clone {
-    fn new(coin_info: &CoinInfo, seed: &[u8]) -> Result<Self>;
-    fn from_private_key(coin_info: &CoinInfo, prv_key: &str) -> Result<Self>;
-}
+///// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
+//pub trait Extra: Sized + serde::Serialize + Clone {
+//    fn new(coin_info: &CoinInfo, seed: &[u8]) -> Result<Self>;
+//    fn from_private_key(coin_info: &CoinInfo, prv_key: &str) -> Result<Self>;
+//}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct EmptyExtra {}
-
-impl Extra for EmptyExtra {
-    fn new(_coin_info: &CoinInfo, _seed: &[u8]) -> Result<Self> {
-        Ok(EmptyExtra {})
-    }
-    fn from_private_key(_coin_info: &CoinInfo, _prv_key: &str) -> Result<Self> {
-        Ok(EmptyExtra {})
-    }
-}
+//#[derive(Debug, Clone, Serialize, Deserialize)]
+//#[serde(rename_all = "camelCase")]
+//pub struct EmptyExtra {}
+//
+//impl Extra for EmptyExtra {
+//    fn new(_coin_info: &CoinInfo, _seed: &[u8]) -> Result<Self> {
+//        Ok(EmptyExtra {})
+//    }
+//    fn from_private_key(_coin_info: &CoinInfo, _prv_key: &str) -> Result<Self> {
+//        Ok(EmptyExtra {})
+//    }
+//}
 
 /// Keystore type
 ///
@@ -204,17 +206,17 @@ impl HdKeystore {
     }
 
     /// Derive account from a mnemonic phase
-    pub fn mnemonic_to_account<A: Address, E: Extra>(
+    pub fn mnemonic_to_account<A: Address>(
         coin_info: &CoinInfo,
         mnemonic: &str,
     ) -> Result<Account> {
         let mnemonic = Mnemonic::from_phrase(mnemonic, Language::English)
             .map_err(|_| Error::InvalidMnemonic)?;
         let seed = bip39::Seed::new(&mnemonic, &"");
-        Self::derive_account_from_coin::<A, E>(coin_info, seed.as_bytes())
+        Self::derive_account_from_coin::<A>(coin_info, seed.as_bytes())
     }
 
-    pub fn derive_account_from_coin<A: Address, E: Extra>(
+    pub fn derive_account_from_coin<A: Address>(
         coin_info: &CoinInfo,
         seed: &[u8],
     ) -> Result<Account> {
@@ -223,31 +225,44 @@ impl HdKeystore {
         let key = keys.first().ok_or_else(|| format_err!("derivate_failed"))?;
         let pub_key = key.private_key().public_key();
         let bytes = pub_key.to_bytes();
-        let address = A::from_public_key(&bytes, Some(&coin_info.symbol))?;
+        let address = A::from_public_key(&bytes, Some(coin_info))?;
 
-        let extra = E::new(coin_info, seed)?;
+        let account_path = get_account_path(&coin_info.derivation_path)?;
+        let esk = Bip32DeterministicPrivateKey::from_seed(seed)?;
+        let derive_path = DerivePath::from_str(&account_path)?;
+        let account = esk
+            .derive(derive_path.into_iter())?
+            .deterministic_public_key()?;
+
+        let ext_pub_key = account.to_hex();
+
+        //        let extra = E::new(coin_info, seed)?;
         let acc = Account {
             address,
             derivation_path: coin_info.derivation_path.to_string(),
             curve: coin_info.curve,
-            coin: coin_info.symbol.to_string(),
-            extra: serde_json::to_value(extra.clone()).expect("extra_error"),
+            coin: coin_info.coin.to_string(),
+            network: coin_info.network.to_string(),
+            ext_pub_key,
+            seg_wit: coin_info.seg_wit.to_string(),
         };
         Ok(acc)
     }
 
-    pub fn private_key_to_account<A: Address, E: Extra>(
+    pub fn private_key_to_account<A: Address>(
         coin: &CoinInfo,
         private_key: &str,
     ) -> Result<Account> {
-        let extra = E::from_private_key(coin, private_key)?;
-        let addr = A::from_private_key(private_key, Some(&coin.symbol))?;
+        //        let extra = E::from_private_key(coin, private_key)?;
+        let addr = A::from_private_key(private_key, Some(&coin))?;
         let acc = Account {
             address: addr,
             derivation_path: "".to_string(),
             curve: coin.curve,
-            coin: coin.symbol.to_owned(),
-            extra: serde_json::to_value(extra.clone()).expect("extra_error"),
+            coin: coin.coin.to_owned(),
+            network: coin.network.to_string(),
+            seg_wit: coin.seg_wit.to_string(),
+            ext_pub_key: "".to_string(),
         };
         Ok(acc)
     }
@@ -305,10 +320,10 @@ impl HdKeystore {
     /// Derive a private key at a specific path, it's coin independent
     pub fn key_at_paths(
         &self,
-        symbol: &str,
+        coin_info: &CoinInfo,
         paths: &[impl AsRef<str>],
     ) -> Result<Vec<Bip32DeterministicPrivateKey>> {
-        let acc = self.account(symbol).ok_or(Error::AccountNotFound)?;
+        let acc = self.account(coin_info).ok_or(Error::AccountNotFound)?;
 
         tcx_ensure!(self.seed.is_some(), Error::KeystoreLocked);
 
@@ -318,13 +333,13 @@ impl HdKeystore {
     }
 
     /// Derive an account on a specific coin
-    pub fn derive_coin<A: Address, E: Extra>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
         // todo: keyType
         tcx_ensure!(self.seed.is_some(), Error::KeystoreLocked);
 
         let seed = self.seed.as_ref().unwrap().as_slice();
 
-        let account = Self::derive_account_from_coin::<A, E>(coin_info, seed)?;
+        let account = Self::derive_account_from_coin::<A>(coin_info, seed)?;
 
         /*
         else
@@ -338,8 +353,10 @@ impl HdKeystore {
     }
 
     /// Find an account by coin symbol
-    pub fn account(&self, symbol: &str) -> Option<&Account> {
-        self.active_accounts.iter().find(|acc| acc.coin == symbol)
+    pub fn account(&self, coin: &CoinInfo) -> Option<&Account> {
+        self.active_accounts
+            .iter()
+            .find(|acc| acc.coin == coin.coin)
     }
 
     pub fn verify_password(&self, password: &str) -> bool {
@@ -370,50 +387,50 @@ fn merge_value(a: &mut Value, b: &Value) {
     }
 }
 
-impl Display for HdKeystore {
-    fn fmt(&self, f: &mut Formatter<'_>) -> result::Result<(), fmt::Error> {
-        let mut pw = Map::new();
-        pw.insert("id".to_string(), json!(&self.id.to_string()));
-        pw.insert("name".to_string(), json!(&self.meta.name));
-        pw.insert("passwordHint".to_string(), json!(&self.meta.password_hint));
-        pw.insert("createdAt".to_string(), json!(&self.meta.timestamp));
-        pw.insert("source".to_string(), json!(&self.meta.source));
-
-        if !&self.active_accounts.is_empty() {
-            if self.active_accounts.len() > 1usize {
-                panic!("Only one account in token 2.5");
-            }
-            let acc = &self
-                .active_accounts
-                .first()
-                .expect("get first account from hdkeystore");
-            pw.insert("address".to_string(), json!(acc.address.to_string()));
-            let coin_split: Vec<&str> = acc.coin.split('-').collect();
-            coin_split.iter().enumerate().for_each(|(i, s)| {
-                if i == 0 {
-                    pw.insert("chainType".to_string(), json!(s));
-                } else if vec!["NONE", "P2WPKH"].contains(s) {
-                    pw.insert("segWit".to_string(), json!(s));
-                }
-            });
-            let mut obj = Value::Object(pw);
-            if let Some(extra) = acc.extra.as_object() {
-                merge_value(&mut obj, &Value::Object(extra.clone()))
-            }
-            write!(
-                f,
-                "{}",
-                serde_json::to_string(&obj).expect("present err when convert to json")
-            )
-        } else {
-            write!(
-                f,
-                "{}",
-                serde_json::to_string(&pw).expect("present err when convert to json")
-            )
-        }
-    }
-}
+//impl Display for HdKeystore {
+//    fn fmt(&self, f: &mut Formatter<'_>) -> result::Result<(), fmt::Error> {
+//        let mut pw = Map::new();
+//        pw.insert("id".to_string(), json!(&self.id.to_string()));
+//        pw.insert("name".to_string(), json!(&self.meta.name));
+//        pw.insert("passwordHint".to_string(), json!(&self.meta.password_hint));
+//        pw.insert("createdAt".to_string(), json!(&self.meta.timestamp));
+//        pw.insert("source".to_string(), json!(&self.meta.source));
+//
+//        if !&self.active_accounts.is_empty() {
+//            if self.active_accounts.len() > 1usize {
+//                panic!("Only one account in token 2.5");
+//            }
+//            let acc = &self
+//                .active_accounts
+//                .first()
+//                .expect("get first account from hdkeystore");
+//            pw.insert("address".to_string(), json!(acc.address.to_string()));
+//            let coin_split: Vec<&str> = acc.coin.split('-').collect();
+//            coin_split.iter().enumerate().for_each(|(i, s)| {
+//                if i == 0 {
+//                    pw.insert("chainType".to_string(), json!(s));
+//                } else if vec!["NONE", "P2WPKH"].contains(s) {
+//                    pw.insert("segWit".to_string(), json!(s));
+//                }
+//            });
+//            let mut obj = Value::Object(pw);
+//            if let Some(extra) = acc.extra.as_object() {
+//                merge_value(&mut obj, &Value::Object(extra.clone()))
+//            }
+//            write!(
+//                f,
+//                "{}",
+//                serde_json::to_string(&obj).expect("present err when convert to json")
+//            )
+//        } else {
+//            write!(
+//                f,
+//                "{}",
+//                serde_json::to_string(&pw).expect("present err when convert to json")
+//            )
+//        }
+//    }
+//}
 
 #[cfg(test)]
 mod tests {
@@ -521,19 +538,18 @@ mod tests {
     #[test]
     pub fn mnemonic_to_account_test() {
         let coin_info = CoinInfo {
-            symbol: "BITCOINCASH".to_string(),
+            coin: "BITCOINCASH".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
-        let account =
-            HdKeystore::mnemonic_to_account::<MockAddress, EmptyExtra>(&coin_info, MNEMONIC)
-                .unwrap();
+        let account = HdKeystore::mnemonic_to_account::<MockAddress>(&coin_info, MNEMONIC).unwrap();
         let expected = Account {
             address: "mock_address".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOINCASH".to_string(),
-            extra: Value::Object(Map::new()),
+            option: "".to_string(),
+            ext_pub_key: "".to_string(),
         };
         assert_eq!(account, expected);
     }
@@ -600,25 +616,24 @@ mod tests {
     pub fn derive_key_at_paths_test() {
         let mut keystore = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default());
         let coin_info = CoinInfo {
-            symbol: "BITCOIN".to_string(),
+            coin: "BITCOIN".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
         let _ = keystore.unlock_by_password(PASSWORD);
 
-        let acc = keystore
-            .derive_coin::<MockAddress, EmptyExtra>(&coin_info)
-            .unwrap();
+        let acc = keystore.derive_coin::<MockAddress>(&coin_info).unwrap();
         let expected = Account {
             address: "mock_address".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOIN".to_string(),
-            extra: Value::Object(Map::new()),
+            option: "".to_string(),
+            ext_pub_key: "".to_string(),
         };
 
         assert_eq!(acc, &expected);
-        assert_eq!(keystore.account("BITCOIN").unwrap(), &expected);
+        assert_eq!(keystore.account(&coin_info).unwrap(), &expected);
         assert_eq!(keystore.active_accounts.len(), 1);
 
         let paths = vec![
@@ -629,7 +644,7 @@ mod tests {
         ];
 
         let _ = keystore.unlock_by_password(PASSWORD);
-        let private_keys = keystore.key_at_paths("BITCOIN", &paths).unwrap();
+        let private_keys = keystore.key_at_paths(&coin_info, &paths).unwrap();
         let pub_keys = private_keys
             .iter()
             .map(|epk| epk.private_key().public_key().to_bytes().to_hex())

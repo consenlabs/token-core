@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use std::iter::IntoIterator;
 use std::str::FromStr;
 use tcx_chain::keystore::Address;
-use tcx_chain::keystore::Extra;
 
 #[macro_use]
 extern crate failure;
@@ -56,98 +55,98 @@ pub struct ExternalAddress {
     pub addr_type: String,
     pub derived_path: String,
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ExtendedPubKeyExtra<T: Address> {
-    #[serde(rename = "encXPub")]
-    pub enc_xpub: String,
-    pub external_address: ExternalAddress,
-    #[serde(skip)]
-    _maker_t: PhantomData<T>,
-}
-
-pub type BtcForkExtra = ExtendedPubKeyExtra<BtcForkAddress>;
-
-impl<T: Address> Extra for ExtendedPubKeyExtra<T>
-where
-    T: std::clone::Clone,
-{
-    fn new(coin_info: &CoinInfo, seed: &[u8]) -> Result<Self> {
-        ensure!(
-            coin_info.curve == CurveType::SECP256k1,
-            "BCH must be at secp256k1"
-        );
-        let account_path = get_account_path(&coin_info.derivation_path)?;
-        let esk = Bip32DeterministicPrivateKey::from_seed(seed)?;
-        let derive_path = DerivePath::from_str(&account_path)?;
-        let account = esk
-            .derive(derive_path.into_iter())?
-            .deterministic_public_key()?;
-
-        let xpub = BtcForkAddress::extended_public_key(&account, coin_info)?;
-
-        ExtendedPubKeyExtra::from_xpub(&xpub, &coin_info.symbol)
-    }
-
-    fn from_private_key(_coin_info: &CoinInfo, _prv_key: &str) -> Result<Self> {
-        unimplemented!()
-    }
-}
-
-impl<T: Address> ExtendedPubKeyExtra<T> {
-    pub fn _enc_xpub(xpub: &str, key: &str, iv: &str) -> Result<String> {
-        let key_bytes = hex::decode(key)?;
-        let iv_bytes = hex::decode(iv)?;
-        let encrypted = encrypt_pkcs7(&xpub.as_bytes(), &key_bytes, &iv_bytes)?;
-        Ok(base64::encode(&encrypted))
-    }
-
-    fn _calc_external_address(xpub: &str, idx: i64, coin: &str) -> Result<ExternalAddress> {
-        let extended_pub_key = Bip32DeterministicPublicKey::from_ss58check(&xpub)?;
-        let child_path = format!("{}/{}", 0, idx as u32);
-        let index_pub = extended_pub_key.derive(DerivePath::from_str(&child_path)?.into_iter())?;
-        let address = T::from_public_key(&index_pub.public_key().to_bytes(), Some(coin))?;
-        Ok(ExternalAddress {
-            address,
-            addr_type: "EXTERNAL".to_string(),
-            derived_path: format!("0/{}", idx).to_string(),
-        })
-    }
-
-    pub fn calc_external_address(&self, idx: i64, coin: &str) -> Result<ExternalAddress> {
-        let xpub = self.xpub()?;
-        Self::_calc_external_address(&xpub, idx, coin)
-    }
-
-    pub fn from_xpub(xpub: &str, coin: &str) -> Result<Self> {
-        let key = tcx_crypto::XPUB_COMMON_KEY_128.read().unwrap();
-        let iv = tcx_crypto::XPUB_COMMON_IV.read().unwrap();
-        let enc_xpub = Self::_enc_xpub(&xpub, &*key, &*iv)?;
-        let external_address = Self::_calc_external_address(&xpub, 1i64, coin)?;
-        Ok(ExtendedPubKeyExtra::<T> {
-            enc_xpub,
-            external_address,
-            _maker_t: PhantomData,
-        })
-    }
-
-    pub fn xpub(&self) -> Result<String> {
-        let key = tcx_crypto::XPUB_COMMON_KEY_128.read().unwrap();
-        let iv = tcx_crypto::XPUB_COMMON_IV.read().unwrap();
-        let xpub_bytes = base64::decode(&self.enc_xpub)?;
-        let key_bytes = hex::decode(&*key)?;
-        let iv_bytes = hex::decode(&*iv)?;
-        let decrypted = decrypt_pkcs7(&xpub_bytes, &key_bytes, &iv_bytes)?;
-        String::from_utf8(decrypted).map_err(|_| Error::DecryptXPubError.into())
-    }
-}
-
-impl<T: Address> From<Value> for ExtendedPubKeyExtra<T> {
-    fn from(v: Value) -> Self {
-        serde_json::from_value::<Self>(v).unwrap()
-    }
-}
+//
+//#[derive(Debug, Clone, Serialize, Deserialize)]
+//#[serde(rename_all = "camelCase")]
+//pub struct ExtendedPubKeyExtra<T: Address> {
+//    #[serde(rename = "encXPub")]
+//    pub enc_xpub: String,
+//    pub external_address: ExternalAddress,
+//    #[serde(skip)]
+//    _maker_t: PhantomData<T>,
+//}
+//
+//pub type BtcForkExtra = ExtendedPubKeyExtra<BtcForkAddress>;
+//
+//impl<T: Address> Extra for ExtendedPubKeyExtra<T>
+//where
+//    T: std::clone::Clone,
+//{
+//    fn new(coin_info: &CoinInfo, seed: &[u8]) -> Result<Self> {
+//        ensure!(
+//            coin_info.curve == CurveType::SECP256k1,
+//            "BCH must be at secp256k1"
+//        );
+//        let account_path = get_account_path(&coin_info.derivation_path)?;
+//        let esk = Bip32DeterministicPrivateKey::from_seed(seed)?;
+//        let derive_path = DerivePath::from_str(&account_path)?;
+//        let account = esk
+//            .derive(derive_path.into_iter())?
+//            .deterministic_public_key()?;
+//
+//        let xpub = BtcForkAddress::extended_public_key(&account, coin_info)?;
+//
+//        ExtendedPubKeyExtra::from_xpub(&xpub, &coin_info.coin)
+//    }
+//
+//    fn from_private_key(_coin_info: &CoinInfo, _prv_key: &str) -> Result<Self> {
+//        unimplemented!()
+//    }
+//}
+//
+//impl<T: Address> ExtendedPubKeyExtra<T> {
+//    pub fn _enc_xpub(xpub: &str, key: &str, iv: &str) -> Result<String> {
+//        let key_bytes = hex::decode(key)?;
+//        let iv_bytes = hex::decode(iv)?;
+//        let encrypted = encrypt_pkcs7(&xpub.as_bytes(), &key_bytes, &iv_bytes)?;
+//        Ok(base64::encode(&encrypted))
+//    }
+//
+//    fn _calc_external_address(xpub: &str, idx: i64, coin: &str) -> Result<ExternalAddress> {
+//        let extended_pub_key = Bip32DeterministicPublicKey::from_ss58check(&xpub)?;
+//        let child_path = format!("{}/{}", 0, idx as u32);
+//        let index_pub = extended_pub_key.derive(DerivePath::from_str(&child_path)?.into_iter())?;
+//        let address = T::from_public_key(&index_pub.public_key().to_bytes(), Some(coin))?;
+//        Ok(ExternalAddress {
+//            address,
+//            addr_type: "EXTERNAL".to_string(),
+//            derived_path: format!("0/{}", idx).to_string(),
+//        })
+//    }
+//
+//    pub fn calc_external_address(&self, idx: i64, coin: &str) -> Result<ExternalAddress> {
+//        let xpub = self.xpub()?;
+//        Self::_calc_external_address(&xpub, idx, coin)
+//    }
+//
+//    pub fn from_xpub(xpub: &str, coin: &str) -> Result<Self> {
+//        let key = tcx_crypto::XPUB_COMMON_KEY_128.read().unwrap();
+//        let iv = tcx_crypto::XPUB_COMMON_IV.read().unwrap();
+//        let enc_xpub = Self::_enc_xpub(&xpub, &*key, &*iv)?;
+//        let external_address = Self::_calc_external_address(&xpub, 1i64, coin)?;
+//        Ok(ExtendedPubKeyExtra::<T> {
+//            enc_xpub,
+//            external_address,
+//            _maker_t: PhantomData,
+//        })
+//    }
+//
+//    pub fn xpub(&self) -> Result<String> {
+//        let key = tcx_crypto::XPUB_COMMON_KEY_128.read().unwrap();
+//        let iv = tcx_crypto::XPUB_COMMON_IV.read().unwrap();
+//        let xpub_bytes = base64::decode(&self.enc_xpub)?;
+//        let key_bytes = hex::decode(&*key)?;
+//        let iv_bytes = hex::decode(&*iv)?;
+//        let decrypted = decrypt_pkcs7(&xpub_bytes, &key_bytes, &iv_bytes)?;
+//        String::from_utf8(decrypted).map_err(|_| Error::DecryptXPubError.into())
+//    }
+//}
+//
+//impl<T: Address> From<Value> for ExtendedPubKeyExtra<T> {
+//    fn from(v: Value) -> Self {
+//        serde_json::from_value::<Self>(v).unwrap()
+//    }
+//}
 
 #[cfg(test)]
 mod tests {
@@ -159,7 +158,7 @@ mod tests {
     #[test]
     pub fn extra_test() {
         let coin_info = CoinInfo {
-            symbol: "LITECOIN".to_string(),
+            coin: "LITECOIN".to_string(),
             derivation_path: "m/44'/2'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
