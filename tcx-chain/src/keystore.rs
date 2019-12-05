@@ -84,6 +84,8 @@ pub struct Account {
     pub derivation_path: String,
     pub curve: CurveType,
     pub coin: String,
+    //    pub option: String,
+    //    pub extended_pub_key: String,
     pub extra: Value,
 }
 

@@ -87,14 +87,15 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
 
     // assemble result and clear result
 
-    //    let data = reply.as_mut_ptr();
-    //    let len = reply.len();
-    //    std::mem::forget(reply);
-    //    Buffer { data, len }
-    wrap_buffer(&mut reply)
+    //        let data = reply.as_mut_ptr();
+    //        let len = reply.len();
+    //        std::mem::forget(reply);
+    //        Buffer { data, len }
+    wrap_buffer(reply)
 }
 
-fn wrap_buffer(to_wrap: &mut Vec<u8>) -> Buffer {
+pub fn wrap_buffer(to_wrap: Vec<u8>) -> Buffer {
+    let mut to_wrap = to_wrap;
     let data = to_wrap.as_mut_ptr();
     let len = to_wrap.len();
     std::mem::forget(to_wrap);
@@ -771,10 +772,10 @@ pub unsafe extern "C" fn get_last_err() -> Buffer {
                 error: err.to_string(),
             };
             let mut rsp_bytes = encode_message(rsp).expect("encode error");
-            wrap_buffer(&mut rsp_bytes)
+            wrap_buffer(rsp_bytes)
         } else {
             let mut rsp: Vec<u8> = vec![];
-            wrap_buffer(&mut rsp)
+            wrap_buffer(rsp)
         }
     })
 }
@@ -1654,15 +1655,17 @@ mod tests {
 
     #[test]
     fn test_call_tcx_api() {
-        let param_hex = "0a1b696d706f72745f77616c6c65745f66726f6d5f6d6e656d6f6e696312ca010a25696d546f6b656e2e496d706f727457616c6c657446726f6d4d6e656d6f6e6963506172616d12a0010a084c495445434f494e124573616c75746520736c757368206e6f7720736372697074206e657374206c61772061646d6974206163686965766520766f69636520736f6461206672756974206669656c641a11496e7365637572652050617373776f7264220f6d2f3434272f31272f30272f302f302a084d4e454d4f4e4943320c4c54432d57616c6c65742d313a074d41494e4e455442044e4f4e454a005001";
-        let mut param_bytes = hex::decode(param_hex).unwrap();
-        let param_buf = Buffer {
-            data: param_bytes.as_mut_ptr(),
-            len: param_bytes.len(),
-        };
-        let ret_buf = unsafe { call_tcx_api(param_buf) };
-        let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
-        let ret: WalletResult = WalletResult::decode(&ret_bytes).unwrap();
-        assert_eq!("LRB53mz8PmBPDBH8HFp3f5bVHxJ9Bqx8PH", ret.address);
+        run_test(|| {
+            let param_hex = "0a0f68645f73746f72655f696d706f727412bb010a166170692e486453746f7265496d706f7274506172616d12a0010a084c495445434f494e124573616c75746520736c757368206e6f7720736372697074206e657374206c61772061646d6974206163686965766520766f69636520736f6461206672756974206669656c641a11496e7365637572652050617373776f7264220f6d2f3434272f31272f30272f302f302a084d4e454d4f4e4943320c4c54432d57616c6c65742d313a074d41494e4e455442044e4f4e454a005001";
+            let mut param_bytes = hex::decode(param_hex).unwrap();
+            let param_buf = Buffer {
+                data: param_bytes.as_mut_ptr(),
+                len: param_bytes.len(),
+            };
+            let ret_buf = unsafe { call_tcx_api(param_buf) };
+            let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
+            let ret: WalletResult = WalletResult::decode(ret_bytes).unwrap();
+            assert_eq!("LRB53mz8PmBPDBH8HFp3f5bVHxJ9Bqx8PH", ret.address);
+        });
     }
 }

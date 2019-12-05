@@ -163,10 +163,11 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     flush_keystore(&ks)?;
 
-    let extra = ::prost_types::Any {
-        type_url: "imToken.api.ImportWalletFromMnemonic".to_owned(),
-        value: vec![],
-    };
+    //    let extra = ::prost_types::Any {
+    //        type_url: "imToken.api.ImportWalletFromMnemonic".to_owned(),
+    //        value: vec![],
+    //    };
+
     let wallet = WalletResult {
         id: ks.id.to_owned(),
         name: ks.meta.name.to_owned(),
@@ -174,7 +175,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
         address: ks.active_accounts.first().unwrap().address.to_owned(),
         source: "MNEMONIC".to_owned(),
         created_at: ks.meta.timestamp.clone(),
-        extra: Some(extra),
+        extra: None,
     };
     let ret = encode_message(wallet)?;
     cache_keystore(ks.clone());
