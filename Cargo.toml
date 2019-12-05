@@ -9,4 +9,6 @@ members = [
     "tcx-btc-fork",
     "tcx-bch",
     "tcx",
+
+    "tcx-fuzz-target",
 ]

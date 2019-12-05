@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 afl = "0.4"
 url = "1.0"
-tcx = { path = "./tcx" }
+tcx = { path = "../tcx" }
+hex = "0.4.0"
 
-[workspace]
+

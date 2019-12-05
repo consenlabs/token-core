@@ -24,8 +24,8 @@ use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
 mod api;
 use crate::api::{Response, TcxAction};
 pub mod error_handling;
+pub mod handler;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
-mod handler;
 use crate::handler::{encode_message, hd_keystore_create, hd_store_import, sign_tx, Buffer};
 mod filemanager;
 use crate::filemanager::{
