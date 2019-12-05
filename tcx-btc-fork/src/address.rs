@@ -19,7 +19,7 @@ use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcFo
 use tcx_constants::CoinInfo;
 use tcx_primitive::{
     DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey, Secp256k1PrivateKey,
-    Secp256k1PublicKey, Ss58Codec,
+    Secp256k1PublicKey, Ss58Codec, TypedPublicKey,
 };
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -29,15 +29,15 @@ pub struct BtcForkAddress {
 }
 
 impl Address for BtcForkAddress {
-    fn from_public_key(public_key: &[u8], coin: Option<&str>) -> Result<String> {
+    fn from_public_key(public_key: &TypedPublicKey, coin: &CoinInfo) -> Result<String> {
         let coin = coin.expect("coin from address_pub_key");
         let network = network_from_coin(&coin);
         tcx_ensure!(network.is_some(), Error::UnsupportedChain);
         let network = network.expect("network");
         let addr = if coin.to_uppercase().contains("P2WPKH") {
-            BtcForkAddress::p2shwpkh(public_key, &network)?.to_string()
+            BtcForkAddress::p2shwpkh(&public_key.to_bytes(), &network)?.to_string()
         } else {
-            BtcForkAddress::p2pkh(public_key, &network)?.to_string()
+            BtcForkAddress::p2pkh(&public_key.to_bytes(), &network)?.to_string()
         };
         Ok(addr.to_string())
     }

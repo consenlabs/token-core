@@ -10,10 +10,23 @@ use serde_json::Value;
 use tcx_constants::{CoinInfo, CurveType};
 
 pub use self::{guard::KeystoreGuard, hd::HdKeystore, private::PrivateKeystore};
+use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
     DeterministicPrivateKey, PrivateKey, TypedDeterministicPrivateKey, TypedPrivateKey,
     TypedPublicKey,
 };
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct Store {
+    pub id: String,
+    pub version: i64,
+    pub crypto: Crypto<Pbkdf2Params>,
+    pub active_accounts: Vec<Account>,
+
+    #[serde(rename = "imTokenMeta")]
+    pub meta: Metadata,
+}
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum Error {
@@ -51,7 +64,7 @@ pub struct Account {
 /// Chain address interface, for encapsulate derivation
 pub trait Address {
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
-    fn from_public_key(bytes: &[u8], coin: Option<&str>) -> Result<String>;
+    fn from_public_key(public_key: &TypedPublicKey, coin: &CoinInfo) -> Result<String>;
 
     fn is_valid(address: &str) -> bool;
 }
@@ -156,26 +169,17 @@ impl Keystore {
         }
     }
 
-    pub fn find_private_key(&self, address: &str) -> Result<TypedPrivateKey> {
+    pub fn find_private_key(&mut self, symbol: &str, address: &str) -> Result<TypedPrivateKey> {
         match self {
             Keystore::PrivateKey(ks) => ks.find_private_key(address),
-            Keystore::Hd(ks) => ks.find_private_key(address),
+            Keystore::Hd(ks) => ks.find_private_key(symbol, address),
         }
     }
 
-    /*
-    pub fn find_deterministic_private_key(&self, address: &str) -> Result<TypedDeterministicPrivateKey> {
+    pub fn account(&self, symbol: &str, address: &str) -> Option<&Account> {
         match self {
-            Keystore::PrivateKey(ks) => Err(Error::CannotDeriveKey.into()),
-            Keystore::Hd(ks) => ks.find_deterministic_private_key(&self, address),
-        }
-    }
-    */
-
-    pub fn account(&self, symbol: &str) -> Option<&Account> {
-        match self {
-            Keystore::PrivateKey(ks) => ks.account(symbol),
-            Keystore::Hd(ks) => ks.account(symbol),
+            Keystore::PrivateKey(ks) => ks.account(address),
+            Keystore::Hd(ks) => ks.account(symbol, address),
         }
     }
 
@@ -187,28 +191,22 @@ impl Keystore {
     }
 
     pub fn from_json(json: &str) -> Result<Keystore> {
-        let value: Value = serde_json::from_str(json)?;
-        let version = value["version"].as_i64();
+        let store: Store = serde_json::from_str(json)?;
 
-        if version.is_some() {
-            match version.unwrap() {
-                PrivateKeystore::VERSION => Ok(Keystore::PrivateKey(serde_json::from_value::<
-                    PrivateKeystore,
-                >(value)?)),
-                HdKeystore::VERSION => {
-                    Ok(Keystore::Hd(serde_json::from_value::<HdKeystore>(value)?))
-                }
-                _ => Err(Error::InvalidVersion.into()),
+        match store.version {
+            HdKeystore::VERSION => Ok(Keystore::Hd(HdKeystore::from_store(store))),
+            PrivateKeystore::VERSION => {
+                Ok(Keystore::PrivateKey(PrivateKeystore::from_store(store)))
             }
-        } else {
-            Err(Error::InvalidVersion.into())
+
+            _ => Err(Error::InvalidVersion.into()),
         }
     }
 
     pub fn to_json(&self) -> String {
         match self {
-            Keystore::PrivateKey(ks) => serde_json::to_string(ks).unwrap(),
-            Keystore::Hd(ks) => serde_json::to_string(ks).unwrap(),
+            Keystore::PrivateKey(ks) => serde_json::to_string(ks.store()).unwrap(),
+            Keystore::Hd(ks) => serde_json::to_string(ks.store()).unwrap(),
         }
     }
 }

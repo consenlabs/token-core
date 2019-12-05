@@ -1,10 +1,13 @@
 use super::Result;
-use crate::{Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, Secp256k1PrivateKey, Secp256k1PublicKey, DeriveJunction};
+use crate::{
+    Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DeriveJunction,
+    Secp256k1PrivateKey, Secp256k1PublicKey,
+};
 use std::io;
 
+use crate::ecc::TypedDeterministicPrivateKey::Bip32Sepc256k1;
 use serde::{Deserialize, Serialize};
 use tcx_constants::CurveType;
-use crate::ecc::TypedDeterministicPrivateKey::Bip32Sepc256k1;
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum KeyError {
@@ -185,7 +188,9 @@ impl TypedDeterministicPublicKey {
 
     pub fn public_key(&self) -> TypedPublicKey {
         match self {
-            TypedDeterministicPublicKey::Bip32Sepc256k1(esk) => TypedPublicKey::Secp256k1(esk.public_key())
+            TypedDeterministicPublicKey::Bip32Sepc256k1(esk) => {
+                TypedPublicKey::Secp256k1(esk.public_key())
+            }
         }
     }
 }
@@ -197,36 +202,49 @@ impl TypedDeterministicPrivateKey {
         }
     }
 
-    pub fn from_seed(deterministic_type: DeterministicType,  curve_type: CurveType, seed: &[u8]) -> Result<TypedDeterministicPrivateKey> {
-        Ok(Bip32Sepc256k1(Bip32DeterministicPrivateKey::from_seed(seed)?))
+    pub fn from_seed(
+        deterministic_type: DeterministicType,
+        curve_type: CurveType,
+        seed: &[u8],
+    ) -> Result<TypedDeterministicPrivateKey> {
+        Ok(Bip32Sepc256k1(Bip32DeterministicPrivateKey::from_seed(
+            seed,
+        )?))
     }
 
     pub fn private_key(&self) -> TypedPrivateKey {
         match self {
-            TypedDeterministicPrivateKey::Bip32Sepc256k1(esk) => TypedPrivateKey::Secp256k1(esk.private_key())
+            TypedDeterministicPrivateKey::Bip32Sepc256k1(esk) => {
+                TypedPrivateKey::Secp256k1(esk.private_key())
+            }
         }
     }
 
     pub fn deterministic_public_key(&self) -> TypedDeterministicPublicKey {
         match self {
-            TypedDeterministicPrivateKey::Bip32Sepc256k1(sk) => TypedDeterministicPublicKey::Bip32Sepc256k1(sk.deterministic_public_key()),
+            TypedDeterministicPrivateKey::Bip32Sepc256k1(sk) => {
+                TypedDeterministicPublicKey::Bip32Sepc256k1(sk.deterministic_public_key())
+            }
         }
     }
 }
 
 impl Derive for TypedDeterministicPrivateKey {
-    fn derive<Iter: Iterator<Item=DeriveJunction>>(&self, path: Iter) -> Result<Self> {
+    fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self> {
         match self {
-            TypedDeterministicPrivateKey::Bip32Sepc256k1(esk) => Ok(TypedDeterministicPrivateKey::Bip32Sepc256k1(esk.derive(path)?))
+            TypedDeterministicPrivateKey::Bip32Sepc256k1(esk) => Ok(
+                TypedDeterministicPrivateKey::Bip32Sepc256k1(esk.derive(path)?),
+            ),
         }
     }
 }
 
 impl Derive for TypedDeterministicPublicKey {
-    fn derive<Iter: Iterator<Item=DeriveJunction>>(&self, path: Iter) -> Result<Self> {
+    fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self> {
         match self {
-            TypedDeterministicPublicKey::Bip32Sepc256k1(epk) => Ok(TypedDeterministicPublicKey::Bip32Sepc256k1(epk.derive(path)?))
+            TypedDeterministicPublicKey::Bip32Sepc256k1(epk) => Ok(
+                TypedDeterministicPublicKey::Bip32Sepc256k1(epk.derive(path)?),
+            ),
         }
     }
 }
-

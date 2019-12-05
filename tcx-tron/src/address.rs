@@ -2,20 +2,32 @@ use bitcoin::util::base58;
 
 use crate::keccak;
 use tcx_chain::Address as TraitAddress;
-use tcx_primitive::{PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey};
+use tcx_chain::Result;
+use tcx_constants::CoinInfo;
+use tcx_primitive::{
+    PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPublicKey,
+};
 
 pub struct Address(pub String);
 
 pub enum Error {
     InvalidBase58,
+    InvalidEcc,
 }
 
 impl TraitAddress for Address {
-    fn from_public_key(public_key: &[u8], _coin: Option<&str>) -> Result<String, failure::Error> {
-        let bytes = Secp256k1PublicKey::from_slice(public_key)?.to_uncompressed();
-        let hash = keccak(&bytes[1..]);
-        let hex: Vec<u8> = [vec![0x41], hash[12..32].to_vec()].concat();
-        Ok(base58::check_encode_slice(&hex))
+    fn from_public_key(public_key: &TypedPublicKey, _coin: &CoinInfo) -> Result<String> {
+        match public_key {
+            TypedPublicKey::Secp256k1(k) => {
+                let bytes = k.to_uncompressed();
+
+                let hash = keccak(&bytes[1..]);
+                let hex: Vec<u8> = [vec![0x41], hash[12..32].to_vec()].concat();
+                Ok(base58::check_encode_slice(&hex))
+            }
+
+            _ => Err(Error::InvalidEcc.into()),
+        }
     }
 
     fn is_valid(address: &str) -> bool {
