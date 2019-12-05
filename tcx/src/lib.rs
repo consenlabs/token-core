@@ -17,7 +17,7 @@ use tcx_chain::signer::TransactionSigner;
 use tcx_chain::{HdKeystore, MessageSigner, Metadata, Source};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_primitive::verify_wif;
-use tcx_tron::{TrxAddress, TrxMessage, TrxSignedTransaction, TrxTransaction};
+use tcx_tron::{TrxAddress, TrxSignedTransaction, TrxTransaction};
 
 mod api;
 use crate::api::{Response, TcxAction};
@@ -26,7 +26,7 @@ pub mod handler;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
     encode_message, hd_keystore_create, hd_store_derive, hd_store_import, keystore_common_delete,
-    keystore_common_export, keystore_common_verify, sign_tx, Buffer,
+    keystore_common_export, keystore_common_verify, sign_tx, tron_sign_message, Buffer,
 };
 mod filemanager;
 use crate::filemanager::{
@@ -94,7 +94,14 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
         }
 
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
-        _ => landingpad(|| hd_keystore_create(&action.param.unwrap().value)),
+
+        "tron_sign_msg" => landingpad(|| tron_sign_message(&action.param.unwrap().value)),
+        _ => landingpad(|| {
+            encode_message(Response {
+                is_success: false,
+                error: "unsupported_method".to_string(),
+            })
+        }),
     };
 
     // assemble result and clear result

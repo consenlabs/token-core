@@ -24,19 +24,19 @@ use crate::api::{
     AccountResponse, AccountsResponse, ExternalAddressParam, HdStoreDeriveParam,
     HdStoreImportParam, KeystoreCommonExportResult, Response, WalletKeyParam, WalletResult,
 };
-use crate::api::{InitTokenCoreXParam, SignTxParam};
+use crate::api::{InitTokenCoreXParam, SignParam};
 //use crate::calc_external_address_internal;
 use crate::error_handling::Result;
 use crate::filemanager::{
     cache_keystore, find_keystore_id_by_address, flush_keystore, WALLET_FILE_DIR,
 };
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
-use tcx_chain::signer::TransactionSigner;
+use tcx_chain::signer::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CoinInfo;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
-use tcx_tron::transaction::TronTxInput;
+use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
 #[repr(C)]
 pub struct Buffer {
@@ -318,7 +318,7 @@ pub fn keystore_common_delete(data: &[u8]) -> Result<Vec<u8>> {
 }
 
 pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
-    let param: SignTxParam = SignTxParam::decode(data).expect("SignTxParam");
+    let param: SignParam = SignParam::decode(data).expect("SignTxParam");
 
     let mut map = KEYSTORE_MAP.write().unwrap();
     let keystore = match map.get_mut(&param.id) {
@@ -334,9 +334,9 @@ pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
     }
 }
 
-pub fn sign_btc_fork_transaction(param: &SignTxParam, guard: &KeystoreGuard) -> Result<Vec<u8>> {
+pub fn sign_btc_fork_transaction(param: &SignParam, guard: &KeystoreGuard) -> Result<Vec<u8>> {
     let input: BtcForkTxInput =
-        BtcForkTxInput::decode(&param.tx_input.as_ref().expect("tx_input").value.clone())
+        BtcForkTxInput::decode(&param.input.as_ref().expect("tx_input").value.clone())
             .expect("BitcoinForkTransactionInput");
     let coin = coin_info_from_param(&param.chain_type, &input.network, &input.seg_wit)?;
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
@@ -352,18 +352,44 @@ pub fn sign_btc_fork_transaction(param: &SignTxParam, guard: &KeystoreGuard) -> 
     encode_message(signed_tx)
 }
 
-pub fn sign_tron_tx(param: &SignTxParam, guard: &KeystoreGuard) -> Result<Vec<u8>> {
+pub fn sign_tron_tx(param: &SignParam, guard: &KeystoreGuard) -> Result<Vec<u8>> {
     let input: TronTxInput =
-        TronTxInput::decode(&param.tx_input.as_ref().expect("tx_input").value.clone())
+        TronTxInput::decode(&param.input.as_ref().expect("tx_input").value.clone())
             .expect("TronTxInput");
     let signed_tx = guard.keystore().sign_transaction(&input)?;
 
     encode_message(signed_tx)
 }
 
+pub fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
+    let param: SignParam = SignParam::decode(data).expect("SignParam");
+
+    let mut map = KEYSTORE_MAP.write().unwrap();
+    let keystore = match map.get_mut(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+
+    let input: TronMessageInput =
+        TronMessageInput::decode(param.input.expect("TronMessageInput").value.clone())
+            .expect("TronMessageInput");
+    let signed_tx = guard.keystore().sign_message(&input)?;
+    encode_message(signed_tx)
+}
+
+//pub fn tron_sign_message(param: &SignTxParam, guard: &KeystoreGuard) -> Result<Vec<u8>> {
+//    let input: TronMessageInput =
+//        TronMessageInput::decode(&param.tx_input.as_ref().expect("tx_input").value.clone())
+//            .expect("TronMessageInput");
+//    let signed_tx = guard.keystore().sign_message(&input)?;
+//    encode_message(signed_tx)
+//}
+
 #[cfg(test)]
 mod tests {
-    use crate::api::{HdStoreImportParam, InitTokenCoreXParam, SignTxParam, WalletResult};
+    use crate::api::{HdStoreImportParam, InitTokenCoreXParam, SignParam, WalletResult};
     use crate::handler::{encode_message, sign_tx};
     use crate::handler::{hd_store_import, init_token_core_x};
     use prost::Message;
@@ -450,11 +476,11 @@ mod tests {
                 network: "MAINNET".to_owned(),
                 seg_wit: "NONE".to_owned(),
             };
-            let tx = SignTxParam {
+            let tx = SignParam {
                 id: "9c6cbc21-1c43-4c8b-bb7a-5e538f908819".to_string(),
                 password: "Insecure Password".to_string(),
                 chain_type: "BITCOINCASH".to_string(),
-                tx_input: Some(::prost_types::Any {
+                input: Some(::prost_types::Any {
                     type_url: "imtoken".to_string(),
                     value: encode_message(input).unwrap(),
                 }),
@@ -486,11 +512,11 @@ mod tests {
 
             let raw_data = hex::decode("0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d").unwrap();
             let input = TronTxInput { raw_data };
-            let tx = SignTxParam {
+            let tx = SignParam {
                 id: import_result.id.to_string(),
                 password: PASSWORD.to_string(),
                 chain_type: "TRON".to_string(),
-                tx_input: Some(::prost_types::Any {
+                input: Some(::prost_types::Any {
                     type_url: "imtoken".to_string(),
                     value: encode_message(input).unwrap(),
                 }),

@@ -1,7 +1,7 @@
-use crate::transaction::{TronTxInput, TronTxOutput};
+use crate::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 use tcx_chain::{
-    HdKeystore, Message as TraitMessage, MessageSigner as TraitMessageSigner, Result,
-    SignedMessage as TraitSignedMessage, TransactionSigner as TraitTransactionSigner,
+    HdKeystore, MessageSigner as TraitMessageSigner, Result,
+    TransactionSigner as TraitTransactionSigner,
 };
 
 use bitcoin_hashes::sha256::Hash;
@@ -95,24 +95,24 @@ impl TraitTransactionSigner<TronTxInput, TronTxOutput> for HdKeystore {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Message {
-    value: String,
-    is_hex: bool,
-    is_tron_header: bool,
-}
+//#[derive(Debug, Clone, Serialize, Deserialize)]
+//#[serde(rename_all = "camelCase")]
+//pub struct Message {
+//    value: String,
+//    is_hex: bool,
+//    is_tron_header: bool,
+//}
 
-impl TraitMessage for Message {}
+//impl TraitMessage for Message {}
 
-pub struct SignedMessage {
-    pub signature: String,
-}
+//pub struct SignedMessage {
+//    pub signature: String,
+//}
+//
+//impl TraitSignedMessage for SignedMessage {}
 
-impl TraitSignedMessage for SignedMessage {}
-
-impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
-    fn sign_message(&self, message: &Message) -> Result<SignedMessage> {
+impl TraitMessageSigner<TronMessageInput, TronMessageOutput> for HdKeystore {
+    fn sign_message(&self, message: &TronMessageInput) -> Result<TronMessageOutput> {
         let coin_info = coin_info_from_param(&"TRON", "", "")?;
         let data = match message.is_hex {
             true => {
@@ -138,7 +138,7 @@ impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
         let sk = &self.get_private_key(path)?;
         let mut sign_result = sk.sign_recoverable(&hash[..])?;
         sign_result[64] = sign_result[64] + 27;
-        Ok(SignedMessage {
+        Ok(TronMessageOutput {
             signature: hex::encode(sign_result),
         })
     }

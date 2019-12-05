@@ -154,7 +154,7 @@ pub mod keystore_common_export_result {
 }
 //// Sign Transaction
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SignTxParam {
+pub struct SignParam {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
     #[prost(string, tag = "2")]
@@ -162,7 +162,7 @@ pub struct SignTxParam {
     #[prost(string, tag = "3")]
     pub chain_type: std::string::String,
     #[prost(message, optional, tag = "4")]
-    pub tx_input: ::std::option::Option<::prost_types::Any>,
+    pub input: ::std::option::Option<::prost_types::Any>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct WalletResult {
