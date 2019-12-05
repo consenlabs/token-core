@@ -41,6 +41,5 @@ pub trait ToHex: Sized {
 }
 
 pub trait FromHex: Sized {
-    type Error;
-    fn from_hex(hex: &str) -> result::Result<Self, Self::Error>;
+    fn from_hex(hex: &str) -> Result<Self>;
 }

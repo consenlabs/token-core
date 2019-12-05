@@ -11,11 +11,7 @@ use bitcoin::consensus::serialize;
 use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
-use tcx_primitive::{
-    Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPrivateKey,
-    DeterministicPublicKey, PrivateKey, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec,
-    TypedPrivateKey,
-};
+use tcx_primitive::{Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec, TypedPrivateKey, TypedDeterministicPublicKey};
 
 use crate::transaction::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
 use bitcoin::util::bip143::SighashComponents;
@@ -47,38 +43,25 @@ pub struct BitcoinForkSinger<S: ScriptPubKeyComponent + Address, T: BitcoinTrans
 impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     TransactionSigner<BitcoinForkSinger<S, T>, BtcForkSignedTxOutput> for Keystore
 {
-    fn sign_transaction(&self, tx: &BitcoinForkSinger<S, T>) -> Result<BtcForkSignedTxOutput> {
-        match self {
-            Keystore::PrivateKey(ks) => {
-                let change_addr = S::address_script_pub_key(&account.address)?;
-                let sk = ks.private_key()?;
-                // todo: more easy way to clone pair, will fix after refactor the pair
-                let mut sks: Vec<Secp256k1PrivateKey> = vec![];
-                let k = match sk {
-                    TypedPrivateKey::Secp256k1(k) => k,
-                };
+    fn sign_transaction(&mut self, symbol:&str, address:&str, tx: &BitcoinForkSinger<S, T>) -> Result<BtcForkSignedTxOutput> {
+        let change_address = if self.determinable() {
+            let dpk = self.find_deterministic_public_key(symbol, address)?;
+            tx.change_address(&dpk)?
+        } else {
+            S::address_script_pub_key(&address)?
+        };
 
-                for x in 0..tx.tx_input.unspents.len() {
-                    sks.push(k.clone());
-                }
+        let mut sks = vec![];
 
-                tx.sign_transaction(&sks, change_addr)
-            }
-            Keystore::Hd(ks) => {
-                let path = &account.derivation_path;
-                let extra = ExtendedPubKeyExtra::<S>::from(account.extra.clone());
-                let paths = tx.collect_key_pair_paths(path)?;
-                let sks = &ks
-                    .key_at_paths(tx.coin.to_uppercase().as_str(), &paths)?
-                    .iter()
-                    .map(|esk| esk.private_key())
-                    .collect::<Vec<Secp256k1PrivateKey>>();
-
-                let xpub = extra.xpub()?;
-                let change_addr = tx.change_address(&xpub)?;
-                tx.sign_transaction(&sks, change_addr)
+        for x in tx.tx_input.unspents.iter() {
+            if x.derived_path.len() > 0 {
+                sks.push(self.find_private_key_by_path(symbol, address, &x.derived_path)?.as_secp256k1()?.clone());
+            } else {
+                sks.push(self.find_private_key(symbol, &x.address)?.as_secp256k1()?.clone());
             }
         }
+
+        tx.sign_transaction(&sks, change_address)
     }
 }
 
@@ -114,13 +97,13 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         S::address_script_pub_key(&self.tx_input.to)
     }
 
-    fn change_address(&self, xpub: &str) -> Result<Script> {
+    fn change_address(&self, dpk: &TypedDeterministicPublicKey) -> Result<Script> {
         if !self.tx_input.change_address.is_empty() {
             S::address_script_pub_key(&self.tx_input.change_address)
         } else {
             let from = &self.tx_input.unspents.first().expect("first_utxo").address;
-            let change_path = format!("0/{}", &self.tx_input.change_idx);
-            let pub_key = Self::derive_pub_key_at_path(&xpub, &change_path)?;
+            let change_path = format!("1/{}", &self.tx_input.change_idx);
+            let pub_key = dpk.public_key().as_secp256k1()?.0;
             S::address_script_like(&from, &pub_key)
         }
     }

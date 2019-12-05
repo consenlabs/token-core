@@ -34,7 +34,7 @@ impl Address for BtcForkAddress {
         let network = network.expect("network");
 
         let addr = if coin.seg_wit.as_str() == "P2WPKH" {
-            BtcForkAddress::p2shwpkh(public_key, &network)?.to_string()
+            BtcForkAddress::p2shwpkh(&public_key.to_bytes(), &network)?.to_string()
         } else {
             BtcForkAddress::p2pkh(&public_key.to_bytes(), &network)?.to_string()
         };

@@ -1,6 +1,6 @@
 use super::Result;
 use crate::{
-    Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, Derive, DeriveJunction,
+    Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DeriveJunction,
     FromHex, Secp256k1PrivateKey, Secp256k1PublicKey, ToHex,
 };
 use std::io;
@@ -116,6 +116,12 @@ impl TypedPrivateKey {
         }
     }
 
+    pub fn as_secp256k1(&self) -> Result<&Secp256k1PrivateKey> {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => Ok(sk) ,
+        }
+    }
+
     pub fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>> {
         match self {
             TypedPrivateKey::Secp256k1(sk) => sk.sign_recoverable(data),
@@ -139,7 +145,7 @@ impl TypedPrivateKey {
             CurveType::SECP256k1 => Ok(TypedPrivateKey::Secp256k1(
                 Secp256k1PrivateKey::from_slice(data)?,
             )),
-            _ => panic!("invalid curve type"),
+            _ => Err(KeyError::InvalidCurveType.into())
         }
     }
 }
@@ -155,6 +161,13 @@ impl TypedPublicKey {
         }
     }
 
+    pub fn as_secp256k1(&self) -> Result<&Secp256k1PublicKey> {
+        match self {
+            TypedPublicKey::Secp256k1(pk) => Ok(pk) ,
+        }
+    }
+
+
     pub fn curve_type(&self) -> CurveType {
         match self {
             TypedPublicKey::Secp256k1(_) => CurveType::SECP256k1,
@@ -166,7 +179,8 @@ impl TypedPublicKey {
             CurveType::SECP256k1 => Ok(TypedPublicKey::Secp256k1(Secp256k1PublicKey::from_slice(
                 data,
             )?)),
-            _ => panic!("invalid curve type"),
+
+            _ => Err(KeyError::InvalidCurveType.into())
         }
     }
 }
@@ -225,6 +239,23 @@ impl TypedDeterministicPrivateKey {
             TypedDeterministicPrivateKey::Bip32Sepc256k1(sk) => {
                 TypedDeterministicPublicKey::Bip32Sepc256k1(sk.deterministic_public_key())
             }
+        }
+    }
+}
+
+impl TypedDeterministicPublicKey {
+    pub fn from_hex(deterministic_type: DeterministicType, curve_type: CurveType, hex: &str) -> Result<TypedDeterministicPublicKey> {
+        match curve_type {
+            CurveType::SECP256k1 => Ok(TypedDeterministicPublicKey::Bip32Sepc256k1(Bip32DeterministicPublicKey::from_hex(hex)?)),
+            _ => Err(KeyError::InvalidCurveType.into())
+        }
+    }
+}
+
+impl ToHex for TypedDeterministicPublicKey {
+    fn to_hex(&self) -> String {
+        match self {
+            TypedDeterministicPublicKey::Bip32Sepc256k1(epk) => epk.to_hex()
         }
     }
 }

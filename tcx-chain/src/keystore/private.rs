@@ -17,6 +17,7 @@ use tcx_primitive::{
     KeyManage, PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPrivateKey,
 };
 use uuid::Uuid;
+use tcx_crypto::hash::str_sha256;
 
 pub struct PrivateKeystore {
     store: Store,
@@ -88,6 +89,7 @@ impl PrivateKeystore {
     }
 
     pub fn from_private_key(private_key: &str, password: &str, source: Source) -> PrivateKeystore {
+        let key_hash = str_sha256(private_key);
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, private_key.as_bytes());
 
         let meta = Metadata {
@@ -96,11 +98,12 @@ impl PrivateKeystore {
         };
 
         let store = Store {
+            key_hash,
+            crypto,
+            meta,
             id: Uuid::new_v4().to_hyphenated().to_string(),
             version: PrivateKeystore::VERSION,
-            crypto,
             active_accounts: vec![],
-            meta,
         };
 
         PrivateKeystore {
@@ -122,8 +125,10 @@ impl PrivateKeystore {
             address: addr,
             derivation_path: "".to_string(),
             curve: coin.curve,
-            coin: coin.symbol.to_owned(),
-            extra: serde_json::to_value(extra.clone()).expect("extra_error"),
+            coin: coin.coin.to_owned(),
+            network: coin.network.to_string(),
+            seg_wit: coin.seg_wit.to_string(),
+            ext_pub_key: "".to_string()
         };
 
         Ok(acc)

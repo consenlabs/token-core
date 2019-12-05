@@ -119,8 +119,6 @@ impl ToHex for Bip32DeterministicPublicKey {
 }
 
 impl FromHex for Bip32DeterministicPublicKey {
-    type Error = failure::Error;
-
     fn from_hex(hex: &str) -> Result<Self> {
         let data = hex::decode(hex)?;
 

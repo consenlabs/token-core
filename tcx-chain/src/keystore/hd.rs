@@ -22,7 +22,9 @@ use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
     generate_mnemonic, get_account_path, Derive, DerivePath, DeterministicType,
     TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
+    ToHex
 };
+use tcx_crypto::hash::str_sha256;
 
 struct Cache {
     mnemonic: String,
@@ -96,6 +98,18 @@ impl HdKeystore {
             .private_key())
     }
 
+    pub fn find_deterministic_public_key(&mut self, symbol: &str, address: &str) -> Result<TypedDeterministicPublicKey> {
+        let account = self
+            .account(symbol, address)
+            .ok_or(Error::AccountNotFound)?;
+
+        TypedDeterministicPublicKey::from_hex(
+            DeterministicType::BIP32,
+            account.curve,
+            &account.ext_pub_key,
+        )
+    }
+
     pub fn find_private_key_by_path(
         &mut self,
         symbol: &str,
@@ -135,12 +149,14 @@ impl HdKeystore {
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
         let mnemonic = generate_mnemonic();
+        let key_hash = str_sha256(&mnemonic);
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         HdKeystore {
             store: Store {
+                crypto,
+                key_hash,
                 id: Uuid::new_v4().to_hyphenated().to_string(),
                 version: Self::VERSION,
-                crypto,
                 active_accounts: vec![],
                 meta,
             },
@@ -150,12 +166,15 @@ impl HdKeystore {
     }
 
     pub fn from_mnemonic(mnemonic: &str, password: &str, meta: Metadata) -> HdKeystore {
+        let key_hash = str_sha256(mnemonic);
+
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         HdKeystore {
             store: Store {
+                key_hash,
+                crypto,
                 id: Uuid::new_v4().to_hyphenated().to_string(),
                 version: Self::VERSION,
-                crypto,
                 active_accounts: vec![],
                 meta,
             },
@@ -182,9 +201,7 @@ impl HdKeystore {
 
         let ext_pub_key = root
             .derive(DerivePath::from_str(
-                get_account_path(&coin_info.derivation_path)?.into_iter(),
-            ))
-            .to_hex();
+                &get_account_path(&coin_info.derivation_path)?)?.into_iter())?.deterministic_public_key().to_hex();
 
         let account = Account {
             address,
@@ -381,7 +398,7 @@ mod tests {
     pub fn derive_key_at_paths_test() {
         let mut keystore = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default());
         let coin_info = CoinInfo {
-            symbol: "BITCOIN".to_string(),
+            coin: "BITCOIN".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
         };
@@ -395,7 +412,6 @@ mod tests {
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOIN".to_string(),
-            extra: Value::Object(Map::new()),
         };
 
         assert_eq!(acc, &expected);

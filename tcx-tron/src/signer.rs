@@ -1,7 +1,7 @@
 use crate::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 use tcx_chain::{
-    HdKeystore, Keystore, Message as TraitMessage, MessageSigner as TraitMessageSigner, Result,
-    SignedMessage as TraitSignedMessage, TransactionSigner as TraitTransactionSigner,
+    Keystore, MessageSigner as TraitMessageSigner, Result,
+    TransactionSigner as TraitTransactionSigner,
 };
 
 use bitcoin_hashes::sha256::Hash;
@@ -46,17 +46,18 @@ use tcx_constants::coin_info::coin_info_from_param;
 //"chainType": "TRON"
 //}
 
-impl TraitTransactionSigner<TronTxInput, TronTxOutput> for HdKeystore {
-    fn sign_transaction(&self, tx: &TronTxInput) -> Result<TronTxOutput> {
+impl TraitTransactionSigner<TronTxInput, TronTxOutput> for Keystore {
+    fn sign_transaction(
+        &mut self,
+        symbol: &str,
+        address: &str,
+        tx: &TronTxInput,
+    ) -> Result<TronTxOutput> {
         //        let mut raw = tx.raw.clone();
         let coin_info = coin_info_from_param(&"TRON", "", "")?;
         let hash = Hash::hash(&tx.raw_data);
-        let account = self
-            .account(&coin_info)
-            .ok_or_else(|| format_err!("account_not_found"))?;
 
-        let path = &account.derivation_path;
-        let sk = &self.find_private_key(&account.address)?;
+        let sk = &self.find_private_key(symbol, address)?;
         let sign_result = sk.sign_recoverable(&hash[..]);
 
         match sign_result {
@@ -66,8 +67,13 @@ impl TraitTransactionSigner<TronTxInput, TronTxOutput> for HdKeystore {
     }
 }
 
-impl TraitMessageSigner<TronMessageInput, TronMessageOutput> for HdKeystore {
-    fn sign_message(&self, message: &TronMessageInput) -> Result<TronMessageOutput> {
+impl TraitMessageSigner<TronMessageInput, TronMessageOutput> for Keystore {
+    fn sign_message(
+        &mut self,
+        symbol: &str,
+        address: &str,
+        message: &TronMessageInput,
+    ) -> Result<TronMessageOutput> {
         let coin_info = coin_info_from_param(&"TRON", "", "")?;
         let data = match message.is_hex {
             true => {
@@ -86,11 +92,7 @@ impl TraitMessageSigner<TronMessageInput, TronMessageOutput> for HdKeystore {
         let to_hash = [header, &data].concat();
 
         let hash = keccak(&to_hash);
-        let account = self
-            .account(&coin_info)
-            .ok_or_else(|| format_err!("account_not_found"))?;
-        let path = &account.derivation_path;
-        let sk = &self.get_private_key(path)?;
+        let sk = &self.find_private_key(symbol, address)?;
         let mut sign_result = sk.sign_recoverable(&hash[..])?;
         sign_result[64] = sign_result[64] + 27;
         Ok(TronMessageOutput {

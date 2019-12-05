@@ -11,10 +11,8 @@ use tcx_constants::{CoinInfo, CurveType};
 
 pub use self::{guard::KeystoreGuard, hd::HdKeystore, private::PrivateKeystore};
 use tcx_crypto::{Crypto, Pbkdf2Params};
-use tcx_primitive::{
-    DeterministicPrivateKey, PrivateKey, TypedDeterministicPrivateKey, TypedPrivateKey,
-    TypedPublicKey,
-};
+use tcx_primitive::{DeterministicPrivateKey, PrivateKey, TypedDeterministicPrivateKey, TypedPrivateKey, TypedPublicKey, TypedDeterministicPublicKey};
+use crate::signer::ChainSigner;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -179,10 +177,40 @@ impl Keystore {
         }
     }
 
+    pub fn find_private_key_by_path(&mut self, symbol: &str, address:&str, path: &str) -> Result<TypedPrivateKey> {
+        match self {
+            Keystore::Hd(ks) => ks.find_private_key_by_path(symbol, address, path),
+            Keystore::PrivateKey(ks) => ks.find_private_key(address),
+        }
+    }
+
+    /*
+    pub fn find_public_key(&mut self, symbol: &str, address:&str) -> Result<TypedPublicKey> {
+        match self {
+            Keystore::Hd(ks) => ks.find_public_key(symbol, address),
+            _ => Err(Error::CannotDeriveKey.into()),
+        }
+    }
+    */
+
+    pub fn find_deterministic_public_key(&mut self, symbol: &str, address: &str) -> Result<TypedDeterministicPublicKey> {
+        match self {
+            Keystore::Hd(ks) => ks.find_deterministic_public_key(symbol, address),
+            _ => Err(Error::CannotDeriveKey.into()),
+        }
+    }
+
     pub fn account(&self, symbol: &str, address: &str) -> Option<&Account> {
         match self {
             Keystore::PrivateKey(ks) => ks.account(address),
             Keystore::Hd(ks) => ks.account(symbol, address),
+        }
+    }
+
+    pub fn must_find_account(&self, symbol: &str, address: &str) -> Result<&Account> {
+        match self {
+            Keystore::PrivateKey(ks) => ks.account(address).ok_or(Error::AccountNotFound.into()),
+            Keystore::Hd(ks) => ks.account(symbol, address).ok_or(Error::AccountNotFound.into()),
         }
     }
 
@@ -213,6 +241,29 @@ impl Keystore {
         }
     }
 }
+
+impl ChainSigner for Keystore {
+    fn sign_recoverable_hash(&mut self, data: &[u8], symbol: &str, address: &str, path: Option<&str>) -> Result<Vec<u8>> {
+        let private_key = if path.is_some() {
+            self.find_private_key_by_path(symbol, address, path.unwrap())?
+        } else {
+            self.find_private_key(symbol, address)?
+        };
+
+        private_key.sign_recoverable(data)
+    }
+
+    fn sign_hash(&mut self, data: &[u8], symbol: &str, address: &str, path: Option<&str>) -> Result<Vec<u8>> {
+        let private_key = if path.is_some() {
+            self.find_private_key_by_path(symbol, address, path.unwrap())?
+        } else {
+            self.find_private_key(symbol, address)?
+        };
+
+        private_key.sign_recoverable(data)
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

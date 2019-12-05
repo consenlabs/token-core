@@ -26,6 +26,6 @@ pub use keystore::{
     Account, Address, EmptyExtra, Extra, HdKeystore, Keystore, KeystoreGuard, Metadata,
     PrivateKeystore, Source,
 };
-pub use signer::{Message, MessageSigner, SignedMessage, TransactionSigner};
+pub use signer::{MessageSigner, TransactionSigner};
 
 pub type Result<T> = result::Result<T, failure::Error>;
