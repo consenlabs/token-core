@@ -1,26 +1,25 @@
 import React from 'react'
 import { StyleSheet, View, Text, TextInput, Button, Alert } from 'react-native'
 import walletAPI from '../../native'
-import { getChainPath } from '../../constant/path'
 import Loading from '../Loading'
 
 interface Props {
 }
 
 interface State {
-  mnemonic: string
-  password: string
-  id: string
-  address: string
   chainType: __chainType
   network: __networkType
+  password: string
+  privateKey: string
+  address: string
+  id: string
   isLoading: boolean
 }
 
-class CMP extends React.Component<Props, State> {
+class CPK extends React.Component<Props, State> {
   static navigationOptions = ({ navigation }: any) => {
     return {
-      title: 'Mnemonic',
+      title: 'PrivateKey',
       headerLeft: () => (
         <Button
           testID="goBack"
@@ -35,76 +34,73 @@ class CMP extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      mnemonic: '',
-      password: '',
-      id: '',
-      address: '',
       chainType: '' as __chainType,
       network: '' as __networkType,
+      password: '',
+      privateKey: '',
+      address: '',
+      id: '',
       isLoading: false,
     }
   }
+
   render() {
-    const { mnemonic, password, chainType, network, id, address, isLoading } = this.state
+    const { privateKey, password, chainType, network, address, isLoading } = this.state
     return (
       <View style={styles.container}>
         <TextInput
-          testID="mnemonicInput"
-          value={mnemonic}
-          placeholder={'mnemonic'}
+          testID="privateKeyInput"
+          value={privateKey}
+          placeholder={'privateKey'}
           style={styles.input}
-          onChangeText={(mnemonic) => this.setState({ mnemonic })}
+          onChangeText={(privateKey) => this.setState({ privateKey })}
           multiline
         />
         <TextInput
-          testID="mnemonicPassword"
+          testID="privateKeyPassword"
           value={password}
           placeholder={'password'}
           style={styles.input}
           onChangeText={(password) => this.setState({ password })}
         />
         <TextInput
-          testID="mnemonicChainType"
+          testID="privateKeyChainType"
           value={chainType}
           placeholder={'chainType'}
           style={styles.input}
           onChangeText={(chainType) => this.setState({ chainType: chainType as __chainType })}
         />
         <TextInput
-          testID="mnemonicNetwork"
+          testID="privateKeyNetwork"
           value={network}
           placeholder={'network'}
           style={styles.input}
           onChangeText={(network) => this.setState({ network: network as __networkType })}
         />
         <Button
-          testID="mnemonicSubmit"
+          testID="privateKeySubmit"
           title="submit"
           onPress={this.handleSubmit}
         />
-        {!!address && <Text testID="mnemonicAddress">{address}</Text>}
+        {!!address && <Text testID="privateKeyAddress">{address}</Text>}
         <Loading animating={isLoading} />
       </View>
     )
   }
 
   handleSubmit = async () => {
-    const { mnemonic, password, chainType, network } = this.state
-    const chainPath = getChainPath(chainType, network)
+    const { privateKey, password, chainType, network } = this.state
     try {
       const params = {
         chainType,
         network,
-        name: 'MNEMONIC-test',
-        source: 'MNEMONIC' as __walletSource,
-        path: chainPath,
-        mnemonic: mnemonic.trim(),
         password,
+        privateKey: privateKey.trim(),
         overwrite: true,
         passwordHint: ''
       }
       this.setState({ isLoading: true })
-      const res = await walletAPI.importWalletFromMnemonic(params)
+      const res = await walletAPI.importWalletFromPrivateKey(params)
       console.log('res', res)
       this.setState({ id: res.id, address: res.address, isLoading: false })
     } catch (err) {
@@ -127,4 +123,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default CMP
+export default CPK

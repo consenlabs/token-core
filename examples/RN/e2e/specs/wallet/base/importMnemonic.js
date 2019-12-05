@@ -1,21 +1,22 @@
 import { id, toHaveText, label } from '../../../utils.js'
 
 export default async function (params) {
-  const { chainType, mnemonic, password, address } = params
+  const { chainType, mnemonic, password, address, network } = params
   // go to Mnemonic screen
   await id('Mnemonic').tap()
 
   await id('mnemonicInput').tap()
-  await id('mnemonicInput').clearText()
-  await id('mnemonicInput').typeText(mnemonic)
+  await id('mnemonicInput').replaceText(mnemonic)
+  await id('mnemonicInput').typeText(' ')
 
   await id('mnemonicPassword').tap()
-  await id('mnemonicPassword').clearText()
-  await id('mnemonicPassword').typeText(password)
+  await id('mnemonicPassword').replaceText(password)
 
   await id('mnemonicChainType').tap()
-  await id('mnemonicChainType').clearText()
-  await id('mnemonicChainType').typeText(chainType)
+  await id('mnemonicChainType').replaceText(chainType)
+
+  await id('mnemonicNetwork').tap()
+  await id('mnemonicNetwork').replaceText(network)
 
   // dismiss keyboard
   await label('return').tap()

@@ -22,9 +22,10 @@ class HomeScreen extends React.Component<Props> {
   }
 
   render() {
-    const screens = [{
-      name: 'Mnemonic',
-    }]
+    const screens = [
+      {name: 'Mnemonic'},
+      {name: 'PrivateKey'}
+    ]
 
     return (
       <ScrollView
