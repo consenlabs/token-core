@@ -87,9 +87,9 @@ impl DeterministicPrivateKey for Bip32DeterministicPrivateKey {
         Secp256k1PrivateKey::from(self.0.private_key.clone())
     }
 
-    fn deterministic_public_key(&self) -> Result<Self::DeterministicPublicKey> {
+    fn deterministic_public_key(&self) -> Self::DeterministicPublicKey {
         let pk = ExtendedPubKey::from_private(&SECP256K1_ENGINE, &self.0);
-        Ok(Bip32DeterministicPublicKey(pk))
+        Bip32DeterministicPublicKey(pk)
     }
 }
 

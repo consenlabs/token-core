@@ -110,7 +110,7 @@ pub struct SignedMessage {
 
 impl TraitSignedMessage for SignedMessage {}
 
-impl TraitMessageSigner<Message, SignedMessage> for HdKeystore {
+impl TraitMessageSigner<Message, SignedMessage> for Keystore {
     fn sign_message(&self, message: &Message) -> Result<SignedMessage> {
         let data = match message.is_hex {
             true => {
