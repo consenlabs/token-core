@@ -18,7 +18,6 @@ use tcx_primitive::{
 };
 
 use crate::transaction::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
-//use crate::ExtendedPubKeyExtra;
 use bitcoin::util::bip143::SighashComponents;
 use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin_hashes::hash160;

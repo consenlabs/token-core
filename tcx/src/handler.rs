@@ -5,6 +5,7 @@ use std::path::Path;
 use bytes::BytesMut;
 use prost::Message;
 use serde_json::Value;
+use tcx_primitive::FromHex;
 
 use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
@@ -33,6 +34,8 @@ use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 use tcx_chain::signer::TransactionSigner;
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CoinInfo;
+use tcx_crypto::aes::cbc::encrypt_pkcs7;
+use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_tron::transaction::TronTxInput;
 
 #[repr(C)]
@@ -161,18 +164,14 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     flush_keystore(&ks)?;
 
-    //    let extra = ::prost_types::Any {
-    //        type_url: "imToken.api.ImportWalletFromMnemonic".to_owned(),
-    //        value: vec![],
-    //    };
     let mut accounts: Vec<AccountResponse> = vec![];
     for account in &ks.active_accounts {
+        let enc_xpub = enc_xpub(&account.ext_pub_key.to_string(), &account.network)?;
         let acc_rsp = AccountResponse {
             chain_type: account.coin.to_string(),
             address: account.address.to_string(),
             path: account.derivation_path.to_string(),
-            // todo:enc xpub
-            extended_xpub_key: account.ext_pub_key.to_string(),
+            extended_xpub_key: enc_xpub,
         };
         accounts.push(acc_rsp);
     }
@@ -187,6 +186,23 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let ret = encode_message(wallet)?;
     cache_keystore(ks.clone());
     Ok(ret)
+}
+
+pub fn enc_xpub(xpub: &str, network: &str) -> Result<String> {
+    let xpk = Bip32DeterministicPublicKey::from_hex(xpub)?;
+    let ext_pub_key: String;
+    if network == "MAINNET" {
+        ext_pub_key = xpk.to_ss58check_with_version(&[0x04, 0x88, 0xB2, 0x1E]);
+    } else {
+        ext_pub_key = xpk.to_ss58check_with_version(&[0x04, 0x35, 0x87, 0xCF]);
+    }
+
+    let key = tcx_crypto::XPUB_COMMON_KEY_128.read().unwrap();
+    let iv = tcx_crypto::XPUB_COMMON_IV.read().unwrap();
+    let key_bytes = hex::decode(&*key)?;
+    let iv_bytes = hex::decode(&*key)?;
+    let encrypted = encrypt_pkcs7(&ext_pub_key.as_bytes(), &key_bytes, &iv_bytes)?;
+    Ok(base64::encode(&encrypted))
 }
 
 pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
@@ -205,12 +221,12 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
 
     for derivation in param.derivations {
         let account = derive_account(&seed, &derivation)?;
+        let enc_xpub = enc_xpub(&account.ext_pub_key.to_string(), &account.network)?;
         let account_rsp = AccountResponse {
             chain_type: derivation.chain_type.to_owned(),
             address: account.address.to_owned(),
             path: account.derivation_path.to_owned(),
-            // todo: enc
-            extended_xpub_key: account.ext_pub_key.to_string(),
+            extended_xpub_key: enc_xpub,
         };
         account_responses.push(account_rsp);
 
@@ -344,11 +360,6 @@ pub fn sign_tron_tx(param: &SignTxParam, guard: &KeystoreGuard) -> Result<Vec<u8
 
     encode_message(signed_tx)
 }
-//
-//pub fn derive_external_address(data: &[u8]) -> Result<Vec<u8>> {
-//    let param: ExternalAddressParam = ExternalAddressParam::decode(data).expect("ExternalAddressParam");
-//    calc_external_address_internal()
-//}
 
 #[cfg(test)]
 mod tests {
