@@ -106,7 +106,7 @@ impl TraitPublicKey for Secp256k1PublicKey {
         Ok(Secp256k1PublicKey(key))
     }
 
-    fn write_into<W: io::Write>(&self, mut writer: W) {
+    fn write_into<W: io::Write>(&self, writer: W) {
         self.0.write_into(writer);
     }
 
@@ -151,7 +151,7 @@ impl Ss58Codec for Secp256k1PrivateKey {
 
 pub fn verify_wif(wif: &str, coin: &CoinInfo) -> Result<String> {
     if let Some(network) = network_from_coin(coin) {
-        let (pk, version) = Secp256k1PrivateKey::from_ss58check_with_version(wif)?;
+        let (_pk, version) = Secp256k1PrivateKey::from_ss58check_with_version(wif)?;
         if version[0] != network.private_prefix {
             return Err(KeyError::InvalidPrivateKey.into());
         }

@@ -216,8 +216,8 @@ impl TypedDeterministicPrivateKey {
     }
 
     pub fn from_seed(
-        deterministic_type: DeterministicType,
-        curve_type: CurveType,
+        _deterministic_type: DeterministicType,
+        _curve_type: CurveType,
         seed: &[u8],
     ) -> Result<TypedDeterministicPrivateKey> {
         Ok(Bip32Sepc256k1(Bip32DeterministicPrivateKey::from_seed(
@@ -244,7 +244,7 @@ impl TypedDeterministicPrivateKey {
 
 impl TypedDeterministicPublicKey {
     pub fn from_hex(
-        deterministic_type: DeterministicType,
+        _deterministic_type: DeterministicType,
         curve_type: CurveType,
         hex: &str,
     ) -> Result<TypedDeterministicPublicKey> {
