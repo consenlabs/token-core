@@ -49,12 +49,14 @@ mod tests {
             coin: "BITCOINCASH".to_string(),
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
         };
         let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
 
         let _ = guard
             .keystore_mut()
-            .derive_coin::<BchAddress, BchExtra>(&bch_coin)
+            .derive_coin::<BchAddress>(&bch_coin)
             .unwrap();
 
         let json_str = guard.keystore_mut().to_json();
@@ -82,13 +84,15 @@ mod tests {
             coin: "BITCOINCASH".to_string(),
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
         };
 
         let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
 
         let _ = guard
             .keystore_mut()
-            .derive_coin::<BchAddress, BchExtra>(&bch_coin)
+            .derive_coin::<BchAddress>(&bch_coin)
             .unwrap();
         let json_str = guard.keystore_mut().to_json();
         let v: Value = serde_json::from_str(&json_str).unwrap();
@@ -104,30 +108,5 @@ mod tests {
         assert_eq!(BIP_PATH, path);
         let coin = account["coin"].as_str().unwrap();
         assert_eq!("BITCOINCASH", coin);
-
-        let extra = account["extra"].as_object().expect("extra");
-        let enc_xpub = extra["encXPub"].as_str().expect("enc_xpub");
-        assert_eq!(enc_xpub, "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==")
-    }
-
-    #[test]
-    fn extra_test() {
-        let ex = BchExtra::from_xpub("tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R", "BITCOINCASH").unwrap();
-
-        assert_eq!(ex.enc_xpub, "GekyMLycBJlFAmob0yEGM8zrEKrBHozAKr66PrMts7k6vSBJ/8DJQW7HViVqWftKhRbPAxZ3MO0281AKvWp4qa+/Q5nqoCi5/THxRLA1wDn8gWqDJjUjaZ7kJaNnreWfUyNGUeDxnN7tHDGdW4nbtA==");
-
-        //        let addr = ex.calc_external_address::<BchAddress>(1i64).unwrap();
-        let expected = r#"
-        {
-            "address": "qqn4as4zx0jmy02rlgv700umavxt8xtpzu5gcetg92",
-            "type": "EXTERNAL",
-            "derivedPath": "0/1"
-        }
-        "#;
-
-        assert_eq!(
-            serde_json::to_value(ex.external_address).unwrap(),
-            serde_json::Value::from_str(expected).unwrap()
-        );
     }
 }

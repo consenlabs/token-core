@@ -23,8 +23,7 @@ mod keystore;
 mod signer;
 
 pub use keystore::{
-    Account, Address, EmptyExtra, Extra, HdKeystore, Keystore, KeystoreGuard, Metadata,
-    PrivateKeystore, Source,
+    Account, Address, HdKeystore, Keystore, KeystoreGuard, Metadata, PrivateKeystore, Source,
 };
 pub use signer::{MessageSigner, TransactionSigner};
 

@@ -73,12 +73,6 @@ pub trait Address {
     fn is_valid(address: &str) -> bool;
 }
 
-/// Encoding more information to account data with variant chain, like xpub for UTXO account base chain.
-pub trait Extra: Sized + serde::Serialize + Clone {
-    fn new(coin_info: &CoinInfo, seed: &[u8]) -> Result<Self>;
-    fn from_private_key(coin_info: &CoinInfo, prv_key: &str) -> Result<Self>;
-}
-
 /// Source to remember which format it comes from
 ///
 /// NOTE: Identity related type is only for imToken App v2.x
@@ -123,19 +117,6 @@ impl Default for Metadata {
             timestamp: metadata_default_time(),
             source: Source::Mnemonic,
         }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct EmptyExtra {}
-
-impl Extra for EmptyExtra {
-    fn new(_coin_info: &CoinInfo, _seed: &[u8]) -> Result<Self> {
-        Ok(EmptyExtra {})
-    }
-    fn from_private_key(_coin_info: &CoinInfo, _prv_key: &str) -> Result<Self> {
-        Ok(EmptyExtra {})
     }
 }
 

@@ -1,4 +1,4 @@
-use super::{Account, Extra};
+use super::Account;
 use super::{Address, Metadata, Source};
 use tcx_constants::{CoinInfo, CurveType};
 use tcx_crypto::{Crypto, Pbkdf2Params};
@@ -6,7 +6,6 @@ use tcx_crypto::{Crypto, Pbkdf2Params};
 use super::Error;
 use super::Result;
 use crate::keystore::{Keystore, Store};
-use crate::EmptyExtra;
 use core::result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
