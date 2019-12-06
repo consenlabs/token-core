@@ -191,8 +191,7 @@ impl Keystore {
 
     pub fn export(&self) -> Result<String> {
         match self {
-            // todo: export private_key
-            Keystore::PrivateKey(pk_store) => Ok("".to_string()),
+            Keystore::PrivateKey(pk_store) => pk_store.private_key(),
             Keystore::Hd(hd_store) => hd_store.mnemonic(),
         }
     }

@@ -61,7 +61,7 @@ message AccountsResponse {
     repeated AccountResponse accounts = 1;
 }
 
-message HdStoreExtendedPublicKeyRequest {
+message HdStoreExtendedPublicKeyParam {
     string id = 1;
     string password = 2;
     string chainType = 3;
@@ -77,9 +77,16 @@ message KeystoreCommonAccountsParam{
 }
 
 /// Private key store
-message PrivateKeyStoreImportRequest {
+message PrivateKeyStoreImportParam {
     string privateKey = 1;
     string password = 2;
+}
+
+message PrivateKeyStoreExportParam {
+    string id = 1;
+    string password = 2;
+    string chainType = 3;
+    string network = 4;
 }
 
 /// Keystore Common

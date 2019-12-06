@@ -172,6 +172,7 @@ mod tests {
     use bitcoin_hashes::hex::ToHex;
     use bitcoin_hashes::Hash;
     use std::str::FromStr;
+    use tcx_constants::coin_info::coin_info_from_param;
 
     #[test]
     fn secp256k1_prv_key() {
@@ -278,14 +279,17 @@ mod tests {
 
     #[test]
     fn verify_wif_test() {
+        let coin_info = coin_info_from_param("BITOCIN", "MAINNET", "NONE").unwrap();
         let ret = verify_wif(
             "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
-            "BITCOIN",
+            &coin_info,
         );
         assert!(ret.is_ok());
+
+        let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
         let ret = verify_wif(
             "6v3S2CrndTdGH8QS1Fw9cWZKJWfee52KytmiB687HPbPBdobUX9",
-            "LITECOIN",
+            &coin_info,
         );
         assert!(ret.is_ok());
         let ret = verify_wif(

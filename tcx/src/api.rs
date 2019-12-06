@@ -102,7 +102,7 @@ pub struct AccountsResponse {
     pub accounts: ::std::vec::Vec<AccountResponse>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct HdStoreExtendedPublicKeyRequest {
+pub struct HdStoreExtendedPublicKeyParam {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
     #[prost(string, tag = "2")]
@@ -124,11 +124,22 @@ pub struct KeystoreCommonAccountsParam {
 }
 //// Private key store
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PrivateKeyStoreImportRequest {
+pub struct PrivateKeyStoreImportParam {
     #[prost(string, tag = "1")]
     pub private_key: std::string::String,
     #[prost(string, tag = "2")]
     pub password: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PrivateKeyStoreExportParam {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(string, tag = "2")]
+    pub password: std::string::String,
+    #[prost(string, tag = "3")]
+    pub chain_type: std::string::String,
+    #[prost(string, tag = "4")]
+    pub network: std::string::String,
 }
 //// Keystore Common
 #[derive(Clone, PartialEq, ::prost::Message)]

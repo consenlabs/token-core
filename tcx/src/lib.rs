@@ -23,9 +23,9 @@ pub mod error_handling;
 pub mod handler;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
-    encode_message, hd_store_create, hd_store_derive, hd_store_import, keystore_common_delete,
-    keystore_common_exists, keystore_common_export, keystore_common_verify, sign_tx,
-    tron_sign_message, Buffer,
+    encode_message, hd_store_create, hd_store_derive, hd_store_export, hd_store_import,
+    keystore_common_delete, keystore_common_exists, keystore_common_verify,
+    private_key_store_export, sign_tx, tron_sign_message, Buffer,
 };
 mod filemanager;
 use crate::filemanager::{
@@ -81,9 +81,11 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
         }),
         "hd_store_create" => landingpad(|| hd_store_create(&action.param.unwrap().value)),
         "hd_store_import" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
+        "hd_store_export" => landingpad(|| hd_store_export(&action.param.unwrap().value)),
         "hd_store_derive" => landingpad(|| hd_store_derive(&action.param.unwrap().value)),
-        "keystore_common_export" => {
-            landingpad(|| keystore_common_export(&action.param.unwrap().value))
+
+        "private_key_store_export" => {
+            landingpad(|| private_key_store_export(&action.param.unwrap().value))
         }
         "keystore_common_verify" => {
             landingpad(|| keystore_common_verify(&action.param.unwrap().value))

@@ -5,7 +5,7 @@ use std::path::Path;
 use bytes::BytesMut;
 use prost::Message;
 use serde_json::Value;
-use tcx_primitive::FromHex;
+use tcx_primitive::{FromHex, TypedPrivateKey};
 
 use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
@@ -22,10 +22,10 @@ use crate::api::keystore_common_export_result::ExportType;
 use crate::api::{
     AccountResponse, AccountsResponse, ExternalAddressParam, HdStoreCreateParam,
     HdStoreDeriveParam, HdStoreImportParam, KeystoreCommonAccountsParam, KeystoreCommonExistsParam,
-    KeystoreCommonExistsResult, KeystoreCommonExportResult, Response, WalletKeyParam, WalletResult,
+    KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam, Response,
+    WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
-//use crate::calc_external_address_internal;
 use crate::error_handling::Result;
 use crate::filemanager::{
     cache_keystore, find_keystore_id_by_address, flush_keystore, WALLET_FILE_DIR,
@@ -35,7 +35,7 @@ use std::collections::HashMap;
 use std::process::exit;
 use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
-use tcx_constants::CoinInfo;
+use tcx_constants::{CoinInfo, CurveType};
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::hash::str_sha256;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
@@ -255,7 +255,7 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
     encode_message(accounts_rsp)
 }
 
-pub fn keystore_common_export(data: &[u8]) -> Result<Vec<u8>> {
+pub fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let param: WalletKeyParam = WalletKeyParam::decode(data).expect("keystore_common_delete");
     let mut map = KEYSTORE_MAP.write().unwrap();
     let keystore: &mut Keystore = match map.get_mut(&param.id) {
@@ -264,31 +264,59 @@ pub fn keystore_common_export(data: &[u8]) -> Result<Vec<u8>> {
     }?;
 
     if keystore.verify_password(&param.password) {
-        //        if KeyType::PrivateKey != keystore.key_type {
-        //            let mnemonic = keystore.mnemonic(&param.password)?;
-        //            export_result = KeystoreCommonExportResult {
-        //                id: keystore.id.to_string(),
-        //                r#type: ExportType::Mnemonic as i32,
-        //                value: mnemonic,
-        //            };
-        //        } else {
-        //            // todo: check if need to unlock wallet
-        //            let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
-        //            let pk = guard.keystore().private_key()?;
-        //            export_result = KeystoreCommonExportResult {
-        //                id: guard.keystore().id.to_string(),
-        //                r#type: ExportType::PrivateKey as i32,
-        //                value: pk,
-        //            };
-        //        }
         let export_result = KeystoreCommonExportResult {
             id: keystore.id(),
-            r#type: if keystore.determinable() {
-                ExportType::Mnemonic as i32
-            } else {
-                ExportType::PrivateKey as i32
-            },
+            r#type: ExportType::Mnemonic as i32,
             value: keystore.export()?,
+        };
+
+        encode_message(export_result)
+    } else {
+        Err(format_err!("{}", "password_incorrect"))
+    }
+}
+
+pub fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
+    let param: PrivateKeyStoreExportParam =
+        PrivateKeyStoreExportParam::decode(data).expect("private_key_store_export");
+    let mut map = KEYSTORE_MAP.write().unwrap();
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    if keystore.verify_password(&param.password) {
+        let pk_hex = keystore.export()?;
+        let bytes = hex::decode(pk_hex.to_string())?;
+
+        let value = match param.chain_type.as_str() {
+            "BITCOINCASH" | "BITCOIN" => {
+                let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
+                let key = typed_pk.as_secp256k1()?;
+                let version: Vec<u8> = if &param.network == "MAINNET" {
+                    vec![0x80]
+                } else {
+                    vec![0xef]
+                };
+                Ok(key.to_ss58check_with_version(&version))
+            }
+            "LITECOIN" => {
+                let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
+                let key = typed_pk.as_secp256k1()?;
+                let version: Vec<u8> = if &param.network == "MAINNET" {
+                    vec![0xb0]
+                } else {
+                    vec![0xef]
+                };
+                Ok(key.to_ss58check_with_version(&version))
+            }
+            "TRON" => Ok(pk_hex.to_string()),
+            _ => Err(format_err!("unsupported_chain")),
+        }?;
+        let export_result = KeystoreCommonExportResult {
+            id: keystore.id(),
+            r#type: ExportType::PrivateKey as i32,
+            value,
         };
 
         encode_message(export_result)

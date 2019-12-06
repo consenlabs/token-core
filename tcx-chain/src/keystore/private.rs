@@ -136,15 +136,16 @@ impl PrivateKeystore {
         Ok(acc)
     }
 
-    pub fn private_key(&self) -> Result<TypedPrivateKey> {
+    pub fn private_key(&self) -> Result<String> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
-        let priv_key = self.private_key.as_ref().unwrap().to_vec();
+        let vec = self.private_key.as_ref().unwrap().to_vec();
+        Ok(hex::encode(&vec))
 
-        TypedPrivateKey::from_slice(CurveType::SECP256k1, &priv_key)
+        //        TypedPrivateKey::from_slice(CurveType::SECP256k1, &priv_key)
     }
 
-    pub fn decrypt_private_key(&self, password: &str) -> Result<Vec<u8>> {
+    fn decrypt_private_key(&self, password: &str) -> Result<Vec<u8>> {
         self.store.crypto.decrypt(password)
     }
 }
