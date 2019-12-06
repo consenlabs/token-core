@@ -161,35 +161,17 @@ pub struct WalletKeyParam {
 pub struct KeystoreCommonExportResult {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(enumeration = "keystore_common_export_result::ExportType", tag = "2")]
+    #[prost(enumeration = "KeyType", tag = "2")]
     pub r#type: i32,
     #[prost(string, tag = "3")]
     pub value: std::string::String,
-}
-pub mod keystore_common_export_result {
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-    #[repr(i32)]
-    pub enum ExportType {
-        Mnemonic = 0,
-        PrivateKey = 1,
-    }
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeystoreCommonExistsParam {
-    #[prost(string, tag = "1")]
-    pub id: std::string::String,
-    #[prost(enumeration = "keystore_common_exists_param::ExportType", tag = "2")]
+    #[prost(enumeration = "KeyType", tag = "1")]
     pub r#type: i32,
-    #[prost(string, tag = "3")]
+    #[prost(string, tag = "2")]
     pub value: std::string::String,
-}
-pub mod keystore_common_exists_param {
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-    #[repr(i32)]
-    pub enum ExportType {
-        Mnemonic = 0,
-        PrivateKey = 1,
-    }
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeystoreCommonExistsResult {
@@ -261,6 +243,12 @@ pub mod external_address_extra {
         #[prost(string, tag = "3")]
         pub r#type: std::string::String,
     }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum KeyType {
+    Mnemonic = 0,
+    PrivateKey = 1,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CacheDerivedKeyParam {

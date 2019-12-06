@@ -102,24 +102,19 @@ message WalletKeyParam {
 
 message KeystoreCommonExportResult {
     string id = 1;
-    enum ExportType {
-        MNEMONIC = 0;
-        PRIVATE_KEY = 1;
-    }
-    ExportType type = 2;
+    KeyType type = 2;
     string value = 3;
 }
 
 message KeystoreCommonExistsParam {
-    string id = 1;
-    enum ExportType {
-        MNEMONIC = 0;
-        PRIVATE_KEY = 1;
-    }
-    ExportType type = 2;
-    string value = 3;
+    KeyType type = 1;
+    string value = 2;
 }
 
+enum KeyType {
+    MNEMONIC = 0;
+    PRIVATE_KEY = 1;
+}
 
 message KeystoreCommonExistsResult {
     bool isExists = 1;

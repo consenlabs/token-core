@@ -18,12 +18,11 @@ use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::TrxAddress;
 
 use crate::api::hd_store_derive_param::Derivation;
-use crate::api::keystore_common_export_result::ExportType;
 use crate::api::{
     AccountResponse, AccountsResponse, ExternalAddressParam, HdStoreCreateParam,
-    HdStoreDeriveParam, HdStoreImportParam, KeystoreCommonAccountsParam, KeystoreCommonExistsParam,
-    KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
-    PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
+    HdStoreDeriveParam, HdStoreImportParam, KeyType, KeystoreCommonAccountsParam,
+    KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
+    PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
@@ -260,7 +259,7 @@ pub fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
 
     let export_result = KeystoreCommonExportResult {
         id: keystore.id(),
-        r#type: ExportType::Mnemonic as i32,
+        r#type: KeyType::Mnemonic as i32,
         value: keystore.export()?,
     };
 
@@ -373,7 +372,7 @@ pub fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
         }?;
         let export_result = KeystoreCommonExportResult {
             id: keystore.id(),
-            r#type: ExportType::PrivateKey as i32,
+            r#type: KeyType::PrivateKey as i32,
             value,
         };
 
@@ -428,7 +427,7 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
     let param: KeystoreCommonExistsParam =
         KeystoreCommonExistsParam::decode(data).expect("keystore_common_exists params");
     let key_hash: String;
-    if param.r#type == ExportType::Mnemonic as i32 {
+    if param.r#type == KeyType::Mnemonic as i32 {
         key_hash = str_sha256(&param.value);
     } else {
         let mut val = param.value.to_string();
@@ -436,7 +435,7 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
         if decoded.is_err() {
             val = private_key_without_version(&param.value)?;
         }
-        key_hash = hex_sha256(&param.value);
+        key_hash = hex_sha256(&val);
     }
     let map = &mut KEYSTORE_MAP.write().unwrap();
 
@@ -549,18 +548,20 @@ pub fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use crate::api::hd_store_derive_param::Derivation;
-    use crate::api::keystore_common_exists_param::ExportType;
     use crate::api::{
         AccountsResponse, HdStoreCreateParam, HdStoreDeriveParam, HdStoreImportParam,
-        InitTokenCoreXParam, KeystoreCommonExportResult, PrivateKeyStoreImportParam, SignParam,
-        WalletKeyParam, WalletResult,
+        InitTokenCoreXParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonExistsParam,
+        KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
+        PrivateKeyStoreImportParam, Response, SignParam, WalletKeyParam, WalletResult,
     };
     use crate::handler::{
         encode_message, hd_store_create, hd_store_derive, hd_store_export,
-        private_key_store_import, sign_tx,
+        keystore_common_accounts, keystore_common_delete, keystore_common_exists,
+        keystore_common_verify, private_key_store_export, private_key_store_import, sign_tx,
     };
     use crate::handler::{hd_store_import, init_token_core_x};
     use prost::Message;
+    use serde_json::error::ErrorCode::ExpectedObjectOrArray;
     use std::ffi::{CStr, CString};
     use std::os::raw::c_char;
     use std::panic;
@@ -654,7 +655,7 @@ mod tests {
             let result: KeystoreCommonExportResult =
                 KeystoreCommonExportResult::decode(&ret).unwrap();
 
-            assert_eq!(result.r#type, ExportType::Mnemonic as i32);
+            assert_eq!(result.r#type, KeyType::Mnemonic as i32);
             assert_eq!(result.value, MNEMONIC);
         })
     }
@@ -743,6 +744,167 @@ mod tests {
     }
 
     #[test]
+    pub fn test_private_key_store_import() {
+        run_test(|| {
+            let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+                private_key: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
+                password: PASSWORD.to_string(),
+                chain_type: "BITCOINCASH".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                overwrite: true,
+            };
+
+            let ret_bytes = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(&ret_bytes).unwrap();
+            assert_eq!(1, import_result.accounts.len());
+            assert_eq!(
+                "qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr",
+                import_result.accounts.first().unwrap().address
+            );
+        })
+    }
+
+    #[test]
+    pub fn test_private_key_store_export() {
+        run_test(|| {
+            let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+                private_key: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
+                password: PASSWORD.to_string(),
+                chain_type: "BITCOINCASH".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                overwrite: true,
+            };
+
+            let ret_bytes = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(&ret_bytes).unwrap();
+
+            let param: PrivateKeyStoreExportParam = PrivateKeyStoreExportParam {
+                id: import_result.id.to_string(),
+                password: PASSWORD.to_string(),
+                chain_type: "BITCOINCASH".to_string(),
+                network: "MAINNET".to_string(),
+            };
+            let ret_bytes = private_key_store_export(&encode_message(param).unwrap()).unwrap();
+            let export_result: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+            assert_eq!(
+                "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
+                export_result.value
+            );
+            assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+
+            let param: PrivateKeyStoreExportParam = PrivateKeyStoreExportParam {
+                id: import_result.id.to_string(),
+                password: PASSWORD.to_string(),
+                chain_type: "BITCOINCASH".to_string(),
+                network: "TESTNET".to_string(),
+            };
+            let ret_bytes = private_key_store_export(&encode_message(param).unwrap()).unwrap();
+            let export_result: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+            assert_eq!(
+                "cT4fTJyLd5RmSZFHnkGmVCzXDKuJLbyTt7cy77ghTTCagzNdPH1j",
+                export_result.value
+            );
+            assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+        })
+    }
+
+    #[test]
+    pub fn test_keystore_common_verify() {
+        run_test(|| {
+            let param: WalletKeyParam = WalletKeyParam {
+                id: WALLET_ID.to_string(),
+                password: PASSWORD.to_string(),
+            };
+
+            let ret_bytes = keystore_common_verify(&encode_message(param).unwrap()).unwrap();
+            let result: Response = Response::decode(&ret_bytes).unwrap();
+            assert!(result.is_success);
+
+            let param: WalletKeyParam = WalletKeyParam {
+                id: WALLET_ID.to_string(),
+                password: "WRONG PASSWORD".to_string(),
+            };
+
+            let ret_bytes = keystore_common_verify(&encode_message(param).unwrap()).unwrap();
+            let result: Response = Response::decode(&ret_bytes).unwrap();
+            assert!(!result.is_success);
+        })
+    }
+
+    #[test]
+    pub fn test_keystore_common_delete() {
+        run_test(|| {
+            let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+                private_key: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
+                password: PASSWORD.to_string(),
+                chain_type: "BITCOINCASH".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                overwrite: true,
+            };
+
+            let ret_bytes = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(&ret_bytes).unwrap();
+
+            let param: WalletKeyParam = WalletKeyParam {
+                id: import_result.id.to_string(),
+                password: PASSWORD.to_string(),
+            };
+
+            let ret_bytes = keystore_common_delete(&encode_message(param).unwrap()).unwrap();
+            let delete_result = Response::decode(&ret_bytes).unwrap();
+            assert!(delete_result.is_success);
+
+            let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
+                r#type: KeyType::PrivateKey as i32,
+                value: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
+            };
+
+            let ret_bytes = keystore_common_exists(&encode_message(param).unwrap()).unwrap();
+            let ret: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
+            assert!(!ret.is_exists)
+        })
+    }
+
+    #[test]
+    pub fn test_keystore_common_exists() {
+        run_test(|| {
+            let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
+                r#type: KeyType::Mnemonic as i32,
+                value: MNEMONIC.to_string(),
+            };
+
+            let ret_bytes = keystore_common_exists(&encode_message(param).unwrap()).unwrap();
+            let result: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
+            assert!(result.is_exists);
+            assert_eq!(result.id, "7719d1e3-3f67-439f-a18e-d9ae413e00e1");
+        })
+    }
+
+    #[test]
+    pub fn test_keystore_common_accounts() {
+        run_test(|| {
+            let param: KeystoreCommonAccountsParam = KeystoreCommonAccountsParam {
+                id: WALLET_ID.to_string(),
+            };
+
+            let ret_bytes = keystore_common_accounts(&encode_message(param).unwrap()).unwrap();
+            let result: AccountsResponse = AccountsResponse::decode(&ret_bytes).unwrap();
+            assert_eq!(1, result.accounts.len());
+            assert_eq!(
+                "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                result.accounts.first().unwrap().address
+            );
+        })
+    }
+
+    #[test]
     pub fn test_sign_bch_tx() {
         run_test(|| {
             let utxo = Utxo {
@@ -780,28 +942,6 @@ mod tests {
             let ret = sign_tx(&tx_bytes).unwrap();
             let output: BtcForkSignedTxOutput = BtcForkSignedTxOutput::decode(&ret).unwrap();
             assert_eq!("0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000", output.signature);
-        })
-    }
-
-    #[test]
-    pub fn test_private_key_store_import() {
-        run_test(|| {
-            let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
-                private_key: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
-                password: PASSWORD.to_string(),
-                chain_type: "BITCOINCASH".to_string(),
-                network: "MAINNET".to_string(),
-                seg_wit: "NONE".to_string(),
-                overwrite: true,
-            };
-
-            let ret_bytes = private_key_store_import(&encode_message(param).unwrap()).unwrap();
-            let import_result: WalletResult = WalletResult::decode(&ret_bytes).unwrap();
-            assert_eq!(1, import_result.accounts.len());
-            assert_eq!(
-                "qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr",
-                import_result.accounts.first().unwrap().address
-            );
         })
     }
 
