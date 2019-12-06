@@ -71,7 +71,7 @@ impl PrivateKeystore {
     pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
-        let sk = self.private_key.as_ref().unwrap().as_slice();
+        let sk = self.private_key.as_ref().unwrap();
 
         let account = Self::private_key_to_account::<A>(coin_info, sk)?;
 
@@ -94,7 +94,8 @@ impl PrivateKeystore {
 
     pub fn from_private_key(private_key: &str, password: &str, source: Source) -> PrivateKeystore {
         let key_hash = hex_sha256(private_key);
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, private_key.as_bytes());
+        let pk_bytes = hex::decode(private_key).expect("valid private_key");
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, &pk_bytes);
 
         let meta = Metadata {
             source,
