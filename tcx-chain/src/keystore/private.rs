@@ -13,7 +13,7 @@ use serde_json::Value;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::iter::Map;
-use tcx_crypto::hash::str_sha256;
+use tcx_crypto::hash::sha256;
 use tcx_primitive::{
     KeyManage, PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPrivateKey,
 };
@@ -92,9 +92,10 @@ impl PrivateKeystore {
         self.store.crypto.verify_password(password)
     }
 
-    pub fn from_private_key(private_key: &str, password: &str, source: Source) -> PrivateKeystore {
-        let key_hash = str_sha256(private_key);
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, private_key.as_bytes());
+    pub fn from_private_key(private_key: &[u8], password: &str, source: Source) -> PrivateKeystore {
+        let key_hash = sha256(private_key);
+
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, private_key);
 
         let meta = Metadata {
             source,
@@ -158,7 +159,8 @@ mod tests {
     #[test]
     pub fn from_private_key_test() {
         let keystore = PrivateKeystore::from_private_key(
-            "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+            &hex::decode("a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6")
+                .unwrap(),
             PASSWORD,
             Source::Private,
         );

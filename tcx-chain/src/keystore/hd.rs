@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_constants::{CoinInfo, CurveType};
-use tcx_crypto::hash::str_sha256;
+use tcx_crypto::hash::sha256;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
     generate_mnemonic, get_account_path, Derive, DerivePath, DeterministicType, ToHex,
@@ -156,24 +156,12 @@ impl HdKeystore {
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
         let mnemonic = generate_mnemonic();
-        let key_hash = str_sha256(&mnemonic);
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
-        HdKeystore {
-            store: Store {
-                crypto,
-                key_hash,
-                id: Uuid::new_v4().to_hyphenated().to_string(),
-                version: Self::VERSION,
-                active_accounts: vec![],
-                meta,
-            },
 
-            cache: None,
-        }
+        Self::from_mnemonic(&mnemonic, password, meta)
     }
 
     pub fn from_mnemonic(mnemonic: &str, password: &str, meta: Metadata) -> HdKeystore {
-        let key_hash = str_sha256(mnemonic);
+        let key_hash = sha256(mnemonic.as_bytes());
 
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         HdKeystore {
@@ -223,9 +211,9 @@ impl HdKeystore {
             seg_wit: coin_info.seg_wit.to_string(),
         };
 
-        self.store.active_accounts.push(account);
+        self.store.active_accounts.push(account.clone());
 
-        Ok(self.store.active_accounts.last().unwrap())
+        Ok(&self.store.active_accounts.last().unwrap())
     }
 
     pub fn account(&self, symbol: &str, address: &str) -> Option<&Account> {
@@ -306,6 +294,7 @@ mod tests {
     use crate::keystore::{metadata_default_time, EmptyExtra};
     use bitcoin_hashes::hex::ToHex;
     use serde_json::Map;
+    use std::string::ToString;
     use tcx_primitive::{PublicKey, TypedPublicKey};
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
@@ -339,31 +328,10 @@ mod tests {
     }
 
     #[test]
-    pub fn mnemonic_to_account_test() {
-        /*
-        let coin_info = CoinInfo {
-            symbol: "BITCOINCASH".to_string(),
-            derivation_path: "m/44'/0'/0'/0/0".to_string(),
-            curve: CurveType::SECP256k1,
-        };
-        let account =
-            HdKeystore::mnemonic_to_account::<MockAddress, EmptyExtra>(&coin_info, MNEMONIC)
-                .unwrap();
-        let expected = Account {
-            address: "mock_address".to_string(),
-            derivation_path: "m/44'/0'/0'/0/0".to_string(),
-            curve: CurveType::SECP256k1,
-            coin: "BITCOINCASH".to_string(),
-            extra: Value::Object(Map::new()),
-        };
-        assert_eq!(account, expected);
-        */
-    }
-
-    #[test]
     pub fn new_keystore() {
         let keystore = HdKeystore::new(PASSWORD, Metadata::default());
         let store = keystore.store;
+
         assert_eq!(store.version, 11000);
         assert_ne!(store.id, "");
         assert_eq!(store.active_accounts.len(), 0);
@@ -393,17 +361,6 @@ mod tests {
         assert_eq!(format!("{}", wrong_password_err), "password_incorrect");
     }
 
-    //
-    //    #[test]
-    //    pub fn get_pair_test() {
-    //        let keystore = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default());
-    //        let pair = keystore
-    //            .get_pair::<tcx_primitive::key::secp256k1::Pair>("m/44'/0'/0'", PASSWORD)
-    //            .unwrap();
-    //        let xpub = pair.to_string();
-    //        assert_eq!(xpub, "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
-    //    }
-
     #[test]
     pub fn derive_key_at_paths_test() {
         let mut keystore = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default());
@@ -411,23 +368,31 @@ mod tests {
             coin: "BITCOIN".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
         };
         let _ = keystore.unlock_by_password(PASSWORD);
 
-        let acc = keystore
-            .derive_coin::<MockAddress, EmptyExtra>(&coin_info)
-            .unwrap();
+        let acc = keystore.derive_coin::<MockAddress>(&coin_info).unwrap();
+
         let expected = Account {
             address: "mock_address".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
+            ext_pub_key: "03a25f12b68000000044efc688fe25a1a677765526ed6737b4bfcfb0122589caab7ca4b223ffa9bb37029d23439ecb195eb06a0d44a608960d18702fd97e19c53451f0548f568207af77".to_string(),
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOIN".to_string(),
         };
 
         assert_eq!(acc, &expected);
-        assert_eq!(keystore.account("BITCOIN", "").unwrap(), &expected);
+        assert_eq!(
+            keystore.account("BITCOIN", "mock_address").unwrap(),
+            &expected
+        );
         assert_eq!(keystore.store.active_accounts.len(), 1);
 
+        /*
         let paths = vec![
             "m/44'/0'/0'/0/0",
             "m/44'/0'/0'/0/1",
@@ -436,8 +401,8 @@ mod tests {
         ];
 
         let _ = keystore.unlock_by_password(PASSWORD);
-        /*
-        let private_keys = keystore.key_at_paths("BITCOIN", &paths).unwrap();
+
+        let private_keys = keystore.find_("BITCOIN", "mock_address", &paths).unwrap();
         let pub_keys = private_keys
             .iter()
             .map(|epk| epk.private_key().public_key().to_bytes().to_hex())
