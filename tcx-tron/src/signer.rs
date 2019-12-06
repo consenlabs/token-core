@@ -110,11 +110,11 @@ mod tests {
     use digest::Digest;
     use serde_json::Value;
     use std::convert::TryFrom;
-    use tcx_chain::KeystoreGuard;
-    use tcx_chain::{EmptyExtra, Keystore};
+    use tcx_chain::{HdKeystore, Keystore, KeystoreGuard};
     use tcx_chain::{Metadata, TransactionSigner};
     use tcx_constants::CoinInfo;
     use tcx_constants::CurveType;
+    use tcx_primitive::Secp256k1PrivateKey;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
@@ -122,7 +122,8 @@ mod tests {
 
     #[test]
     fn sign_transaction() -> core::result::Result<(), failure::Error> {
-        let json: Value = serde_json::from_str(
+        /*
+        (
             r#" {
             "visible": false,
             "txID": "dc74fc99076e7638067753c5c9c3aa61f9ce208707ef6940e4ab8a4944b5d69f",
@@ -147,9 +148,11 @@ mod tests {
         },
             "raw_data_hex": "0a0208312208b02efdc02638b61e40f083c3a7c92d5a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541a1e81654258bf14f63feb2e8d1380075d45b0dac1215410b3e84ec677b3e63c99affcadb91a6b4e086798f186470a0bfbfa7c92d"
         } "#,
-        )?;
+        */
 
-        let tx = Transaction::try_from(json)?;
+        let tx = TronTxInput {
+            raw_data: hex::decode("0a0208312208b02efdc02638b61e40f083c3a7c92d5a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541a1e81654258bf14f63feb2e8d1380075d45b0dac1215410b3e84ec677b3e63c99affcadb91a6b4e086798f186470a0bfbfa7c92d").unwrap()
+        };
 
         let meta = Metadata::default();
         let mut keystore = Keystore::Hd(HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta));
@@ -163,13 +166,13 @@ mod tests {
         };
         let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
 
-        let _ = guard.keystore_mut().derive_coin::<Address>(&coin_info);
+        let ks = guard.keystore_mut();
 
-        /*
-        let signed_tx = guard.keystore_mut().sign_transaction(&tx)?;
+        let account = ks.derive_coin::<Address>(&coin_info).unwrap().clone();
 
-        assert_eq!(signed_tx.raw["signature"][0].as_str().unwrap(), "beac4045c3ea5136b541a3d5ec2a3e5836d94f28a1371440a01258808612bc161b5417e6f5a342451303cda840f7e21bfaba1011fad5f63538cb8cc132a9768800", "signature must be correct");
-        */
+        let signed_tx: TronTxOutput = ks.sign_transaction("TRON", &account.address, &tx)?;
+
+        assert_eq!(hex::encode(signed_tx.signature), "beac4045c3ea5136b541a3d5ec2a3e5836d94f28a1371440a01258808612bc161b5417e6f5a342451303cda840f7e21bfaba1011fad5f63538cb8cc132a9768800");
 
         Ok(())
     }

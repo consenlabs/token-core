@@ -35,14 +35,26 @@ impl TraitAddress for Address {
 mod tests {
     use super::Address;
     use tcx_chain::Address as TraitAddress;
-    use tcx_primitive::{PublicKey, Secp256k1PublicKey};
+    use tcx_constants::{CoinInfo, CurveType};
+    use tcx_primitive::{PublicKey, Secp256k1PublicKey, TypedPublicKey};
 
     #[test]
     fn tron_address() {
         let bytes = hex::decode("04DAAC763B1B3492720E404C53D323BAF29391996F7DD5FA27EF0D12F7D50D694700684A32AD97FF4C09BF9CF0B9D0AC7F0091D9C6CB8BE9BB6A1106DA557285D8").unwrap();
-        let _public_key = Secp256k1PublicKey::from_slice(&bytes).unwrap();
+        let coin_info = CoinInfo {
+            coin: "".to_string(),
+            derivation_path: "".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "".to_string(),
+            seg_wit: "".to_string(),
+        };
+
         assert_eq!(
-            Address::from_public_key(&bytes, None).unwrap(),
+            Address::from_public_key(
+                &TypedPublicKey::from_slice(CurveType::SECP256k1, &bytes).unwrap(),
+                &coin_info
+            )
+            .unwrap(),
             "THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"
         );
     }
