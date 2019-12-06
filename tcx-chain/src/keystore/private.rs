@@ -42,17 +42,17 @@ impl PrivateKeystore {
         }
     }
 
-    pub fn unlock_by_password(&mut self, password: &str) -> Result<()> {
+    pub(crate) fn unlock_by_password(&mut self, password: &str) -> Result<()> {
         self.private_key = Some(self.decrypt_private_key(password)?);
 
         Ok(())
     }
 
-    pub fn lock(&mut self) {
+    pub(crate) fn lock(&mut self) {
         self.private_key = None;
     }
 
-    pub fn find_private_key(&self, address: &str) -> Result<TypedPrivateKey> {
+    pub(crate) fn find_private_key(&self, address: &str) -> Result<TypedPrivateKey> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
         let account = self
@@ -67,7 +67,7 @@ impl PrivateKeystore {
         TypedPrivateKey::from_slice(account.curve, private_key)
     }
 
-    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+    pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
         let sk = self.private_key.as_ref().unwrap();
@@ -80,14 +80,14 @@ impl PrivateKeystore {
     }
 
     /// Find an account by coin symbol
-    pub fn account(&self, symbol: &str) -> Option<&Account> {
+    pub(crate) fn account(&self, symbol: &str) -> Option<&Account> {
         self.store
             .active_accounts
             .iter()
             .find(|acc| acc.coin == symbol)
     }
 
-    pub fn verify_password(&self, password: &str) -> bool {
+    pub(crate) fn verify_password(&self, password: &str) -> bool {
         self.store.crypto.verify_password(password)
     }
 
@@ -116,7 +116,7 @@ impl PrivateKeystore {
         }
     }
 
-    pub fn private_key_to_account<A: Address>(
+    pub(crate) fn private_key_to_account<A: Address>(
         coin: &CoinInfo,
         private_key: &[u8],
     ) -> Result<Account> {
@@ -136,7 +136,7 @@ impl PrivateKeystore {
         Ok(acc)
     }
 
-    pub fn private_key(&self) -> Result<String> {
+    pub(crate) fn private_key(&self) -> Result<String> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
         let vec = self.private_key.as_ref().unwrap().to_vec();

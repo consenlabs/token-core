@@ -317,12 +317,17 @@ impl ChainSigner for Keystore {
 
 #[cfg(test)]
 mod tests {
-    use crate::Keystore;
+    use crate::keystore::Keystore::{Hd, PrivateKey};
+    use crate::{HdKeystore, Keystore, Metadata, PrivateKeystore, Source};
     use serde_json::Value;
     use std::str::FromStr;
-    use tcx_primitive::Ss58Codec;
+    use tcx_constants::coin_info::coin_info_from_param;
+    use tcx_primitive::{Ss58Codec, ToHex};
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
+    const MNEMONIC: &str =
+        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+
     static KEYSTORE_JSON: &'static str = r#"
         {
     "id": "7719d1e3-3f67-439f-a18e-d9ae413e00e1",
@@ -406,11 +411,18 @@ mod tests {
             "password_incorrect"
         );
 
+        assert!(keystore.verify_password(PASSWORD));
+        assert!(!keystore.verify_password("WRONG PASSWORD"));
         keystore.unlock_by_password(PASSWORD).unwrap();
         assert_eq!(
             "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
             keystore.export().unwrap()
         );
+
+        keystore.lock();
+        let export_ret = keystore.export();
+        assert!(export_ret.is_err());
+        assert_eq!(format!("{}", export_ret.err().unwrap()), "keystore_locked");
     }
 
     #[test]
@@ -431,18 +443,51 @@ mod tests {
             "L39VXyorp19JfsEJfbD7Tfr4pBEX93RJuVXW7E13C51ZYAhUWbYa"
         );
 
-        //todo: find new receive address
         let pk = keystore.find_private_key_by_path(
             "BITCOINCASH",
             "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
-            "m/44'/145'/0'/0/0",
+            "0/0",
         );
         assert_eq!(
             pk.unwrap()
                 .as_secp256k1()
                 .unwrap()
                 .to_ss58check_with_version(&[0x80]),
-            "L4sbT9qTd5GDKFaM9MfyZXeY8RPZWkeKUPb9ZC4StYDnwVH1qrRL"
+            "L39VXyorp19JfsEJfbD7Tfr4pBEX93RJuVXW7E13C51ZYAhUWbYa"
         );
+
+        let public_key = keystore
+            .find_deterministic_public_key(
+                "BITCOINCASH",
+                "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+            )
+            .unwrap();
+        assert_eq!(public_key.to_hex(), "031064f6a580000000251d72997d4cf931a7e6819f7da37725166100fc7dae9ca6afc3f8fd8a3d3a7f0303f2f84851514bf2f40a46b5bb9dbf4e5913fbacde1a96968cda08f9fd882caa");
+    }
+
+    #[test]
+    fn test_create() {
+        let hd_store = HdKeystore::new(PASSWORD, Metadata::default());
+        let keystore = Hd(hd_store);
+        assert_eq!(0, keystore.accounts().len());
+        assert!(keystore.determinable());
+
+        let hd_store = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default());
+        let keystore = Hd(hd_store);
+        assert_eq!(0, keystore.accounts().len());
+        assert!(keystore.determinable());
+        assert_eq!(
+            keystore.key_hash(),
+            "efbe00a55ddd4c5350e295a9533d28f93cac001bfdad8cf4275140461ea03e9e"
+        );
+
+        let pk_store = PrivateKeystore::from_private_key(
+            "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+            PASSWORD,
+            Source::Private,
+        );
+        let keystore = PrivateKey(pk_store);
+        assert_eq!(0, keystore.accounts().len());
+        assert!(!keystore.determinable());
     }
 }

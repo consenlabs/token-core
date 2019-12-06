@@ -51,7 +51,7 @@ impl HdKeystore {
         HdKeystore { store, cache: None }
     }
 
-    pub fn unlock_by_password(&mut self, password: &str) -> Result<()> {
+    pub(crate) fn unlock_by_password(&mut self, password: &str) -> Result<()> {
         let mnemonic_bytes = self.store.crypto.decrypt(password)?;
         let mnemonic_str = String::from_utf8(mnemonic_bytes)?;
 
@@ -67,23 +67,23 @@ impl HdKeystore {
         Ok(())
     }
 
-    pub fn lock(&mut self) {
+    pub(crate) fn lock(&mut self) {
         self.cache = None;
     }
 
-    pub fn mnemonic(&self) -> Result<String> {
+    pub(crate) fn mnemonic(&self) -> Result<String> {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
         Ok(cache.mnemonic.to_string())
     }
 
-    pub fn seed(&self) -> Result<&Vec<u8>> {
+    pub(crate) fn seed(&self) -> Result<&Vec<u8>> {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
         Ok(&cache.seed)
     }
 
-    pub fn find_private_key(&self, symbol: &str, address: &str) -> Result<TypedPrivateKey> {
+    pub(crate) fn find_private_key(&self, symbol: &str, address: &str) -> Result<TypedPrivateKey> {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
         let account = self
@@ -101,7 +101,7 @@ impl HdKeystore {
             .private_key())
     }
 
-    pub fn find_deterministic_public_key(
+    pub(crate) fn find_deterministic_public_key(
         &mut self,
         symbol: &str,
         address: &str,
@@ -117,7 +117,7 @@ impl HdKeystore {
         )
     }
 
-    pub fn find_private_key_by_path(
+    pub(crate) fn find_private_key_by_path(
         &mut self,
         symbol: &str,
         address: &str,
@@ -178,7 +178,7 @@ impl HdKeystore {
         }
     }
 
-    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+    pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
         let root = TypedDeterministicPrivateKey::from_seed(
@@ -216,14 +216,14 @@ impl HdKeystore {
         Ok(&self.store.active_accounts.last().unwrap())
     }
 
-    pub fn account(&self, symbol: &str, address: &str) -> Option<&Account> {
+    pub(crate) fn account(&self, symbol: &str, address: &str) -> Option<&Account> {
         self.store
             .active_accounts
             .iter()
             .find(|acc| acc.address == address && acc.coin == symbol)
     }
 
-    pub fn verify_password(&self, password: &str) -> bool {
+    pub(crate) fn verify_password(&self, password: &str) -> bool {
         self.store.crypto.verify_password(password)
     }
 }
