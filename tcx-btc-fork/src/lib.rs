@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use std::iter::IntoIterator;
 use std::str::FromStr;
 use tcx_chain::Address;
-use tcx_chain::Extra;
 
 #[macro_use]
 extern crate failure;

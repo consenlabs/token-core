@@ -5,9 +5,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use super::guard::KeystoreGuard;
+use super::Account;
 use super::Address;
 use super::Result;
-use super::{Account, Extra};
 use super::{Error, Metadata, Source};
 
 use crate::keystore::{Keystore, Store};
@@ -291,7 +291,7 @@ impl Display for HdKeystore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::keystore::{metadata_default_time, EmptyExtra};
+    use crate::keystore::metadata_default_time;
     use bitcoin_hashes::hex::ToHex;
     use serde_json::Map;
     use std::string::ToString;
