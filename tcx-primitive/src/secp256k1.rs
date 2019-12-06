@@ -162,23 +162,23 @@ pub fn verify_private_key(private_key: &str, coin: &CoinInfo) -> Result<String> 
 }
 
 pub fn private_key_without_version(private_key: &str) -> Result<String> {
-    let (pk, version) = Secp256k1PrivateKey::from_ss58check_with_version(private_key)?;
+    let (pk, _version) = Secp256k1PrivateKey::from_ss58check_with_version(private_key)?;
     Ok(hex::encode(pk.to_bytes()))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::derive::Derive;
+    
 
-    use super::{verify_private_key, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec};
+    use super::{verify_private_key, Secp256k1PrivateKey, Ss58Codec};
 
-    use crate::{DerivePath, PrivateKey, PublicKey};
-    use bip39::{Language, Mnemonic, Seed};
+    use crate::{PrivateKey, PublicKey};
+    
 
-    use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
+    
     use bitcoin_hashes::hex::ToHex;
     use bitcoin_hashes::Hash;
-    use std::str::FromStr;
+    
     use tcx_constants::coin_info::coin_info_from_param;
 
     #[test]

@@ -122,6 +122,12 @@ impl TypedPrivateKey {
         }
     }
 
+    pub fn to_bytes(&self) -> Vec<u8> {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => sk.to_bytes(),
+        }
+    }
+
     pub fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>> {
         match self {
             TypedPrivateKey::Secp256k1(sk) => sk.sign_recoverable(data),
@@ -184,9 +190,6 @@ impl TypedPublicKey {
     }
 }
 
-pub enum TypedDeterministicPrivateKey {
-    Bip32Sepc256k1(Bip32DeterministicPrivateKey),
-}
 
 pub enum TypedDeterministicPublicKey {
     Bip32Sepc256k1(Bip32DeterministicPublicKey),
@@ -201,11 +204,33 @@ impl TypedDeterministicPublicKey {
 
     pub fn public_key(&self) -> TypedPublicKey {
         match self {
-            TypedDeterministicPublicKey::Bip32Sepc256k1(esk) => {
-                TypedPublicKey::Secp256k1(esk.public_key())
+            TypedDeterministicPublicKey::Bip32Sepc256k1(epk) => {
+                TypedPublicKey::Secp256k1(epk.public_key())
             }
         }
     }
+}
+
+impl ToString for TypedDeterministicPublicKey {
+    fn to_string(&self) -> String {
+        match self {
+            TypedDeterministicPublicKey::Bip32Sepc256k1(epk) => epk.to_string()
+        }
+    }
+}
+
+impl Derive for TypedDeterministicPublicKey {
+    fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self> {
+        match self {
+            TypedDeterministicPublicKey::Bip32Sepc256k1(epk) => Ok(
+                TypedDeterministicPublicKey::Bip32Sepc256k1(epk.derive(path)?),
+            ),
+        }
+    }
+}
+
+pub enum TypedDeterministicPrivateKey {
+    Bip32Sepc256k1(Bip32DeterministicPrivateKey),
 }
 
 impl TypedDeterministicPrivateKey {
@@ -227,8 +252,8 @@ impl TypedDeterministicPrivateKey {
 
     pub fn private_key(&self) -> TypedPrivateKey {
         match self {
-            TypedDeterministicPrivateKey::Bip32Sepc256k1(esk) => {
-                TypedPrivateKey::Secp256k1(esk.private_key())
+            TypedDeterministicPrivateKey::Bip32Sepc256k1(dsk) => {
+                TypedPrivateKey::Secp256k1(dsk.private_key())
             }
         }
     }
@@ -238,6 +263,14 @@ impl TypedDeterministicPrivateKey {
             TypedDeterministicPrivateKey::Bip32Sepc256k1(sk) => {
                 TypedDeterministicPublicKey::Bip32Sepc256k1(sk.deterministic_public_key())
             }
+        }
+    }
+}
+
+impl ToString for TypedDeterministicPrivateKey {
+    fn to_string(&self) -> String {
+        match self {
+            TypedDeterministicPrivateKey::Bip32Sepc256k1(sk) => sk.to_string()
         }
     }
 }
@@ -268,51 +301,72 @@ impl ToHex for TypedDeterministicPublicKey {
 impl Derive for TypedDeterministicPrivateKey {
     fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self> {
         match self {
-            TypedDeterministicPrivateKey::Bip32Sepc256k1(esk) => Ok(
-                TypedDeterministicPrivateKey::Bip32Sepc256k1(esk.derive(path)?),
+            TypedDeterministicPrivateKey::Bip32Sepc256k1(dsk) => Ok(
+                TypedDeterministicPrivateKey::Bip32Sepc256k1(dsk.derive(path)?),
             ),
         }
     }
 }
 
-impl Derive for TypedDeterministicPublicKey {
-    fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self> {
-        match self {
-            TypedDeterministicPublicKey::Bip32Sepc256k1(epk) => Ok(
-                TypedDeterministicPublicKey::Bip32Sepc256k1(epk.derive(path)?),
-            ),
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
-    use super::TypedPrivateKey;
-    use crate::{DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey};
+    use super::{TypedPublicKey, TypedPrivateKey, PublicKey, PrivateKey, DeterministicType, TypedDeterministicPrivateKey, TypedDeterministicPublicKey, DeterministicPublicKey, DeterministicPrivateKey};
+    use crate::{DerivePath, Derive};
+    use std::str::FromStr;
+    use tcx_constants::CurveType;
+    use bip39::{Language, Mnemonic, Seed};
 
-    fn default_private_key() -> String {
-        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc".to_owned()
+    fn default_seed() -> Seed {
+        let mn = Mnemonic::from_phrase(
+            "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            Language::English,
+        )
+            .unwrap();
+        Seed::new(&mn, "")
+    }
+
+    fn default_private_key() -> Vec<u8>{
+        hex::decode("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc").unwrap()
     }
 
     #[test]
     fn typed_private_key() {
-        /*
-        let tk = TypedPrivateKey::from_slice(CurveType::Secp256k1,&hex::decode(&default_private_key()).unwrap()).unwrap();
+        let sk = TypedPrivateKey::from_slice(CurveType::SECP256k1,&default_private_key()).unwrap();
 
-        assert_eq!(tk.to_bytes().to_hex(), default_private_key());
-        */
+        assert_eq!(sk.to_bytes(), default_private_key());
+        assert_eq!(sk.as_secp256k1().unwrap().to_bytes(), default_private_key());
+        assert_eq!(sk.curve_type(), CurveType::SECP256k1);
     }
 
     #[test]
-    fn typed_deterministic_private_key() {}
+    fn typed_deterministic_private_key() {
+        let root = TypedDeterministicPrivateKey::from_seed(
+            DeterministicType::BIP32, CurveType::SECP256k1, &default_seed().as_bytes()).unwrap();
+
+        let dpk = root
+            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
+            .unwrap()
+            .deterministic_public_key();
+
+        assert_eq!(dpk.to_string(), "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
+
+        let dsk = root
+            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
+            .unwrap();
+
+        assert_eq!(dsk.to_string(), "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
+    }
 
     #[test]
     fn typed_public_key() {
-        /*
-        let tk = TypedPrivateKey::from_slice(CurveType::Secp256k1, &hex::decode(&default_private_key()).unwrap()).unwrap();
-        */
+        let sk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &default_private_key()).unwrap();
+
+        let pk = sk.public_key();
+
+        assert_eq!(hex::encode(pk.to_bytes()), "02b95c249d84f417e3e395a127425428b540671cc15881eb828c17b722a53fc599");
+        assert_eq!(hex::encode(pk.as_secp256k1().unwrap().to_bytes()), "02b95c249d84f417e3e395a127425428b540671cc15881eb828c17b722a53fc599");
+        assert_eq!(pk.curve_type(), CurveType::SECP256k1);
     }
 
-    #[test]
-    fn typed_deterministic_public_key() {}
 }
