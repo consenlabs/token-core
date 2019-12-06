@@ -552,10 +552,12 @@ mod tests {
     use crate::api::keystore_common_exists_param::ExportType;
     use crate::api::{
         AccountsResponse, HdStoreCreateParam, HdStoreDeriveParam, HdStoreImportParam,
-        InitTokenCoreXParam, KeystoreCommonExportResult, SignParam, WalletKeyParam, WalletResult,
+        InitTokenCoreXParam, KeystoreCommonExportResult, PrivateKeyStoreImportParam, SignParam,
+        WalletKeyParam, WalletResult,
     };
     use crate::handler::{
-        encode_message, hd_store_create, hd_store_derive, hd_store_export, sign_tx,
+        encode_message, hd_store_create, hd_store_derive, hd_store_export,
+        private_key_store_import, sign_tx,
     };
     use crate::handler::{hd_store_import, init_token_core_x};
     use prost::Message;
@@ -778,6 +780,28 @@ mod tests {
             let ret = sign_tx(&tx_bytes).unwrap();
             let output: BtcForkSignedTxOutput = BtcForkSignedTxOutput::decode(&ret).unwrap();
             assert_eq!("0100000001e2986a004630cb451921d9e7b4454a6671e50ddd43ea431c34f6011d9ca4c309000000006b483045022100b3d91f406cdc33eb4d8f2b56491e6c87da2372eb83f1f384fc3f02f81a5b21b50220324dd7ecdc214721c542db252078473f9e7172bf592fa55332621c3e348be45041210251492dfb299f21e426307180b577f927696b6df0b61883215f88eb9685d3d449ffffffff020e6d0100000000001976a9142af4c2c085cd9da90c13cd64c6ae746fa139956e88ac22020000000000001976a9148835a675efb0db4fd00e9eb77aff38a6d5bd767c88ac00000000", output.signature);
+        })
+    }
+
+    #[test]
+    pub fn test_private_key_store_import() {
+        run_test(|| {
+            let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+                private_key: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
+                password: PASSWORD.to_string(),
+                chain_type: "BITCOINCASH".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                overwrite: true,
+            };
+
+            let ret_bytes = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(&ret_bytes).unwrap();
+            assert_eq!(1, import_result.accounts.len());
+            assert_eq!(
+                "qrnvl24e5kd6rpls53wmpvtfcgdmfrcfkv8fhnq9kr",
+                import_result.accounts.first().unwrap().address
+            );
         })
     }
 
