@@ -1,4 +1,4 @@
-use crate::hash::str_sha256;
+use crate::hash::hex_sha256;
 use crate::numberic_util;
 use crate::Error;
 use crate::Result;
@@ -138,7 +138,7 @@ impl CacheDerivedKey {
     }
 
     fn hash(key: &str) -> String {
-        str_sha256(key)
+        hex_sha256(key)
     }
 
     pub fn get_derived_key(&self, key: &str) -> Result<Vec<u8>> {

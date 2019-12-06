@@ -5,7 +5,7 @@ use std::path::Path;
 use bytes::BytesMut;
 use prost::Message;
 use serde_json::Value;
-use tcx_primitive::{verify_private_key, FromHex, TypedPrivateKey};
+use tcx_primitive::{private_key_without_version, verify_private_key, FromHex, TypedPrivateKey};
 
 use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
@@ -37,7 +37,7 @@ use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::{CoinInfo, CurveType};
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
-use tcx_crypto::hash::str_sha256;
+use tcx_crypto::hash::{hex_sha256, str_sha256};
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
@@ -227,9 +227,6 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
     }?;
 
     keystore.unlock_by_password(&param.password)?;
-    //    keystore.derive_coin()
-    //    let seed = guard.keystore().decrypt_seed(&param.password)?;
-    //    let mut accounts: Vec<Account> = vec![];
     let mut account_responses: Vec<AccountResponse> = vec![];
 
     for derivation in param.derivations {
@@ -242,11 +239,7 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
             extended_xpub_key: enc_xpub,
         };
         account_responses.push(account_rsp);
-
-        //        accounts.push(account);
     }
-
-    //    guard.keystore_mut().active_accounts.append(&mut accounts);
 
     let accounts_rsp = AccountsResponse {
         accounts: account_responses,
@@ -263,27 +256,20 @@ pub fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    if keystore.verify_password(&param.password) {
-        let export_result = KeystoreCommonExportResult {
-            id: keystore.id(),
-            r#type: ExportType::Mnemonic as i32,
-            value: keystore.export()?,
-        };
+    keystore.unlock_by_password(&param.password)?;
 
-        encode_message(export_result)
-    } else {
-        Err(format_err!("{}", "password_incorrect"))
-    }
+    let export_result = KeystoreCommonExportResult {
+        id: keystore.id(),
+        r#type: ExportType::Mnemonic as i32,
+        value: keystore.export()?,
+    };
+
+    encode_message(export_result)
 }
 
 pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let param: PrivateKeyStoreImportParam =
         PrivateKeyStoreImportParam::decode(data).expect("private_key_store_import");
-    //    let mut map = KEYSTORE_MAP.write().unwrap();
-    //    let keystore: &mut Keystore = match map.get_mut(&param.id) {
-    //        Some(keystore) => Ok(keystore),
-    //        _ => Err(format_err!("{}", "wallet_not_found")),
-    //    }?;
     let source = if param.chain_type.as_str() == "TRON" {
         Source::Private
     } else {
@@ -441,7 +427,17 @@ pub fn keystore_common_delete(data: &[u8]) -> Result<Vec<u8>> {
 pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
     let param: KeystoreCommonExistsParam =
         KeystoreCommonExistsParam::decode(data).expect("keystore_common_exists params");
-    let key_hash = str_sha256(&param.value);
+    let key_hash: String;
+    if param.r#type == ExportType::Mnemonic as i32 {
+        key_hash = str_sha256(&param.value);
+    } else {
+        let mut val = param.value.to_string();
+        let decoded = hex::decode(param.value.to_string());
+        if decoded.is_err() {
+            val = private_key_without_version(&param.value)?;
+        }
+        key_hash = hex_sha256(&param.value);
+    }
     let map = &mut KEYSTORE_MAP.write().unwrap();
 
     // todo: check the key_type
@@ -552,8 +548,15 @@ pub fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::api::{HdStoreImportParam, InitTokenCoreXParam, SignParam, WalletResult};
-    use crate::handler::{encode_message, sign_tx};
+    use crate::api::hd_store_derive_param::Derivation;
+    use crate::api::keystore_common_exists_param::ExportType;
+    use crate::api::{
+        AccountsResponse, HdStoreCreateParam, HdStoreDeriveParam, HdStoreImportParam,
+        InitTokenCoreXParam, KeystoreCommonExportResult, SignParam, WalletKeyParam, WalletResult,
+    };
+    use crate::handler::{
+        encode_message, hd_store_create, hd_store_derive, hd_store_export, sign_tx,
+    };
     use crate::handler::{hd_store_import, init_token_core_x};
     use prost::Message;
     use std::ffi::{CStr, CString};
@@ -563,9 +566,13 @@ mod tests {
     use tcx_btc_fork::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
     use tcx_tron::transaction::{TronTxInput, TronTxOutput};
 
+    static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+
+    static OTHER_MNEMONIC: &'static str =
+        "calm release clay imitate top extend close draw quiz refuse shuffle injury";
 
     fn setup() {
         let param = InitTokenCoreXParam {
@@ -590,6 +597,22 @@ mod tests {
     }
 
     #[test]
+    pub fn test_hd_store_create() {
+        run_test(|| {
+            let param = HdStoreCreateParam {
+                password: PASSWORD.to_string(),
+                password_hint: "".to_string(),
+                name: "aaa".to_string(),
+            };
+            let ret = hd_store_create(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(&ret).unwrap();
+
+            assert!(import_result.accounts.is_empty());
+            assert_eq!(import_result.name, "aaa");
+        })
+    }
+
+    #[test]
     pub fn test_hd_store_import() {
         run_test(|| {
             let param = HdStoreImportParam {
@@ -607,11 +630,113 @@ mod tests {
             let ret = hd_store_import(&encode_message(param).unwrap()).unwrap();
             let import_result: WalletResult = WalletResult::decode(&ret).unwrap();
 
-            assert_eq!(import_result.chain_type, "BITCOINCASH");
             assert_eq!(
-                import_result.address,
+                import_result.accounts.first().unwrap().chain_type,
+                "BITCOINCASH"
+            );
+            assert_eq!(
+                import_result.accounts.first().unwrap().address,
                 "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r"
             );
+        })
+    }
+
+    #[test]
+    pub fn test_hd_store_export() {
+        run_test(|| {
+            let param = WalletKeyParam {
+                id: WALLET_ID.to_string(),
+                password: PASSWORD.to_string(),
+            };
+            let ret = hd_store_export(&encode_message(param).unwrap()).unwrap();
+            let result: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(&ret).unwrap();
+
+            assert_eq!(result.r#type, ExportType::Mnemonic as i32);
+            assert_eq!(result.value, MNEMONIC);
+        })
+    }
+
+    #[test]
+    pub fn test_hd_store_derive() {
+        run_test(|| {
+            let param = HdStoreImportParam {
+                chain_type: "BITCOINCASH".to_string(),
+                mnemonic: OTHER_MNEMONIC.to_string(),
+                password: PASSWORD.to_string(),
+                path: "m/44'/145'/0'/0/0".to_string(),
+                source: "MNEMONIC".to_string(),
+                name: "test-wallet".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                password_hint: "imtoken".to_string(),
+                overwrite: true,
+            };
+            let ret = hd_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(&ret).unwrap();
+
+            let derivations = vec![
+                Derivation {
+                    chain_type: "LITECOIN".to_string(),
+                    path: "m/44'/2'/0'/0/0".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "LITECOIN".to_string(),
+                    path: "m/49'/2'/0'/0/0".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "P2WPKH".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "LITECOIN".to_string(),
+                    path: "m/49'/1'/0'/0/0".to_string(),
+                    network: "TESTNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "TRON".to_string(),
+                    path: "m/44'/195'/0'/0/0".to_string(),
+                    network: "".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                },
+            ];
+            let param = HdStoreDeriveParam {
+                id: import_result.id.to_string(),
+                password: PASSWORD.to_string(),
+                derivations,
+            };
+            let derived_accounts_bytes = hd_store_derive(&encode_message(param).unwrap()).unwrap();
+            let derived_accounts: AccountsResponse =
+                AccountsResponse::decode(derived_accounts_bytes).unwrap();
+            assert_eq!(4, derived_accounts.accounts.len());
+            assert_eq!(
+                "LQ3JqCohgLQ3x1CJXYERnJTy1ySaqr1E32",
+                derived_accounts.accounts[0].address
+            );
+            assert_eq!("22Ikq6RusCCX7VLc7aFspGVufwTEutbYJuv8i4GLBbLELOJMeFGuJrtif9sFAsZdaljVDYwK14n6cU69629UwZjYrR5el2pp5nZ4KtXAZmh/jDjcv+sJx7CmP17fyo00OmImzJQthHpeV0OkIPBByg==", derived_accounts.accounts[0].extended_xpub_key);
+
+            assert_eq!(
+                "MQUu6P7wsLQZfVZMuFWB7UXiheuVTM7RYF",
+                derived_accounts.accounts[1].address
+            );
+            assert_eq!("w2wK29bO0ymidd1gX/7Z4dhgj6J+Kmc1HS5yr1gLKvLrnyTv93gi3cVq741vI8k9CKUaWhwnS6pI2+jUOyQzQ8SrjKhQKYwLCkvsm4SsjLdVTlhv2skJjfUZo4SnR3noc2KbxsP+KHd6MEoZi4qPkw==", derived_accounts.accounts[1].extended_xpub_key);
+
+            assert_eq!(
+                "mvdDMnRsqjqzvCyYyRXpvscmnU1FxodhkE",
+                derived_accounts.accounts[2].address
+            );
+            assert_eq!("dzjilwagK3bhSKJ5Mnq/iwdqFT3oKGcK0Oz93i+c36PazeewVrgwaDmZft+xT4b6WfVdIoXeFVFSsM1Opf1l9YbToiA8mGHEVzS2IuBxbwJNnENamOSy7D+GEOl/Adb8icsQ/nCK3HAC8Lra28/8ng==", derived_accounts.accounts[2].extended_xpub_key);
+
+            assert_eq!(
+                "TLZnqkrSNLUWNrZMug8u9b6pJ3XcTGbzDV",
+                derived_accounts.accounts[3].address
+            );
+            assert_eq!("Xcz+x0dDNHe0HOh9MiLkQcKYQ1jpwOPrWw4w1KQmzeXzbV+YUAjaMj1qsEgPDApIhcpprYIHXk3k+UIZadAbXGJkIg8loygq1hp3psL4j9LjYVI3ad/aaFbSd27OStZCn35Z8+RpAxFRVOIFtH3s1w==", derived_accounts.accounts[3].extended_xpub_key);
         })
     }
 
@@ -640,9 +765,10 @@ mod tests {
                 seg_wit: "NONE".to_owned(),
             };
             let tx = SignParam {
-                id: "9c6cbc21-1c43-4c8b-bb7a-5e538f908819".to_string(),
-                password: "Insecure Password".to_string(),
+                id: "7719d1e3-3f67-439f-a18e-d9ae413e00e1".to_string(),
+                password: PASSWORD.to_string(),
                 chain_type: "BITCOINCASH".to_string(),
+                address: "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r".to_string(),
                 input: Some(::prost_types::Any {
                     type_url: "imtoken".to_string(),
                     value: encode_message(input).unwrap(),
@@ -665,8 +791,8 @@ mod tests {
                 path: "m/44'/195'/0'/0/0".to_string(),
                 source: "MNEMONIC".to_string(),
                 name: "test-wallet".to_string(),
-                network: "MAINNET".to_string(),
-                seg_wit: "NONE".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
                 password_hint: "imtoken".to_string(),
                 overwrite: true,
             };
@@ -679,6 +805,7 @@ mod tests {
                 id: import_result.id.to_string(),
                 password: PASSWORD.to_string(),
                 chain_type: "TRON".to_string(),
+                address: import_result.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
                     type_url: "imtoken".to_string(),
                     value: encode_message(input).unwrap(),

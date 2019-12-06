@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_constants::{CoinInfo, CurveType};
-use tcx_crypto::hash::str_sha256;
+use tcx_crypto::hash::{hex_sha256, str_sha256};
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
     generate_mnemonic, get_account_path, Derive, DerivePath, DeterministicType, ToHex,
