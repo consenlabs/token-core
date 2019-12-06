@@ -10,9 +10,9 @@ use serde_json::Value;
 
 use tcx_bch::BchAddress;
 use tcx_btc_fork::{address::BtcForkAddress, ExternalAddress};
-use tcx_chain::keystore_guard::KeystoreGuard;
-use tcx_chain::signer::TransactionSigner;
+use tcx_chain::TransactionSigner;
 use tcx_chain::{HdKeystore, MessageSigner, Metadata, Source};
+use tcx_chain::{Keystore, KeystoreGuard};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_primitive::verify_wif;
 use tcx_tron::TrxAddress;
@@ -161,7 +161,8 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
         if version != i64::from(HdKeystore::VERSION) {
             continue;
         }
-        let keystore: HdKeystore = serde_json::from_str(&contents)?;
+        //        let keystore: HdKeystore = serde_json::from_str(&contents)?;
+        let keystore = Keystore::from_json(&contents)?;
         cache_keystore(keystore);
     }
     Ok(())

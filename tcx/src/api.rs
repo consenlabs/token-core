@@ -188,7 +188,9 @@ pub struct SignParam {
     pub password: std::string::String,
     #[prost(string, tag = "3")]
     pub chain_type: std::string::String,
-    #[prost(message, optional, tag = "4")]
+    #[prost(string, tag = "4")]
+    pub address: std::string::String,
+    #[prost(message, optional, tag = "5")]
     pub input: ::std::option::Option<::prost_types::Any>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]

@@ -145,6 +145,36 @@ pub enum Keystore {
 }
 
 impl Keystore {
+    pub fn id(&self) -> String {
+        self.store().id.to_string()
+    }
+
+    pub fn set_id(&mut self, id: &str) {
+        self.store_mut().id = id.to_string()
+    }
+
+    fn store(&self) -> &Store {
+        match self {
+            Keystore::PrivateKey(ks) => ks.store(),
+            Keystore::Hd(ks) => ks.store(),
+        }
+    }
+
+    fn store_mut(&mut self) -> &mut Store {
+        match self {
+            Keystore::PrivateKey(ks) => ks.store_mut(),
+            Keystore::Hd(ks) => ks.store_mut(),
+        }
+    }
+
+    pub fn meta(&self) -> Metadata {
+        self.store().meta.clone()
+    }
+
+    pub fn key_hash(&self) -> String {
+        self.store().key_hash.to_string()
+    }
+
     pub fn unlock_by_password(&mut self, password: &str) -> Result<()> {
         match self {
             Keystore::PrivateKey(ks) => ks.unlock_by_password(password),
@@ -159,6 +189,14 @@ impl Keystore {
         }
     }
 
+    pub fn export(&self) -> Result<String> {
+        match self {
+            // todo: export private_key
+            Keystore::PrivateKey(pk_store) => Ok("".to_string()),
+            Keystore::Hd(hd_store) => hd_store.mnemonic(),
+        }
+    }
+
     pub fn lock(&mut self) {
         match self {
             Keystore::PrivateKey(ks) => ks.lock(),
@@ -166,10 +204,10 @@ impl Keystore {
         }
     }
 
-    pub fn derive_coin<A: Address, E: Extra>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
         match self {
-            Keystore::PrivateKey(ks) => ks.derive_coin::<A, E>(coin_info),
-            Keystore::Hd(ks) => ks.derive_coin::<A, E>(coin_info),
+            Keystore::PrivateKey(ks) => ks.derive_coin::<A>(coin_info),
+            Keystore::Hd(ks) => ks.derive_coin::<A>(coin_info),
         }
     }
 
@@ -216,6 +254,13 @@ impl Keystore {
         match self {
             Keystore::PrivateKey(ks) => ks.account(address),
             Keystore::Hd(ks) => ks.account(symbol, address),
+        }
+    }
+
+    pub fn accounts(&self) -> &[Account] {
+        match self {
+            Keystore::PrivateKey(ks) => ks.store().active_accounts.as_slice(),
+            Keystore::Hd(ks) => ks.store().active_accounts.as_slice(),
         }
     }
 

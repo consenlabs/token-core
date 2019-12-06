@@ -32,6 +32,10 @@ impl PrivateKeystore {
         &self.store
     }
 
+    pub(crate) fn store_mut(&mut self) -> &mut Store {
+        &mut self.store
+    }
+
     pub(crate) fn from_store(store: Store) -> Self {
         PrivateKeystore {
             store,
@@ -64,12 +68,12 @@ impl PrivateKeystore {
         TypedPrivateKey::from_slice(account.curve, private_key)
     }
 
-    pub fn derive_coin<A: Address, E: Extra>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
         let sk = self.private_key.as_ref().unwrap().as_slice();
 
-        let account = Self::private_key_to_account::<A, E>(coin_info, sk)?;
+        let account = Self::private_key_to_account::<A>(coin_info, sk)?;
 
         self.store.active_accounts.push(account);
 
@@ -112,14 +116,12 @@ impl PrivateKeystore {
         }
     }
 
-    pub fn private_key_to_account<A: Address, E: Extra>(
+    pub fn private_key_to_account<A: Address>(
         coin: &CoinInfo,
         private_key: &[u8],
     ) -> Result<Account> {
         let tsk = TypedPrivateKey::from_slice(coin.curve, private_key)?;
         let addr = A::from_public_key(&tsk.public_key(), coin)?;
-
-        let extra = EmptyExtra {};
 
         let acc = Account {
             address: addr,

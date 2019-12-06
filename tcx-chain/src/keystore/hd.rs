@@ -43,6 +43,10 @@ impl HdKeystore {
         &self.store
     }
 
+    pub(crate) fn store_mut(&mut self) -> &mut Store {
+        &mut self.store
+    }
+
     pub(crate) fn from_store(store: Store) -> Self {
         HdKeystore { store, cache: None }
     }
@@ -67,10 +71,10 @@ impl HdKeystore {
         self.cache = None;
     }
 
-    pub fn mnemonic(&self) -> Result<&str> {
+    pub fn mnemonic(&self) -> Result<String> {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
-        Ok(&cache.mnemonic)
+        Ok(cache.mnemonic.to_string())
     }
 
     pub fn seed(&self) -> Result<&Vec<u8>> {
@@ -186,7 +190,7 @@ impl HdKeystore {
         }
     }
 
-    pub fn derive_coin<A: Address, E: Extra>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
         let mut cache = self.cache.as_mut().ok_or(Error::KeystoreLocked)?;
 
         let root = TypedDeterministicPrivateKey::from_seed(

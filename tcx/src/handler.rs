@@ -12,9 +12,8 @@ use tcx_btc_fork::{
     address::BtcForkAddress, BtcForkSegWitTransaction, BtcForkSignedTxOutput, BtcForkTransaction,
     BtcForkTxInput,
 };
-use tcx_chain::keystore::KeyType;
-use tcx_chain::keystore_guard::KeystoreGuard;
 use tcx_chain::{Account, HdKeystore, Metadata, Source};
+use tcx_chain::{Keystore, KeystoreGuard};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::TrxAddress;
 
@@ -33,7 +32,8 @@ use crate::filemanager::{
 };
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 use std::collections::HashMap;
-use tcx_chain::signer::{MessageSigner, TransactionSigner};
+use std::process::exit;
+use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CoinInfo;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
@@ -53,7 +53,10 @@ pub fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
     Ok(buf.to_vec())
 }
 
-fn derive_account(seed: &[u8], derivation: &Derivation) -> Result<Account> {
+fn derive_account<'a, 'b>(
+    keystore: &'a mut Keystore,
+    derivation: &'b Derivation,
+) -> Result<&'a Account> {
     let mut coin_info = coin_info_from_param(
         &derivation.chain_type,
         &derivation.network,
@@ -61,9 +64,9 @@ fn derive_account(seed: &[u8], derivation: &Derivation) -> Result<Account> {
     )?;
     coin_info.derivation_path = derivation.path.to_owned();
     match derivation.chain_type.as_str() {
-        "BITCOINCASH" => HdKeystore::derive_account_from_coin::<BchAddress>(&coin_info, seed),
-        "LITECOIN" => HdKeystore::derive_account_from_coin::<BtcForkAddress>(&coin_info, seed),
-        "TRON" => HdKeystore::derive_account_from_coin::<TrxAddress>(&coin_info, seed),
+        "BITCOINCASH" => keystore.derive_coin::<BchAddress>(&coin_info),
+        "LITECOIN" => keystore.derive_coin::<BtcForkAddress>(&coin_info),
+        "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -103,7 +106,8 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
         if version != i64::from(HdKeystore::VERSION) {
             continue;
         }
-        let keystore: HdKeystore = serde_json::from_str(&contents)?;
+        //        let keystore: HdKeystore = serde_json::from_str(&contents)?;
+        let keystore = Keystore::from_json(&contents)?;
         cache_keystore(keystore);
     }
     Ok(())
@@ -121,17 +125,19 @@ pub fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
     //    let meta: Metadata = serde_json::from_value(v.clone())?;
     let ks = HdKeystore::new(&param.password, meta);
 
-    flush_keystore(&ks)?;
+    let keystore = Keystore::Hd(ks);
+    flush_keystore(&keystore)?;
 
+    let meta = keystore.meta();
     let wallet = WalletResult {
-        id: ks.id.to_owned(),
-        name: ks.meta.name.to_owned(),
+        id: keystore.id(),
+        name: meta.name.to_owned(),
         source: "MNEMONIC".to_owned(),
         accounts: vec![],
-        created_at: ks.meta.timestamp.clone(),
+        created_at: meta.timestamp.clone(),
     };
     let ret = encode_message(wallet)?;
-    cache_keystore(ks.clone());
+    cache_keystore(keystore);
     Ok(ret)
 }
 
@@ -146,40 +152,31 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     //    let meta: Metadata = serde_json::from_value(v.clone())?;
     let mut ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta);
+    let mut keystore = Keystore::Hd(ks);
+    keystore.unlock_by_password(&param.password)?;
 
-    {
-        let mut guard_mut = KeystoreGuard::unlock_by_password(&mut ks, &param.password)?;
+    let mut coin_info = coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
+    coin_info.derivation_path = param.path.to_string();
+    let account = match param.chain_type.as_str() {
+        "BITCOINCASH" => keystore.derive_coin::<BchAddress>(&coin_info),
+        "LITECOIN" => keystore.derive_coin::<BtcForkAddress>(&coin_info),
+        "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
+        _ => Err(format_err!("{}", "chain_type_not_support")),
+    }?;
 
-        let mut coin_info =
-            coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
-        coin_info.derivation_path = param.path.to_string();
-        let account = match param.chain_type.as_str() {
-            "BITCOINCASH" => guard_mut
-                .keystore_mut()
-                .derive_coin::<BchAddress>(&coin_info),
-            "LITECOIN" => guard_mut
-                .keystore_mut()
-                .derive_coin::<BtcForkAddress>(&coin_info),
-            "TRON" => guard_mut
-                .keystore_mut()
-                .derive_coin::<TrxAddress>(&coin_info),
-            _ => Err(format_err!("{}", "chain_type_not_support")),
-        }?;
-
-        let exist_kid_opt = find_keystore_id_by_address(&account.address);
-        if let Some(exist_kid) = exist_kid_opt {
-            if !param.overwrite {
-                return Err(format_err!("{}", "wallet_exists"));
-            } else {
-                guard_mut.keystore_mut().id = exist_kid;
-            }
+    let exist_kid_opt = find_keystore_id_by_address(&account.address);
+    if let Some(exist_kid) = exist_kid_opt {
+        if !param.overwrite {
+            return Err(format_err!("{}", "wallet_exists"));
+        } else {
+            keystore.set_id(&exist_kid)
         }
     }
 
-    flush_keystore(&ks)?;
+    flush_keystore(&keystore)?;
 
     let mut accounts: Vec<AccountResponse> = vec![];
-    for account in &ks.active_accounts {
+    for account in keystore.accounts() {
         let enc_xpub = enc_xpub(&account.ext_pub_key.to_string(), &account.network)?;
         let acc_rsp = AccountResponse {
             chain_type: account.coin.to_string(),
@@ -190,15 +187,16 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
         accounts.push(acc_rsp);
     }
 
+    let meta = keystore.meta();
     let wallet = WalletResult {
-        id: ks.id.to_owned(),
-        name: ks.meta.name.to_owned(),
+        id: keystore.id(),
+        name: meta.name.to_owned(),
         source: "MNEMONIC".to_owned(),
         accounts,
-        created_at: ks.meta.timestamp.clone(),
+        created_at: meta.timestamp.clone(),
     };
     let ret = encode_message(wallet)?;
-    cache_keystore(ks.clone());
+    cache_keystore(keystore);
     Ok(ret)
 }
 
@@ -223,18 +221,19 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
     let param: HdStoreDeriveParam =
         HdStoreDeriveParam::decode(data).expect("hd_store_derive_param");
     let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore = match map.get_mut(&param.id) {
+    let mut keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
-    let seed = guard.keystore().decrypt_seed(&param.password)?;
-    let mut accounts: Vec<Account> = vec![];
+    keystore.unlock_by_password(&param.password)?;
+    //    keystore.derive_coin()
+    //    let seed = guard.keystore().decrypt_seed(&param.password)?;
+    //    let mut accounts: Vec<Account> = vec![];
     let mut account_responses: Vec<AccountResponse> = vec![];
 
     for derivation in param.derivations {
-        let account = derive_account(&seed, &derivation)?;
+        let account = derive_account(keystore, &derivation)?;
         let enc_xpub = enc_xpub(&account.ext_pub_key.to_string(), &account.network)?;
         let account_rsp = AccountResponse {
             chain_type: derivation.chain_type.to_owned(),
@@ -244,10 +243,10 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
         };
         account_responses.push(account_rsp);
 
-        accounts.push(account);
+        //        accounts.push(account);
     }
 
-    guard.keystore_mut().active_accounts.append(&mut accounts);
+    //    guard.keystore_mut().active_accounts.append(&mut accounts);
 
     let accounts_rsp = AccountsResponse {
         accounts: account_responses,
@@ -259,30 +258,38 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
 pub fn keystore_common_export(data: &[u8]) -> Result<Vec<u8>> {
     let param: WalletKeyParam = WalletKeyParam::decode(data).expect("keystore_common_delete");
     let mut map = KEYSTORE_MAP.write().unwrap();
-    let mut keystore = match map.get_mut(&param.id) {
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
     if keystore.verify_password(&param.password) {
-        let export_result: KeystoreCommonExportResult;
-        if KeyType::PrivateKey != keystore.key_type {
-            let mnemonic = keystore.mnemonic(&param.password)?;
-            export_result = KeystoreCommonExportResult {
-                id: keystore.id.to_string(),
-                r#type: ExportType::Mnemonic as i32,
-                value: mnemonic,
-            };
-        } else {
-            // todo: check if need to unlock wallet
-            let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
-            let pk = guard.keystore().private_key()?;
-            export_result = KeystoreCommonExportResult {
-                id: guard.keystore().id.to_string(),
-                r#type: ExportType::PrivateKey as i32,
-                value: pk,
-            };
-        }
+        //        if KeyType::PrivateKey != keystore.key_type {
+        //            let mnemonic = keystore.mnemonic(&param.password)?;
+        //            export_result = KeystoreCommonExportResult {
+        //                id: keystore.id.to_string(),
+        //                r#type: ExportType::Mnemonic as i32,
+        //                value: mnemonic,
+        //            };
+        //        } else {
+        //            // todo: check if need to unlock wallet
+        //            let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+        //            let pk = guard.keystore().private_key()?;
+        //            export_result = KeystoreCommonExportResult {
+        //                id: guard.keystore().id.to_string(),
+        //                r#type: ExportType::PrivateKey as i32,
+        //                value: pk,
+        //            };
+        //        }
+        let export_result = KeystoreCommonExportResult {
+            id: keystore.id(),
+            r#type: if keystore.determinable() {
+                ExportType::Mnemonic as i32
+            } else {
+                ExportType::PrivateKey as i32
+            },
+            value: keystore.export()?,
+        };
 
         encode_message(export_result)
     } else {
@@ -293,7 +300,7 @@ pub fn keystore_common_export(data: &[u8]) -> Result<Vec<u8>> {
 pub fn keystore_common_verify(data: &[u8]) -> Result<Vec<u8>> {
     let param: WalletKeyParam = WalletKeyParam::decode(data).expect("keystore_common_delete");
     let map = KEYSTORE_MAP.read().unwrap();
-    let keystore: &HdKeystore = match map.get(&param.id) {
+    let keystore: &Keystore = match map.get(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
@@ -313,7 +320,7 @@ pub fn keystore_common_verify(data: &[u8]) -> Result<Vec<u8>> {
 pub fn keystore_common_delete(data: &[u8]) -> Result<Vec<u8>> {
     let param: WalletKeyParam = WalletKeyParam::decode(data).expect("keystore_common_delete");
     let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore: &HdKeystore = match map.get(&param.id) {
+    let keystore: &Keystore = match map.get(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
@@ -335,15 +342,17 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
     let param: KeystoreCommonExistsParam =
         KeystoreCommonExistsParam::decode(data).expect("keystore_common_exists params");
     let key_hash = str_sha256(&param.value);
-    let map: &mut HashMap<String, HdKeystore> = &mut KEYSTORE_MAP.write().unwrap();
+    let map = &mut KEYSTORE_MAP.write().unwrap();
 
     // todo: check the key_type
-    let founded: Option<&HdKeystore> = map.values().find(|keystore| keystore.key_hash == key_hash);
+    let founded: Option<&Keystore> = map
+        .values()
+        .find(|keystore| keystore.key_hash() == key_hash);
     let result: KeystoreCommonExistsResult;
     if let Some(ks) = founded {
         result = KeystoreCommonExistsResult {
             is_exists: true,
-            id: ks.id.to_owned(),
+            id: ks.id(),
         }
     } else {
         result = KeystoreCommonExistsResult {
@@ -358,13 +367,13 @@ pub fn keystore_common_accounts(data: &[u8]) -> Result<Vec<u8>> {
     let param: KeystoreCommonAccountsParam =
         KeystoreCommonAccountsParam::decode(data).expect("keystore_common_accounts params");
     let map = KEYSTORE_MAP.read().unwrap();
-    let keystore: &HdKeystore = match map.get(&param.id) {
+    let keystore: &Keystore = match map.get(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
     let mut accounts: Vec<AccountResponse> = vec![];
-    for account in &keystore.active_accounts {
+    for account in keystore.accounts() {
         let enc_xpub = enc_xpub(&account.ext_pub_key, &account.network)?;
         let acc_rsp = AccountResponse {
             chain_type: account.coin.to_owned(),
@@ -383,42 +392,42 @@ pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
     let param: SignParam = SignParam::decode(data).expect("SignTxParam");
 
     let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore = match map.get_mut(&param.id) {
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+    keystore.unlock_by_password(&param.password)?;
     match param.chain_type.as_str() {
-        "BITCOINCASH" | "LITECOIN" => sign_btc_fork_transaction(&param, &guard),
-        "TRON" => sign_tron_tx(&param, &guard),
+        "BITCOINCASH" | "LITECOIN" => sign_btc_fork_transaction(&param, keystore),
+        "TRON" => sign_tron_tx(&param, keystore),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
 
-pub fn sign_btc_fork_transaction(param: &SignParam, guard: &KeystoreGuard) -> Result<Vec<u8>> {
+pub fn sign_btc_fork_transaction(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
     let input: BtcForkTxInput =
         BtcForkTxInput::decode(&param.input.as_ref().expect("tx_input").value.clone())
             .expect("BitcoinForkTransactionInput");
     let coin = coin_info_from_param(&param.chain_type, &input.network, &input.seg_wit)?;
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
         let tran = BchTransaction::new(input, coin);
-        guard.keystore().sign_transaction(&tran)?
+        keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
     } else if input.seg_wit.as_str() != "NONE" {
         let tran = BtcForkSegWitTransaction::new(input, coin);
-        guard.keystore().sign_transaction(&tran)?
+        keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
     } else {
         let tran = BtcForkTransaction::new(input, coin);
-        guard.keystore().sign_transaction(&tran)?
+        keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
     };
     encode_message(signed_tx)
 }
 
-pub fn sign_tron_tx(param: &SignParam, guard: &KeystoreGuard) -> Result<Vec<u8>> {
+pub fn sign_tron_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
     let input: TronTxInput =
         TronTxInput::decode(&param.input.as_ref().expect("tx_input").value.clone())
             .expect("TronTxInput");
-    let signed_tx = guard.keystore().sign_transaction(&input)?;
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
 
     encode_message(signed_tx)
 }
@@ -427,17 +436,17 @@ pub fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
     let param: SignParam = SignParam::decode(data).expect("SignParam");
 
     let mut map = KEYSTORE_MAP.write().unwrap();
-    let keystore = match map.get_mut(&param.id) {
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
-
+    //    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+    keystore.unlock_by_password(&param.password);
     let input: TronMessageInput =
         TronMessageInput::decode(param.input.expect("TronMessageInput").value.clone())
             .expect("TronMessageInput");
-    let signed_tx = guard.keystore().sign_message(&input)?;
+    let signed_tx = keystore.sign_message(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
 }
 

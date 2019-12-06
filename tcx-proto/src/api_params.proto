@@ -119,7 +119,8 @@ message SignParam {
     string id = 1;
     string password = 2;
     string chainType = 3;
-    google.protobuf.Any input = 4;
+    string address = 4;
+    google.protobuf.Any input = 5;
 }
 
 message WalletResult {
