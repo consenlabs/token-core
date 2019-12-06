@@ -100,11 +100,6 @@ message WalletKeyParam {
     string password = 2;
 }
 
-message KeystoreCommonExportResult {
-    string id = 1;
-    KeyType type = 2;
-    string value = 3;
-}
 
 message KeystoreCommonExistsParam {
     KeyType type = 1;
