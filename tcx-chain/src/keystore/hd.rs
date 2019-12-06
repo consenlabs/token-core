@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_constants::{CoinInfo, CurveType};
-use tcx_crypto::hash::sha256;
+use tcx_crypto::hash::{hex_sha256, str_sha256, sha256};
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
     generate_mnemonic, get_account_path, Derive, DerivePath, DeterministicType, ToHex,
@@ -179,7 +179,7 @@ impl HdKeystore {
     }
 
     pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
-        let mut cache = self.cache.as_mut().ok_or(Error::KeystoreLocked)?;
+        let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
         let root = TypedDeterministicPrivateKey::from_seed(
             DeterministicType::BIP32,
