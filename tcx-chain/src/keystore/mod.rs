@@ -320,64 +320,129 @@ mod tests {
     use crate::Keystore;
     use serde_json::Value;
     use std::str::FromStr;
+    use tcx_primitive::Ss58Codec;
 
-    fn from_json() {
-        let json = r#"
+    static PASSWORD: &'static str = "Insecure Pa55w0rd";
+    static KEYSTORE_JSON: &'static str = r#"
         {
-    "id": "41923f0c-427b-4e5f-a55c-a6a30d2ee0a5",
+    "id": "7719d1e3-3f67-439f-a18e-d9ae413e00e1",
     "version": 11000,
+    "keyHash": "efbe00a55ddd4c5350e295a9533d28f93cac001bfdad8cf4275140461ea03e9e",
     "crypto": {
         "cipher": "aes-128-ctr",
         "cipherparams": {
-            "iv": "9374c8d7b04f9a7649a80142a83873e6"
+            "iv": "6006bd4e828f2f93dca31e36590ca4c9"
         },
-        "ciphertext": "8ce8dcc303dc02c2de0d8bad566c44b152543b61f12961c1bdcab08a7d83424f19d5beaf7251e28ddf00ccf5e3f3358ecc3eb10b1761bf1cd3b108806f6ff34158102602c6cdd6adceb09eb2db8c3244",
+        "ciphertext": "b06b82b8cda0bc72761177b312dfd46318248ad8473b6c97d46c44aedf6a283f44f0267dd03f210dcddf4ea1a34f85b0b02533dd9c37ce2276cb087af3e43f2a76b968e17c816ca8ea5c",
         "kdf": "pbkdf2",
         "kdfparams": {
-          "c": 65535,
-          "dklen": 32,
-          "prf": "hmac-sha256",
-          "salt": "33c8f2d27fe994a1e7d51108c7811cdaa2b821cc6760ed760954b4b67a1bcd8c"
+            "c": 10240,
+            "prf": "hmac-sha256",
+            "dklen": 32,
+            "salt": "5d85aaf812a613f810cc1cda18d35f46c013f5e537629e25372969f5f87402cd"
         },
-        "mac": "6b86a18f4ba9f3f428e256e72a3d832dcf0cd1cb820ec61e413a64d83b012059"
+        "mac": "56af7c5faf0a791cbb4911c4c20070156e4ad0a03f8253b2a2fb005a68d7a026"
     },
     "activeAccounts": [
         {
-            "address": "bc1q32nssyaw5ph0skae5nja0asmw2y2a6qw8f0p38",
-            "derivationPath": "m/84'/0'/0'/0/0",
+            "address": "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+            "derivationPath": "m/44'/145'/0'/0/0",
             "curve": "SECP256k1",
-            "coin": "BITCOIN",
-            "extra": {}
-        },
-        {
-            "address": "tokencorex66",
-            "derivationPath": "m/84'/0'/0'/0/0",
-            "curve": "SECP256k1",
-            "coin": "EOS",
-            "extra": [
-                {
-                "encPrivate": {
-                    "encStr": "8657459f1ad4b7b8d2db4850b9072dab1da6d08cf248070068dc910df73c1dc5",
-                    "nonce": "cb64438515ef2565b7d0d1a036297bbd"
-                },
-                "publicKey": "EOS8W4CoVEhTj6RHhazfw6wqtrHGk4kE4fYb2VzCexAk81SjPU1mL"
-                }
-            ]
+            "coin": "BITCOINCASH",
+            "network": "MAINNET",
+            "segWit": "NONE",
+            "extPubKey": "031064f6a580000000251d72997d4cf931a7e6819f7da37725166100fc7dae9ca6afc3f8fd8a3d3a7f0303f2f84851514bf2f40a46b5bb9dbf4e5913fbacde1a96968cda08f9fd882caa"
         }
     ],
     "imTokenMeta": {
-        "name": "Multi Chain Keystore",
-        "passwordHint": "",
-        "source": "MNEMONIC",
-        "timestamp": 1519611221
+        "name": "test-wallet",
+        "passwordHint": "imtoken",
+        "timestamp": 1575605134,
+        "source": "MNEMONIC"
     }
 }
 "#;
-        let keystore: Keystore = Keystore::from_json(json).unwrap();
+
+    #[test]
+    fn test_json() {
+        let keystore: Keystore = Keystore::from_json(KEYSTORE_JSON).unwrap();
+        assert_eq!(1, keystore.accounts().len());
+        assert_eq!(
+            "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+            keystore.accounts().first().unwrap().address
+        );
 
         assert_eq!(
             Value::from_str(&keystore.to_json()).unwrap(),
-            Value::from_str(json).unwrap()
+            Value::from_str(KEYSTORE_JSON).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_keystore_non_sensitive() {
+        let mut keystore = Keystore::from_json(KEYSTORE_JSON).unwrap();
+        assert_eq!(keystore.id(), "7719d1e3-3f67-439f-a18e-d9ae413e00e1");
+        keystore.set_id("test_set_id");
+        assert_eq!("test_set_id", keystore.id());
+        assert_eq!("test-wallet", keystore.meta().name);
+        assert!(keystore.determinable());
+        assert_eq!(
+            "efbe00a55ddd4c5350e295a9533d28f93cac001bfdad8cf4275140461ea03e9e",
+            keystore.key_hash()
+        );
+    }
+
+    #[test]
+    fn test_keystore_unlock() {
+        let mut keystore = Keystore::from_json(KEYSTORE_JSON).unwrap();
+
+        let export_ret = keystore.export();
+        assert!(export_ret.is_err());
+        assert_eq!(format!("{}", export_ret.err().unwrap()), "keystore_locked");
+        let unlocked_ret = keystore.unlock_by_password("WRONG PASSWORD");
+        assert!(unlocked_ret.is_err());
+        assert_eq!(
+            format!("{}", unlocked_ret.err().unwrap()),
+            "password_incorrect"
+        );
+
+        keystore.unlock_by_password(PASSWORD).unwrap();
+        assert_eq!(
+            "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            keystore.export().unwrap()
+        );
+    }
+
+    #[test]
+    fn test_find_key() {
+        let mut keystore = Keystore::from_json(KEYSTORE_JSON).unwrap();
+        keystore.unlock_by_password(PASSWORD);
+        let pk =
+            keystore.find_private_key("BITCOINCASH", "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y21");
+        assert!(pk.is_err());
+
+        let pk =
+            keystore.find_private_key("BITCOINCASH", "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r");
+        assert_eq!(
+            pk.unwrap()
+                .as_secp256k1()
+                .unwrap()
+                .to_ss58check_with_version(&[0x80]),
+            "L39VXyorp19JfsEJfbD7Tfr4pBEX93RJuVXW7E13C51ZYAhUWbYa"
+        );
+
+        //todo: find new receive address
+        let pk = keystore.find_private_key_by_path(
+            "BITCOINCASH",
+            "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+            "m/44'/145'/0'/0/0",
+        );
+        assert_eq!(
+            pk.unwrap()
+                .as_secp256k1()
+                .unwrap()
+                .to_ss58check_with_version(&[0x80]),
+            "L4sbT9qTd5GDKFaM9MfyZXeY8RPZWkeKUPb9ZC4StYDnwVH1qrRL"
         );
     }
 }
