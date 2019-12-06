@@ -49,8 +49,8 @@ mod tests {
             coin: "BITCOINCASH".to_string(),
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
-            network: "".to_string(),
-            seg_wit: "".to_string(),
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
         };
         let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
 
@@ -84,8 +84,8 @@ mod tests {
             coin: "BITCOINCASH".to_string(),
             derivation_path: BIP_PATH.to_string(),
             curve: CurveType::SECP256k1,
-            network: "".to_string(),
-            seg_wit: "".to_string(),
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
         };
 
         let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
@@ -108,9 +108,5 @@ mod tests {
         assert_eq!(BIP_PATH, path);
         let coin = account["coin"].as_str().unwrap();
         assert_eq!("BITCOINCASH", coin);
-
-        let extra = account["extra"].as_object().expect("extra");
-        let enc_xpub = extra["encXPub"].as_str().expect("enc_xpub");
-        assert_eq!(enc_xpub, "wAKUeR6fOGFL+vi50V+MdVSH58gLy8Jx7zSxywz0tN++l2E0UNG7zv+R1FVgnrqU6d0wl699Q/I7O618UxS7gnpFxkGuK0sID4fi7pGf9aivFxuKy/7AJJ6kOmXH1Rz6FCS6b8W7NKlzgbcZpJmDsQ==")
     }
 }
