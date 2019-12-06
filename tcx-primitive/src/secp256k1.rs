@@ -168,17 +168,14 @@ pub fn private_key_without_version(private_key: &str) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    
 
     use super::{verify_private_key, Secp256k1PrivateKey, Ss58Codec};
 
     use crate::{PrivateKey, PublicKey};
-    
 
-    
     use bitcoin_hashes::hex::ToHex;
     use bitcoin_hashes::Hash;
-    
+
     use tcx_constants::coin_info::coin_info_from_param;
 
     #[test]

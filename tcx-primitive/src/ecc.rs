@@ -190,7 +190,6 @@ impl TypedPublicKey {
     }
 }
 
-
 pub enum TypedDeterministicPublicKey {
     Bip32Sepc256k1(Bip32DeterministicPublicKey),
 }
@@ -214,7 +213,7 @@ impl TypedDeterministicPublicKey {
 impl ToString for TypedDeterministicPublicKey {
     fn to_string(&self) -> String {
         match self {
-            TypedDeterministicPublicKey::Bip32Sepc256k1(epk) => epk.to_string()
+            TypedDeterministicPublicKey::Bip32Sepc256k1(epk) => epk.to_string(),
         }
     }
 }
@@ -270,7 +269,7 @@ impl TypedDeterministicPrivateKey {
 impl ToString for TypedDeterministicPrivateKey {
     fn to_string(&self) -> String {
         match self {
-            TypedDeterministicPrivateKey::Bip32Sepc256k1(sk) => sk.to_string()
+            TypedDeterministicPrivateKey::Bip32Sepc256k1(sk) => sk.to_string(),
         }
     }
 }
@@ -308,31 +307,33 @@ impl Derive for TypedDeterministicPrivateKey {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use super::{TypedPublicKey, TypedPrivateKey, PublicKey, PrivateKey, DeterministicType, TypedDeterministicPrivateKey, TypedDeterministicPublicKey, DeterministicPublicKey, DeterministicPrivateKey};
-    use crate::{DerivePath, Derive};
+    use super::{
+        DeterministicPrivateKey, DeterministicPublicKey, DeterministicType, PrivateKey, PublicKey,
+        TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey, TypedPublicKey,
+    };
+    use crate::{Derive, DerivePath};
+    use bip39::{Language, Mnemonic, Seed};
     use std::str::FromStr;
     use tcx_constants::CurveType;
-    use bip39::{Language, Mnemonic, Seed};
 
     fn default_seed() -> Seed {
         let mn = Mnemonic::from_phrase(
             "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
             Language::English,
         )
-            .unwrap();
+        .unwrap();
         Seed::new(&mn, "")
     }
 
-    fn default_private_key() -> Vec<u8>{
+    fn default_private_key() -> Vec<u8> {
         hex::decode("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc").unwrap()
     }
 
     #[test]
     fn typed_private_key() {
-        let sk = TypedPrivateKey::from_slice(CurveType::SECP256k1,&default_private_key()).unwrap();
+        let sk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &default_private_key()).unwrap();
 
         assert_eq!(sk.to_bytes(), default_private_key());
         assert_eq!(sk.as_secp256k1().unwrap().to_bytes(), default_private_key());
@@ -342,7 +343,11 @@ mod tests {
     #[test]
     fn typed_deterministic_private_key() {
         let root = TypedDeterministicPrivateKey::from_seed(
-            DeterministicType::BIP32, CurveType::SECP256k1, &default_seed().as_bytes()).unwrap();
+            DeterministicType::BIP32,
+            CurveType::SECP256k1,
+            &default_seed().as_bytes(),
+        )
+        .unwrap();
 
         let dpk = root
             .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
@@ -364,9 +369,14 @@ mod tests {
 
         let pk = sk.public_key();
 
-        assert_eq!(hex::encode(pk.to_bytes()), "02b95c249d84f417e3e395a127425428b540671cc15881eb828c17b722a53fc599");
-        assert_eq!(hex::encode(pk.as_secp256k1().unwrap().to_bytes()), "02b95c249d84f417e3e395a127425428b540671cc15881eb828c17b722a53fc599");
+        assert_eq!(
+            hex::encode(pk.to_bytes()),
+            "02b95c249d84f417e3e395a127425428b540671cc15881eb828c17b722a53fc599"
+        );
+        assert_eq!(
+            hex::encode(pk.as_secp256k1().unwrap().to_bytes()),
+            "02b95c249d84f417e3e395a127425428b540671cc15881eb828c17b722a53fc599"
+        );
         assert_eq!(pk.curve_type(), CurveType::SECP256k1);
     }
-
 }
