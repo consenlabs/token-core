@@ -276,21 +276,77 @@ pub fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
     }
 }
 
-//pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
-//    let param: PrivateKeyStoreImportParam =
-//        PrivateKeyStoreImportParam::decode(data).expect("private_key_store_import");
-////    let mut map = KEYSTORE_MAP.write().unwrap();
-////    let keystore: &mut Keystore = match map.get_mut(&param.id) {
-////        Some(keystore) => Ok(keystore),
-////        _ => Err(format_err!("{}", "wallet_not_found")),
-////    }?;
-//    let coin_info = coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
-//    let private_key = verify_private_key(&param.private_key, &coin_info)?;
-//
-//    let pk_store = PrivateKeystore::from_private_key(&private_key, &param.password, Source::Private);
-//
-//    let keystore =
-//}
+pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
+    let param: PrivateKeyStoreImportParam =
+        PrivateKeyStoreImportParam::decode(data).expect("private_key_store_import");
+    //    let mut map = KEYSTORE_MAP.write().unwrap();
+    //    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+    //        Some(keystore) => Ok(keystore),
+    //        _ => Err(format_err!("{}", "wallet_not_found")),
+    //    }?;
+    let source = if param.chain_type.as_str() == "TRON" {
+        Source::Private
+    } else {
+        Source::Wif
+    };
+    let source_str = if param.chain_type.as_str() == "TRON" {
+        "PRIVATE"
+    } else {
+        "WIF"
+    };
+    let coin_info = coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
+    let private_key = verify_private_key(&param.private_key, &coin_info)?;
+
+    let pk_store = PrivateKeystore::from_private_key(&private_key, &param.password, source.clone());
+
+    let mut keystore = Keystore::PrivateKey(pk_store);
+
+    keystore.unlock_by_password(&param.password)?;
+
+    let mut coin_info = coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
+    //    coin_info.derivation_path = param.path.to_string();
+    let account = match param.chain_type.as_str() {
+        "BITCOINCASH" => keystore.derive_coin::<BchAddress>(&coin_info),
+        "LITECOIN" => keystore.derive_coin::<BtcForkAddress>(&coin_info),
+        "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
+        _ => Err(format_err!("{}", "chain_type_not_support")),
+    }?;
+
+    let exist_kid_opt = find_keystore_id_by_address(&account.address);
+    if let Some(exist_kid) = exist_kid_opt {
+        if !param.overwrite {
+            return Err(format_err!("{}", "wallet_exists"));
+        } else {
+            keystore.set_id(&exist_kid)
+        }
+    }
+
+    flush_keystore(&keystore)?;
+
+    let mut accounts: Vec<AccountResponse> = vec![];
+    for account in keystore.accounts() {
+        //        let enc_xpub = enc_xpub(&account.ext_pub_key.to_string(), &account.network)?;
+        let acc_rsp = AccountResponse {
+            chain_type: account.coin.to_string(),
+            address: account.address.to_string(),
+            path: account.derivation_path.to_string(),
+            extended_xpub_key: "".to_owned(),
+        };
+        accounts.push(acc_rsp);
+    }
+
+    let meta = keystore.meta();
+    let wallet = WalletResult {
+        id: keystore.id(),
+        name: meta.name.to_owned(),
+        source: source_str.to_owned(),
+        accounts,
+        created_at: meta.timestamp.clone(),
+    };
+    let ret = encode_message(wallet)?;
+    cache_keystore(keystore);
+    Ok(ret)
+}
 
 pub fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let param: PrivateKeyStoreExportParam =

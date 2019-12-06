@@ -135,6 +135,8 @@ pub struct PrivateKeyStoreImportRequest {
     pub network: std::string::String,
     #[prost(string, tag = "5")]
     pub seg_wit: std::string::String,
+    #[prost(bool, tag = "10")]
+    pub overwrite: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PrivateKeyStoreExportParam {

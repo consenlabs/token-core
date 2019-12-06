@@ -25,7 +25,7 @@ use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
     encode_message, hd_store_create, hd_store_derive, hd_store_export, hd_store_import,
     keystore_common_delete, keystore_common_exists, keystore_common_verify,
-    private_key_store_export, sign_tx, tron_sign_message, Buffer,
+    private_key_store_export, private_key_store_import, sign_tx, tron_sign_message, Buffer,
 };
 mod filemanager;
 use crate::filemanager::{
@@ -84,6 +84,9 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
         "hd_store_export" => landingpad(|| hd_store_export(&action.param.unwrap().value)),
         "hd_store_derive" => landingpad(|| hd_store_derive(&action.param.unwrap().value)),
 
+        "private_key_store_import" => {
+            landingpad(|| private_key_store_import(&action.param.unwrap().value))
+        }
         "private_key_store_export" => {
             landingpad(|| private_key_store_export(&action.param.unwrap().value))
         }

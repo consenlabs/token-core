@@ -83,6 +83,8 @@ message PrivateKeyStoreImportParam {
     string chainType = 3;
     string network = 4;
     string segWit = 5;
+
+    bool overwrite = 10;
 }
 
 message PrivateKeyStoreExportParam {
