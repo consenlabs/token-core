@@ -129,6 +129,12 @@ pub struct PrivateKeyStoreImportParam {
     pub private_key: std::string::String,
     #[prost(string, tag = "2")]
     pub password: std::string::String,
+    #[prost(string, tag = "3")]
+    pub chain_type: std::string::String,
+    #[prost(string, tag = "4")]
+    pub network: std::string::String,
+    #[prost(string, tag = "5")]
+    pub seg_wit: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PrivateKeyStoreExportParam {

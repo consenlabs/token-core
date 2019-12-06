@@ -80,6 +80,9 @@ message KeystoreCommonAccountsParam{
 message PrivateKeyStoreImportParam {
     string privateKey = 1;
     string password = 2;
+    string chainType = 3;
+    string network = 4;
+    string segWit = 5;
 }
 
 message PrivateKeyStoreExportParam {

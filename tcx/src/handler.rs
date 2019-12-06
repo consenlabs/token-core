@@ -5,14 +5,14 @@ use std::path::Path;
 use bytes::BytesMut;
 use prost::Message;
 use serde_json::Value;
-use tcx_primitive::{FromHex, TypedPrivateKey};
+use tcx_primitive::{verify_private_key, FromHex, TypedPrivateKey};
 
 use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
     address::BtcForkAddress, BtcForkSegWitTransaction, BtcForkSignedTxOutput, BtcForkTransaction,
     BtcForkTxInput,
 };
-use tcx_chain::{Account, HdKeystore, Metadata, Source};
+use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
 use tcx_chain::{Keystore, KeystoreGuard};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::TrxAddress;
@@ -22,8 +22,8 @@ use crate::api::keystore_common_export_result::ExportType;
 use crate::api::{
     AccountResponse, AccountsResponse, ExternalAddressParam, HdStoreCreateParam,
     HdStoreDeriveParam, HdStoreImportParam, KeystoreCommonAccountsParam, KeystoreCommonExistsParam,
-    KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam, Response,
-    WalletKeyParam, WalletResult,
+    KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
+    PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
@@ -275,6 +275,22 @@ pub fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
         Err(format_err!("{}", "password_incorrect"))
     }
 }
+
+//pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
+//    let param: PrivateKeyStoreImportParam =
+//        PrivateKeyStoreImportParam::decode(data).expect("private_key_store_import");
+////    let mut map = KEYSTORE_MAP.write().unwrap();
+////    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+////        Some(keystore) => Ok(keystore),
+////        _ => Err(format_err!("{}", "wallet_not_found")),
+////    }?;
+//    let coin_info = coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
+//    let private_key = verify_private_key(&param.private_key, &coin_info)?;
+//
+//    let pk_store = PrivateKeystore::from_private_key(&private_key, &param.password, Source::Private);
+//
+//    let keystore =
+//}
 
 pub fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let param: PrivateKeyStoreExportParam =

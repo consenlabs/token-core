@@ -149,21 +149,23 @@ impl Ss58Codec for Secp256k1PrivateKey {
     }
 }
 
-pub fn verify_wif(wif: &str, coin: &CoinInfo) -> Result<String> {
+pub fn verify_private_key(private_key: &str, coin: &CoinInfo) -> Result<String> {
     if let Some(network) = network_from_coin(coin) {
-        let (_pk, version) = Secp256k1PrivateKey::from_ss58check_with_version(wif)?;
+        let (pk, version) = Secp256k1PrivateKey::from_ss58check_with_version(private_key)?;
         if version[0] != network.private_prefix {
             return Err(KeyError::InvalidPrivateKey.into());
+        } else {
+            return Ok(hex::encode(pk.to_bytes()));
         }
     }
-    Ok(wif.to_string())
+    Ok(private_key.to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use crate::derive::Derive;
 
-    use super::{verify_wif, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec};
+    use super::{verify_private_key, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec};
 
     use crate::{DerivePath, PrivateKey, PublicKey};
     use bip39::{Language, Mnemonic, Seed};
@@ -280,24 +282,24 @@ mod tests {
     #[test]
     fn verify_wif_test() {
         let coin_info = coin_info_from_param("BITOCIN", "MAINNET", "NONE").unwrap();
-        let ret = verify_wif(
+        let ret = verify_private_key(
             "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
             &coin_info,
         );
         assert!(ret.is_ok());
 
         let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
-        let ret = verify_wif(
+        let ret = verify_private_key(
             "6v3S2CrndTdGH8QS1Fw9cWZKJWfee52KytmiB687HPbPBdobUX9",
             &coin_info,
         );
         assert!(ret.is_ok());
-        let ret = verify_wif(
+        let ret = verify_private_key(
             "T77jSKLkPvX4SBgRN8v11jTdnHwb8ckrn7WLjXcNjLikug2dAhaP",
             "LITECOIN",
         );
         assert!(ret.is_ok());
-        let ret = verify_wif(
+        let ret = verify_private_key(
             "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
             "LITECOIN",
         );

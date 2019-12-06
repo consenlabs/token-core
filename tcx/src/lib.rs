@@ -14,7 +14,7 @@ use tcx_chain::TransactionSigner;
 use tcx_chain::{HdKeystore, MessageSigner, Metadata, Source};
 use tcx_chain::{Keystore, KeystoreGuard};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
-use tcx_primitive::verify_wif;
+use tcx_primitive::verify_private_key;
 use tcx_tron::TrxAddress;
 
 mod api;
