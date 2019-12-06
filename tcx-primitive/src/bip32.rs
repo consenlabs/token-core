@@ -242,18 +242,21 @@ impl Ss58Codec for Bip32DeterministicPrivateKey {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPrivateKey, PrivateKey, ToHex};
+    use crate::{
+        Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DerivePath,
+        DeterministicPrivateKey, PrivateKey, ToHex,
+    };
+    use bip39::{Language, Mnemonic, Seed};
     use std::str::FromStr;
-    use bip39::{Seed, Mnemonic, Language};
 
     fn default_seed() -> Seed {
-            let mn = Mnemonic::from_phrase(
-                "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
-                Language::English,
-            )
-                .unwrap();
-            Seed::new(&mn, "")
-        }
+        let mn = Mnemonic::from_phrase(
+            "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+            Language::English,
+        )
+        .unwrap();
+        Seed::new(&mn, "")
+    }
 
     #[test]
     fn derive_public_keys() {
@@ -269,11 +272,11 @@ mod tests {
             .iter()
             .map(|path| {
                 hex::encode(
-                esk.derive(DerivePath::from_str(path).unwrap().into_iter())
-                    .unwrap()
-                    .private_key()
-                    .public_key()
-                    .to_compressed()
+                    esk.derive(DerivePath::from_str(path).unwrap().into_iter())
+                        .unwrap()
+                        .private_key()
+                        .public_key()
+                        .to_compressed(),
                 )
             })
             .collect::<Vec<String>>();
@@ -299,13 +302,9 @@ mod tests {
         assert_eq!(dpk.to_string(), "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
 
         let dsk = root
-            .derive(DerivePath::from_str("m/44'/0'/0'")
-            .unwrap()
-            .into_iter())
+            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
             .unwrap();
 
         assert_eq!(dsk.to_string(), "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
     }
-
-
 }

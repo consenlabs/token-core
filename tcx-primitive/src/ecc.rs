@@ -288,7 +288,7 @@ impl Derive for TypedDeterministicPublicKey {
 #[cfg(test)]
 mod tests {
     use super::TypedPrivateKey;
-    use crate::{PrivateKey, PublicKey, DeterministicPublicKey, DeterministicPrivateKey};
+    use crate::{DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey};
 
     fn default_private_key() -> String {
         "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc".to_owned()
@@ -304,9 +304,7 @@ mod tests {
     }
 
     #[test]
-    fn typed_deterministic_private_key() {
-
-    }
+    fn typed_deterministic_private_key() {}
 
     #[test]
     fn typed_public_key() {
@@ -316,7 +314,5 @@ mod tests {
     }
 
     #[test]
-    fn typed_deterministic_public_key() {
-
-    }
+    fn typed_deterministic_public_key() {}
 }
