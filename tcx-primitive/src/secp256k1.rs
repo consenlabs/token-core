@@ -197,52 +197,17 @@ mod tests {
         let msg = "TokenCoreX";
         let hash = bitcoin_hashes::sha256::Hash::hash(msg.as_bytes());
         let signed_bytes = prv_key.sign(&hash.into_inner()).unwrap();
-        /*
         assert_eq!("304402202514266dc7d807ecd69f6d5d03dae7d68619b2c562d8ac77f60e186f4fde4f2202207fbedf5642b095e4a37e71432c99e2b1144f8b9d73a0018be04e6d5ddbd26146", signed_bytes.to_hex());
-        */
 
         let wrong_signed = prv_key.sign(&[0, 1, 2, 3]);
-        /*
         assert_eq!(
             format!("{}", wrong_signed.err().unwrap()),
             "invalid_message"
         )
-        */
-    }
-
-    fn default_seed() -> Seed {
-        let mn = Mnemonic::from_phrase(
-            "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
-            Language::English,
-        )
-        .unwrap();
-        Seed::new(&mn, "")
-    }
-
-    #[test]
-    fn test_encode_with_network() {
-        /*
-        let xpub = "tpubDDDcs8o1LaKXKXaPTEVBUZJYTgNAte4xj24MtFCMsfrHku93ZZjy87CGyz93dcocR6x6JHdusHodD9EVcSQuDbmkAWznWZtvyqyMDqS6VK4";
-        let (xpub_key, version) = ExtendedPubKey::from_ss58check_with_version(xpub).unwrap();
-        //        xpub_key.coin = Some("BITCOIN".to_owned());
-        let ret = xpub_key.to_ss58check_with_version(&[0x04, 0x88, 0xB2, 0x1E]);
-        assert_eq!("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8", ret);
-
-        let xprv = "tprv8g8UWPRHxaNWXZN3uoaiNpyYyaDr2j5Dvcj1vxLxKcEF653k7xcN9wq9eT73wBM1HzE9hmWJbAPXvDvaMXqGWm81UcVpHnmATfH2JJrfhGg";
-        let (xprv_key, version) = ExtendedPrivKey::from_ss58check_with_version(xprv).unwrap();
-        let ret = xprv_key.to_ss58check_with_version(&[0x04, 0x88, 0xAD, 0xE4]);
-        assert_eq!("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS", ret);
-        */
     }
 
     #[test]
     fn private_key() {
-        /*
-        let private_key = Secp256k1PrivateKey::from_extended("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS").unwrap();
-        assert!(private_key.is_extendable());
-        let wif = private_key.private_key().to_ss58check_with_version(&[0x80]);
-        assert_eq!("L2saPfZaQWXY6AMxBdLy4UdR8M3xz698fVo3HY5rmRPZDgHe2nAD", wif);
-
         let private_key =
             Secp256k1PrivateKey::from_wif("L2saPfZaQWXY6AMxBdLy4UdR8M3xz698fVo3HY5rmRPZDgHe2nAD")
                 .unwrap();
@@ -250,13 +215,11 @@ mod tests {
             "L2saPfZaQWXY6AMxBdLy4UdR8M3xz698fVo3HY5rmRPZDgHe2nAD",
             private_key.to_ss58check_with_version(&[0x80])
         );
-        */
     }
 
     #[test]
     fn wif_with_version() {
-        /*
-        let (pk, version) = PrivateKey::from_ss58check_with_version(
+        let (pk, version) = Secp256k1PrivateKey::from_ss58check_with_version(
             "T8XwS9GfbPi73xQtwyQWLF2qXxFCkEtfdHNkrVrjXJijx8qEkHj9",
         )
         .unwrap();
@@ -268,40 +231,20 @@ mod tests {
             "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
             pk.to_ss58check_with_version(&[0x80])
         )
-        */
-    }
-
-    #[test]
-    fn ypub_test() {
-        /*
-        let (epk, version) = ExtendedPrivKey::from_ss58check_with_version("uprv91G7gZkzehuMVxDJTYE6tLivdF8e4rvzSu1LFfKw3b2Qx1Aj8vpoFnHdfUZ3hmi9jsvPifmZ24RTN2KhwB8BfMLTVqaBReibyaFFcTP1s9n").unwrap();
-        assert_eq!("uprv91G7gZkzehuMVxDJTYE6tLivdF8e4rvzSu1LFfKw3b2Qx1Aj8vpoFnHdfUZ3hmi9jsvPifmZ24RTN2KhwB8BfMLTVqaBReibyaFFcTP1s9n", epk.to_ss58check_with_version(&version));
-        */
     }
 
     #[test]
     fn verify_wif_test() {
-        let coin_info = coin_info_from_param("BITOCIN", "MAINNET", "NONE").unwrap();
-        let ret = verify_private_key(
-            "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
-            &coin_info,
-        );
-        assert!(ret.is_ok());
-
         let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
         let ret = verify_private_key(
             "6v3S2CrndTdGH8QS1Fw9cWZKJWfee52KytmiB687HPbPBdobUX9",
             &coin_info,
         );
-        assert!(ret.is_ok());
-        let ret = verify_private_key(
-            "T77jSKLkPvX4SBgRN8v11jTdnHwb8ckrn7WLjXcNjLikug2dAhaP",
-            "LITECOIN",
-        );
+
         assert!(ret.is_ok());
         let ret = verify_private_key(
             "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
-            "LITECOIN",
+            &coin_info,
         );
         assert!(ret.is_err());
         assert_eq!("invalid_private_key", format!("{}", ret.err().unwrap()))

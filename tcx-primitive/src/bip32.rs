@@ -103,6 +103,18 @@ impl DeterministicPublicKey for Bip32DeterministicPublicKey {
     }
 }
 
+impl ToString for Bip32DeterministicPublicKey {
+    fn to_string(&self) -> String {
+        self.0.to_string()
+    }
+}
+
+impl ToString for Bip32DeterministicPrivateKey {
+    fn to_string(&self) -> String {
+        self.0.to_string()
+    }
+}
+
 impl ToHex for Bip32DeterministicPublicKey {
     fn to_hex(&self) -> String {
         let mut ret = [0; 74];
@@ -230,12 +242,21 @@ impl Ss58Codec for Bip32DeterministicPrivateKey {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DerivePath};
+    use crate::{Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPrivateKey, PrivateKey, ToHex};
     use std::str::FromStr;
+    use bip39::{Seed, Mnemonic, Language};
+
+    fn default_seed() -> Seed {
+            let mn = Mnemonic::from_phrase(
+                "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
+                Language::English,
+            )
+                .unwrap();
+            Seed::new(&mn, "")
+        }
 
     #[test]
-    fn test_key_at_paths_with_seed() {
-        /*
+    fn derive_public_keys() {
         let seed = default_seed();
         let paths = vec![
             "m/44'/0'/0'/0/0",
@@ -243,16 +264,17 @@ mod tests {
             "m/44'/0'/0'/1/0",
             "m/44'/0'/0'/1/1",
         ];
-        let esk = Bip32DeterministicPrivateKey::from_seed(&seed).unwrap();
+        let esk = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes()).unwrap();
         let pub_keys = paths
             .iter()
             .map(|path| {
+                hex::encode(
                 esk.derive(DerivePath::from_str(path).unwrap().into_iter())
                     .unwrap()
                     .private_key()
                     .public_key()
                     .to_compressed()
-                    .to_hex()
+                )
             })
             .collect::<Vec<String>>();
         let expected_pub_keys = vec![
@@ -262,53 +284,28 @@ mod tests {
             "022f4c38f7bbaa00fc886db62f975b34201c2bfed146e98973caf03268941801db",
         ];
         assert_eq!(pub_keys, expected_pub_keys);
-        */
     }
 
     #[test]
-    fn extended_key_test() {
-        /*
+    fn derive_keys() {
         let seed = default_seed();
-        let esk = Bip32DeterministicPrivateKey::from_seed(&seed).unwrap();
+        let root = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes()).unwrap();
 
-        let _xpub_key = esk.extended_pub_key().unwrap();
-        let mut index_xpub_key =esk
+        let dpk = root
             .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
             .unwrap()
-            .extended_pub_key()
-            .unwrap();
-        let xpub = index_xpub_key.to_string();
-        assert_eq!(xpub, "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
-        let private_key = Secp256k1PrivateKey::from_seed(&seed).unwrap();
-        let mut xprv_key = private_key
-            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
+            .deterministic_public_key();
+
+        assert_eq!(dpk.to_string(), "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
+
+        let dsk = root
+            .derive(DerivePath::from_str("m/44'/0'/0'")
             .unwrap()
-            .extended_priv_key()
+            .into_iter())
             .unwrap();
 
-        let xprv = xprv_key.to_string();
-        assert_eq!(xprv, "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
-        */
+        assert_eq!(dsk.to_string(), "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
     }
 
-    #[test]
-    fn derive_pub_key_test() {
-        /*
-        let xpub = "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8";
-        let xpub_key = Bip32DeterministicPublicKey::from_extended(xpub).unwrap();
 
-        let path = DerivePath::from_str("0/0").unwrap();
-        let index_pub_key = xpub_key.derive(path.into_iter()).unwrap();
-
-        assert_eq!(
-            index_pub_key.public_key().to_bytes().to_hex(),
-            "026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868"
-        );
-
-        let err = ExtendedPubKey::from_ss58check_with_version("invalid_xpub")
-            .err()
-            .unwrap();
-        assert_eq!(format!("{}", err), "invalid base58 character 0x6c");
-        */
-    }
 }

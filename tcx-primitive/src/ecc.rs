@@ -284,3 +284,39 @@ impl Derive for TypedDeterministicPublicKey {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::TypedPrivateKey;
+    use crate::{PrivateKey, PublicKey, DeterministicPublicKey, DeterministicPrivateKey};
+
+    fn default_private_key() -> String {
+        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc".to_owned()
+    }
+
+    #[test]
+    fn typed_private_key() {
+        /*
+        let tk = TypedPrivateKey::from_slice(CurveType::Secp256k1,&hex::decode(&default_private_key()).unwrap()).unwrap();
+
+        assert_eq!(tk.to_bytes().to_hex(), default_private_key());
+        */
+    }
+
+    #[test]
+    fn typed_deterministic_private_key() {
+
+    }
+
+    #[test]
+    fn typed_public_key() {
+        /*
+        let tk = TypedPrivateKey::from_slice(CurveType::Secp256k1, &hex::decode(&default_private_key()).unwrap()).unwrap();
+        */
+    }
+
+    #[test]
+    fn typed_deterministic_public_key() {
+
+    }
+}
