@@ -23,6 +23,12 @@
 		706E245F236184E30083E861 /* libtcx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 706E245E236184E20083E861 /* libtcx.a */; };
 		706E24622361887C0083E861 /* tcx.h in Sources */ = {isa = PBXBuildFile; fileRef = 706E245C236184E20083E861 /* tcx.h */; };
 		706E24632361887C0083E861 /* iOSExample-Bridging-Header.h in Sources */ = {isa = PBXBuildFile; fileRef = 706E2461236187BF0083E861 /* iOSExample-Bridging-Header.h */; };
+		70A05E0B239BE14B00DC3A93 /* btc_fork.proto in Sources */ = {isa = PBXBuildFile; fileRef = 70A05E09239BE14B00DC3A93 /* btc_fork.proto */; };
+		70A05E0C239BE14B00DC3A93 /* btc_fork.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70A05E0A239BE14B00DC3A93 /* btc_fork.pb.swift */; };
+		70F81966239BD8A300A738A9 /* api.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70F81962239BD8A300A738A9 /* api.pb.swift */; };
+		70F81967239BD8A300A738A9 /* api_params.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70F81963239BD8A300A738A9 /* api_params.pb.swift */; };
+		70F81968239BD8A300A738A9 /* api.proto in Sources */ = {isa = PBXBuildFile; fileRef = 70F81964239BD8A300A738A9 /* api.proto */; };
+		70F81969239BD8A300A738A9 /* api_params.proto in Sources */ = {isa = PBXBuildFile; fileRef = 70F81965239BD8A300A738A9 /* api_params.proto */; };
 		9B5AC83291D6347F95B5CC81 /* Pods_iOSExampleTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 39611BA67CF6FF08174944B8 /* Pods_iOSExampleTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -68,6 +74,12 @@
 		706E245C236184E20083E861 /* tcx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tcx.h; sourceTree = "<group>"; };
 		706E245E236184E20083E861 /* libtcx.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libtcx.a; sourceTree = "<group>"; };
 		706E2461236187BF0083E861 /* iOSExample-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iOSExample-Bridging-Header.h"; sourceTree = "<group>"; };
+		70A05E09239BE14B00DC3A93 /* btc_fork.proto */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.protobuf; path = btc_fork.proto; sourceTree = "<group>"; };
+		70A05E0A239BE14B00DC3A93 /* btc_fork.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = btc_fork.pb.swift; sourceTree = "<group>"; };
+		70F81962239BD8A300A738A9 /* api.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = api.pb.swift; sourceTree = "<group>"; };
+		70F81963239BD8A300A738A9 /* api_params.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = api_params.pb.swift; sourceTree = "<group>"; };
+		70F81964239BD8A300A738A9 /* api.proto */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.protobuf; path = api.proto; sourceTree = "<group>"; };
+		70F81965239BD8A300A738A9 /* api_params.proto */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.protobuf; path = api_params.proto; sourceTree = "<group>"; };
 		7864543431DF4082A254772F /* Pods-iOSExampleTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOSExampleTests.debug.xcconfig"; path = "Target Support Files/Pods-iOSExampleTests/Pods-iOSExampleTests.debug.xcconfig"; sourceTree = "<group>"; };
 		B33EEF958D0801D646090E9F /* Pods_iOSExample_iOSExampleUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_iOSExample_iOSExampleUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C633BCE5BCA2B04F86E6A550 /* Pods-iOSExample-iOSExampleUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOSExample-iOSExampleUITests.release.xcconfig"; path = "Target Support Files/Pods-iOSExample-iOSExampleUITests/Pods-iOSExample-iOSExampleUITests.release.xcconfig"; sourceTree = "<group>"; };
@@ -142,6 +154,7 @@
 		706E241923602B7B0083E861 /* iOSExample */ = {
 			isa = PBXGroup;
 			children = (
+				70F81961239BD8A300A738A9 /* Proto */,
 				706E245A236184E20083E861 /* TokenCoreX */,
 				706E241A23602B7B0083E861 /* AppDelegate.swift */,
 				706E241C23602B7B0083E861 /* SceneDelegate.swift */,
@@ -207,6 +220,19 @@
 				706E245E236184E20083E861 /* libtcx.a */,
 			);
 			path = Libs;
+			sourceTree = "<group>";
+		};
+		70F81961239BD8A300A738A9 /* Proto */ = {
+			isa = PBXGroup;
+			children = (
+				70A05E0A239BE14B00DC3A93 /* btc_fork.pb.swift */,
+				70A05E09239BE14B00DC3A93 /* btc_fork.proto */,
+				70F81962239BD8A300A738A9 /* api.pb.swift */,
+				70F81963239BD8A300A738A9 /* api_params.pb.swift */,
+				70F81964239BD8A300A738A9 /* api.proto */,
+				70F81965239BD8A300A738A9 /* api_params.proto */,
+			);
+			path = Proto;
 			sourceTree = "<group>";
 		};
 		A711952B573B3CD041F6C9F7 /* Frameworks */ = {
@@ -458,14 +484,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				70F81968239BD8A300A738A9 /* api.proto in Sources */,
 				706E24622361887C0083E861 /* tcx.h in Sources */,
 				706E24632361887C0083E861 /* iOSExample-Bridging-Header.h in Sources */,
 				706E241B23602B7B0083E861 /* AppDelegate.swift in Sources */,
+				70F81967239BD8A300A738A9 /* api_params.pb.swift in Sources */,
 				706E244B23603B7B0083E861 /* FuncResultView.swift in Sources */,
+				70A05E0C239BE14B00DC3A93 /* btc_fork.pb.swift in Sources */,
+				70F81966239BD8A300A738A9 /* api.pb.swift in Sources */,
 				706E241D23602B7B0083E861 /* SceneDelegate.swift in Sources */,
 				706E244D23603CD10083E861 /* UserData.swift in Sources */,
+				70A05E0B239BE14B00DC3A93 /* btc_fork.proto in Sources */,
 				706E241F23602B7B0083E861 /* ContentView.swift in Sources */,
 				706E244F236153480083E861 /* Utils.swift in Sources */,
+				70F81969239BD8A300A738A9 /* api_params.proto in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

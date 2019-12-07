@@ -158,19 +158,19 @@ pub struct WalletKeyParam {
     pub password: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct KeystoreCommonExistsParam {
+    #[prost(enumeration = "KeyType", tag = "1")]
+    pub r#type: i32,
+    #[prost(string, tag = "2")]
+    pub value: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeystoreCommonExportResult {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
     #[prost(enumeration = "KeyType", tag = "2")]
     pub r#type: i32,
     #[prost(string, tag = "3")]
-    pub value: std::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeystoreCommonExistsParam {
-    #[prost(enumeration = "KeyType", tag = "1")]
-    pub r#type: i32,
-    #[prost(string, tag = "2")]
     pub value: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
