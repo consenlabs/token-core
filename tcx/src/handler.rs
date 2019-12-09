@@ -47,6 +47,8 @@ pub struct Buffer {
 }
 
 pub fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
+    // todo: delete print
+    println!("{:#?}", msg);
     let mut buf = BytesMut::with_capacity(msg.encoded_len());
     msg.encode(&mut buf)?;
     Ok(buf.to_vec())
@@ -105,7 +107,6 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
         if version != i64::from(HdKeystore::VERSION) {
             continue;
         }
-        //        let keystore: HdKeystore = serde_json::from_str(&contents)?;
         let keystore = Keystore::from_json(&contents)?;
         cache_keystore(keystore);
     }
@@ -143,7 +144,7 @@ pub fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
 pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let param: HdStoreImportParam =
         HdStoreImportParam::decode(data).expect("import wallet from mnemonic");
-
+    println!("{:?}", param);
     let mut meta = Metadata::default();
     meta.name = param.name.to_owned();
     meta.password_hint = param.password_hint.to_owned();
@@ -151,7 +152,9 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     //    let meta: Metadata = serde_json::from_value(v.clone())?;
     let mut ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta);
+
     let mut keystore = Keystore::Hd(ks);
+    println!("ks: {:?}", &keystore.id());
     keystore.unlock_by_password(&param.password)?;
 
     let mut coin_info = coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;

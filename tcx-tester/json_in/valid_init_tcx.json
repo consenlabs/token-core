@@ -2,7 +2,7 @@
     "method": "init_token_core_x_param",
     "param": {
         "type": "api.InitTokenCoreXParam",
-        "fileDir": "../test-data",
+        "fileDir": "/tmp/imtoken/wallets",
         "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
         "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
     }

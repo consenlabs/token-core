@@ -17,7 +17,7 @@ use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_primitive::verify_private_key;
 use tcx_tron::TrxAddress;
 
-mod api;
+pub mod api;
 use crate::api::{Response, TcxAction};
 pub mod error_handling;
 pub mod handler;
@@ -299,15 +299,26 @@ mod tests {
     #[test]
     fn test_call_tcx_api() {
         run_test(|| {
-            let param_hex = "0a0f68645f73746f72655f696d706f727412bb010a166170692e486453746f7265496d706f7274506172616d12a0010a084c495445434f494e124573616c75746520736c757368206e6f7720736372697074206e657374206c61772061646d6974206163686965766520766f69636520736f6461206672756974206669656c641a11496e7365637572652050617373776f7264220f6d2f3434272f31272f30272f302f302a084d4e454d4f4e4943320c4c54432d57616c6c65742d313a074d41494e4e455442044e4f4e454a005001";
+            //        let param_hex = "0a17696e69745f746f6b656e5f636f72655f785f706172616d124b0a176170692e496e6974546f6b656e436f726558506172616d12300a0c2e2e2f746573742d646174611a203943304333303838394342434335453031414235423242423838373135373939";
+            //        let mut param_bytes = hex::decode(param_hex).unwrap();
+            ////            let param_buf = Buffer {
+            ////                data: param_bytes.as_mut_ptr(),
+            ////                len: param_bytes.len(),
+            ////            };
+            //        let param_buf = wrap_buffer(param_bytes);
+            //        let ret_buf = unsafe { call_tcx_api(param_buf) };
+
+            let param_hex = "0a0f68645f73746f72655f696d706f727412ac010a0f68645f73746f72655f696d706f72741298010a0b424954434f494e43415348124a696e6a656374206b69646e657920656d7074792063616e616c20736861646f77207061637420636f6d666f7274207769666520637275736820686f727365207769666520736b657463681a043132333422116d2f3434272f313435272f30272f302f302a084d4e454d4f4e4943320d4d4e454d4f4e49432d746573743a074d41494e4e45544a005001";
             let mut param_bytes = hex::decode(param_hex).unwrap();
-            let param_buf = Buffer {
-                data: param_bytes.as_mut_ptr(),
-                len: param_bytes.len(),
-            };
+            //            let param_buf = Buffer {
+            //                data: param_bytes.as_mut_ptr(),
+            //                len: param_bytes.len(),
+            //            };
+            let param_buf = wrap_buffer(param_bytes);
             let ret_buf = unsafe { call_tcx_api(param_buf) };
             let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
             let ret: WalletResult = WalletResult::decode(ret_bytes).unwrap();
+            println!("{:#?}", ret);
             assert_eq!(
                 "LRB53mz8PmBPDBH8HFp3f5bVHxJ9Bqx8PH",
                 ret.accounts.first().unwrap().address

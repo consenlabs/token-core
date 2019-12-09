@@ -193,6 +193,7 @@ impl HdKeystore {
         let public_key = private_key.public_key();
 
         let address = A::from_public_key(&public_key, coin_info)?;
+        println!("account: {}", address);
 
         let ext_pub_key = root
             .derive(
@@ -210,7 +211,7 @@ impl HdKeystore {
             ext_pub_key,
             seg_wit: coin_info.seg_wit.to_string(),
         };
-
+        println!("account: {}", &account.address);
         self.store.active_accounts.push(account.clone());
 
         Ok(&self.store.active_accounts.last().unwrap())

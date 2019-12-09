@@ -24,14 +24,14 @@ lazy_static! {
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             network: "MAINNET".to_string(),
-            seg_wit: "NONE".to_string(),
+            seg_wit: "".to_string(),
         });
         coin_infos.push(CoinInfo {
             coin: "BITCOINCASH".to_string(),
             derivation_path: "m/44'/1'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             network: "TESTNET".to_string(),
-            seg_wit: "NONE".to_string(),
+            seg_wit: "".to_string(),
         });
         coin_infos.push(CoinInfo {
             coin: "LITECOIN".to_string(),

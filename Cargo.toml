@@ -11,4 +11,5 @@ members = [
     "tcx",
 
     "tcx-fuzz-target",
+    "tcx-tester",
 ]

@@ -1,6 +1,7 @@
 var protobuf = require("protobufjs");
 var fs = require('fs');
 var path = require('path');
+const { spawnSync } = require( 'child_process' );
 
 var outDir = "../hex_in";
 var jsonIn = "../json_in";
@@ -65,8 +66,11 @@ protobuf.load('google/protobuf/any.proto', function (err, root) {
                 var buffer = TcxAction.encode(message).finish();
                 // ... do something with buffer
                 var hexStr = buffer.toString('hex');
-                console.log(payload.method, hexStr);
-                fs.writeFileSync(path.join(outDir, f), hexStr);
+                const ls = spawnSync( '../../target/debug/tcx-tester', [hexStr] );
+
+                // console.log( `stderr: ${ls.stderr.toString()}` );
+                console.log( `stdout: ${ls.stdout.toString()}` );
+                fs.writeFileSync(path.join(outDir, f), ls.stdout.toString());
             }
 
             
