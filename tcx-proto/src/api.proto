@@ -1,0 +1,16 @@
+syntax = "proto3";
+package api;
+
+import "google/protobuf/any.proto";
+
+// Action Wrapper
+message TcxAction {
+    string method = 1;
+    google.protobuf.Any param = 2;
+}
+
+// A common response when error occurred.
+message Response {
+    bool isSuccess = 1;
+    string error = 2;
+}

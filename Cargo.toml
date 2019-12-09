@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "tcx-proto",
     "tcx-constants",
     "tcx-primitive",
     "tcx-crypto",
@@ -8,4 +9,6 @@ members = [
     "tcx-btc-fork",
     "tcx-bch",
     "tcx",
+
+    "tcx-fuzz-target",
 ]

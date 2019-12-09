@@ -1,44 +1,71 @@
 use bitcoin::util::base58;
 
 use crate::keccak;
-use tcx_chain::keystore::Address as TraitAddress;
-use tcx_primitive::{Pair, Public, Secp256k1Pair, Secp256k1PublicKey};
+use failure::Fail;
+use tcx_chain::Address as TraitAddress;
+use tcx_chain::Result;
+use tcx_constants::CoinInfo;
+use tcx_primitive::{
+    PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPublicKey,
+};
 
 pub struct Address(pub String);
 
-pub enum Error {
-    InvalidBase58,
-}
-
 impl TraitAddress for Address {
-    fn from_public_key(public_key: &[u8], _coin: Option<&str>) -> Result<String, failure::Error> {
-        let bytes = Secp256k1PublicKey::from_slice(public_key)?.to_uncompressed();
+    fn from_public_key(public_key: &TypedPublicKey, _coin: &CoinInfo) -> Result<String> {
+        let pk = public_key.as_secp256k1()?;
+        let bytes = pk.to_uncompressed();
+
         let hash = keccak(&bytes[1..]);
         let hex: Vec<u8> = [vec![0x41], hash[12..32].to_vec()].concat();
         Ok(base58::check_encode_slice(&hex))
     }
 
-    fn from_private_key(private_key: &str, coin: Option<&str>) -> Result<String, failure::Error> {
-        let pk_bytes = hex::decode(private_key)?;
-        let pair = Secp256k1Pair::from_slice(&pk_bytes)?;
-        Address::from_public_key(&pair.public_key().to_uncompressed(), coin)
+    fn is_valid(address: &str) -> bool {
+        let decode_ret = base58::from_check(address);
+        if let Ok(data) = decode_ret {
+            data.len() == 21 && data[0] == 0x41
+        } else {
+            false
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::Address;
-    use tcx_chain::keystore::Address as TraitAddress;
-    use tcx_primitive::Public;
-    use tcx_primitive::Secp256k1PublicKey;
+    use tcx_chain::Address as TraitAddress;
+    use tcx_constants::{CoinInfo, CurveType};
+    use tcx_primitive::{PublicKey, Secp256k1PublicKey, TypedPublicKey};
 
     #[test]
     fn tron_address() {
         let bytes = hex::decode("04DAAC763B1B3492720E404C53D323BAF29391996F7DD5FA27EF0D12F7D50D694700684A32AD97FF4C09BF9CF0B9D0AC7F0091D9C6CB8BE9BB6A1106DA557285D8").unwrap();
-        let _public_key = Secp256k1PublicKey::from_slice(&bytes).unwrap();
+        let coin_info = CoinInfo {
+            coin: "".to_string(),
+            derivation_path: "".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "".to_string(),
+            seg_wit: "".to_string(),
+        };
+
         assert_eq!(
-            Address::from_public_key(&bytes, None).unwrap(),
+            Address::from_public_key(
+                &TypedPublicKey::from_slice(CurveType::SECP256k1, &bytes).unwrap(),
+                &coin_info
+            )
+            .unwrap(),
             "THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"
         );
+    }
+
+    #[test]
+    fn tron_address_validation() {
+        assert!(Address::is_valid("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"));
+        assert!(!Address::is_valid("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acot"));
+        assert!(!Address::is_valid(
+            "qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
+        ));
+        assert!(!Address::is_valid("mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN"));
     }
 }

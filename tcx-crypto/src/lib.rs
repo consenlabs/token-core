@@ -1,5 +1,6 @@
 pub mod aes;
 pub mod crypto;
+pub mod hash;
 pub mod numberic_util;
 
 use core::result;
@@ -10,9 +11,6 @@ use std::sync::RwLock;
 extern crate failure;
 #[macro_use]
 extern crate lazy_static;
-#[allow(unused_imports)]
-#[macro_use]
-extern crate hex_literal;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 

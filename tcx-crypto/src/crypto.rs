@@ -1,3 +1,4 @@
+use crate::hash::hex_sha256;
 use crate::numberic_util;
 use crate::Error;
 use crate::Result;
@@ -23,9 +24,11 @@ struct CipherParams {
     iv: String,
 }
 
-pub trait KdfParams {
+pub trait KdfParams: Default {
+    fn kdf_key() -> String;
     fn validate(&self) -> Result<()>;
     fn generate_derived_key(&self, password: &[u8], out: &mut [u8]);
+    fn set_salt(&mut self, salt: &str);
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -37,8 +40,8 @@ pub struct Pbkdf2Params {
     salt: String,
 }
 
-impl Pbkdf2Params {
-    pub fn default() -> Pbkdf2Params {
+impl Default for Pbkdf2Params {
+    fn default() -> Pbkdf2Params {
         Pbkdf2Params {
             c: 10240,
             prf: "hmac-sha256".to_owned(),
@@ -49,6 +52,10 @@ impl Pbkdf2Params {
 }
 
 impl KdfParams for Pbkdf2Params {
+    fn kdf_key() -> String {
+        "pbkdf2".to_owned()
+    }
+
     fn validate(&self) -> Result<()> {
         if self.dklen == 0 || self.c == 0 || self.salt.is_empty() || self.prf.is_empty() {
             Err(Error::KdfParamsInvalid.into())
@@ -60,6 +67,59 @@ impl KdfParams for Pbkdf2Params {
     fn generate_derived_key(&self, password: &[u8], out: &mut [u8]) {
         let salt_bytes: Vec<u8> = FromHex::from_hex(&self.salt).unwrap();
         pbkdf2::pbkdf2::<hmac::Hmac<sha2::Sha256>>(password, &salt_bytes, self.c as usize, out);
+    }
+
+    fn set_salt(&mut self, salt: &str) {
+        self.salt = salt.to_owned();
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SCryptParams {
+    n: u32,
+    p: u32,
+    r: u32,
+    dklen: u32,
+    salt: String,
+}
+
+impl Default for SCryptParams {
+    fn default() -> Self {
+        SCryptParams {
+            dklen: 32,
+            n: 8192,
+            p: 1,
+            r: 8,
+            salt: "".to_string(),
+        }
+    }
+}
+
+impl KdfParams for SCryptParams {
+    fn kdf_key() -> String {
+        "scrypt".to_owned()
+    }
+
+    fn validate(&self) -> Result<()> {
+        if self.dklen == 0 || self.n == 0 || self.salt.is_empty() || self.p == 0 || self.r == 0 {
+            Err(Error::KdfParamsInvalid.into())
+        } else {
+            Ok(())
+        }
+    }
+
+    fn generate_derived_key(&self, password: &[u8], out: &mut [u8]) {
+        let salt_bytes: Vec<u8> = FromHex::from_hex(&self.salt).unwrap();
+        let log_n = (self.n as f64).log2().round();
+        let inner_params =
+            scrypt::ScryptParams::new(log_n as u8, self.r, self.p).expect("init scrypt params");
+
+        scrypt::scrypt(password, &salt_bytes, &inner_params, out);
+    }
+
+    fn set_salt(&mut self, salt: &str) {
+        self.salt = salt.to_owned();
     }
 }
 
@@ -78,8 +138,7 @@ impl CacheDerivedKey {
     }
 
     fn hash(key: &str) -> String {
-        let key_data: Vec<u8> = FromHex::from_hex(key).expect("cache derived key from key");
-        Sha256::digest(&Sha256::digest(&key_data)).to_hex()
+        hex_sha256(key)
     }
 
     pub fn get_derived_key(&self, key: &str) -> Result<Vec<u8>> {
@@ -104,17 +163,20 @@ pub struct Crypto<T: KdfParams> {
     cached_derived_key: Option<CacheDerivedKey>,
 }
 
-impl Crypto<Pbkdf2Params> {
-    pub fn new(password: &str, origin: &[u8]) -> Crypto<Pbkdf2Params> {
-        let mut param = Pbkdf2Params::default();
-        param.salt = numberic_util::random_iv(32).to_hex();
+impl<T> Crypto<T>
+where
+    T: KdfParams,
+{
+    pub fn new(password: &str, origin: &[u8]) -> Crypto<T> {
+        let mut param = T::default();
+        param.set_salt(&numberic_util::random_iv(32).to_hex());
         let iv = numberic_util::random_iv(16);
 
         let mut crypto = Crypto {
             cipher: "aes-128-ctr".to_owned(),
             cipherparams: CipherParams { iv: iv.to_hex() },
             ciphertext: String::from(""),
-            kdf: "pbkdf2".to_owned(),
+            kdf: T::kdf_key(),
             kdfparams: param,
             mac: String::from(""),
             cached_derived_key: None,
@@ -138,7 +200,7 @@ impl Crypto<Pbkdf2Params> {
             let mut derived_key: Credential = [0u8; CREDENTIAL_LEN];
             self.kdfparams
                 .generate_derived_key(key.as_bytes(), &mut derived_key);
-            if self.mac != "" && !self.verify_derived_key(&derived_key) {
+            if &self.mac != "" && !self.verify_derived_key(&derived_key) {
                 return Err(Error::PasswordIncorrect.into());
             }
             Ok(derived_key.to_vec())
@@ -256,7 +318,7 @@ mod tests {
 
     #[test]
     pub fn decrypt_crypto() {
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(PASSWORD, "TokenCoreX".as_bytes());
+        let mut crypto: Crypto<Pbkdf2Params> = Crypto::new(PASSWORD, "TokenCoreX".as_bytes());
         let cipher_bytes = crypto.decrypt(PASSWORD).expect("cipher bytes");
         assert_eq!("TokenCoreX", String::from_utf8(cipher_bytes).unwrap());
 
@@ -292,7 +354,7 @@ mod tests {
             err.downcast::<crate::Error>().unwrap()
         );
 
-        let ret = crypto.derive_enc_pair("WrongPassword", &hex!("01020304"));
+        let ret = crypto.derive_enc_pair("WrongPassword", &hex::decode("01020304").unwrap());
         assert!(ret.is_err());
         let err = ret.err().unwrap();
         assert_eq!(
@@ -321,7 +383,42 @@ mod tests {
     }
 
     #[test]
-    pub fn json_serial() {
+    pub fn generate_derived_key_scrypt_test() {
+        let mut param = SCryptParams::default();
+        param.salt = "01020304010203040102030401020304".to_string();
+        let mut derived_key = [0; CREDENTIAL_LEN];
+        param.generate_derived_key(PASSWORD.as_bytes(), &mut derived_key);
+        let dk_hex = derived_key.to_hex();
+        assert_eq!("9bfd772f716328f1c2b12192786161f194ad8f36727646d80e6b8384c1564a740a0d61290fa111563baa2ee00c24e8ec624fb8fe5dd3d7c121adbfc3305c266a", dk_hex);
+    }
+
+    #[test]
+    pub fn decode_v3_keystore_crypto_test() {
+        let data = r#"{
+    "mac": "a10b412993ec783e854cb339b1f4165a013d41267adb561ed9ab47c209dea3ab",
+    "cipherparams": {
+      "iv": "799f757ee52b7c95aa76967fa908676c"
+    },
+    "kdfparams": {
+      "dklen": 32,
+      "r": 8,
+      "salt": "e3fa7f40fecac7f6c61326dfb6aba4697c2daba9ecd41f017e996ae15aa18a51",
+      "p": 1,
+      "n": 1024
+    },
+    "cipher": "aes-128-ctr",
+    "ciphertext": "d5c053f4893fbbaa0d58cc87d5b82abdbac55599a46fe6eb8e355487e5c4799039a4a4ae7f365db3d573946f3acb51a2cfb2aafe",
+    "kdf": "scrypt"
+  }"#;
+
+        let crypto: Crypto<SCryptParams> = serde_json::from_str(data).unwrap();
+        let result = crypto.decrypt(&"Insecure Pa55w0rd").unwrap();
+        let wif = String::from_utf8(result).unwrap();
+        assert_eq!("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB", wif)
+    }
+
+    #[test]
+    pub fn deserialize_from_json() {
         let data = r#"
     {
     "cipher": "aes-128-ctr",
@@ -340,8 +437,7 @@ mod tests {
   }"#;
 
         let crypto: Crypto<Pbkdf2Params> = serde_json::from_str(data).unwrap();
-        let result = crypto.decrypt("aaa");
-        assert!(result.is_err());
+
         assert_eq!(
             crypto.mac,
             "4906577f075ad714f328e7b33829fdccfa8cd22eab2c0a8bc4f577824188ed16"

@@ -8,6 +8,7 @@ target 'iOSExample' do
   # Pods for iOSExample
   pod 'MBProgressHUD', '~> 1.1.0'
   pod 'Alamofire', '~> 5.0.0-beta.2'
+  pod 'SwiftProtobuf', '~> 1.0'
 
   target 'iOSExampleTests' do
     inherit! :search_paths

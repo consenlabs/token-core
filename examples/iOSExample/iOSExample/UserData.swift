@@ -9,14 +9,13 @@
 
 import SwiftUI
 import Combine
+import SwiftProtobuf
 
 final class UserData: ObservableObject  {
   @Published var operations = [
     Operation(id: "INIT", desc: "Init TokenCoreX"),
     Operation(id: "CREATE_WALLET", desc: "Create Wallet"),
     Operation(id: "IMPORT_WALLET", desc: "Import Wallet"),
-    Operation(id: "FIND_WALLET", desc: "Find Wallet"),
-    Operation(id: "EXPORT_MNEMONIC", desc: "Export Mnemonic"),
     Operation(id: "SIGN_TX", desc: "Sign Transaction"),
     Operation(id: "CLEAN_WALLETS", desc: "Clean All Test Wallets"),
   ]
@@ -60,14 +59,8 @@ final class UserData: ObservableObject  {
     case "CREATE_WALLET":
       doWorkBackground("Creating wallet", hardWork: createWallet)
       return
-    case "FIND_WALLET":
-      doWorkBackground("Finding wallet", hardWork: findWallet)
-      return
     case "IMPORT_WALLET":
       doWorkBackground("Importing wallet", hardWork: importWallet)
-      return
-    case "EXPORT_MNEMONIC":
-      doWorkBackground("Exporting Mnemonic", hardWork: exportMenmonic)
       return
     case "SIGN_TX":
       doWorkBackground("Signing Transaction", hardWork: signTransaction)
@@ -80,18 +73,15 @@ final class UserData: ObservableObject  {
     }
   }
   
-  func createWallet() {
-    
-    let param = [
-        "name": "createWalletTest",
-        "password": "Insecure Password",
-        "passwordHint": "Insecure Password",
-        "source": "MNEMONIC"
-    ]
-    self.apiResult = prettyPrintJSON(param);
-    self.apiResult = try! callTokenCoreXApi(param, create_wallet)
-  }
-  
+   func wrap_action(_ data: Data, method: String) throws -> Data {
+     var action = Api_TcxAction()
+     action.method = method;
+     var paramAny = Google_Protobuf_Any()
+     paramAny.typeURL = "imtoken.hd_store_import_param";
+     paramAny.value = data
+     action.param = paramAny
+     return try action.serializedData()
+   }
   
   func initTokenCoreX() {
     if UserData.IsInitialized {
@@ -114,76 +104,91 @@ final class UserData: ObservableObject  {
     self.apiResult = ""
   }
   
-  func findWallet() {
-    let param: [String: Any] = [
-      "chainType":"BITCOINCASH",
-      "mnemonic":"blind gravity card grunt basket expect garment tilt organ concert great critic",
-      "network":"MAINNET",
-      "path":"m/44'/145'/0'/0/0",
-      "segWit":"NONE"
-    ]
-    self.apiResult = prettyPrintJSON(param);
-    self.apiResult = try! callTokenCoreXApi(param, find_wallet_by_mnemonic)
+  func createWallet() {
+    do {
+      var param = Api_HdStoreCreateParam()
+      param.name = "test_create"
+      param.password = "imToken"
+      param.passwordHint = "imtoken"
+      
+      self.apiRequest = try param.jsonString()
+      var data = try wrap_action(try param.serializedData(), method: "hd_store_create")
+      let retData = try callTokenCoreXApi(&data)
+      let ret = try Api_WalletResult(serializedData: retData)
+      self.apiResult = try ret.jsonString()
+    } catch {
+      print(error)
+    }
   }
+  
+ 
   
   func importWallet() {
-    let param: [String: Any] = [
-      "chainType":"BITCOINCASH",
-      "mnemonic":"inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
-      "name":"BCH-Wallet-1",
-      "network":"MAINNET",
-      "overwrite":true,
-      "password":"Insecure Password",
-      "passwordHint":"",
-      "path":"m/44'/145'/0'/0/0",
-      "segWit":"NONE",
-      "source":"MNEMONIC"
-      ]
-    self.apiResult = prettyPrintJSON(param);
-    self.apiResult = try! callTokenCoreXApi(param, import_wallet_from_mnemonic)
-  }
-  
-  func exportMenmonic() {
-    createWallet()
-    let ret = try! JSONSerialization.jsonObject(with: self.apiResult.data(using: .utf8)!, options: .allowFragments) as! [String: Any]
-    
-    let param: [String: Any] = [
-      "id": ret["id"] as! String,
-      "password": "Insecure Password"
-    ]
-    self.apiResult = prettyPrintJSON(param);
-    self.apiResult = try! callTokenCoreXApi(param, export_mnemonic)
+    do {
+      var param = Api_HdStoreImportParam()
+          param.chainType = "BITCOINCASH"
+          param.mnemonic = "inject kidney empty canal shadow pact comfort wife crush horse wife sketch"
+          param.network = "MAINNET";
+          param.path = "m/44'/145'/0'/0/0"
+          param.segWit = "NONE"
+          param.overwrite = true
+          param.password = "imToken"
+
+      var data = try wrap_action(try param.serializedData(), method: "hd_store_import")
+          let result = try! callTokenCoreXApi(&data)
+          let importResult = try! Api_WalletResult(serializedData: result)
+          self.apiResult = try! importResult.jsonString()
+    } catch {
+      print(error)
+    }
     
   }
+
   
   func signTransaction() {
     importWallet()
+    
     let ret = try! JSONSerialization.jsonObject(with: self.apiResult.data(using: .utf8)!, options: .allowFragments) as! [String: Any]
     
-    let utxo: [String: Any] = [
-      "txHash": "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2",
-      "vout": 0,
-      "amount": "100000",
-      "address": "bitcoincash:qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
-      "scriptPubKey": "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac",
-      "derivedPath": "0/0"
-    ]
-    let param: [String: Any] = [
-      "id":ret["id"] as! String,
-      "password": "Insecure Password",
-      "to": "bitcoincash:qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s",
-      "amount": "93454",
-      "fee": "6000",
-      "internalUsed": 0,
-      "chainType": "BITCOINCASH",
-      "chainId": "145",
-      "segWit":"NONE",
-      "outputs": [
-          utxo
-      ]
-    ]
-    self.apiResult = prettyPrintJSON(param);
-    self.apiResult = try! callTokenCoreXApi(param, sign_transaction)
+    do {
+      var param = Api_SignParam()
+      param.id = ret["id"] as! String
+      param.password = "imToken"
+      param.chainType = "BITCOINCASH"
+      param.address = "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r"
+      
+      self.apiRequest = try param.jsonString()
+      var utxo = Transaction_Utxo()
+      utxo.txHash = "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2"
+      utxo.vout = 0
+      utxo.amount = 100000
+      utxo.address = "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r"
+      utxo.scriptPubKey = "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac"
+      utxo.derivedPath = "0/0"
+      
+      var input = Transaction_BtcForkTxInput()
+      input.amount = 93454
+      input.to = "qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s"
+      input.fee = 6000
+      input.changeIdx = 1;
+      input.network = "MAINNET"
+      input.segWit = "NONE"
+      
+      input.unspents = [utxo]
+      
+      var txInAny = Google_Protobuf_Any()
+      txInAny.typeURL = "imtoken.tx"
+      txInAny.value = try input.serializedData()
+      param.input = txInAny
+      
+      
+      var data = try wrap_action(try param.serializedData(), method: "sign_tx")
+      let retData = try callTokenCoreXApi(&data)
+      let ret = try Transaction_BtcForkSignedTxOutput(serializedData: retData)
+      self.apiResult = try ret.jsonString()
+    } catch {
+      print(error)
+    }
   }
   
   func cleanWallets() {
@@ -225,42 +230,29 @@ final class UserData: ObservableObject  {
       }
     }
   }
+
   
-  private func callTokenCoreXApi(_ param: JSONObject, _ block: (_ mapStr: UnsafePointer<Int8>?) -> UnsafePointer<Int8>?) throws -> String {
-      
-      let data = try! JSONSerialization.data(withJSONObject: param, options: [])
-      let mapStr = String(data: data, encoding: .utf8)!
-      
-      clear_err()
-      let cPtr = block(mapStr)
-      defer {
-        free_const_string(cPtr)
-      }
-      let cErrPtr = get_last_err_message()!
-      defer {
-        free_const_string(cErrPtr)
-      }
-      
-      let errStr = String(cString: cErrPtr)
-      if errStr.count > 0 {
-        throw errStr
-      } else if let cPtr = cPtr {
-        let ret = String(cString: cPtr)
-        if ret ==  "{}" {
   
-          return ret
+  private func callTokenCoreXApi(_ data: inout Data) throws -> Data {
+    var returnData = Data();
+        data.withUnsafeMutableBytes{  [ bytesLen = data.count ] (bytes: UnsafeMutablePointer<UInt8>) -> Void in
+             //Use `bytes` inside this closure
+          let buf = Buffer(data: bytes, len: UInt(bytesLen))
+          clear_err()
+          let retBuf = call_tcx_api(buf)
+          defer {
+            free_buf(retBuf)
+          }
+          let errBuf = get_last_err()
+
+          if errBuf.len > 0 {
+            returnData = Data(bytes: errBuf.data, count: Int(errBuf.len))
+            free_buf(errBuf)
+          } else {
+            returnData = Data(bytes: retBuf.data, count: Int(retBuf.len))
         }
-        
-        let retObj = try? JSONSerialization.jsonObject(with: ret.data(using: .utf8)!, options: []) as? [AnyHashable: Any]
-        if let retObj = retObj {
-          return prettyPrintJSON(retObj)
-        } else {
-          return ret
         }
-        
-      } else {
-        return ""
-      }
+    return returnData
     }
   
 }

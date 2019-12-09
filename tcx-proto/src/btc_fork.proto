@@ -1,0 +1,29 @@
+syntax = "proto3";
+package transaction;
+
+message Utxo {
+    string txHash = 1;
+    int32 vout = 2;
+    int64 amount = 3;
+    string address = 4;
+    string scriptPubKey = 5;
+    string derivedPath = 6;
+    int64 sequence = 7;
+}
+
+message BtcForkTxInput {
+    string to = 1;
+    int64 amount = 2;
+    repeated Utxo unspents = 3;
+    string memo = 4;
+    int64 fee = 5;
+    uint32 changeIdx = 6;
+    string changeAddress = 7;
+    string network = 8;
+    string segWit = 9;
+}
+
+message BtcForkSignedTxOutput {
+    string signature = 1;
+    string txHash = 2;
+}

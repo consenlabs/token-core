@@ -8,7 +8,7 @@ use std::ffi::{CStr, CString};
 use std::fs::{create_dir, remove_dir};
 use std::path::Path;
 use tcx::*;
-use tcx_btc_fork::transaction::Utxo;
+use tcx_btc_fork::signer::Utxo;
 fn main() {
     // 1) scan_wallets
     // 必须先调用scan_wallets, 设置wallet_dir

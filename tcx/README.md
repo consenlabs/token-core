@@ -1,3 +1,3 @@
-# TokenCoreX
+# TokenCoreX API Layer
 
-Compile TokenCore to a lib file.
+This package is used to exposed all API.

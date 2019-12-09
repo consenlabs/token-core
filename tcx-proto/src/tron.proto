@@ -1,0 +1,20 @@
+syntax = "proto3";
+package transaction;
+
+message TronTxInput {
+    bytes rawData = 1;
+}
+
+message TronTxOutput {
+    bytes signature = 1;
+}
+
+message TronMessageInput {
+    string value = 1;
+    bool isHex = 2;
+    bool isTronHeader = 3;
+}
+
+message TronMessageOutput {
+    string signature = 1;
+}
