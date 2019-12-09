@@ -35,12 +35,12 @@ class CMP extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      mnemonic: '',
-      password: '',
+      mnemonic: 'inject kidney empty canal shadow pact comfort wife crush horse wife sketch',
+      password: '1234',
       id: '',
       address: '',
-      chainType: '' as __chainType,
-      network: '' as __networkType,
+      chainType: 'BITCOINCASH' as __chainType,
+      network: 'MAINNET' as __networkType,
       isLoading: false,
     }
   }
@@ -106,9 +106,9 @@ class CMP extends React.Component<Props, State> {
       this.setState({ isLoading: true })
       const res = await walletAPI.importWalletFromMnemonic(params)
       console.log('res', res)
-      this.setState({ id: res.id, address: res.address, isLoading: false })
+      this.setState({ id: res.id, address: res.accounts[0].address, isLoading: false })
     } catch (err) {
-      this.setState({ isLoading: true })
+      this.setState({ isLoading: false })
       Alert.alert('', err.message)
     }
   }

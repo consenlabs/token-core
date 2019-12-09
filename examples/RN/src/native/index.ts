@@ -2,101 +2,48 @@
  * Wallet Native API
  */
 
+// import protobuf from 'protobufjs'
 import { NativeModules } from 'react-native'
-import {
-  // import wallet
-  ImportWalletFromMnemonicParams,
-  ImportWalletFromKeystoreParams,
-  ImportWalletFromPrivateKeyParams,
-  ImportWalletResult,
+import { Buffer } from 'buffer'
+import protoRoot from './proto'
+import { api } from './proto.d'
 
-  // export wallet
-  ExportParams,
-  ExportBtcPrivateKeyParams,
-  ExportKeystoreResult,
-  ExportMnemonicResult,
-  ExportPrivateKeyResult,
-  ExistsMnemonicParams,
-  ExistsKeystoreParams,
-  ExistsPrivateKeyParams,
-  RemoveWalletParams,
-  RemoveWalletResult,
-
-  // sign transaction
-  EthtereumSignParams,
-  BitcoinSignParams,
-  EosSignParams,
-  SignTxResult,
-
-  // personal sign
-  EosEcSignParams,
-  SignParams,
-
-  // password
-  VerifyPasswordParams,
-  VerifyPasswordResult,
-} from './interface'
-
-const WalletAPI = NativeModules.WalletAPI
+const TcxAPI = NativeModules.TcxApi
 
 export default {
-  generateMnemonic(): Promise<string> {
-    return WalletAPI.generateMnemonic({})
-  },
+  async importWalletFromMnemonic(params: api.IHdStoreImportParam): Promise<api.IWalletResult> {
+    try {
+      const Any = protoRoot.google.protobuf.Any
+      const TcxAction = protoRoot.api.TcxAction
+      const ParamType = protoRoot.api.HdStoreImportParam
+      const encodedParam = ParamType.create(params)
+      const any = Any.create({
+        type_url: 'hd_store_import',
+        value: ParamType.encode(encodedParam).finish(),
+      })
+      const message = TcxAction.create({
+        method: 'hd_store_import',
+        param: any
+      })
 
-  importWalletFromMnemonic(params: ImportWalletFromMnemonicParams): Promise<ImportWalletResult> {
-    return WalletAPI.importWalletFromMnemonic(params)
-  },
-
-  importWalletFromKeystore(params: ImportWalletFromKeystoreParams): Promise<ImportWalletResult> {
-    return WalletAPI.importWalletFromKeystore(params)
-  },
-
-  importWalletFromPrivateKey(params: ImportWalletFromPrivateKeyParams): Promise<ImportWalletResult> {
-    return WalletAPI.importWalletFromPrivateKey(params)
-  },
-
-  existsMnemonic(params: ExistsMnemonicParams): Promise<ImportWalletResult> {
-    return WalletAPI.findWalletByMnemonic(params)
-  },
-
-  existsKeystore(params: ExistsKeystoreParams): Promise<ImportWalletResult> {
-    return WalletAPI.findWalletByKeystore(params)
-  },
-
-  existsPrivateKey(params: ExistsPrivateKeyParams): Promise<ImportWalletResult> {
-    return WalletAPI.findWalletByPrivateKey(params)
-  },
-
-  exportPrivateKey(params: ExportParams | ExportBtcPrivateKeyParams): Promise<ExportPrivateKeyResult> {
-    return WalletAPI.exportPrivateKey(params)
-  },
-
-  exportMnemonic(params: ExportParams): Promise<ExportMnemonicResult> {
-    return WalletAPI.exportMnemonic(params)
-  },
-
-  exportKeystore(params: ExportParams): Promise<ExportKeystoreResult> {
-    return WalletAPI.exportKeystore(params)
-  },
-
-  removeWallet(params: RemoveWalletParams): Promise<RemoveWalletResult> {
-    return WalletAPI.removeWallet(params)
-  },
-
-  signTransaction(params: EthtereumSignParams | BitcoinSignParams | EosSignParams): Promise<SignTxResult> {
-    return WalletAPI.signTransaction(params)
-  },
-
-  eosEcSign(params: EosEcSignParams): Promise<string /* signature */> {
-    return WalletAPI.eosEcSign(params)
-  },
-
-  personalSign(params: SignParams): Promise<string /* signature */> {
-    return WalletAPI.personalSign(params)
-  },
-
-  verifyPassword(params: VerifyPasswordParams): Promise<VerifyPasswordResult> {
-    return WalletAPI.verifyPassword(params)
+      const buffer = TcxAction.encode(message).finish()
+      const hexStr = Buffer.from(buffer).toString('hex')
+      console.log('hexStr', hexStr)
+      const res = await TcxAPI.callTcxApi(hexStr)
+      console.log('res', res)
+      const retBuf = Buffer.from(res, 'hex')
+      const WalletType = protoRoot.api.WalletResult
+      const wallet = WalletType.decode(retBuf)
+      console.log('wallet: ', wallet)
+      return wallet
+    } catch (error) {
+      console.log('error', error)
+      const errBuf = Buffer.from(error, 'hex')
+      console.log('errBuf', errBuf)
+      const ResponseType = protoRoot.api.Response
+      const err = ResponseType.decode(errBuf)
+      console.log('err', err)
+      throw err
+    }
   },
 }
