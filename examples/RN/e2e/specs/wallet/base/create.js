@@ -1,4 +1,4 @@
-import { id, toHaveText } from '../../../utils.js'
+import { id, toHaveText, readTextValue } from '../../../utils.js'
 
 export default async function (params) {
   const { chainType, password, address, network, segWit } = params
@@ -19,6 +19,17 @@ export default async function (params) {
   await id('submit-btn').tap()
 
   await waitFor(id('expected-address')).toExist().withTimeout(2000)
+  const expectedAddress = await readTextValue('expected-address')
+
+  // export
+  await id('export-btn').tap()
+  await waitFor(id('expected-mnemonic')).toExist().withTimeout(2000)
+
+  // import
+  await id('import-btn').tap()
+  await waitFor(id('import-address')).toExist().withTimeout(2000)
+
+  await toHaveText('import-address', expectedAddress)
 
   // go back
   await id('goBack').tap()

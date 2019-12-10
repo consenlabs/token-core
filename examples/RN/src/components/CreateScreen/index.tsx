@@ -12,9 +12,11 @@ interface State {
   segWit: string
   id: string | null | undefined
   address: string | null | undefined
+  expectedAddress: any
   chainType: __chainType
   network: __networkType
   isLoading: boolean
+  mnemonic: any
 }
 
 class CMP extends React.Component<Props, State> {
@@ -38,14 +40,16 @@ class CMP extends React.Component<Props, State> {
       password: '',
       id: '',
       address: '',
+      expectedAddress: '',
       chainType: '' as __chainType,
       network: '' as __networkType,
       segWit: '',
       isLoading: false,
+      mnemonic: '',
     }
   }
   render() {
-    const { password, chainType, network, segWit, address, isLoading } = this.state
+    const { isLoading, password, chainType, network, segWit, address, mnemonic } = this.state
     const inputs = {
       password,
       chainType,
@@ -54,29 +58,67 @@ class CMP extends React.Component<Props, State> {
     }
     return (
       <View style={styles.container}>
+        <Loading animating={isLoading} />
+        <View>
+          {
+            Object.keys(inputs).map((v) => {
+              return <TextInput
+                key={v}
+                testID={`input-${v}`}
+                // @ts-ignore
+                value={inputs[v]}
+                placeholder={v}
+                style={styles.input}
+                onChangeText={(text) => {
+                  // @ts-ignore
+                  this.setState({ [v]: text })
+                }}
+              />
+            })
+          }
+          <Button
+            testID="submit-btn"
+            title="create"
+            onPress={this.handleSubmit}
+          />
+          {!!address && <Text testID="expected-address">{address}</Text>}
+        </View>
+        <View>
+          <Button
+            testID="export-btn"
+            title="export"
+            onPress={this.handleExport}
+          />
+          {!!mnemonic && <Text testID="expected-mnemonic">{mnemonic}</Text>}
+        </View>
+        {this.renderImport()}
+      </View>
+    )
+  }
+
+  renderImport() {
+    const { password, chainType, network, segWit, expectedAddress, mnemonic } = this.state
+    const inputs = {
+      mnemonic,
+      password,
+      chainType,
+      network,
+      segWit,
+    }
+    return (
+      <View>
         {
           Object.keys(inputs).map((v) => {
-            return <TextInput
-              key={v}
-              testID={`input-${v}`}
-              // @ts-ignore
-              value={inputs[v]}
-              placeholder={v}
-              style={styles.input}
-              onChangeText={(text) => {
-                // @ts-ignore
-                this.setState({ [v]: text })
-              }}
-            />
+            // @ts-ignore
+            return <Text key={v}>{inputs[v]}</Text>
           })
         }
         <Button
-          testID="submit-btn"
-          title="create"
-          onPress={this.handleSubmit}
+          testID="import-btn"
+          title="import"
+          onPress={this.handleImport}
         />
-        {!!address && <Text testID="expected-address">{address}</Text>}
-        <Loading animating={isLoading} />
+        {!!expectedAddress && <Text testID="import-address">{expectedAddress}</Text>}
       </View>
     )
   }
@@ -107,6 +149,57 @@ class CMP extends React.Component<Props, State> {
       // @ts-ignore
       const address = accountsRes.accounts[0].address
       this.setState({ id: res.id, address, isLoading: false })
+    } catch (err) {
+      this.setState({ isLoading: false })
+      Alert.alert('', err.message)
+    }
+  }
+
+  handleExport = async () => {
+    const { id, password } = this.state
+    try {
+      this.setState({ isLoading: true })
+      const res = await walletAPI.hdStoreExport({ id, password })
+      this.setState({ mnemonic: res.value, isLoading: false })
+    } catch (err) {
+      this.setState({ isLoading: false })
+      Alert.alert('', err.message)
+    }
+  }
+
+  handleImport = async () => {
+    const { mnemonic, password, chainType, network, segWit } = this.state
+    const chainPath = getChainPath(chainType, network)
+    try {
+      const params = {
+        chainType,
+        network,
+        name: 'MNEMONIC-test',
+        source: 'MNEMONIC' as __walletSource,
+        path: chainPath,
+        mnemonic: mnemonic.trim(),
+        password,
+        segWit,
+        overwrite: true,
+        passwordHint: ''
+      }
+      console.log('params', params)
+      this.setState({ isLoading: true })
+      const res = await walletAPI.hdStoreImport(params)
+      const deriveParams = {
+        chainType,
+        path: chainPath,
+        network,
+        segWit,
+      }
+      const accountsRes = await walletAPI.hdStoreDerive({
+        id: res.id,
+        password,
+        derivations: [deriveParams]
+      })
+      // @ts-ignore
+      const address = accountsRes.accounts[0].address
+      this.setState({ id: res.id, expectedAddress: address, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
       Alert.alert('', err.message)

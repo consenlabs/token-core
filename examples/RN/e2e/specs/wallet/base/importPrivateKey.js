@@ -22,12 +22,14 @@ export default async function (params) {
 
   // dismiss keyboard
   // await label('return').tap()
-
   await id('import-btn').tap()
-
   await waitFor(id('import-address')).toExist().withTimeout(2000)
-
   await toHaveText('import-address', address)
+
+  // export
+  await id('export-btn').tap()
+  await waitFor(id('export-privateKey')).toExist().withTimeout(2000)
+  await toHaveText('export-privateKey', privateKey)
 
   // go back
   await id('goBack').tap()

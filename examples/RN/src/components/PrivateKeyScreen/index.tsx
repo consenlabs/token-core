@@ -11,6 +11,7 @@ interface State {
   network: __networkType
   password: string
   privateKey: string
+  exportPrivateKey: any
   address: string
   segWit: string
   id: string
@@ -39,6 +40,7 @@ class CPK extends React.Component<Props, State> {
       network: '' as __networkType,
       password: '',
       privateKey: '',
+      exportPrivateKey: '',
       address: '',
       segWit: '',
       id: '',
@@ -47,7 +49,7 @@ class CPK extends React.Component<Props, State> {
   }
 
   render() {
-    const { privateKey, password, chainType, network, address, segWit, isLoading } = this.state
+    const { privateKey, password, chainType, network, address, segWit, isLoading, exportPrivateKey } = this.state
     const inputs = {
       privateKey,
       password,
@@ -57,29 +59,40 @@ class CPK extends React.Component<Props, State> {
     }
     return (
       <View style={styles.container}>
-        {
-          Object.keys(inputs).map((v) => {
-            return <TextInput
-              key={v}
-              testID={`input-${v}`}
-              // @ts-ignore
-              value={inputs[v]}
-              placeholder={v}
-              style={styles.input}
-              onChangeText={(text) => {
-                // @ts-ignore
-                this.setState({ [v]: text })
-              }}
-            />
-          })
-        }
-        <Button
-          testID="import-btn"
-          title="import"
-          onPress={this.handleImport}
-        />
-        {!!address && <Text testID="import-address">{address}</Text>}
         <Loading animating={isLoading} />
+        <View>
+          {
+            Object.keys(inputs).map((v) => {
+              return <TextInput
+                key={v}
+                testID={`input-${v}`}
+                // @ts-ignore
+                value={inputs[v]}
+                placeholder={v}
+                style={styles.input}
+                onChangeText={(text) => {
+                  // @ts-ignore
+                  this.setState({ [v]: text })
+                }}
+              />
+            })
+          }
+          <Button
+            testID="import-btn"
+            title="import"
+            onPress={this.handleImport}
+          />
+          {!!address && <Text testID="import-address">{address}</Text>}
+        </View>
+
+        <View>
+          <Button
+            testID="export-btn"
+            title="export"
+            onPress={this.handleExport}
+          />
+          {!!exportPrivateKey && <Text testID="export-privateKey">{exportPrivateKey}</Text>}
+        </View>
       </View>
     )
   }
@@ -105,6 +118,19 @@ class CPK extends React.Component<Props, State> {
       Alert.alert('', err.message)
     }
   }
+
+  handleExport = async () => {
+    const { id, password, chainType, network } = this.state
+    try {
+      this.setState({ isLoading: true })
+      const res = await walletAPI.privateKeyStoreExport({ id, password, chainType, network })
+      this.setState({ exportPrivateKey: res.value, isLoading: false })
+    } catch (err) {
+      this.setState({ isLoading: false })
+      Alert.alert('', err.message)
+    }
+  }
+
 }
 
 const styles = StyleSheet.create({
