@@ -24,8 +24,9 @@ pub mod handler;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
     encode_message, hd_store_create, hd_store_derive, hd_store_export, hd_store_import,
-    keystore_common_delete, keystore_common_exists, keystore_common_verify,
-    private_key_store_export, private_key_store_import, sign_tx, tron_sign_message, Buffer,
+    keystore_common_accounts, keystore_common_delete, keystore_common_exists,
+    keystore_common_verify, private_key_store_export, private_key_store_import, sign_tx,
+    tron_sign_message, Buffer,
 };
 mod filemanager;
 use crate::filemanager::{
@@ -100,7 +101,7 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
             landingpad(|| keystore_common_exists(&action.param.unwrap().value))
         }
         "keystore_common_accounts" => {
-            landingpad(|| keystore_common_exists(&action.param.unwrap().value))
+            landingpad(|| keystore_common_accounts(&action.param.unwrap().value))
         }
 
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
@@ -212,13 +213,13 @@ mod tests {
     use std::path::Path;
     use std::str::FromStr;
 
-    use crate::api::{InitTokenCoreXParam, WalletResult};
+    use crate::api::{InitTokenCoreXParam, KeystoreCommonExistsResult, WalletResult};
     use crate::init_token_core_x;
     use bytes::BytesMut;
     use prost::Message;
     use tcx_chain::HdKeystore;
 
-    static WALLET_ID: &'static str = "9c6cbc21-1c43-4c8b-bb7a-5e538f908819";
+    static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
 
     fn _to_c_char(str: &str) -> *const c_char {
         CString::new(str).unwrap().into_raw()
@@ -313,5 +314,20 @@ mod tests {
                 ret.accounts.first().unwrap().address
             );
         });
+    }
+
+    #[test]
+    fn test_encode_empty_struct() {
+        //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult {
+        //            is_exists: false,
+        //            id: "".to_string()
+        //        };
+        //        let hex_value = hex::encode(encode_message(param).unwrap());
+        //        assert_eq!("08001200", hex_value);
+        let bytes = hex::decode("08001200").unwrap();
+        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult::decode(bytes).unwrap();
+        let param2: KeystoreCommonExistsResult =
+            KeystoreCommonExistsResult::decode(vec![]).unwrap();
+        assert_eq!(param.is_exists, param2.is_exists);
     }
 }
