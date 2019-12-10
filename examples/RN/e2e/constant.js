@@ -28,11 +28,6 @@ export const TRON_MAINNET_MNEMONIC_12_PRIVATEKEY = 'b2a3f2ad9ea57b03aae9584a50b3
 
 export const MNEMONIC_24 = 'install mass display evidence cave prize echo soda clever beef orphan canyon hint area jar you crazy salad cradle balance solve club yellow advice'
 
-// TESTNET MNEMONIC_24 ADDRESS
-export const BITCOINCASH_TESTNET_MNEMONIC_24_ADDRESS = 'qr9lsgw69856d4ptnl9wp08emrv53kx8gvfqvrf6kj'
-export const LITECOIN_TESTNET_MNEMONIC_24_ADDRESS = 'mz7SiXSBFfaBPLhhRWdFMNCcvdPxSWo9vT'
-export const TRON_TESTNET_MNEMONIC_24_ADDRESS = 'TPULP1o2CfsyLupsQABm4hHTUsWXiYpmBA'
-
 // MAINNET MNEMONIC_24 ADDRESS
 export const BITCOINCASH_MAINNET_MNEMONIC_24_ADDRESS = 'qzrg7hg66dwxupa48je67ca2m08wd5s9t53l3e5l7n'
 export const LITECOIN_MAINNET_MNEMONIC_24_ADDRESS = 'LWPTmrBhMfezodS721xizSvdmHfRWqWnEe'
