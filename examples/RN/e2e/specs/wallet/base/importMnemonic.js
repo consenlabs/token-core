@@ -25,10 +25,21 @@ export default async function (params) {
   // await label('return').tap()
 
   await id('import-btn').tap()
-
   await waitFor(id('import-address')).toExist().withTimeout(2000)
-
   await toHaveText('import-address', address)
+
+  // keystore
+  await id('keystoreCommonVerify').tap()
+  await waitFor(id('verifySuccess')).toExist().withTimeout(2000)
+
+  await id('keystoreCommonExists').tap()
+  await waitFor(id('isExists')).toExist().withTimeout(2000)
+
+  await id('keystoreCommonAccounts').tap()
+  await waitFor(id('accounts')).toExist().withTimeout(2000)
+
+  await id('keystoreCommonDelete').tap()
+  await waitFor(id('deleteSuccess')).toExist().withTimeout(2000)
 
   // go back
   await id('goBack').tap()

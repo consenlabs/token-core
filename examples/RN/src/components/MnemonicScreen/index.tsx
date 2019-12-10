@@ -16,6 +16,10 @@ interface State {
   chainType: __chainType
   network: __networkType
   isLoading: boolean
+  verifySuccess: any
+  isExists: any
+  accounts: any
+  deleteSuccess: any
 }
 
 class CMP extends React.Component<Props, State> {
@@ -44,6 +48,10 @@ class CMP extends React.Component<Props, State> {
       network: '' as __networkType,
       segWit: '',
       isLoading: false,
+      verifySuccess: false,
+      isExists: false,
+      deleteSuccess: false,
+      accounts: '',
     }
   }
   render() {
@@ -57,31 +65,129 @@ class CMP extends React.Component<Props, State> {
     }
     return (
       <View style={styles.container}>
-        {
-          Object.keys(inputs).map((v) => {
-            return <TextInput
-              key={v}
-              testID={`input-${v}`}
-              // @ts-ignore
-              value={inputs[v]}
-              placeholder={v}
-              style={styles.input}
-              onChangeText={(text) => {
-                // @ts-ignore
-                this.setState({ [v]: text })
-              }}
-            />
-          })
-        }
-        <Button
-          testID="import-btn"
-          title="import"
-          onPress={this.handleImport}
-        />
-        {!!address && <Text testID="import-address">{address}</Text>}
         <Loading animating={isLoading} />
+        <View>
+          {
+            Object.keys(inputs).map((v) => {
+              return <TextInput
+                key={v}
+                testID={`input-${v}`}
+                // @ts-ignore
+                value={inputs[v]}
+                placeholder={v}
+                style={styles.input}
+                onChangeText={(text) => {
+                  // @ts-ignore
+                  this.setState({ [v]: text })
+                }}
+              />
+            })
+          }
+          <Button
+            testID="import-btn"
+            title="import"
+            onPress={this.handleImport}
+          />
+          {!!address && <Text testID="import-address">{address}</Text>}
+        </View>
+        {this.renderKeystore()}
       </View>
     )
+  }
+
+  renderKeystore() {
+    const { verifySuccess, isExists, accounts, deleteSuccess } = this.state
+    return (
+      <View>
+        <View>
+          <Button
+            testID="keystoreCommonVerify"
+            title="keystoreCommonVerify"
+            onPress={this.keystoreCommonVerify}
+          />
+          {!!verifySuccess && <Text testID="verifySuccess">{`verifySuccess`}</Text>}
+        </View>
+
+        <View>
+          <Button
+            testID="keystoreCommonExists"
+            title="keystoreCommonExists"
+            onPress={this.keystoreCommonExists}
+          />
+          {!!isExists && <Text testID="isExists">{`isExists`}</Text>}
+        </View>
+
+        <View>
+          <Button
+            testID="keystoreCommonAccounts"
+            title="keystoreCommonAccounts"
+            onPress={this.keystoreCommonAccounts}
+          />
+          {!!accounts && <Text testID="accounts">{accounts}</Text>}
+        </View>
+
+        <View>
+          <Button
+            testID="keystoreCommonDelete"
+            title="keystoreCommonDelete"
+            onPress={this.keystoreCommonDelete}
+          />
+          {!!deleteSuccess && <Text testID="deleteSuccess">{`deleteSuccess`}</Text>}
+        </View>
+      </View>
+    )
+  }
+
+  keystoreCommonVerify = async () => {
+    const { id, password } = this.state
+    try {
+      this.setState({ isLoading: true })
+      const res = await walletAPI.keystoreCommonVerify({ id, password })
+      this.setState({ verifySuccess: res.isSuccess, isLoading: false })
+    } catch (err) {
+      this.setState({ isLoading: false })
+      Alert.alert('', err.message)
+    }
+  }
+
+  keystoreCommonExists = async () => {
+    const { mnemonic } = this.state
+    try {
+      this.setState({ isLoading: true })
+      // @ts-ignore
+      const res = await walletAPI.keystoreCommonExists({ type: 'MNEMONIC', value: mnemonic })
+      this.setState({ isExists: res.isExists, isLoading: false })
+    } catch (err) {
+      this.setState({ isLoading: false })
+      Alert.alert('', err.message)
+    }
+  }
+
+  keystoreCommonAccounts = async () => {
+    const { id } = this.state
+    try {
+      this.setState({ isLoading: true })
+      const res = await walletAPI.keystoreCommonAccounts({ id })
+      const accounts = res.accounts
+      // @ts-ignore
+      this.setState({ accounts: accounts[0].address, isLoading: false })
+    } catch (err) {
+      this.setState({ isLoading: false })
+      Alert.alert('', err.message)
+    }
+  }
+
+  keystoreCommonDelete = async () => {
+    const { id, password } = this.state
+    try {
+      this.setState({ isLoading: true })
+      const res = await walletAPI.keystoreCommonDelete({ id, password })
+      // @ts-ignore
+      this.setState({ deleteSuccess: res.isSuccess, isLoading: false })
+    } catch (err) {
+      this.setState({ isLoading: false })
+      Alert.alert('', err.message)
+    }
   }
 
   handleImport = async () => {
