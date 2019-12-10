@@ -89,14 +89,14 @@ export default function () {
 
           it(`should import ${chainType} wallet, network is ${network}, mnemonic is ${mnemonicIndex} and address is ${address}`, async () => {
             // const { chainType, mnemonic, password, address, network } = params
-            await importMnemonic(getChainParams({
-              chainType: chainType,
-              mnemonic: mnemonic,
+            const params = getChainParams({
+              mnemonic,
+              chainType,
               password: PASSWORD,
-              network: network,
+              network,
               segWit: 'NONE',
-              address: address,
-            }))
+            })
+            await importMnemonic({ ...params, address })
           })
         }
       }

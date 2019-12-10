@@ -12,6 +12,7 @@ interface State {
   password: string
   privateKey: string
   address: string
+  segWit: string
   id: string
   isLoading: boolean
 }
@@ -39,72 +40,68 @@ class CPK extends React.Component<Props, State> {
       password: '',
       privateKey: '',
       address: '',
+      segWit: '',
       id: '',
       isLoading: false,
     }
   }
 
   render() {
-    const { privateKey, password, chainType, network, address, isLoading } = this.state
+    const { privateKey, password, chainType, network, address, segWit, isLoading } = this.state
+    const inputs = {
+      privateKey,
+      password,
+      chainType,
+      network,
+      segWit,
+    }
     return (
       <View style={styles.container}>
-        <TextInput
-          testID="privateKeyInput"
-          value={privateKey}
-          placeholder={'privateKey'}
-          style={styles.input}
-          onChangeText={(privateKey) => this.setState({ privateKey })}
-          multiline
-        />
-        <TextInput
-          testID="privateKeyPassword"
-          value={password}
-          placeholder={'password'}
-          style={styles.input}
-          onChangeText={(password) => this.setState({ password })}
-        />
-        <TextInput
-          testID="privateKeyChainType"
-          value={chainType}
-          placeholder={'chainType'}
-          style={styles.input}
-          onChangeText={(chainType) => this.setState({ chainType: chainType as __chainType })}
-        />
-        <TextInput
-          testID="privateKeyNetwork"
-          value={network}
-          placeholder={'network'}
-          style={styles.input}
-          onChangeText={(network) => this.setState({ network: network as __networkType })}
-        />
+        {
+          Object.keys(inputs).map((v) => {
+            return <TextInput
+              key={v}
+              testID={`input-${v}`}
+              // @ts-ignore
+              value={inputs[v]}
+              placeholder={v}
+              style={styles.input}
+              onChangeText={(text) => {
+                // @ts-ignore
+                this.setState({ [v]: text })
+              }}
+            />
+          })
+        }
         <Button
-          testID="privateKeySubmit"
-          title="submit"
-          onPress={this.handleSubmit}
+          testID="import-btn"
+          title="import"
+          onPress={this.handleImport}
         />
-        {!!address && <Text testID="privateKeyAddress">{address}</Text>}
+        {!!address && <Text testID="import-address">{address}</Text>}
         <Loading animating={isLoading} />
       </View>
     )
   }
 
-  handleSubmit = async () => {
-    const { privateKey, password, chainType, network } = this.state
+  handleImport = async () => {
+    const { privateKey, password, chainType, network, segWit } = this.state
     try {
       const params = {
+        privateKey: privateKey.trim(),
+        password,
         chainType,
         network,
-        password,
-        privateKey: privateKey.trim(),
+        segWit,
         overwrite: true,
-        passwordHint: ''
       }
       this.setState({ isLoading: true })
-      const res = await walletAPI.importWalletFromPrivateKey(params)
+      const res = await walletAPI.privateKeyStoreImport(params)
       console.log('res', res)
-      this.setState({ id: res.id, address: res.address, isLoading: false })
+      // @ts-ignore
+      this.setState({ id: res.id, address: res.accounts[0].address, isLoading: false })
     } catch (err) {
-      this.setState({ isLoading: true })
+      this.setState({ isLoading: false })
       Alert.alert('', err.message)
     }
   }

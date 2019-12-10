@@ -28,27 +28,46 @@ export const ADDRESSES = {
   TRON_MAINNET_PRIVATEKEY_ADDRESS
 }
 
+const getChainParams = ({ privateKey, password, chainType, network, segWit }) => {
+  switch (chainType) {
+    case 'TRON':
+      return {
+        chainType,
+        privateKey,
+        password,
+        network: '',
+        segWit: '',
+      }
+    default:
+      return {
+        chainType,
+        privateKey,
+        password,
+        network,
+        segWit,
+      }
+  }
+}
+
 export default function () {
   describe('⏳ privateKey flow', () => {
     for (const chainIndex in CHAINTYPES) {
-        for (const ptivatekeyIndex in PRIVATEKEYS) {
-          
-          let chainType = CHAINTYPES[chainIndex]
-          let privateKey = PRIVATEKEYS[ptivatekeyIndex]
-          let address = ADDRESSES[ptivatekeyIndex + '_ADDRESS']
-          let network = ptivatekeyIndex.indexOf('MAINNET') ? 'MAINNET' : 'TESTNET'
-          console.log(network)
-          it(`should import ${chainType} wallet, network is ${network}, privateKey is ${ptivatekeyIndex} and address is ${address}`, async () => {
-            // const { chainType, mnemonic, password, address, network } = params
-            await importPrivateKey({
-              chainType: chainType,
-              privateKey: privateKey,
-              password: PASSWORD,
-              address: address,
-              network: network
-            })
-          })
-      }
+      let chainType = CHAINTYPES[chainIndex]
+      let privateKey = PRIVATEKEYS[`${chainType}_MAINNET_PRIVATEKEY`]
+      let address = ADDRESSES[chainType + '_MAINNET_PRIVATEKEY_ADDRESS']
+      let network = 'MAINNET'
+      console.log(network)
+      it(`should import ${chainType} wallet, network is ${network}, privateKey is ${privateKey} and address is ${address}`, async () => {
+        // const { chainType, mnemonic, password, address, network } = params
+        const params = getChainParams({
+          privateKey,
+          chainType,
+          password: PASSWORD,
+          network,
+          segWit: 'NONE',
+        })
+        await importPrivateKey({ ...params, address })
+      })
     }
   })
 }
