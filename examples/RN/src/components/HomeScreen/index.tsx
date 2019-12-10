@@ -25,6 +25,7 @@ class HomeScreen extends React.Component<Props> {
     const screens = [
       { name: 'Mnemonic' },
       { name: 'PrivateKey' },
+      { name: 'Create' },
     ]
 
     return (
