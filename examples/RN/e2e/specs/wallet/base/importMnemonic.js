@@ -1,31 +1,34 @@
 import { id, toHaveText, label } from '../../../utils.js'
 
 export default async function (params) {
-  const { chainType, mnemonic, password, address, network } = params
+  const { chainType, mnemonic, password, address, network, segWit } = params
   // go to Mnemonic screen
   await id('Mnemonic').tap()
 
-  await id('mnemonicInput').tap()
-  await id('mnemonicInput').replaceText(mnemonic)
-  await id('mnemonicInput').typeText(' ')
+  await id('input-mnemonic').tap()
+  await id('input-mnemonic').replaceText(mnemonic)
+  // await id('input-mnemonic').typeText(' ')
 
-  await id('mnemonicPassword').tap()
-  await id('mnemonicPassword').replaceText(password)
+  await id('input-password').tap()
+  await id('input-password').replaceText(password)
 
-  await id('mnemonicChainType').tap()
-  await id('mnemonicChainType').replaceText(chainType)
+  await id('input-chainType').tap()
+  await id('input-chainType').replaceText(chainType)
 
-  await id('mnemonicNetwork').tap()
-  await id('mnemonicNetwork').replaceText(network)
+  await id('input-network').tap()
+  await id('input-network').replaceText(network)
+
+  await id('input-segWit').tap()
+  await id('input-segWit').replaceText(segWit)
 
   // dismiss keyboard
-  await label('return').tap()
+  // await label('return').tap()
 
-  await id('mnemonicSubmit').tap()
+  await id('import-btn').tap()
 
-  await waitFor(id('mnemonicAddress')).toExist().withTimeout(2000)
+  await waitFor(id('import-address')).toExist().withTimeout(2000)
 
-  await toHaveText('mnemonicAddress', address)
+  await toHaveText('import-address', address)
 
   // go back
   await id('goBack').tap()

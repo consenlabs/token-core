@@ -45,12 +45,43 @@ export const ADDRESSES = {
   TRON_TESTNET_MNEMONIC_24_ADDRESS,
 }
 
+
+const getChainParams = ({ mnemonic, password, chainType, network, segWit }) => {
+  switch (chainType) {
+    case 'BITCOINCASH':
+    case 'LITECOIN':
+      return {
+        chainType,
+        mnemonic,
+        password,
+        network,
+        segWit,
+      }
+    case 'TRON':
+      return {
+        chainType,
+        mnemonic,
+        password,
+        network: '',
+        segWit: '',
+      }
+    default:
+      return {
+        chainType,
+        mnemonic,
+        password,
+        network,
+        segWit,
+      }
+  }
+}
+
 export default function () {
   describe('⏳ mnemonic flow', () => {
     for (const chainIndex in CHAINTYPES) {
       for (const networkIndex in NETWORKS) {
         for (const mnemonicIndex in MNEMONICS) {
-          
+
           let chainType = CHAINTYPES[chainIndex]
           let network = NETWORKS[networkIndex]
           let mnemonic = MNEMONICS[mnemonicIndex]
@@ -58,13 +89,14 @@ export default function () {
 
           it(`should import ${chainType} wallet, network is ${network}, mnemonic is ${mnemonicIndex} and address is ${address}`, async () => {
             // const { chainType, mnemonic, password, address, network } = params
-            await importMnemonic({
+            await importMnemonic(getChainParams({
               chainType: chainType,
               mnemonic: mnemonic,
               password: PASSWORD,
+              network: network,
+              segWit: 'NONE',
               address: address,
-              network: network
-            })
+            }))
           })
         }
       }
