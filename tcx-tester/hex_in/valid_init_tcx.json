@@ -1,4 +1,0 @@
-Response {
-    is_success: false,
-    error: "unsupported_method",
-}

@@ -10,6 +10,5 @@ members = [
     "tcx-bch",
     "tcx",
 
-    "tcx-fuzz-target",
     "tcx-tester",
 ]

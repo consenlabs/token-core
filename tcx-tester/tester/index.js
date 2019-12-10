@@ -3,7 +3,7 @@ var fs = require('fs');
 var path = require('path');
 const { spawnSync } = require( 'child_process' );
 
-var outDir = "../hex_in";
+var outDir = "../test_result";
 var jsonIn = "../json_in";
 
 function clearAllFiles(directory) {
@@ -47,7 +47,6 @@ protobuf.load('google/protobuf/any.proto', function (err, root) {
 
                 var param = payload.param;
 
-                // var paramBytes = encode(param);
                 var ParamType = root.lookupType(param.type);
                 var encodedParam = ParamType.create(param);
                 var any = Any.create({
@@ -56,20 +55,14 @@ protobuf.load('google/protobuf/any.proto', function (err, root) {
                 })
                 payload.param = any;
 
-                // console.log(param.type, paramBytes.toString('hex'));
-                // payload.param = paramBytes;
-                // var ApiType = root.lookupType('api.TcxAction');
                 var message = TcxAction.create({
                     "method": payload.method,
                     "param": any
                 });
                 var buffer = TcxAction.encode(message).finish();
-                // ... do something with buffer
                 var hexStr = buffer.toString('hex');
                 const ls = spawnSync( '../../target/debug/tcx-tester', [hexStr] );
 
-                // console.log( `stderr: ${ls.stderr.toString()}` );
-                console.log( `stdout: ${ls.stdout.toString()}` );
                 fs.writeFileSync(path.join(outDir, f), ls.stdout.toString());
             }
 

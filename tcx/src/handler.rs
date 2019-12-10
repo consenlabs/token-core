@@ -144,7 +144,6 @@ pub fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
 pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let param: HdStoreImportParam =
         HdStoreImportParam::decode(data).expect("import wallet from mnemonic");
-    println!("{:?}", param);
     let mut meta = Metadata::default();
     meta.name = param.name.to_owned();
     meta.password_hint = param.password_hint.to_owned();
@@ -154,7 +153,6 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let mut ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta);
 
     let mut keystore = Keystore::Hd(ks);
-    println!("ks: {:?}", &keystore.id());
     keystore.unlock_by_password(&param.password)?;
 
     let mut coin_info = coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
