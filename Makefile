@@ -34,5 +34,5 @@ build-ios-rn-example: ##@build generate the iOS RN compiled file
 e2e: ##@test run e2e test
 	(cd examples/RN && yarn)
 	(cd examples/RN/ios && pod install)
-	(cd examples/RN && yarn e2e)
+	(cd examples/RN && yarn e2e:release)
 
