@@ -380,9 +380,9 @@ pub type BtcForkSegWitTransaction =
 mod tests {
     use super::*;
 
+    use tcx_constants::coin_info::coin_info_from_param;
     use tcx_primitive::Secp256k1PrivateKey;
 
-    /*
     #[test]
     fn test_sign_ltc() {
         let unspents = vec![Utxo {
@@ -394,27 +394,30 @@ mod tests {
             derived_path: "0/0".to_string(),
             sequence: 0,
         }];
-        let tran = BitcoinForkSinger::<
-            BtcForkAddress,
-            LegacyTransactionSignComponent<LegacySignHasher>,
-        > {
+        let tx_input = BtcForkTxInput {
             to: "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc".to_string(),
             amount: 500000,
             unspents,
             memo: "".to_string(),
             fee: 100000,
-            change_idx: Some(1u32),
-            change_address: None,
-            coin: "LITECOIN-TESTNET".to_string(),
-            _marker_s: PhantomData,
-            _marker_t: PhantomData,
+            change_idx: 1u32,
+            change_address: "".to_string(),
+            network: "TESTNET".to_string(),
+            seg_wit: "NONE".to_string(),
         };
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let tran =
+            BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
+                tx_input,
+                coin_info,
+                _marker_s: PhantomData,
+                _marker_t: PhantomData,
+            };
 
         let prv_key =
             Secp256k1PrivateKey::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
                 .unwrap();
         let change_addr = BtcForkAddress::from_str("mgBCJAsvzgT2qNNeXsoECg2uPKrUsZ76up").unwrap();
-                let sign_ret = keystore.sign_transaction(&tran, Some(&PASSWORD)).unwrap();
         let expected = tran
             .sign_transaction(&vec![prv_key], change_addr.script_pubkey())
             .unwrap();
@@ -432,29 +435,32 @@ mod tests {
             derived_path: "0/0".to_string(),
             sequence: 0,
         }];
-        let tran = BitcoinForkSinger::<
-            BtcForkAddress,
-            LegacyTransactionSignComponent<LegacySignHasher>,
-        > {
+        let tx_input = BtcForkTxInput {
             to: "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc".to_string(),
             amount: 500000,
             unspents,
             memo: "".to_string(),
             fee: 100000,
-            change_idx: None,
-            change_address: Some("mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1".to_string()),
-            coin: "LITECOIN-TESTNET".to_string(),
-            _marker_s: PhantomData,
-            _marker_t: PhantomData,
+            change_idx: 0,
+            change_address: "mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1".to_string(),
+            network: "TESTNET".to_string(),
+            seg_wit: "NONE".to_string(),
         };
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let tran =
+            BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
+                tx_input,
+                coin_info,
+                _marker_s: PhantomData,
+                _marker_t: PhantomData,
+            };
 
-        let pair =
+        let prv_key =
             Secp256k1PrivateKey::from_wif("cSBnVM4xvxarwGQuAfQFwqDg9k5tErHUHzgWsEfD4zdwUasvqRVY")
                 .unwrap();
         let change_addr = BtcForkAddress::from_str("mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1").unwrap();
-                let sign_ret = keystore.sign_transaction(&tran, Some(&PASSWORD)).unwrap();
         let actual = tran
-            .sign_transaction(&vec![pair], change_addr.script_pubkey())
+            .sign_transaction(&vec![prv_key], change_addr.script_pubkey())
             .unwrap();
         assert_eq!(actual.signature, "01000000015884e5db9de218238671572340b207ee85b628074e7e467096c267266baf77a4000000006b483045022100eefdd6cace70ee64d6a29bca5f52c338b2b3ecf6e6c7b222818c9bba60f094fb022053535e23a77afc7255c18ae8c6e6bf0f8b6e3f552d08519455714cbe59e489cf01210223078d2942df62c45621d209fab84ea9a7a23346201b7727b9b45a29c4e76f5effffffff0220a10700000000001976a9147821c0a3768aa9d1a37e16cf76002aef5373f1a888ac801a0600000000001976a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac00000000");
     }
@@ -470,15 +476,21 @@ mod tests {
             derived_path: "1/0".to_string(),
             sequence: 0,
         }];
-        let tran = BitcoinForkSinger::<BtcForkAddress, SegWitTransactionSignComponent> {
+        let tx_input = BtcForkTxInput {
             to: "M7xo1Mi1gULZSwgvu7VVEvrwMRqngmFkVd".to_string(),
             amount: 19800000,
             unspents,
             memo: "".to_string(),
             fee: 50000,
-            change_idx: Some(1u32),
-            change_address: None,
-            coin: "LITECOIN".to_string(),
+            change_idx: 1u32,
+            change_address: "".to_string(),
+            network: "".to_string(),
+            seg_wit: "".to_string(),
+        };
+        let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
+        let tran = BitcoinForkSinger::<BtcForkAddress, SegWitTransactionSignComponent> {
+            tx_input,
+            coin_info,
             _marker_s: PhantomData,
             _marker_t: PhantomData,
         };
@@ -495,5 +507,4 @@ mod tests {
             .unwrap();
         assert_eq!(expected.signature, "020000000001018bba45b98e54a14d79ca2a5e253f727bff45cf58b5ac5421dd6a37756eb668e801000000171600147b03478d2f7c984179084baa38f790ed1d37629bffffffff01c01f2e010000000017a91400aff21f24bc08af58e41e4186d8492a10b84f9e8702483045022100d0cc3d94c7b7b34fdcc2adc4fd3f735560407581afd6caa11c8d04b963a048a00220777d98e0122fe97206875f49556a401dfc449739ec30e44cb9ed9b92a0b3ff1b01210209c629c64829ec2e99703600ee86c7161a9ed13213e714726210274c29cf780900000000");
     }
-    */
 }

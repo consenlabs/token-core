@@ -1,3 +1,9 @@
+/// This file only contains btc chain(including forks) related messages.
+// ref:
+// - https://en.bitcoin.it/wiki/Transaction
+// - https://www.bitcoincash.org/spec/transaction.html
+
+/// FUNCTION: sign_tx(SignParam{input: BtcForkTxInput}): BtcForkSignedTxOutput
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Utxo {
     #[prost(string, tag = "1")]

@@ -20,6 +20,34 @@ lazy_static! {
     static ref COIN_INFOS: RwLock<Vec<CoinInfo>> = {
         let mut coin_infos = Vec::new();
         coin_infos.push(CoinInfo {
+            coin: "BITCOIN".to_string(),
+            derivation_path: "m/44'/0'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
+        });
+        coin_infos.push(CoinInfo {
+            coin: "BITCOIN".to_string(),
+            derivation_path: "m/44'/1'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "TESTNET".to_string(),
+            seg_wit: "NONE".to_string(),
+        });
+        coin_infos.push(CoinInfo {
+            coin: "BITCOIN".to_string(),
+            derivation_path: "m/49'/0'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "MAINNET".to_string(),
+            seg_wit: "P2WPKH".to_string(),
+        });
+        coin_infos.push(CoinInfo {
+            coin: "BITCOIN".to_string(),
+            derivation_path: "m/49'/1'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "TESTNET".to_string(),
+            seg_wit: "P2WPKH".to_string(),
+        });
+        coin_infos.push(CoinInfo {
             coin: "BITCOINCASH".to_string(),
             derivation_path: "m/44'/145'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,

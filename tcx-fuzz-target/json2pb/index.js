@@ -34,48 +34,42 @@ protobuf.load('google/protobuf/any.proto', function (err, root) {
         }
 
         var TcxAction = root.lookup('TcxAction');
+        const generate_pb = (dir, f) => {
+            var filePath = path.join(dir, f);
+            var fileContent = fs.readFileSync(filePath);
+            console.log(fileContent.toString());
+            var payload = JSON.parse(fileContent.toString());
 
-        protobuf.load("api_params.proto", function (err, root) {
-            if (err)
-                throw err;
-            const generate_pb = (dir, f) => {
-                var filePath = path.join(dir, f);
-                var fileContent = fs.readFileSync(filePath);
-                console.log(fileContent.toString());
-                var payload = JSON.parse(fileContent.toString());
+            var param = payload.param;
 
-                var param = payload.param;
+            // var paramBytes = encode(param);
+            var ParamType = root.lookupType(param.type);
+            var encodedParam = ParamType.create(param);
+            var any = Any.create({
+                type_url: param.type,
+                value: ParamType.encode(encodedParam).finish(),
+            })
+            payload.param = any;
 
-                // var paramBytes = encode(param);
-                var ParamType = root.lookupType(param.type);
-                var encodedParam = ParamType.create(param);
-                var any = Any.create({
-                    type_url: param.type,
-                    value: ParamType.encode(encodedParam).finish(),
-                })
-                payload.param = any;
+            // console.log(param.type, paramBytes.toString('hex'));
+            // payload.param = paramBytes;
+            // var ApiType = root.lookupType('api.TcxAction');
+            var message = TcxAction.create({
+                "method": payload.method,
+                "param": any
+            });
+            var buffer = TcxAction.encode(message).finish();
+            // ... do something with buffer
+            var hexStr = buffer.toString('hex');
+            console.log(payload.method, hexStr);
+            fs.writeFileSync(path.join(outDir, f), hexStr);
+        }
 
-                // console.log(param.type, paramBytes.toString('hex'));
-                // payload.param = paramBytes;
-                // var ApiType = root.lookupType('api.TcxAction');
-                var message = TcxAction.create({
-                    "method": payload.method,
-                    "param": any
-                });
-                var buffer = TcxAction.encode(message).finish();
-                // ... do something with buffer
-                var hexStr = buffer.toString('hex');
-                console.log(payload.method, hexStr);
-                fs.writeFileSync(path.join(outDir, f), hexStr);
-            }
 
-            
-            clearAllFiles(outDir);
-            walkDir(jsonIn, generate_pb);
-            console.log("Generate Success");
-        });
+        clearAllFiles(outDir);
+        walkDir(jsonIn, generate_pb);
+        console.log("Generate Success");
     });
-
 });
 
 

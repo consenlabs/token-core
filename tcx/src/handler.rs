@@ -121,7 +121,6 @@ pub fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
     meta.password_hint = param.password_hint.to_owned();
     meta.source = Source::Mnemonic;
 
-    //    let meta: Metadata = serde_json::from_value(v.clone())?;
     let ks = HdKeystore::new(&param.password, meta);
 
     let keystore = Keystore::Hd(ks);
@@ -640,6 +639,35 @@ mod tests {
             assert_eq!(
                 import_result.accounts.first().unwrap().address,
                 "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r"
+            );
+        })
+    }
+
+    #[test]
+    pub fn test_hd_store_import_ltc() {
+        run_test(|| {
+            let param = HdStoreImportParam {
+                chain_type: "LITECOIN".to_string(),
+                mnemonic: MNEMONIC.to_string(),
+                password: PASSWORD.to_string(),
+                path: "m/44'/1'/0'/0/0".to_string(),
+                source: "MNEMONIC".to_string(),
+                name: "test-wallet".to_string(),
+                network: "TESTNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                password_hint: "imtoken".to_string(),
+                overwrite: true,
+            };
+            let ret = hd_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(&ret).unwrap();
+
+            assert_eq!(
+                import_result.accounts.first().unwrap().chain_type,
+                "LITECOIN"
+            );
+            assert_eq!(
+                import_result.accounts.first().unwrap().address,
+                "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN"
             );
         })
     }
