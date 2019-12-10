@@ -1,6 +1,12 @@
 syntax = "proto3";
 package transaction;
 
+/// This file only contains btc chain(including forks) related messages.
+// ref:
+// - https://en.bitcoin.it/wiki/Transaction
+// - https://www.bitcoincash.org/spec/transaction.html
+
+// FUNCTION: sign_tx(SignParam{input: BtcForkTxInput}): BtcForkSignedTxOutput
 message Utxo {
     string txHash = 1;
     int32 vout = 2;
