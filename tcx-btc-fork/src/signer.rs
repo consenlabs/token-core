@@ -119,7 +119,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             S::address_script_pub_key(&self.tx_input.change_address)
         } else {
             let from = &self.tx_input.unspents.first().expect("first_utxo").address;
-            let change_path = format!("1/{}", &self.tx_input.change_idx);
+            let change_path = format!("1/{}", &self.tx_input.change_address_index);
             let pub_key = dpk.public_key().as_secp256k1()?.0;
             S::address_script_like(&from, &pub_key)
         }
@@ -398,9 +398,8 @@ mod tests {
             to: "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc".to_string(),
             amount: 500000,
             unspents,
-            memo: "".to_string(),
             fee: 100000,
-            change_idx: 1u32,
+            change_address_index: 1u32,
             change_address: "".to_string(),
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
@@ -439,9 +438,8 @@ mod tests {
             to: "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc".to_string(),
             amount: 500000,
             unspents,
-            memo: "".to_string(),
             fee: 100000,
-            change_idx: 0,
+            change_address_index: 0,
             change_address: "mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1".to_string(),
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
@@ -480,9 +478,8 @@ mod tests {
             to: "M7xo1Mi1gULZSwgvu7VVEvrwMRqngmFkVd".to_string(),
             amount: 19800000,
             unspents,
-            memo: "".to_string(),
             fee: 50000,
-            change_idx: 1u32,
+            change_address_index: 1u32,
             change_address: "".to_string(),
             network: "".to_string(),
             seg_wit: "".to_string(),

@@ -327,7 +327,6 @@ mod tests {
         let bytes = hex::decode("1211756e737570706f727465645f636861696e").unwrap();
         let rsp = Response::decode(bytes);
         println!("{:?}", rsp);
-        assert_eq!(1, 2);
         //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult::decode(bytes).unwrap();
         //        let param2: KeystoreCommonExistsResult =
         //            KeystoreCommonExistsResult::decode(vec![]).unwrap();

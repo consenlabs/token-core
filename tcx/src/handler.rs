@@ -195,7 +195,7 @@ fn enc_xpub(xpub: &str, network: &str) -> Result<String> {
     let key = tcx_crypto::XPUB_COMMON_KEY_128.read().unwrap();
     let iv = tcx_crypto::XPUB_COMMON_IV.read().unwrap();
     let key_bytes = hex::decode(&*key)?;
-    let iv_bytes = hex::decode(&*key)?;
+    let iv_bytes = hex::decode(&*iv)?;
     let encrypted = encrypt_pkcs7(&ext_pub_key.as_bytes(), &key_bytes, &iv_bytes)?;
     Ok(base64::encode(&encrypted))
 }
@@ -755,25 +755,25 @@ mod tests {
                 "LQ3JqCohgLQ3x1CJXYERnJTy1ySaqr1E32",
                 derived_accounts.accounts[0].address
             );
-            assert_eq!("22Ikq6RusCCX7VLc7aFspGVufwTEutbYJuv8i4GLBbLELOJMeFGuJrtif9sFAsZdaljVDYwK14n6cU69629UwZjYrR5el2pp5nZ4KtXAZmh/jDjcv+sJx7CmP17fyo00OmImzJQthHpeV0OkIPBByg==", derived_accounts.accounts[0].extended_xpub_key);
+            assert_eq!("/EhDRyPFcj1UGx8i+WiJSIeBSyaN0pX7Oq3wXqwO5M9T1aRhfLpsNPGAPLf07K+p+B0OdQW1ogVbDQCWkIwVXZLPY+njp9LjXaICiWGEeidR1TwBZSwOMRKE68wJWH/7puxYfY/Rq1+d2GFv6NxSCw==", derived_accounts.accounts[0].extended_xpub_key);
 
             assert_eq!(
                 "MQUu6P7wsLQZfVZMuFWB7UXiheuVTM7RYF",
                 derived_accounts.accounts[1].address
             );
-            assert_eq!("w2wK29bO0ymidd1gX/7Z4dhgj6J+Kmc1HS5yr1gLKvLrnyTv93gi3cVq741vI8k9CKUaWhwnS6pI2+jUOyQzQ8SrjKhQKYwLCkvsm4SsjLdVTlhv2skJjfUZo4SnR3noc2KbxsP+KHd6MEoZi4qPkw==", derived_accounts.accounts[1].extended_xpub_key);
+            assert_eq!("A5LUzJcPB4r54wqr8EjFh9fe0L87spIN9KJKtzHV6QJXBH6GEAiYT57uftpJITx613HdIXXzi8VJ30TmG8erBF30oD1DnbDmGmDo4sdRTdQSsp9NuprhZ3Y3PR9+xzdc2tKDblRL5dLZswaPxCOQcw==", derived_accounts.accounts[1].extended_xpub_key);
 
             assert_eq!(
                 "mvdDMnRsqjqzvCyYyRXpvscmnU1FxodhkE",
                 derived_accounts.accounts[2].address
             );
-            assert_eq!("dzjilwagK3bhSKJ5Mnq/iwdqFT3oKGcK0Oz93i+c36PazeewVrgwaDmZft+xT4b6WfVdIoXeFVFSsM1Opf1l9YbToiA8mGHEVzS2IuBxbwJNnENamOSy7D+GEOl/Adb8icsQ/nCK3HAC8Lra28/8ng==", derived_accounts.accounts[2].extended_xpub_key);
+            assert_eq!("eZIL4e0a8qw18Pve92iLfehteHDA+kqjwv91aKE+2hNN3arkq20yY2Mx6q4WAowFv0QRfIi6QlrhafJKUpjiC469NNZagCSHLaECYliEwmwTgC97zXmVJDB6MJi79y+mznf8G7Few8+u6UfiXELN5g==", derived_accounts.accounts[2].extended_xpub_key);
 
             assert_eq!(
                 "TLZnqkrSNLUWNrZMug8u9b6pJ3XcTGbzDV",
                 derived_accounts.accounts[3].address
             );
-            assert_eq!("Xcz+x0dDNHe0HOh9MiLkQcKYQ1jpwOPrWw4w1KQmzeXzbV+YUAjaMj1qsEgPDApIhcpprYIHXk3k+UIZadAbXGJkIg8loygq1hp3psL4j9LjYVI3ad/aaFbSd27OStZCn35Z8+RpAxFRVOIFtH3s1w==", derived_accounts.accounts[3].extended_xpub_key);
+            assert_eq!("Sla41n5BdHqc1QmqA9DXjWNx13Fpq18u19jCaMbYbxClsPr7cr/gzXsbE+08wfNLuGgtVVY4/prpnv3/pdJ8KA/I/iOKvelKxuJgN9n2O5Q54CmObc0qJVZxcAQM0PbrKE9YJyGDkJNMLM+OmjEwjg==", derived_accounts.accounts[3].extended_xpub_key);
 
             remove_created_wallet(&import_result.id);
         })
@@ -973,7 +973,7 @@ mod tests {
             let ret = hd_store_derive(&encode_message(param).unwrap()).unwrap();
             let rsp: AccountsResponse = AccountsResponse::decode(ret).unwrap();
 
-            let raw_data = hex::decode("0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d").unwrap();
+            let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
             let input = TronTxInput { raw_data };
             let tx = SignParam {
                 id: import_result.id.to_string(),
@@ -989,7 +989,7 @@ mod tests {
             let ret = sign_tx(&tx_bytes).unwrap();
             let output: TronTxOutput = TronTxOutput::decode(&ret).unwrap();
             let expected_sign = "bbf5ce0549490613a26c3ac4fc8574e748eabda05662b2e49cea818216b9da18691e78cd6379000e9c8a35c13dfbf620f269be90a078b58799b56dc20da3bdf200";
-            assert_eq!(expected_sign, hex::encode(output.signature));
+            assert_eq!(expected_sign, output.signatures[0]);
             remove_created_wallet(&import_result.id);
         })
     }
