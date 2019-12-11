@@ -6,6 +6,7 @@ import MnemonicScreen from '../components/MnemonicScreen'
 import PrivateKeyScreen from '../components/PrivateKeyScreen'
 import CreateScreen from '../components/CreateScreen'
 import SignTxScreen from '../components/SignTxScreen'
+import TronSignMessageScreen from '../components/TronSignMessageScreen'
 
 
 const MainNavigator = createStackNavigator(
@@ -15,6 +16,7 @@ const MainNavigator = createStackNavigator(
     PrivateKey: { screen: PrivateKeyScreen },
     Create: { screen: CreateScreen },
     SignTx: { screen: SignTxScreen },
+    TronSignMessage: { screen: TronSignMessageScreen },
   },
   {
     initialRouteName: 'Home'
