@@ -8,6 +8,7 @@ members = [
     "tcx-tron",
     "tcx-btc-fork",
     "tcx-bch",
+    "tcx-ckb",
     "tcx",
 
     "tcx-fuzz-target",

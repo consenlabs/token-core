@@ -1,0 +1,71 @@
+syntax = "proto3";
+package transaction;
+
+message OutPoint {
+   bytes txHash = 1;
+   int32 index = 2;
+}
+
+message Witness {
+    bytes lock = 1;
+    bytes inputType = 2;
+    bytes outputType = 3;
+
+    bytes raw = 4;
+}
+
+message Script {
+   bytes args = 1;
+   bytes codeHash = 2;
+   string hashType = 3;
+}
+
+message CellInput {
+    OutPoint previousOutput = 1;
+    string since = 2;
+}
+
+message CellOutput {
+   int64 capacity = 1;
+   Script lock = 2;
+   Script type = 3;
+}
+
+message CellDep {
+   OutPoint outPoint = 1;
+   string depType = 2;
+}
+
+message CachedCell {
+    bytes blockHash = 1 ;
+    int64 capacity = 2;
+    Script lock = 3;
+    OutPoint outPoint = 4;
+    bool cellbase = 5;
+    int32 outputDataLen = 6;
+    string status = 7;
+    bytes dataHash = 8;
+    Script type = 9;
+
+    string derivePath = 10;
+}
+
+message TxInput {
+    string version = 1;
+    bytes txHash = 2;
+
+    repeated CellDep cellDeps = 3;
+    repeated bytes headerDeps = 4;
+    repeated CellInput inputs = 5;
+    repeated CellOutput outputs = 6;
+    repeated Witness witnesses = 7;
+    repeated bytes outputsData = 8;
+
+    repeated CachedCell cachedCells = 9;
+}
+
+message TxOutput {
+    bytes txHash = 1;
+    repeated Witness witnesses = 2;
+}
+

@@ -1,3 +1,4 @@
+/// Action Wrapper
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TcxAction {
     #[prost(string, tag = "1")]
@@ -5,6 +6,7 @@ pub struct TcxAction {
     #[prost(message, optional, tag = "2")]
     pub param: ::std::option::Option<::prost_types::Any>,
 }
+/// A common response when error occurred.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Response {
     #[prost(bool, tag = "1")]
