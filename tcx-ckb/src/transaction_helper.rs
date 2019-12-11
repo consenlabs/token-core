@@ -15,11 +15,11 @@ impl Script {
     }
 
     pub fn serialize(&self) -> Result<Vec<u8>> {
-        Serializer::serialize_dynamic_vec(&vec![
+        Ok(Serializer::serialize_dynamic_vec(&vec![
             self.code_hash.clone(),
             self.serialize_hash_type()?,
-            Serializer::serialize_fixed_vec(&vec![self.args.clone()])?,
-        ])
+            Serializer::serialize_fixed_vec(&vec![self.args.clone()]),
+        ]))
     }
 
     pub fn to_hash(&self) -> Result<Vec<u8>> {
@@ -28,19 +28,19 @@ impl Script {
 }
 
 impl Witness {
-    pub fn serialize(&self) -> Result<Vec<u8>> {
+    pub fn serialize(&self) -> Vec<u8> {
         let inner_serialize = |x: &Vec<u8>| {
             if x.len() > 0 {
                 Serializer::serialize_fixed_vec(&vec![x.clone()])
             } else {
-                Ok(vec![])
+                vec![]
             }
         };
 
         Serializer::serialize_dynamic_vec(&vec![
-            inner_serialize(&self.lock)?,
-            inner_serialize(&self.input_type)?,
-            inner_serialize(&self.output_type)?,
+            inner_serialize(&self.lock),
+            inner_serialize(&self.input_type),
+            inner_serialize(&self.output_type),
         ])
     }
 }
@@ -130,7 +130,7 @@ mod tests {
         };
 
         assert_eq!(
-            witness.serialize().unwrap(),
+            witness.serialize(),
             hex::decode("10000000100000001000000010000000").unwrap()
         );
 
@@ -140,7 +140,7 @@ mod tests {
             output_type: vec![0x20],
         };
         assert_eq!(
-            witness.serialize().unwrap(),
+            witness.serialize(),
             hex::decode("1a00000010000000100000001500000001000000100100000020").unwrap()
         );
     }

@@ -59,10 +59,11 @@ message TxInput {
     repeated bytes outputsData = 7;
 
     repeated CachedCell cachedCells = 8;
+
+    bytes txHash = 9;
 }
 
 message TxOutput {
-    bytes txHash = 1;
-    repeated Witness witnesses = 2;
+    repeated Witness witnesses = 1;
 }
 

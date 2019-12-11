@@ -1,7 +1,7 @@
 mod address;
 mod hash;
 mod serializer;
-mod signer;
+//mod signer;
 mod transaction;
 mod transaction_helper;
 
@@ -32,4 +32,7 @@ pub enum Error {
 
     #[fail(display = "invalid_hash_type")]
     InvalidHashType,
+
+    #[fail(display = "cell_input_not_cached")]
+    CellInputNotCached,
 }

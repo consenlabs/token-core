@@ -87,11 +87,11 @@ pub struct TxInput {
     pub outputs_data: ::std::vec::Vec<std::vec::Vec<u8>>,
     #[prost(message, repeated, tag = "8")]
     pub cached_cells: ::std::vec::Vec<CachedCell>,
+    #[prost(bytes, tag = "9")]
+    pub tx_hash: std::vec::Vec<u8>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TxOutput {
-    #[prost(bytes, tag = "1")]
-    pub tx_hash: std::vec::Vec<u8>,
-    #[prost(message, repeated, tag = "2")]
+    #[prost(message, repeated, tag = "1")]
     pub witnesses: ::std::vec::Vec<Witness>,
 }

@@ -3,13 +3,13 @@ use tcx_chain::{Keystore, Result, TransactionSigner};
 
 use crate::hash::new_blake2b;
 use crate::serializer::Serializer;
-use crate::transaction::{CachedCell, CellInput, TxInput, TxOutput, Witness};
+use crate::transaction::{CachedCell, CellInput, TxInput, TxOutput, Witness, OutPoint};
 use crate::Error;
 use std::collections::HashMap;
 use tcx_chain::ChainSigner;
 
 pub struct CkbTxSigner<'a> {
-    ks: &'a mut Keystore,
+    ks: &'a mut dyn ChainSigner,
     symbol: &'a str,
     address: &'a str,
 }
@@ -19,7 +19,7 @@ impl<'a> CkbTxSigner<'a> {
         &mut self,
         tx_hash: &[u8],
         witnesses: &Vec<Witness>,
-        input_cells: &Vec<CachedCell>,
+        input_cells: &Vec<&CachedCell>,
     ) -> Result<Vec<Witness>> {
         // tx_hash must be 256 bit length
         if tx_hash.len() != 32 {
@@ -61,7 +61,7 @@ impl<'a> CkbTxSigner<'a> {
         let first = &witness_group[0];
 
         let mut empty_witness = Witness {
-            lock: [0u8; 130].to_vec(),
+            lock: [0u8; 65].to_vec(),
             input_type: first.input_type.clone(),
             output_type: first.output_type.clone(),
         };
@@ -92,7 +92,7 @@ impl<'a> CkbTxSigner<'a> {
 
     fn group_script(
         &mut self,
-        input_cells: &Vec<CachedCell>,
+        input_cells: &Vec<&CachedCell>,
     ) -> Result<HashMap<Vec<u8>, Vec<usize>>> {
         let mut map: HashMap<Vec<u8>, Vec<usize>> = HashMap::new();
 
@@ -129,29 +129,39 @@ impl TransactionSigner<TxInput, TxOutput> for Keystore {
             return Err(Error::InvalidOutputsDataLength.into());
         }
 
-        /*
-        let input_cells = tx.inputs.iter().map(|x| {
+        let find_cache_cell = |x: &OutPoint| -> Result<&CachedCell> {
+            for y in tx.cached_cells.iter() {
+                if y.out_point.is_some() {
+                    let point = y.out_point.as_ref().unwrap();
+                    if point.index == x.index && point.tx_hash == x.tx_hash {
+                        return Ok(y)
+                    }
+                }
+            }
+
+            Err(Error::CellInputNotCached.into())
+        };
+
+        let mut input_cells: Vec<&CachedCell> = vec![];
+
+        for x in tx.inputs.iter() {
             if x.previous_output.is_none() {
                 return Err(Error::InvalidOutputPoint.into());
             }
 
-            let out_point = &x.previous_output.unwrap();
+            input_cells.push(find_cache_cell(x.previous_output.as_ref().unwrap())?);
+        }
 
-            let cached_cell = tx.cached_cells.iter().filter(
-                |y| {
-                    if y.out_point.is_none() {
-                        return Err(Error::InvalidOutputPoint).into());
-                    }
+        let mut signer = CkbTxSigner {
+            ks: self,
+            symbol,
+            address
+        };
 
-                    let yout_point = &y.out_point.unwrap();
-                    out_point.tx_hash == yout_point.tx_hash && out_point.index == yout_point.index
-                }).first()
-        });
-        */
+        let signed_witnesses = signer.sign_witnesses(&tx.tx_hash, &tx.witnesses, &input_cells)?;
 
         let tx_output = TxOutput {
-            tx_hash: vec![],
-            witnesses: vec![],
+            witnesses: signed_witnesses,
         };
 
         Ok(tx_output)

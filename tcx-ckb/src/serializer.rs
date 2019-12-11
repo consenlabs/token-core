@@ -30,17 +30,17 @@ impl Serializer {
         buf.to_vec()
     }
 
-    pub fn serialize_struct(values: &Vec<Vec<u8>>) -> Result<Vec<u8>> {
+    pub fn serialize_struct(values: &Vec<Vec<u8>>) -> Vec<u8> {
         let mut ret: Vec<u8> = vec![];
 
         for item in values.iter() {
             ret.extend(item);
         }
 
-        Ok(ret)
+        ret
     }
 
-    pub fn serialize_dynamic_vec(values: &Vec<Vec<u8>>) -> Result<Vec<u8>> {
+    pub fn serialize_dynamic_vec(values: &Vec<Vec<u8>>) -> Vec<u8> {
         let mut body: Vec<u8> = vec![];
         let mut element_lengths: Vec<u32> = vec![];
 
@@ -61,10 +61,10 @@ impl Serializer {
 
         ret.extend(body);
 
-        Ok(ret)
+        ret
     }
 
-    pub fn serialize_fixed_vec(values: &Vec<Vec<u8>>) -> Result<Vec<u8>> {
+    pub fn serialize_fixed_vec(values: &Vec<Vec<u8>>) -> Vec<u8> {
         let mut ret: Vec<u8> = vec![];
         let mut body: Vec<u8> = vec![];
 
@@ -79,7 +79,7 @@ impl Serializer {
         ret.extend(Serializer::serialize_u32(total_size));
         ret.extend(body);
 
-        Ok(ret)
+        ret
     }
 }
 
@@ -89,26 +89,23 @@ mod tests {
 
     #[test]
     fn serialize_struct() {
-        let bytes =
-            Serializer::serialize_struct(&vec![vec![0x11, 0x13], vec![0x20, 0x17, 0x9]]).unwrap();
+        let bytes = Serializer::serialize_struct(&vec![vec![0x11, 0x13], vec![0x20, 0x17, 0x9]]);
         assert_eq!(bytes, hex::decode("1113201709").unwrap());
     }
 
     #[test]
     fn serialize_fixed_vec() {
         let bytes =
-            Serializer::serialize_fixed_vec(&vec![hex::decode("1234567890abcdef").unwrap()])
-                .unwrap();
+            Serializer::serialize_fixed_vec(&vec![hex::decode("1234567890abcdef").unwrap()]);
         assert_eq!(bytes, hex::decode("080000001234567890abcdef").unwrap());
     }
 
     #[test]
     fn serialize_dynmaic_vec() {
-        let bytes = Serializer::serialize_dynamic_vec(&vec![]).unwrap();
+        let bytes = Serializer::serialize_dynamic_vec(&vec![]);
         assert_eq!(bytes, hex::decode("04000000").unwrap());
 
-        let bytes =
-            Serializer::serialize_dynamic_vec(&vec![hex::decode("020000001234").unwrap()]).unwrap();
+        let bytes = Serializer::serialize_dynamic_vec(&vec![hex::decode("020000001234").unwrap()]);
         assert_eq!(bytes, hex::decode("0e00000008000000020000001234").unwrap());
 
         let bytes = Serializer::serialize_dynamic_vec(&vec![
@@ -117,8 +114,7 @@ mod tests {
             hex::decode("020000000567").unwrap(),
             hex::decode("0100000089").unwrap(),
             hex::decode("03000000abcdef").unwrap(),
-        ])
-        .unwrap();
+        ]);
         assert_eq!(bytes, hex::decode("34000000180000001e00000022000000280000002d00000002000000123400000000020000000567010000008903000000abcdef").unwrap());
     }
 }
