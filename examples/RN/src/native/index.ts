@@ -175,7 +175,7 @@ export default {
     return tcxApi('keystore_common_accounts', params)
   },
 
-  async signTx(params: api.ISignParam): Promise<transaction.IBtcForkSignedTxOutput> {
+  async signTx(params: api.ISignParam): Promise<transaction.IBtcForkSignedTxOutput | transaction.ITronTxOutput> {
     // @ts-ignore
     return tcxApi('sign_tx', params)
   },

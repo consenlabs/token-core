@@ -26,6 +26,7 @@ class HomeScreen extends React.Component<Props> {
       { name: 'Create' },
       { name: 'Mnemonic' },
       { name: 'PrivateKey' },
+      { name: 'SignTx' },
     ]
 
     return (
