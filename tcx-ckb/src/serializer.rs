@@ -6,14 +6,13 @@ pub struct Serializer();
 
 impl Serializer {
     fn calculate_offsets(element_lengths: &Vec<u32>) -> (u32, Vec<u32>) {
-        let header_length = 4 * 4 * element_lengths.len() as u32;
-        let mut offsets = vec![header_length];
+        let header_length = 4 + 4 * element_lengths.len() as u32;
+        let mut offsets = vec![];
         let mut total = header_length;
 
         for i in 0..element_lengths.len() {
+            offsets.push(total as u32);
             total = total + (element_lengths[i] as u32);
-
-            offsets.push(offsets[i] + element_lengths[i] as u32);
         }
 
         (total, offsets)
@@ -22,6 +21,12 @@ impl Serializer {
     pub fn serialize_u32(value: u32) -> Vec<u8> {
         let mut buf = [0; 4];
         LittleEndian::write_u32(&mut buf, value);
+        buf.to_vec()
+    }
+
+    pub fn serialize_u64(value: u64) -> Vec<u8> {
+        let mut buf = [0; 8];
+        LittleEndian::write_u64(&mut buf, value);
         buf.to_vec()
     }
 
@@ -49,6 +54,7 @@ impl Serializer {
         let offsets = Serializer::calculate_offsets(&element_lengths);
 
         ret.extend(Serializer::serialize_u32(offsets.0));
+
         offsets.1.iter().for_each(|item| {
             ret.extend(Serializer::serialize_u32(*item));
         });
@@ -103,7 +109,7 @@ mod tests {
 
         let bytes =
             Serializer::serialize_dynamic_vec(&vec![hex::decode("020000001234").unwrap()]).unwrap();
-        assert_eq!(bytes, hex::decode("e00000008000000020000001234").unwrap());
+        assert_eq!(bytes, hex::decode("0e00000008000000020000001234").unwrap());
 
         let bytes = Serializer::serialize_dynamic_vec(&vec![
             hex::decode("020000001234").unwrap(),

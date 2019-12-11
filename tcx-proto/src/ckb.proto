@@ -10,8 +10,6 @@ message Witness {
     bytes lock = 1;
     bytes inputType = 2;
     bytes outputType = 3;
-
-    bytes raw = 4;
 }
 
 message Script {
@@ -52,16 +50,15 @@ message CachedCell {
 
 message TxInput {
     string version = 1;
-    bytes txHash = 2;
 
-    repeated CellDep cellDeps = 3;
-    repeated bytes headerDeps = 4;
-    repeated CellInput inputs = 5;
-    repeated CellOutput outputs = 6;
-    repeated Witness witnesses = 7;
-    repeated bytes outputsData = 8;
+    repeated CellDep cellDeps = 2;
+    repeated bytes headerDeps = 3;
+    repeated CellInput inputs = 4;
+    repeated CellOutput outputs = 5;
+    repeated Witness witnesses = 6;
+    repeated bytes outputsData = 7;
 
-    repeated CachedCell cachedCells = 9;
+    repeated CachedCell cachedCells = 8;
 }
 
 message TxOutput {

@@ -13,8 +13,6 @@ pub struct Witness {
     pub input_type: std::vec::Vec<u8>,
     #[prost(bytes, tag = "3")]
     pub output_type: std::vec::Vec<u8>,
-    #[prost(bytes, tag = "4")]
-    pub raw: std::vec::Vec<u8>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Script {
@@ -75,21 +73,19 @@ pub struct CachedCell {
 pub struct TxInput {
     #[prost(string, tag = "1")]
     pub version: std::string::String,
-    #[prost(bytes, tag = "2")]
-    pub tx_hash: std::vec::Vec<u8>,
-    #[prost(message, repeated, tag = "3")]
+    #[prost(message, repeated, tag = "2")]
     pub cell_deps: ::std::vec::Vec<CellDep>,
-    #[prost(bytes, repeated, tag = "4")]
+    #[prost(bytes, repeated, tag = "3")]
     pub header_deps: ::std::vec::Vec<std::vec::Vec<u8>>,
-    #[prost(message, repeated, tag = "5")]
+    #[prost(message, repeated, tag = "4")]
     pub inputs: ::std::vec::Vec<CellInput>,
-    #[prost(message, repeated, tag = "6")]
+    #[prost(message, repeated, tag = "5")]
     pub outputs: ::std::vec::Vec<CellOutput>,
-    #[prost(message, repeated, tag = "7")]
+    #[prost(message, repeated, tag = "6")]
     pub witnesses: ::std::vec::Vec<Witness>,
-    #[prost(bytes, repeated, tag = "8")]
+    #[prost(bytes, repeated, tag = "7")]
     pub outputs_data: ::std::vec::Vec<std::vec::Vec<u8>>,
-    #[prost(message, repeated, tag = "9")]
+    #[prost(message, repeated, tag = "8")]
     pub cached_cells: ::std::vec::Vec<CachedCell>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]

@@ -1,17 +1,26 @@
-use tcx_chain::{TransactionSigner, Keystore, Result};
 use failure::Fail;
+use tcx_chain::{Keystore, Result, TransactionSigner};
 
-use crate::transaction::{TxOutput, TxInput, CachedCell, Witness};
-use std::collections::HashMap;
+use crate::hash::new_blake2b;
+use crate::serializer::Serializer;
+use crate::transaction::{CachedCell, CellInput, TxInput, TxOutput, Witness};
 use crate::Error;
+use std::collections::HashMap;
+use tcx_chain::ChainSigner;
 
-
-pub struct CkbTxSigner {
-
+pub struct CkbTxSigner<'a> {
+    ks: &'a mut Keystore,
+    symbol: &'a str,
+    address: &'a str,
 }
 
-impl CkbTxSigner {
-    pub fn sign_witnesses(&mut self, tx_hash: &[u8], witnesses: &Vec<Witness>, input_cells: &Vec<CachedCell>) -> Result<Vec<Witness>> {
+impl<'a> CkbTxSigner<'a> {
+    pub fn sign_witnesses(
+        &mut self,
+        tx_hash: &[u8],
+        witnesses: &Vec<Witness>,
+        input_cells: &Vec<CachedCell>,
+    ) -> Result<Vec<Witness>> {
         // tx_hash must be 256 bit length
         if tx_hash.len() != 32 {
             return Err(Error::InvalidTxHash.into());
@@ -21,51 +30,92 @@ impl CkbTxSigner {
             return Err(Error::WitnessEmpty.into());
         }
 
-        let grouped_scripts = self.group_script(input_cells);
-        let mut raw_witnesses = witnesses.clone();
-        let rest_witness = witnesses.last()?;
+        let grouped_scripts = self.group_script(input_cells)?;
 
-        grouped_scripts.iter().for_each(|item| {
+        let mut raw_witnesses = witnesses.to_vec();
+
+        for item in grouped_scripts.iter() {
             let mut ws = vec![];
-            ws.iter_mut().chain(item.1.iter().map(|i| input_cells[i]).collect()).chain(rest_witness.clone());
+            ws.extend(item.1.iter().map(|i| &witnesses[*i]));
 
-            let signed_witness = self.sign_witness_group(tx_hash,&ws)?;
+            if witnesses.len() > input_cells.len() {
+                ws.extend(&witnesses[input_cells.len()..]);
+            }
+
+            let signed_witness = self.sign_witness_group(tx_hash, &ws)?;
             raw_witnesses[item.1[0]] = signed_witness;
-        });
+        }
 
         Ok(raw_witnesses)
     }
 
-    pub fn sign_witness_group(&mut self, tx_hash: &[u8], witness_group: &Vec<Witness>) -> Result<Witness> {
+    pub fn sign_witness_group(
+        &mut self,
+        tx_hash: &[u8],
+        witness_group: &Vec<&Witness>,
+    ) -> Result<Witness> {
         if witness_group.len() == 0 {
             return Err(Error::WitnessGroupEmpty.into());
         }
 
+        let first = &witness_group[0];
 
+        let mut empty_witness = Witness {
+            lock: [0u8; 130].to_vec(),
+            input_type: first.input_type.clone(),
+            output_type: first.output_type.clone(),
+        };
 
-        Ok(())
+        let serialized_empty_witness = empty_witness.serialize()?;
+        let serialized_empty_length = serialized_empty_witness.len();
+
+        let mut s = new_blake2b();
+        s.update(tx_hash);
+        s.update(&Serializer::serialize_u64(serialized_empty_length as u64));
+        s.update(&serialized_empty_witness);
+
+        for w in witness_group[1..].iter() {
+            let bytes = w.serialize()?;
+            s.update(&Serializer::serialize_u64(bytes.len() as u64));
+            s.update(&bytes);
+        }
+
+        let mut result = [0u8; 32];
+        s.finalize(&mut result);
+
+        empty_witness.lock =
+            self.ks
+                .sign_recoverable_hash(&result, self.symbol, self.address, None)?;
+
+        Ok(empty_witness)
     }
 
-    pub fn group_script(&mut self, input_cells: &Vec<CachedCell>) -> HashMap<Vec<u8>, Vec<u32>> {
-        let mut map:HashMap<Vec<u8>, Vec<u32>> = HashMap::new();
+    pub fn group_script(
+        &mut self,
+        input_cells: &Vec<CachedCell>,
+    ) -> Result<HashMap<Vec<u8>, Vec<usize>>> {
+        let mut map: HashMap<Vec<u8>, Vec<usize>> = HashMap::new();
 
         for i in 0..input_cells.len() {
-            let item = input_cells[i];
-            let hash = item.lock.to_hash();
-            let mut indices = map.get_mut(&hash);
+            let item = &input_cells[i];
+            if item.lock.is_none() {
+                continue;
+            }
+
+            let hash = item.lock.as_ref().unwrap().to_hash()?;
+            let indices = map.get_mut(&hash);
             if indices.is_some() {
-                indices.unwrap().push(i as u32);
+                indices.unwrap().push(i);
             } else {
-                map.insert(hash, vec![i as u32]);
+                map.insert(hash, vec![i]);
             }
         }
 
-        map
+        Ok(map)
     }
 }
 
-
-impl TransactionSigner<TxInput, TxOutput> for Keystore  {
+impl TransactionSigner<TxInput, TxOutput> for Keystore {
     fn sign_transaction(&mut self, symbol: &str, address: &str, tx: &TxInput) -> Result<TxOutput> {
         if tx.witnesses.len() == 0 {
             return Err(Error::RequiredWitness.into());
@@ -79,6 +129,7 @@ impl TransactionSigner<TxInput, TxOutput> for Keystore  {
             return Err(Error::InvalidOutputsDataLength.into());
         }
 
+        /*
         let input_cells = tx.inputs.iter().map(|x| {
             if x.previous_output.is_none() {
                 return Err(Error::InvalidOutputPoint.into());
@@ -96,7 +147,7 @@ impl TransactionSigner<TxInput, TxOutput> for Keystore  {
                     out_point.tx_hash == yout_point.tx_hash && out_point.index == yout_point.index
                 }).first()
         });
-
+        */
 
         let tx_output = TxOutput {
             tx_hash: vec![],
@@ -107,3 +158,17 @@ impl TransactionSigner<TxInput, TxOutput> for Keystore  {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn group_script() {}
+
+    #[test]
+    fn sign_transaction() {}
+
+    #[test]
+    fn sign_witnesses() {}
+
+    #[test]
+    fn sign_group_witness() {}
+}

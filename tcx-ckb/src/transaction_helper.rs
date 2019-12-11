@@ -1,5 +1,5 @@
 use crate::serializer::Serializer;
-use crate::transaction::Script;
+use crate::transaction::{Script, Witness};
 
 use super::Error;
 use crate::hash::blake2b_256;
@@ -22,14 +22,32 @@ impl Script {
         ])
     }
 
-    fn to_hash(&self) -> Result<Vec<u8>> {
+    pub fn to_hash(&self) -> Result<Vec<u8>> {
         Ok(blake2b_256(&self.serialize()?))
+    }
+}
+
+impl Witness {
+    pub fn serialize(&self) -> Result<Vec<u8>> {
+        let inner_serialize = |x: &Vec<u8>| {
+            if x.len() > 0 {
+                Serializer::serialize_fixed_vec(&vec![x.clone()])
+            } else {
+                Ok(vec![])
+            }
+        };
+
+        Serializer::serialize_dynamic_vec(&vec![
+            inner_serialize(&self.lock)?,
+            inner_serialize(&self.input_type)?,
+            inner_serialize(&self.output_type)?,
+        ])
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::transaction::Script;
+    use crate::transaction::{Script, Witness};
 
     #[test]
     fn serialize_script() {
@@ -100,6 +118,30 @@ mod tests {
             script.to_hash().unwrap(),
             hex::decode("d39f84d4702f53cf8625da4411be1640b961715cb36816501798fedb70b6e0fb")
                 .unwrap()
+        );
+    }
+
+    #[test]
+    fn serialize_witness() {
+        let witness = Witness {
+            lock: vec![],
+            input_type: vec![],
+            output_type: vec![],
+        };
+
+        assert_eq!(
+            witness.serialize().unwrap(),
+            hex::decode("10000000100000001000000010000000").unwrap()
+        );
+
+        let witness = Witness {
+            lock: vec![],
+            input_type: vec![0x10],
+            output_type: vec![0x20],
+        };
+        assert_eq!(
+            witness.serialize().unwrap(),
+            hex::decode("1a00000010000000100000001500000001000000100100000020").unwrap()
         );
     }
 }

@@ -25,6 +25,6 @@ mod signer;
 pub use keystore::{
     Account, Address, HdKeystore, Keystore, KeystoreGuard, Metadata, PrivateKeystore, Source,
 };
-pub use signer::{MessageSigner, TransactionSigner};
+pub use signer::{ChainSigner, MessageSigner, TransactionSigner};
 
 pub type Result<T> = result::Result<T, failure::Error>;

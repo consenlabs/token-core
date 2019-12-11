@@ -1,7 +1,7 @@
 mod hash;
-mod transaction;
-//mod signer;
 mod serializer;
+mod signer;
+mod transaction;
 mod transaction_helper;
 
 use failure::Fail;
