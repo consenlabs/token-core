@@ -138,15 +138,6 @@ pub fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
     cache_keystore(keystore);
     Ok(ret)
 }
-//
-//fn find_wallet_by_key_hash(hash: &str) -> Option<&Keystore> {
-//    let map = KEYSTORE_MAP.read().unwrap();
-//
-//    let founded: Option<&Keystore> = map
-//        .values()
-//        .find(|keystore| keystore.key_hash() == key_hash);
-//    founded
-//}
 
 pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let param: HdStoreImportParam =
@@ -170,37 +161,14 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     meta.password_hint = param.password_hint.to_owned();
     meta.source = Source::Mnemonic;
 
-    //    let meta: Metadata = serde_json::from_value(v.clone())?;
     let mut ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta);
     let mut keystore = Keystore::Hd(ks);
-    //    keystore.unlock_by_password(&param.password)?;
-    //
-    //    let mut coin_info = coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
-    //    coin_info.derivation_path = param.path.to_string();
-    //    let account = match param.chain_type.as_str() {
-    //        "BITCOINCASH" => keystore.derive_coin::<BchAddress>(&coin_info),
-    //        "LITECOIN" => keystore.derive_coin::<BtcForkAddress>(&coin_info),
-    //        "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
-    //        _ => Err(format_err!("{}", "chain_type_not_support")),
-    //    }?;
 
     if founded.is_some() {
         keystore.set_id(&founded.unwrap().id())
     }
 
     flush_keystore(&keystore)?;
-
-    //    let mut accounts: Vec<AccountResponse> = vec![];
-    //    for account in keystore.accounts() {
-    //        let enc_xpub = enc_xpub(&account.ext_pub_key.to_string(), &account.network)?;
-    //        let acc_rsp = AccountResponse {
-    //            chain_type: account.coin.to_string(),
-    //            address: account.address.to_string(),
-    //            path: account.derivation_path.to_string(),
-    //            extended_xpub_key: enc_xpub,
-    //        };
-    //        accounts.push(acc_rsp);
-    //    }
 
     let meta = keystore.meta();
     let wallet = WalletResult {
@@ -429,6 +397,7 @@ pub fn keystore_common_delete(data: &[u8]) -> Result<Vec<u8>> {
     if keystore.verify_password(&param.password) {
         delete_keystore_file(&param.id)?;
         map.remove(&param.id);
+
         let rsp = Response {
             is_success: true,
             error: "".to_owned(),
@@ -908,7 +877,7 @@ mod tests {
     pub fn test_keystore_common_delete() {
         run_test(|| {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
-                private_key: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
+                private_key: "5JZc7wGRUr4J1RHDcM9ySWKLfQ2xjRUEo612qC4RLJ3G7jzJ4qx".to_string(),
                 password: PASSWORD.to_string(),
                 chain_type: "BITCOINCASH".to_string(),
                 network: "MAINNET".to_string(),
@@ -930,13 +899,13 @@ mod tests {
 
             let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
                 r#type: KeyType::PrivateKey as i32,
-                value: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
+                value: "5JZc7wGRUr4J1RHDcM9ySWKLfQ2xjRUEo612qC4RLJ3G7jzJ4qx".to_string(),
             };
 
             let ret_bytes = keystore_common_exists(&encode_message(param).unwrap()).unwrap();
             let ret: KeystoreCommonExistsResult =
                 KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
-            assert!(!ret.is_exists);
+            assert_eq!(false, ret.is_exists);
             remove_created_wallet(&import_result.id);
         })
     }

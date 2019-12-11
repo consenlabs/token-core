@@ -324,10 +324,13 @@ mod tests {
         //        };
         //        let hex_value = hex::encode(encode_message(param).unwrap());
         //        assert_eq!("08001200", hex_value);
-        let bytes = hex::decode("08001200").unwrap();
-        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult::decode(bytes).unwrap();
-        let param2: KeystoreCommonExistsResult =
-            KeystoreCommonExistsResult::decode(vec![]).unwrap();
-        assert_eq!(param.is_exists, param2.is_exists);
+        let bytes = hex::decode("1211756e737570706f727465645f636861696e").unwrap();
+        let rsp = Response::decode(bytes);
+        println!("{:?}", rsp);
+        assert_eq!(1, 2);
+        //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult::decode(bytes).unwrap();
+        //        let param2: KeystoreCommonExistsResult =
+        //            KeystoreCommonExistsResult::decode(vec![]).unwrap();
+        //        assert_eq!(param.is_exists, param2.is_exists);
     }
 }
