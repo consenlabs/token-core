@@ -55,13 +55,16 @@ impl TraitTransactionSigner<TronTxInput, TronTxOutput> for Keystore {
     ) -> Result<TronTxOutput> {
         //        let mut raw = tx.raw.clone();
         let coin_info = coin_info_from_param(&"TRON", "", "")?;
-        let hash = Hash::hash(&tx.raw_data);
+        let data = hex::decode(&tx.raw_data)?;
+        let hash = Hash::hash(&data);
 
         let sk = &self.find_private_key(symbol, address)?;
         let sign_result = sk.sign_recoverable(&hash[..]);
 
         match sign_result {
-            Ok(r) => Ok(TronTxOutput { signature: r }),
+            Ok(r) => Ok(TronTxOutput {
+                signatures: vec![hex::encode(r)],
+            }),
             Err(_e) => Err(format_err!("{}", "can not format error")),
         }
     }
@@ -151,7 +154,7 @@ mod tests {
         */
 
         let tx = TronTxInput {
-            raw_data: hex::decode("0a0208312208b02efdc02638b61e40f083c3a7c92d5a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541a1e81654258bf14f63feb2e8d1380075d45b0dac1215410b3e84ec677b3e63c99affcadb91a6b4e086798f186470a0bfbfa7c92d").unwrap()
+            raw_data: "0a0208312208b02efdc02638b61e40f083c3a7c92d5a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541a1e81654258bf14f63feb2e8d1380075d45b0dac1215410b3e84ec677b3e63c99affcadb91a6b4e086798f186470a0bfbfa7c92d".to_string()
         };
 
         let meta = Metadata::default();
@@ -172,7 +175,7 @@ mod tests {
 
         let signed_tx: TronTxOutput = ks.sign_transaction("TRON", &account.address, &tx)?;
 
-        assert_eq!(hex::encode(signed_tx.signature), "beac4045c3ea5136b541a3d5ec2a3e5836d94f28a1371440a01258808612bc161b5417e6f5a342451303cda840f7e21bfaba1011fad5f63538cb8cc132a9768800");
+        assert_eq!(signed_tx.signatures[0], "beac4045c3ea5136b541a3d5ec2a3e5836d94f28a1371440a01258808612bc161b5417e6f5a342451303cda840f7e21bfaba1011fad5f63538cb8cc132a9768800");
 
         Ok(())
     }

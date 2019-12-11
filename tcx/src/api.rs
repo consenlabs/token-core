@@ -65,24 +65,16 @@ pub struct WalletResult {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HdStoreImportParam {
     #[prost(string, tag = "1")]
-    pub chain_type: std::string::String,
-    #[prost(string, tag = "2")]
     pub mnemonic: std::string::String,
-    #[prost(string, tag = "3")]
+    #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(string, tag = "4")]
-    pub path: std::string::String,
-    #[prost(string, tag = "5")]
+    #[prost(string, tag = "3")]
     pub source: std::string::String,
-    #[prost(string, tag = "6")]
+    #[prost(string, tag = "4")]
     pub name: std::string::String,
-    #[prost(string, tag = "7")]
-    pub network: std::string::String,
-    #[prost(string, tag = "8")]
-    pub seg_wit: std::string::String,
-    #[prost(string, tag = "9")]
+    #[prost(string, tag = "5")]
     pub password_hint: std::string::String,
-    #[prost(bool, tag = "10")]
+    #[prost(bool, tag = "6")]
     pub overwrite: bool,
 }
 /// FUNCTION: hd_store_derive(HdStoreDeriveParam): AccountsResponse
@@ -144,7 +136,7 @@ pub struct KeystoreCommonExportResult {
 
 /// FUNCTION: private_key_store_import(PrivateKeyStoreImportParam): WalletResult
 ///
-/// create a new hd keystore by a private key
+/// create a new private key keystore by a private key
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PrivateKeyStoreImportParam {
     #[prost(string, tag = "1")]
@@ -162,7 +154,7 @@ pub struct PrivateKeyStoreImportParam {
 }
 /// FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult
 ///
-/// export the private key from a hd keystore
+/// export the private key from a private key keystore
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PrivateKeyStoreExportParam {
     #[prost(string, tag = "1")]

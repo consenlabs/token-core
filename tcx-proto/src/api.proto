@@ -53,16 +53,12 @@ message WalletResult {
 //
 // create a new hd keystore by mnemonic
 message HdStoreImportParam {
-    string chainType = 1;
-    string mnemonic = 2;
-    string password = 3;
-    string path = 4;
-    string source = 5;
-    string name = 6;
-    string network = 7;
-    string segWit = 8;
-    string passwordHint = 9;
-    bool overwrite = 10;
+    string mnemonic = 1;
+    string password = 2;
+    string source = 3;
+    string name = 4;
+    string passwordHint = 5;
+    bool overwrite = 6;
 }
 
 // FUNCTION: hd_store_derive(HdStoreDeriveParam): AccountsResponse
