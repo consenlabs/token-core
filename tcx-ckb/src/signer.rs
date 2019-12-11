@@ -90,7 +90,7 @@ impl<'a> CkbTxSigner<'a> {
         Ok(empty_witness)
     }
 
-    pub fn group_script(
+    fn group_script(
         &mut self,
         input_cells: &Vec<CachedCell>,
     ) -> Result<HashMap<Vec<u8>, Vec<usize>>> {

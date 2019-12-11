@@ -20,6 +20,14 @@ pub fn blake2b_256<T: AsRef<[u8]>>(s: T) -> Vec<u8> {
     inner_blake2b_256(s).to_vec()
 }
 
+pub fn blake2b_160<T: AsRef<[u8]>>(s: T) -> Vec<u8> {
+    if s.as_ref().is_empty() {
+        return BLANK_HASH[..20].to_vec();
+    }
+
+    inner_blake2b_256(s)[..20].to_vec()
+}
+
 fn inner_blake2b_256<T: AsRef<[u8]>>(s: T) -> [u8; 32] {
     let mut result = [0u8; 32];
     let mut blake2b = new_blake2b();

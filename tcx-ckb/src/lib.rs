@@ -1,3 +1,4 @@
+mod address;
 mod hash;
 mod serializer;
 mod signer;
