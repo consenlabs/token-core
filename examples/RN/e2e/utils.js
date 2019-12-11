@@ -29,30 +29,6 @@ export async function readTextValue(testID) {
   }
 }
 
-export async function readAddressValue(walletName) {
-  try {
-    await expect(text(walletName)).toNotExist()
-  } catch (e) {
-    const start = "AX.id='"
-    const end = `'; AX.label='${walletName} `
-    const errorMessage = e.message.toString()
-    const [, restMessage] = errorMessage.split(start)
-    const [address] = restMessage.split(end)
-    return address
-  }
-}
-
-export async function readMnemonicValue() {
-  let mnemonic = ''
-  for (let index = 0; index < 12; index++) {
-    mnemonic += await readTextValue(`mnemonic-${index}`)
-    if (index < 11) {
-      mnemonic += ' '
-    }
-  }
-  return mnemonic
-}
-
 export async function toHaveText(testID, expectText) {
   await expect(id(testID)).toHaveText(expectText)
 }

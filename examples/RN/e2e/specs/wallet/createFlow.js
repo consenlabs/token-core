@@ -5,37 +5,8 @@
  */
 
 import create from './base/create'
-import { PASSWORD } from '../../constant'
-
-export const CHAINTYPES = ['BITCOINCASH', 'LITECOIN', 'TRON']
-export const NETWORKS = ['MAINNET', 'TESTNET']
-
-const getChainParams = ({ password, chainType, network, segWit }) => {
-  switch (chainType) {
-    case 'BITCOINCASH':
-    case 'LITECOIN':
-      return {
-        chainType,
-        password,
-        network,
-        segWit,
-      }
-    case 'TRON':
-      return {
-        chainType,
-        password,
-        network: '',
-        segWit: '',
-      }
-    default:
-      return {
-        chainType,
-        password,
-        network,
-        segWit,
-      }
-  }
-}
+import { PASSWORD, CHAINTYPES, NETWORKS } from '../../constant'
+import { formatHdStoreParams } from '../../chain'
 
 export default function () {
   describe('⏳ create flow', () => {
@@ -46,7 +17,7 @@ export default function () {
 
         it(`should create ${chainType} wallet, network is ${network}`, async () => {
           // const { chainType, mnemonic, password, address, network } = params
-          const params = getChainParams({
+          const params = formatHdStoreParams({
             chainType,
             password: PASSWORD,
             network,

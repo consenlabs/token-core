@@ -22,7 +22,7 @@ export default async function (params) {
 
   // dismiss keyboard
   // await label('return').tap()
-  await id('import-btn').tap()
+  await id('import').tap()
   await waitFor(id('import-address')).toExist().withTimeout(2000)
   await toHaveText('import-address', address)
 

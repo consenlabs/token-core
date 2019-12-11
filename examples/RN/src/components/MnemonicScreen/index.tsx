@@ -84,7 +84,7 @@ class CMP extends React.Component<Props, State> {
             })
           }
           <Button
-            testID="import-btn"
+            testID="import"
             title="import"
             onPress={this.handleImport}
           />
@@ -206,7 +206,6 @@ class CMP extends React.Component<Props, State> {
         overwrite: true,
         passwordHint: ''
       }
-      console.log('params', params)
       this.setState({ isLoading: true })
       const res = await walletAPI.hdStoreImport(params)
       const deriveParams = {

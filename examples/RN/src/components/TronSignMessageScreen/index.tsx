@@ -117,7 +117,7 @@ class CPK extends React.Component<Props, State> {
           })
         }
         <Button
-          testID="import-btn"
+          testID="import"
           title="import"
           onPress={this.handleImport}
         />
@@ -135,7 +135,6 @@ class CPK extends React.Component<Props, State> {
       address,
       input: JSON.parse(input),
     }
-    console.log('params', params)
     this.setState({ isLoading: true })
 
     try {
@@ -163,7 +162,6 @@ class CPK extends React.Component<Props, State> {
         network: '',
         passwordHint: ''
       }
-      console.log('params', params)
       this.setState({ isLoading: true })
       const res = await walletAPI.hdStoreImport(params)
       const deriveParams = {

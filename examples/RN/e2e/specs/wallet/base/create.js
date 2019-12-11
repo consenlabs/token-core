@@ -16,19 +16,19 @@ export default async function (params) {
   await id('input-segWit').tap()
   await id('input-segWit').replaceText(segWit)
 
-  await id('submit-btn').tap()
+  await id('create').tap()
 
   await waitFor(id('expected-address')).toExist().withTimeout(2000)
   const expectedAddress = await readTextValue('expected-address')
 
   // export
-  await id('export-btn').tap()
+  await id('export').tap()
   await waitFor(id('expected-mnemonic')).toExist().withTimeout(2000)
 
   // import
-  await id('import-btn').tap()
+  await id('import').tap()
+  // verify
   await waitFor(id('import-address')).toExist().withTimeout(2000)
-
   await toHaveText('import-address', expectedAddress)
 
   // go back

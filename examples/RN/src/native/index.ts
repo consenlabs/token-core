@@ -104,6 +104,7 @@ const tcxApi = async(method: any, params: any) => {
       param: any
     })
 
+    console.log(`${method} params`, params)
     const buffer = TcxAction.encode(message).finish()
     const hexStr = Buffer.from(buffer).toString('hex')
     console.log(`${method} hexStr: `, hexStr)

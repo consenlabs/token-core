@@ -78,7 +78,7 @@ class CPK extends React.Component<Props, State> {
             })
           }
           <Button
-            testID="import-btn"
+            testID="import"
             title="import"
             onPress={this.handleImport}
           />
@@ -110,7 +110,6 @@ class CPK extends React.Component<Props, State> {
       }
       this.setState({ isLoading: true })
       const res = await walletAPI.privateKeyStoreImport(params)
-      console.log('res', res)
       // @ts-ignore
       this.setState({ id: res.id, address: res.accounts[0].address, isLoading: false })
     } catch (err) {

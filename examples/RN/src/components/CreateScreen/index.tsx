@@ -77,17 +77,17 @@ class CMP extends React.Component<Props, State> {
             })
           }
           <Button
-            testID="submit-btn"
+            testID="create"
             title="create"
-            onPress={this.handleSubmit}
+            onPress={this.create}
           />
           {!!address && <Text testID="expected-address">{address}</Text>}
         </View>
         <View>
           <Button
-            testID="export-btn"
+            testID="export"
             title="export"
-            onPress={this.handleExport}
+            onPress={this.export}
           />
           {!!mnemonic && <Text testID="expected-mnemonic">{mnemonic}</Text>}
         </View>
@@ -114,16 +114,16 @@ class CMP extends React.Component<Props, State> {
           })
         }
         <Button
-          testID="import-btn"
+          testID="import"
           title="import"
-          onPress={this.handleImport}
+          onPress={this.import}
         />
         {!!expectedAddress && <Text testID="import-address">{expectedAddress}</Text>}
       </View>
     )
   }
 
-  handleSubmit = async () => {
+  create = async () => {
     const { password, chainType, network, segWit } = this.state
     const chainPath = getChainPath(chainType, network)
     try {
@@ -132,7 +132,6 @@ class CMP extends React.Component<Props, State> {
         name: '',
         passwordHint: ''
       }
-      console.log('params', params)
       this.setState({ isLoading: true })
       const res = await walletAPI.hdStoreCreate(params)
       const deriveParams = {
@@ -155,7 +154,7 @@ class CMP extends React.Component<Props, State> {
     }
   }
 
-  handleExport = async () => {
+  export = async () => {
     const { id, password } = this.state
     try {
       this.setState({ isLoading: true })
@@ -167,7 +166,7 @@ class CMP extends React.Component<Props, State> {
     }
   }
 
-  handleImport = async () => {
+  import = async () => {
     const { mnemonic, password, chainType, network, segWit } = this.state
     const chainPath = getChainPath(chainType, network)
     try {
@@ -183,7 +182,6 @@ class CMP extends React.Component<Props, State> {
         overwrite: true,
         passwordHint: ''
       }
-      console.log('params', params)
       this.setState({ isLoading: true })
       const res = await walletAPI.hdStoreImport(params)
       const deriveParams = {
