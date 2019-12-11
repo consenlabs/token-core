@@ -8,11 +8,12 @@
     "start": "react-native start",
     "test": "jest",
     "pbjs": "pbjs -t static-module -w commonjs -o src/native/proto.js ../../tcx-proto/src/*.proto && pbts -o src/native/proto.d.ts src/native/proto.js",
-    "e2e:debug": "detox build --configuration=ios.sim.debug && detox test --configuration=ios.sim.debug",
+    "e2e:debug:build": "detox build --configuration=ios.sim.debug",
+    "e2e:debug:test": "detox test --configuration=ios.sim.debug",
+    "e2e:debug": "npm run e2e:debug:build && npm run e2e:debug:test",
     "e2e:build": "detox build --configuration=ios.sim.release",
     "e2e:test": "detox test --configuration=ios.sim.release",
-    "e2e:release": "npm run e2e:build && npm run e2e:test",
-    "e2e": "npm run e2e:test",
+    "e2e": "npm run e2e:build && npm run e2e:test",
     "e2er": "yarn e2e --reuse"
   },
   "dependencies": {
