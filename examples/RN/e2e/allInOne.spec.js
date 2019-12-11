@@ -7,6 +7,6 @@ import tronSignMessageFlow from './specs/wallet/tronSignMessageFlow'
 // createFlow()
 // mnemonicFlow()
 // privateKeyFlow()
-signTxFlow()
-// tronSignMessageFlow()
+// signTxFlow()
+tronSignMessageFlow()
 

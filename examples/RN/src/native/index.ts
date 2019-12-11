@@ -65,9 +65,11 @@ const getParamsAndResponseType = (method: any, params: any) => {
       ]
     case 'sign_tx': {
       let ResponseType: any = protoRoot.transaction.BtcForkSignedTxOutput
+      let InputType: any = protoRoot.transaction.BtcForkTxInput
       switch (chainType) {
         case 'TRON':
           ResponseType = protoRoot.transaction.TronTxOutput
+          InputType = protoRoot.transaction.TronTxInput
           break
         default:
           break
@@ -75,12 +77,14 @@ const getParamsAndResponseType = (method: any, params: any) => {
       return [
         protoRoot.api.SignParam,
         ResponseType,
+        InputType,
       ]
     }
     case 'tron_sign_message':
       return [
         protoRoot.api.SignParam,
         protoRoot.transaction.TronMessageOutput,
+        protoRoot.transaction.TronMessageInput,
       ]
     default:
       return []
@@ -92,7 +96,16 @@ const tcxApi = async(method: any, params: any) => {
     const Any = protoRoot.google.protobuf.Any
     const TcxAction = protoRoot.api.TcxAction
 
-    const [ParamType, ResType] = getParamsAndResponseType(method, params)
+    const [ParamType, ResType, InputType] = getParamsAndResponseType(method, params)
+
+    if (InputType) {
+      const encodedInputParam = InputType.create(params.input)
+      const anyInput = Any.create({
+        type_url: method,
+        value: InputType.encode(encodedInputParam).finish(),
+      })
+      params.input = anyInput
+    }
 
     const encodedParam = ParamType.create(params)
     const any = Any.create({
