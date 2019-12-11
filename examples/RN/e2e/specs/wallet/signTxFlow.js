@@ -36,9 +36,8 @@ export const SIGN_TX = [
         derivedPath: "0/0",
         sequence: 0
       }],
-      memo: "",
       fee: 100000,
-      changeIdx: 1,
+      changeAddressIndex: 1,
       changeAddress: "",
       network: "TESTNET",
       segWit: "NONE"
@@ -55,7 +54,7 @@ export const SIGN_TX = [
     input: {
       raw_data: '0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d',
     },
-    signature: "bbf5ce0549490613a26c3ac4fc8574e748eabda05662b2e49cea818216b9da18691e78cd6379000e9c8a35c13dfbf620f269be90a078b58799b56dc20da3bdf200",
+    signature: "a9605b8766796299aeb40279c78e6818519d2330c4d20fb99583c85249920e8004b8d003ed9981016d87222c58e442de5b20b1996a322480562785f91d95211801",
   },
   {
     chainType: "BITCOINCASH",
@@ -76,7 +75,6 @@ export const SIGN_TX = [
         derivedPath: "1/0",
         sequence: 0
       }],
-      memo: "",
       fee: 6000,
       changeIdx: 1,
       changeAddress: "",

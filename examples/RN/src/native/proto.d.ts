@@ -309,7 +309,7 @@ export namespace api {
         name?: (string|null);
     }
 
-    /** Hd Store */
+    /** Represents a HdStoreCreateParam. */
     class HdStoreCreateParam implements IHdStoreCreateParam {
 
         /**
@@ -398,11 +398,122 @@ export namespace api {
         public toJSON(): { [k: string]: any };
     }
 
+    /** Properties of a WalletResult. */
+    interface IWalletResult {
+
+        /** WalletResult id */
+        id?: (string|null);
+
+        /** WalletResult name */
+        name?: (string|null);
+
+        /** WalletResult source */
+        source?: (string|null);
+
+        /** WalletResult accounts */
+        accounts?: (api.IAccountResponse[]|null);
+
+        /** WalletResult createdAt */
+        createdAt?: (number|Long|null);
+    }
+
+    /** Represents a WalletResult. */
+    class WalletResult implements IWalletResult {
+
+        /**
+         * Constructs a new WalletResult.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IWalletResult);
+
+        /** WalletResult id. */
+        public id: string;
+
+        /** WalletResult name. */
+        public name: string;
+
+        /** WalletResult source. */
+        public source: string;
+
+        /** WalletResult accounts. */
+        public accounts: api.IAccountResponse[];
+
+        /** WalletResult createdAt. */
+        public createdAt: (number|Long);
+
+        /**
+         * Creates a new WalletResult instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns WalletResult instance
+         */
+        public static create(properties?: api.IWalletResult): api.WalletResult;
+
+        /**
+         * Encodes the specified WalletResult message. Does not implicitly {@link api.WalletResult.verify|verify} messages.
+         * @param message WalletResult message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IWalletResult, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified WalletResult message, length delimited. Does not implicitly {@link api.WalletResult.verify|verify} messages.
+         * @param message WalletResult message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IWalletResult, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a WalletResult message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns WalletResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.WalletResult;
+
+        /**
+         * Decodes a WalletResult message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns WalletResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.WalletResult;
+
+        /**
+         * Verifies a WalletResult message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a WalletResult message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns WalletResult
+         */
+        public static fromObject(object: { [k: string]: any }): api.WalletResult;
+
+        /**
+         * Creates a plain object from a WalletResult message. Also converts values to other types if specified.
+         * @param message WalletResult
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.WalletResult, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this WalletResult to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
     /** Properties of a HdStoreImportParam. */
     interface IHdStoreImportParam {
-
-        /** HdStoreImportParam chainType */
-        chainType?: (string|null);
 
         /** HdStoreImportParam mnemonic */
         mnemonic?: (string|null);
@@ -410,20 +521,11 @@ export namespace api {
         /** HdStoreImportParam password */
         password?: (string|null);
 
-        /** HdStoreImportParam path */
-        path?: (string|null);
-
         /** HdStoreImportParam source */
         source?: (string|null);
 
         /** HdStoreImportParam name */
         name?: (string|null);
-
-        /** HdStoreImportParam network */
-        network?: (string|null);
-
-        /** HdStoreImportParam segWit */
-        segWit?: (string|null);
 
         /** HdStoreImportParam passwordHint */
         passwordHint?: (string|null);
@@ -441,29 +543,17 @@ export namespace api {
          */
         constructor(properties?: api.IHdStoreImportParam);
 
-        /** HdStoreImportParam chainType. */
-        public chainType: string;
-
         /** HdStoreImportParam mnemonic. */
         public mnemonic: string;
 
         /** HdStoreImportParam password. */
         public password: string;
 
-        /** HdStoreImportParam path. */
-        public path: string;
-
         /** HdStoreImportParam source. */
         public source: string;
 
         /** HdStoreImportParam name. */
         public name: string;
-
-        /** HdStoreImportParam network. */
-        public network: string;
-
-        /** HdStoreImportParam segWit. */
-        public segWit: string;
 
         /** HdStoreImportParam passwordHint. */
         public passwordHint: string;
@@ -761,102 +851,6 @@ export namespace api {
         }
     }
 
-    /** Properties of a BtcForkDeriveExtraParam. */
-    interface IBtcForkDeriveExtraParam {
-
-        /** BtcForkDeriveExtraParam network */
-        network?: (string|null);
-
-        /** BtcForkDeriveExtraParam segWit */
-        segWit?: (string|null);
-    }
-
-    /** Represents a BtcForkDeriveExtraParam. */
-    class BtcForkDeriveExtraParam implements IBtcForkDeriveExtraParam {
-
-        /**
-         * Constructs a new BtcForkDeriveExtraParam.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: api.IBtcForkDeriveExtraParam);
-
-        /** BtcForkDeriveExtraParam network. */
-        public network: string;
-
-        /** BtcForkDeriveExtraParam segWit. */
-        public segWit: string;
-
-        /**
-         * Creates a new BtcForkDeriveExtraParam instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns BtcForkDeriveExtraParam instance
-         */
-        public static create(properties?: api.IBtcForkDeriveExtraParam): api.BtcForkDeriveExtraParam;
-
-        /**
-         * Encodes the specified BtcForkDeriveExtraParam message. Does not implicitly {@link api.BtcForkDeriveExtraParam.verify|verify} messages.
-         * @param message BtcForkDeriveExtraParam message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: api.IBtcForkDeriveExtraParam, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified BtcForkDeriveExtraParam message, length delimited. Does not implicitly {@link api.BtcForkDeriveExtraParam.verify|verify} messages.
-         * @param message BtcForkDeriveExtraParam message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: api.IBtcForkDeriveExtraParam, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a BtcForkDeriveExtraParam message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns BtcForkDeriveExtraParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.BtcForkDeriveExtraParam;
-
-        /**
-         * Decodes a BtcForkDeriveExtraParam message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns BtcForkDeriveExtraParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.BtcForkDeriveExtraParam;
-
-        /**
-         * Verifies a BtcForkDeriveExtraParam message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a BtcForkDeriveExtraParam message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns BtcForkDeriveExtraParam
-         */
-        public static fromObject(object: { [k: string]: any }): api.BtcForkDeriveExtraParam;
-
-        /**
-         * Creates a plain object from a BtcForkDeriveExtraParam message. Also converts values to other types if specified.
-         * @param message BtcForkDeriveExtraParam
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: api.BtcForkDeriveExtraParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this BtcForkDeriveExtraParam to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
     /** Properties of an AccountResponse. */
     interface IAccountResponse {
 
@@ -1055,292 +1049,112 @@ export namespace api {
         public toJSON(): { [k: string]: any };
     }
 
-    /** Properties of a HdStoreExtendedPublicKeyParam. */
-    interface IHdStoreExtendedPublicKeyParam {
+    /** Properties of a KeystoreCommonExportResult. */
+    interface IKeystoreCommonExportResult {
 
-        /** HdStoreExtendedPublicKeyParam id */
+        /** KeystoreCommonExportResult id */
         id?: (string|null);
 
-        /** HdStoreExtendedPublicKeyParam password */
-        password?: (string|null);
+        /** KeystoreCommonExportResult type */
+        type?: (api.KeyType|null);
 
-        /** HdStoreExtendedPublicKeyParam chainType */
-        chainType?: (string|null);
-
-        /** HdStoreExtendedPublicKeyParam address */
-        address?: (string|null);
+        /** KeystoreCommonExportResult value */
+        value?: (string|null);
     }
 
-    /** Represents a HdStoreExtendedPublicKeyParam. */
-    class HdStoreExtendedPublicKeyParam implements IHdStoreExtendedPublicKeyParam {
+    /** Represents a KeystoreCommonExportResult. */
+    class KeystoreCommonExportResult implements IKeystoreCommonExportResult {
 
         /**
-         * Constructs a new HdStoreExtendedPublicKeyParam.
+         * Constructs a new KeystoreCommonExportResult.
          * @param [properties] Properties to set
          */
-        constructor(properties?: api.IHdStoreExtendedPublicKeyParam);
+        constructor(properties?: api.IKeystoreCommonExportResult);
 
-        /** HdStoreExtendedPublicKeyParam id. */
+        /** KeystoreCommonExportResult id. */
         public id: string;
 
-        /** HdStoreExtendedPublicKeyParam password. */
-        public password: string;
+        /** KeystoreCommonExportResult type. */
+        public type: api.KeyType;
 
-        /** HdStoreExtendedPublicKeyParam chainType. */
-        public chainType: string;
-
-        /** HdStoreExtendedPublicKeyParam address. */
-        public address: string;
+        /** KeystoreCommonExportResult value. */
+        public value: string;
 
         /**
-         * Creates a new HdStoreExtendedPublicKeyParam instance using the specified properties.
+         * Creates a new KeystoreCommonExportResult instance using the specified properties.
          * @param [properties] Properties to set
-         * @returns HdStoreExtendedPublicKeyParam instance
+         * @returns KeystoreCommonExportResult instance
          */
-        public static create(properties?: api.IHdStoreExtendedPublicKeyParam): api.HdStoreExtendedPublicKeyParam;
+        public static create(properties?: api.IKeystoreCommonExportResult): api.KeystoreCommonExportResult;
 
         /**
-         * Encodes the specified HdStoreExtendedPublicKeyParam message. Does not implicitly {@link api.HdStoreExtendedPublicKeyParam.verify|verify} messages.
-         * @param message HdStoreExtendedPublicKeyParam message or plain object to encode
+         * Encodes the specified KeystoreCommonExportResult message. Does not implicitly {@link api.KeystoreCommonExportResult.verify|verify} messages.
+         * @param message KeystoreCommonExportResult message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: api.IHdStoreExtendedPublicKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: api.IKeystoreCommonExportResult, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Encodes the specified HdStoreExtendedPublicKeyParam message, length delimited. Does not implicitly {@link api.HdStoreExtendedPublicKeyParam.verify|verify} messages.
-         * @param message HdStoreExtendedPublicKeyParam message or plain object to encode
+         * Encodes the specified KeystoreCommonExportResult message, length delimited. Does not implicitly {@link api.KeystoreCommonExportResult.verify|verify} messages.
+         * @param message KeystoreCommonExportResult message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encodeDelimited(message: api.IHdStoreExtendedPublicKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encodeDelimited(message: api.IKeystoreCommonExportResult, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Decodes a HdStoreExtendedPublicKeyParam message from the specified reader or buffer.
+         * Decodes a KeystoreCommonExportResult message from the specified reader or buffer.
          * @param reader Reader or buffer to decode from
          * @param [length] Message length if known beforehand
-         * @returns HdStoreExtendedPublicKeyParam
+         * @returns KeystoreCommonExportResult
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.HdStoreExtendedPublicKeyParam;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.KeystoreCommonExportResult;
 
         /**
-         * Decodes a HdStoreExtendedPublicKeyParam message from the specified reader or buffer, length delimited.
+         * Decodes a KeystoreCommonExportResult message from the specified reader or buffer, length delimited.
          * @param reader Reader or buffer to decode from
-         * @returns HdStoreExtendedPublicKeyParam
+         * @returns KeystoreCommonExportResult
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.HdStoreExtendedPublicKeyParam;
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.KeystoreCommonExportResult;
 
         /**
-         * Verifies a HdStoreExtendedPublicKeyParam message.
+         * Verifies a KeystoreCommonExportResult message.
          * @param message Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
         public static verify(message: { [k: string]: any }): (string|null);
 
         /**
-         * Creates a HdStoreExtendedPublicKeyParam message from a plain object. Also converts values to their respective internal types.
+         * Creates a KeystoreCommonExportResult message from a plain object. Also converts values to their respective internal types.
          * @param object Plain object
-         * @returns HdStoreExtendedPublicKeyParam
+         * @returns KeystoreCommonExportResult
          */
-        public static fromObject(object: { [k: string]: any }): api.HdStoreExtendedPublicKeyParam;
+        public static fromObject(object: { [k: string]: any }): api.KeystoreCommonExportResult;
 
         /**
-         * Creates a plain object from a HdStoreExtendedPublicKeyParam message. Also converts values to other types if specified.
-         * @param message HdStoreExtendedPublicKeyParam
+         * Creates a plain object from a KeystoreCommonExportResult message. Also converts values to other types if specified.
+         * @param message KeystoreCommonExportResult
          * @param [options] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: api.HdStoreExtendedPublicKeyParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(message: api.KeystoreCommonExportResult, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
-         * Converts this HdStoreExtendedPublicKeyParam to JSON.
+         * Converts this KeystoreCommonExportResult to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
     }
 
-    /** Properties of a HdStoreExtendedPublicKeyResponse. */
-    interface IHdStoreExtendedPublicKeyResponse {
-
-        /** HdStoreExtendedPublicKeyResponse extendedPublicKey */
-        extendedPublicKey?: (string|null);
-    }
-
-    /** Represents a HdStoreExtendedPublicKeyResponse. */
-    class HdStoreExtendedPublicKeyResponse implements IHdStoreExtendedPublicKeyResponse {
-
-        /**
-         * Constructs a new HdStoreExtendedPublicKeyResponse.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: api.IHdStoreExtendedPublicKeyResponse);
-
-        /** HdStoreExtendedPublicKeyResponse extendedPublicKey. */
-        public extendedPublicKey: string;
-
-        /**
-         * Creates a new HdStoreExtendedPublicKeyResponse instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns HdStoreExtendedPublicKeyResponse instance
-         */
-        public static create(properties?: api.IHdStoreExtendedPublicKeyResponse): api.HdStoreExtendedPublicKeyResponse;
-
-        /**
-         * Encodes the specified HdStoreExtendedPublicKeyResponse message. Does not implicitly {@link api.HdStoreExtendedPublicKeyResponse.verify|verify} messages.
-         * @param message HdStoreExtendedPublicKeyResponse message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: api.IHdStoreExtendedPublicKeyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified HdStoreExtendedPublicKeyResponse message, length delimited. Does not implicitly {@link api.HdStoreExtendedPublicKeyResponse.verify|verify} messages.
-         * @param message HdStoreExtendedPublicKeyResponse message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: api.IHdStoreExtendedPublicKeyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a HdStoreExtendedPublicKeyResponse message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns HdStoreExtendedPublicKeyResponse
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.HdStoreExtendedPublicKeyResponse;
-
-        /**
-         * Decodes a HdStoreExtendedPublicKeyResponse message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns HdStoreExtendedPublicKeyResponse
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.HdStoreExtendedPublicKeyResponse;
-
-        /**
-         * Verifies a HdStoreExtendedPublicKeyResponse message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a HdStoreExtendedPublicKeyResponse message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns HdStoreExtendedPublicKeyResponse
-         */
-        public static fromObject(object: { [k: string]: any }): api.HdStoreExtendedPublicKeyResponse;
-
-        /**
-         * Creates a plain object from a HdStoreExtendedPublicKeyResponse message. Also converts values to other types if specified.
-         * @param message HdStoreExtendedPublicKeyResponse
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: api.HdStoreExtendedPublicKeyResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this HdStoreExtendedPublicKeyResponse to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
-    /** Properties of a KeystoreCommonAccountsParam. */
-    interface IKeystoreCommonAccountsParam {
-
-        /** KeystoreCommonAccountsParam id */
-        id?: (string|null);
-    }
-
-    /** Represents a KeystoreCommonAccountsParam. */
-    class KeystoreCommonAccountsParam implements IKeystoreCommonAccountsParam {
-
-        /**
-         * Constructs a new KeystoreCommonAccountsParam.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: api.IKeystoreCommonAccountsParam);
-
-        /** KeystoreCommonAccountsParam id. */
-        public id: string;
-
-        /**
-         * Creates a new KeystoreCommonAccountsParam instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns KeystoreCommonAccountsParam instance
-         */
-        public static create(properties?: api.IKeystoreCommonAccountsParam): api.KeystoreCommonAccountsParam;
-
-        /**
-         * Encodes the specified KeystoreCommonAccountsParam message. Does not implicitly {@link api.KeystoreCommonAccountsParam.verify|verify} messages.
-         * @param message KeystoreCommonAccountsParam message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: api.IKeystoreCommonAccountsParam, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified KeystoreCommonAccountsParam message, length delimited. Does not implicitly {@link api.KeystoreCommonAccountsParam.verify|verify} messages.
-         * @param message KeystoreCommonAccountsParam message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: api.IKeystoreCommonAccountsParam, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a KeystoreCommonAccountsParam message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns KeystoreCommonAccountsParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.KeystoreCommonAccountsParam;
-
-        /**
-         * Decodes a KeystoreCommonAccountsParam message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns KeystoreCommonAccountsParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.KeystoreCommonAccountsParam;
-
-        /**
-         * Verifies a KeystoreCommonAccountsParam message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a KeystoreCommonAccountsParam message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns KeystoreCommonAccountsParam
-         */
-        public static fromObject(object: { [k: string]: any }): api.KeystoreCommonAccountsParam;
-
-        /**
-         * Creates a plain object from a KeystoreCommonAccountsParam message. Also converts values to other types if specified.
-         * @param message KeystoreCommonAccountsParam
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: api.KeystoreCommonAccountsParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this KeystoreCommonAccountsParam to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
+    /** KeyType enum. */
+    enum KeyType {
+        MNEMONIC = 0,
+        PRIVATE_KEY = 1
     }
 
     /** Properties of a PrivateKeyStoreImportParam. */
@@ -1365,7 +1179,7 @@ export namespace api {
         overwrite?: (boolean|null);
     }
 
-    /** Private key store */
+    /** Represents a PrivateKeyStoreImportParam. */
     class PrivateKeyStoreImportParam implements IPrivateKeyStoreImportParam {
 
         /**
@@ -1581,7 +1395,7 @@ export namespace api {
         password?: (string|null);
     }
 
-    /** Keystore Common */
+    /** Represents a WalletKeyParam. */
     class WalletKeyParam implements IWalletKeyParam {
 
         /**
@@ -1763,114 +1577,6 @@ export namespace api {
         public toJSON(): { [k: string]: any };
     }
 
-    /** Properties of a KeystoreCommonExportResult. */
-    interface IKeystoreCommonExportResult {
-
-        /** KeystoreCommonExportResult id */
-        id?: (string|null);
-
-        /** KeystoreCommonExportResult type */
-        type?: (api.KeyType|null);
-
-        /** KeystoreCommonExportResult value */
-        value?: (string|null);
-    }
-
-    /** Represents a KeystoreCommonExportResult. */
-    class KeystoreCommonExportResult implements IKeystoreCommonExportResult {
-
-        /**
-         * Constructs a new KeystoreCommonExportResult.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: api.IKeystoreCommonExportResult);
-
-        /** KeystoreCommonExportResult id. */
-        public id: string;
-
-        /** KeystoreCommonExportResult type. */
-        public type: api.KeyType;
-
-        /** KeystoreCommonExportResult value. */
-        public value: string;
-
-        /**
-         * Creates a new KeystoreCommonExportResult instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns KeystoreCommonExportResult instance
-         */
-        public static create(properties?: api.IKeystoreCommonExportResult): api.KeystoreCommonExportResult;
-
-        /**
-         * Encodes the specified KeystoreCommonExportResult message. Does not implicitly {@link api.KeystoreCommonExportResult.verify|verify} messages.
-         * @param message KeystoreCommonExportResult message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: api.IKeystoreCommonExportResult, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified KeystoreCommonExportResult message, length delimited. Does not implicitly {@link api.KeystoreCommonExportResult.verify|verify} messages.
-         * @param message KeystoreCommonExportResult message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: api.IKeystoreCommonExportResult, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a KeystoreCommonExportResult message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns KeystoreCommonExportResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.KeystoreCommonExportResult;
-
-        /**
-         * Decodes a KeystoreCommonExportResult message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns KeystoreCommonExportResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.KeystoreCommonExportResult;
-
-        /**
-         * Verifies a KeystoreCommonExportResult message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a KeystoreCommonExportResult message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns KeystoreCommonExportResult
-         */
-        public static fromObject(object: { [k: string]: any }): api.KeystoreCommonExportResult;
-
-        /**
-         * Creates a plain object from a KeystoreCommonExportResult message. Also converts values to other types if specified.
-         * @param message KeystoreCommonExportResult
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: api.KeystoreCommonExportResult, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this KeystoreCommonExportResult to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
-    /** KeyType enum. */
-    enum KeyType {
-        MNEMONIC = 0,
-        PRIVATE_KEY = 1
-    }
-
     /** Properties of a KeystoreCommonExistsResult. */
     interface IKeystoreCommonExistsResult {
 
@@ -1967,6 +1673,96 @@ export namespace api {
         public toJSON(): { [k: string]: any };
     }
 
+    /** Properties of a KeystoreCommonAccountsParam. */
+    interface IKeystoreCommonAccountsParam {
+
+        /** KeystoreCommonAccountsParam id */
+        id?: (string|null);
+    }
+
+    /** Represents a KeystoreCommonAccountsParam. */
+    class KeystoreCommonAccountsParam implements IKeystoreCommonAccountsParam {
+
+        /**
+         * Constructs a new KeystoreCommonAccountsParam.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IKeystoreCommonAccountsParam);
+
+        /** KeystoreCommonAccountsParam id. */
+        public id: string;
+
+        /**
+         * Creates a new KeystoreCommonAccountsParam instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns KeystoreCommonAccountsParam instance
+         */
+        public static create(properties?: api.IKeystoreCommonAccountsParam): api.KeystoreCommonAccountsParam;
+
+        /**
+         * Encodes the specified KeystoreCommonAccountsParam message. Does not implicitly {@link api.KeystoreCommonAccountsParam.verify|verify} messages.
+         * @param message KeystoreCommonAccountsParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IKeystoreCommonAccountsParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified KeystoreCommonAccountsParam message, length delimited. Does not implicitly {@link api.KeystoreCommonAccountsParam.verify|verify} messages.
+         * @param message KeystoreCommonAccountsParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IKeystoreCommonAccountsParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a KeystoreCommonAccountsParam message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns KeystoreCommonAccountsParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.KeystoreCommonAccountsParam;
+
+        /**
+         * Decodes a KeystoreCommonAccountsParam message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns KeystoreCommonAccountsParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.KeystoreCommonAccountsParam;
+
+        /**
+         * Verifies a KeystoreCommonAccountsParam message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a KeystoreCommonAccountsParam message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns KeystoreCommonAccountsParam
+         */
+        public static fromObject(object: { [k: string]: any }): api.KeystoreCommonAccountsParam;
+
+        /**
+         * Creates a plain object from a KeystoreCommonAccountsParam message. Also converts values to other types if specified.
+         * @param message KeystoreCommonAccountsParam
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.KeystoreCommonAccountsParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this KeystoreCommonAccountsParam to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
     /** Properties of a SignParam. */
     interface ISignParam {
 
@@ -1986,7 +1782,7 @@ export namespace api {
         input?: (google.protobuf.IAny|null);
     }
 
-    /** Sign Transaction */
+    /** Represents a SignParam. */
     class SignParam implements ISignParam {
 
         /**
@@ -2076,120 +1872,6 @@ export namespace api {
 
         /**
          * Converts this SignParam to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
-    /** Properties of a WalletResult. */
-    interface IWalletResult {
-
-        /** WalletResult id */
-        id?: (string|null);
-
-        /** WalletResult name */
-        name?: (string|null);
-
-        /** WalletResult source */
-        source?: (string|null);
-
-        /** WalletResult accounts */
-        accounts?: (api.IAccountResponse[]|null);
-
-        /** WalletResult createdAt */
-        createdAt?: (number|Long|null);
-    }
-
-    /** Represents a WalletResult. */
-    class WalletResult implements IWalletResult {
-
-        /**
-         * Constructs a new WalletResult.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: api.IWalletResult);
-
-        /** WalletResult id. */
-        public id: string;
-
-        /** WalletResult name. */
-        public name: string;
-
-        /** WalletResult source. */
-        public source: string;
-
-        /** WalletResult accounts. */
-        public accounts: api.IAccountResponse[];
-
-        /** WalletResult createdAt. */
-        public createdAt: (number|Long);
-
-        /**
-         * Creates a new WalletResult instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns WalletResult instance
-         */
-        public static create(properties?: api.IWalletResult): api.WalletResult;
-
-        /**
-         * Encodes the specified WalletResult message. Does not implicitly {@link api.WalletResult.verify|verify} messages.
-         * @param message WalletResult message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: api.IWalletResult, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified WalletResult message, length delimited. Does not implicitly {@link api.WalletResult.verify|verify} messages.
-         * @param message WalletResult message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: api.IWalletResult, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a WalletResult message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns WalletResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.WalletResult;
-
-        /**
-         * Decodes a WalletResult message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns WalletResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.WalletResult;
-
-        /**
-         * Verifies a WalletResult message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a WalletResult message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns WalletResult
-         */
-        public static fromObject(object: { [k: string]: any }): api.WalletResult;
-
-        /**
-         * Creates a plain object from a WalletResult message. Also converts values to other types if specified.
-         * @param message WalletResult
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: api.WalletResult, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this WalletResult to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
@@ -2598,6 +2280,300 @@ export namespace api {
              */
             public toJSON(): { [k: string]: any };
         }
+    }
+
+    /** Properties of a BtcForkDeriveExtraParam. */
+    interface IBtcForkDeriveExtraParam {
+
+        /** BtcForkDeriveExtraParam network */
+        network?: (string|null);
+
+        /** BtcForkDeriveExtraParam segWit */
+        segWit?: (string|null);
+    }
+
+    /** Represents a BtcForkDeriveExtraParam. */
+    class BtcForkDeriveExtraParam implements IBtcForkDeriveExtraParam {
+
+        /**
+         * Constructs a new BtcForkDeriveExtraParam.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IBtcForkDeriveExtraParam);
+
+        /** BtcForkDeriveExtraParam network. */
+        public network: string;
+
+        /** BtcForkDeriveExtraParam segWit. */
+        public segWit: string;
+
+        /**
+         * Creates a new BtcForkDeriveExtraParam instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns BtcForkDeriveExtraParam instance
+         */
+        public static create(properties?: api.IBtcForkDeriveExtraParam): api.BtcForkDeriveExtraParam;
+
+        /**
+         * Encodes the specified BtcForkDeriveExtraParam message. Does not implicitly {@link api.BtcForkDeriveExtraParam.verify|verify} messages.
+         * @param message BtcForkDeriveExtraParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IBtcForkDeriveExtraParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified BtcForkDeriveExtraParam message, length delimited. Does not implicitly {@link api.BtcForkDeriveExtraParam.verify|verify} messages.
+         * @param message BtcForkDeriveExtraParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IBtcForkDeriveExtraParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a BtcForkDeriveExtraParam message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns BtcForkDeriveExtraParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.BtcForkDeriveExtraParam;
+
+        /**
+         * Decodes a BtcForkDeriveExtraParam message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns BtcForkDeriveExtraParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.BtcForkDeriveExtraParam;
+
+        /**
+         * Verifies a BtcForkDeriveExtraParam message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a BtcForkDeriveExtraParam message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns BtcForkDeriveExtraParam
+         */
+        public static fromObject(object: { [k: string]: any }): api.BtcForkDeriveExtraParam;
+
+        /**
+         * Creates a plain object from a BtcForkDeriveExtraParam message. Also converts values to other types if specified.
+         * @param message BtcForkDeriveExtraParam
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.BtcForkDeriveExtraParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this BtcForkDeriveExtraParam to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a HdStoreExtendedPublicKeyParam. */
+    interface IHdStoreExtendedPublicKeyParam {
+
+        /** HdStoreExtendedPublicKeyParam id */
+        id?: (string|null);
+
+        /** HdStoreExtendedPublicKeyParam password */
+        password?: (string|null);
+
+        /** HdStoreExtendedPublicKeyParam chainType */
+        chainType?: (string|null);
+
+        /** HdStoreExtendedPublicKeyParam address */
+        address?: (string|null);
+    }
+
+    /** Represents a HdStoreExtendedPublicKeyParam. */
+    class HdStoreExtendedPublicKeyParam implements IHdStoreExtendedPublicKeyParam {
+
+        /**
+         * Constructs a new HdStoreExtendedPublicKeyParam.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IHdStoreExtendedPublicKeyParam);
+
+        /** HdStoreExtendedPublicKeyParam id. */
+        public id: string;
+
+        /** HdStoreExtendedPublicKeyParam password. */
+        public password: string;
+
+        /** HdStoreExtendedPublicKeyParam chainType. */
+        public chainType: string;
+
+        /** HdStoreExtendedPublicKeyParam address. */
+        public address: string;
+
+        /**
+         * Creates a new HdStoreExtendedPublicKeyParam instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns HdStoreExtendedPublicKeyParam instance
+         */
+        public static create(properties?: api.IHdStoreExtendedPublicKeyParam): api.HdStoreExtendedPublicKeyParam;
+
+        /**
+         * Encodes the specified HdStoreExtendedPublicKeyParam message. Does not implicitly {@link api.HdStoreExtendedPublicKeyParam.verify|verify} messages.
+         * @param message HdStoreExtendedPublicKeyParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IHdStoreExtendedPublicKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified HdStoreExtendedPublicKeyParam message, length delimited. Does not implicitly {@link api.HdStoreExtendedPublicKeyParam.verify|verify} messages.
+         * @param message HdStoreExtendedPublicKeyParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IHdStoreExtendedPublicKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a HdStoreExtendedPublicKeyParam message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns HdStoreExtendedPublicKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.HdStoreExtendedPublicKeyParam;
+
+        /**
+         * Decodes a HdStoreExtendedPublicKeyParam message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns HdStoreExtendedPublicKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.HdStoreExtendedPublicKeyParam;
+
+        /**
+         * Verifies a HdStoreExtendedPublicKeyParam message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a HdStoreExtendedPublicKeyParam message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns HdStoreExtendedPublicKeyParam
+         */
+        public static fromObject(object: { [k: string]: any }): api.HdStoreExtendedPublicKeyParam;
+
+        /**
+         * Creates a plain object from a HdStoreExtendedPublicKeyParam message. Also converts values to other types if specified.
+         * @param message HdStoreExtendedPublicKeyParam
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.HdStoreExtendedPublicKeyParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this HdStoreExtendedPublicKeyParam to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a HdStoreExtendedPublicKeyResponse. */
+    interface IHdStoreExtendedPublicKeyResponse {
+
+        /** HdStoreExtendedPublicKeyResponse extendedPublicKey */
+        extendedPublicKey?: (string|null);
+    }
+
+    /** Represents a HdStoreExtendedPublicKeyResponse. */
+    class HdStoreExtendedPublicKeyResponse implements IHdStoreExtendedPublicKeyResponse {
+
+        /**
+         * Constructs a new HdStoreExtendedPublicKeyResponse.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IHdStoreExtendedPublicKeyResponse);
+
+        /** HdStoreExtendedPublicKeyResponse extendedPublicKey. */
+        public extendedPublicKey: string;
+
+        /**
+         * Creates a new HdStoreExtendedPublicKeyResponse instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns HdStoreExtendedPublicKeyResponse instance
+         */
+        public static create(properties?: api.IHdStoreExtendedPublicKeyResponse): api.HdStoreExtendedPublicKeyResponse;
+
+        /**
+         * Encodes the specified HdStoreExtendedPublicKeyResponse message. Does not implicitly {@link api.HdStoreExtendedPublicKeyResponse.verify|verify} messages.
+         * @param message HdStoreExtendedPublicKeyResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IHdStoreExtendedPublicKeyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified HdStoreExtendedPublicKeyResponse message, length delimited. Does not implicitly {@link api.HdStoreExtendedPublicKeyResponse.verify|verify} messages.
+         * @param message HdStoreExtendedPublicKeyResponse message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IHdStoreExtendedPublicKeyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a HdStoreExtendedPublicKeyResponse message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns HdStoreExtendedPublicKeyResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.HdStoreExtendedPublicKeyResponse;
+
+        /**
+         * Decodes a HdStoreExtendedPublicKeyResponse message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns HdStoreExtendedPublicKeyResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.HdStoreExtendedPublicKeyResponse;
+
+        /**
+         * Verifies a HdStoreExtendedPublicKeyResponse message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a HdStoreExtendedPublicKeyResponse message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns HdStoreExtendedPublicKeyResponse
+         */
+        public static fromObject(object: { [k: string]: any }): api.HdStoreExtendedPublicKeyResponse;
+
+        /**
+         * Creates a plain object from a HdStoreExtendedPublicKeyResponse message. Also converts values to other types if specified.
+         * @param message HdStoreExtendedPublicKeyResponse
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.HdStoreExtendedPublicKeyResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this HdStoreExtendedPublicKeyResponse to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
     }
 
     /** Properties of a CacheDerivedKeyParam. */
@@ -3140,14 +3116,11 @@ export namespace transaction {
         /** BtcForkTxInput unspents */
         unspents?: (transaction.IUtxo[]|null);
 
-        /** BtcForkTxInput memo */
-        memo?: (string|null);
-
         /** BtcForkTxInput fee */
         fee?: (number|Long|null);
 
-        /** BtcForkTxInput changeIdx */
-        changeIdx?: (number|null);
+        /** BtcForkTxInput changeAddressIndex */
+        changeAddressIndex?: (number|null);
 
         /** BtcForkTxInput changeAddress */
         changeAddress?: (string|null);
@@ -3177,14 +3150,11 @@ export namespace transaction {
         /** BtcForkTxInput unspents. */
         public unspents: transaction.IUtxo[];
 
-        /** BtcForkTxInput memo. */
-        public memo: string;
-
         /** BtcForkTxInput fee. */
         public fee: (number|Long);
 
-        /** BtcForkTxInput changeIdx. */
-        public changeIdx: number;
+        /** BtcForkTxInput changeAddressIndex. */
+        public changeAddressIndex: number;
 
         /** BtcForkTxInput changeAddress. */
         public changeAddress: string;
@@ -3366,7 +3336,7 @@ export namespace transaction {
     interface ITronTxInput {
 
         /** TronTxInput rawData */
-        rawData?: (Uint8Array|null);
+        rawData?: (string|null);
     }
 
     /** Represents a TronTxInput. */
@@ -3379,7 +3349,7 @@ export namespace transaction {
         constructor(properties?: transaction.ITronTxInput);
 
         /** TronTxInput rawData. */
-        public rawData: Uint8Array;
+        public rawData: string;
 
         /**
          * Creates a new TronTxInput instance using the specified properties.
@@ -3455,8 +3425,8 @@ export namespace transaction {
     /** Properties of a TronTxOutput. */
     interface ITronTxOutput {
 
-        /** TronTxOutput signature */
-        signature?: (Uint8Array|null);
+        /** TronTxOutput signatures */
+        signatures?: (string[]|null);
     }
 
     /** Represents a TronTxOutput. */
@@ -3468,8 +3438,8 @@ export namespace transaction {
          */
         constructor(properties?: transaction.ITronTxOutput);
 
-        /** TronTxOutput signature. */
-        public signature: Uint8Array;
+        /** TronTxOutput signatures. */
+        public signatures: string[];
 
         /**
          * Creates a new TronTxOutput instance using the specified properties.

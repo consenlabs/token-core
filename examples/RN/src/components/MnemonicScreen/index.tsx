@@ -195,16 +195,12 @@ class CMP extends React.Component<Props, State> {
     const chainPath = getChainPath(chainType, network)
     try {
       const params = {
-        chainType,
-        network,
-        name: 'MNEMONIC-test',
-        source: 'MNEMONIC' as __walletSource,
-        path: chainPath,
         mnemonic: mnemonic.trim(),
         password,
-        segWit,
+        source: 'MNEMONIC' as __walletSource,
+        name: 'MNEMONIC-test',
+        passwordHint: '',
         overwrite: true,
-        passwordHint: ''
       }
       this.setState({ isLoading: true })
       const res = await walletAPI.hdStoreImport(params)

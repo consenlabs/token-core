@@ -117,12 +117,12 @@ const tcxApi = async(method: any, params: any) => {
     return result
   } catch (error) {
     console.warn(`${method} error`, error)
-    const errBuf = Buffer.from(error, 'hex')
+    const errBuf = Buffer.from(error.message, 'hex')
     console.warn(`${method} errBuf`, errBuf)
     const ResponseType = protoRoot.api.Response
     const err = ResponseType.decode(errBuf)
     console.warn(`${method} decode err`, err)
-    throw err
+    throw new Error(err.error)
   }
 }
 

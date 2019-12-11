@@ -145,7 +145,9 @@ class CPK extends React.Component<Props, State> {
 
     try {
       const res = await walletAPI.signTx(params)
-      this.setState({ signature: res.signature, isLoading: false })
+      // @ts-ignore
+      const signature = chainType === 'TRON' ? res.signatures[0] : res.signature
+      this.setState({ signature, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
       Alert.alert('', err.message)
@@ -157,16 +159,12 @@ class CPK extends React.Component<Props, State> {
     const chainPath = getChainPath(chainType, network)
     try {
       const params = {
-        chainType,
-        network,
-        name: 'MNEMONIC-test',
-        source: 'MNEMONIC' as __walletSource,
-        path: chainPath,
         mnemonic: mnemonic.trim(),
         password,
-        segWit,
+        source: 'MNEMONIC' as __walletSource,
+        name: 'MNEMONIC-test',
+        passwordHint: '',
         overwrite: true,
-        passwordHint: ''
       }
       this.setState({ isLoading: true })
       const res = await walletAPI.hdStoreImport(params)

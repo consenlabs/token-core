@@ -689,7 +689,7 @@ $root.api = (function() {
         /**
          * Constructs a new HdStoreCreateParam.
          * @memberof api
-         * @classdesc Hd Store
+         * @classdesc Represents a HdStoreCreateParam.
          * @implements IHdStoreCreateParam
          * @constructor
          * @param {api.IHdStoreCreateParam=} [properties] Properties to set
@@ -907,20 +907,328 @@ $root.api = (function() {
         return HdStoreCreateParam;
     })();
 
+    api.WalletResult = (function() {
+
+        /**
+         * Properties of a WalletResult.
+         * @memberof api
+         * @interface IWalletResult
+         * @property {string|null} [id] WalletResult id
+         * @property {string|null} [name] WalletResult name
+         * @property {string|null} [source] WalletResult source
+         * @property {Array.<api.IAccountResponse>|null} [accounts] WalletResult accounts
+         * @property {number|Long|null} [createdAt] WalletResult createdAt
+         */
+
+        /**
+         * Constructs a new WalletResult.
+         * @memberof api
+         * @classdesc Represents a WalletResult.
+         * @implements IWalletResult
+         * @constructor
+         * @param {api.IWalletResult=} [properties] Properties to set
+         */
+        function WalletResult(properties) {
+            this.accounts = [];
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * WalletResult id.
+         * @member {string} id
+         * @memberof api.WalletResult
+         * @instance
+         */
+        WalletResult.prototype.id = "";
+
+        /**
+         * WalletResult name.
+         * @member {string} name
+         * @memberof api.WalletResult
+         * @instance
+         */
+        WalletResult.prototype.name = "";
+
+        /**
+         * WalletResult source.
+         * @member {string} source
+         * @memberof api.WalletResult
+         * @instance
+         */
+        WalletResult.prototype.source = "";
+
+        /**
+         * WalletResult accounts.
+         * @member {Array.<api.IAccountResponse>} accounts
+         * @memberof api.WalletResult
+         * @instance
+         */
+        WalletResult.prototype.accounts = $util.emptyArray;
+
+        /**
+         * WalletResult createdAt.
+         * @member {number|Long} createdAt
+         * @memberof api.WalletResult
+         * @instance
+         */
+        WalletResult.prototype.createdAt = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+        /**
+         * Creates a new WalletResult instance using the specified properties.
+         * @function create
+         * @memberof api.WalletResult
+         * @static
+         * @param {api.IWalletResult=} [properties] Properties to set
+         * @returns {api.WalletResult} WalletResult instance
+         */
+        WalletResult.create = function create(properties) {
+            return new WalletResult(properties);
+        };
+
+        /**
+         * Encodes the specified WalletResult message. Does not implicitly {@link api.WalletResult.verify|verify} messages.
+         * @function encode
+         * @memberof api.WalletResult
+         * @static
+         * @param {api.IWalletResult} message WalletResult message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        WalletResult.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+            if (message.name != null && message.hasOwnProperty("name"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
+            if (message.source != null && message.hasOwnProperty("source"))
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.source);
+            if (message.accounts != null && message.accounts.length)
+                for (var i = 0; i < message.accounts.length; ++i)
+                    $root.api.AccountResponse.encode(message.accounts[i], writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+            if (message.createdAt != null && message.hasOwnProperty("createdAt"))
+                writer.uint32(/* id 5, wireType 0 =*/40).int64(message.createdAt);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified WalletResult message, length delimited. Does not implicitly {@link api.WalletResult.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.WalletResult
+         * @static
+         * @param {api.IWalletResult} message WalletResult message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        WalletResult.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a WalletResult message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.WalletResult
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.WalletResult} WalletResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        WalletResult.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.WalletResult();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                case 2:
+                    message.name = reader.string();
+                    break;
+                case 3:
+                    message.source = reader.string();
+                    break;
+                case 4:
+                    if (!(message.accounts && message.accounts.length))
+                        message.accounts = [];
+                    message.accounts.push($root.api.AccountResponse.decode(reader, reader.uint32()));
+                    break;
+                case 5:
+                    message.createdAt = reader.int64();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a WalletResult message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.WalletResult
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.WalletResult} WalletResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        WalletResult.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a WalletResult message.
+         * @function verify
+         * @memberof api.WalletResult
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        WalletResult.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.id != null && message.hasOwnProperty("id"))
+                if (!$util.isString(message.id))
+                    return "id: string expected";
+            if (message.name != null && message.hasOwnProperty("name"))
+                if (!$util.isString(message.name))
+                    return "name: string expected";
+            if (message.source != null && message.hasOwnProperty("source"))
+                if (!$util.isString(message.source))
+                    return "source: string expected";
+            if (message.accounts != null && message.hasOwnProperty("accounts")) {
+                if (!Array.isArray(message.accounts))
+                    return "accounts: array expected";
+                for (var i = 0; i < message.accounts.length; ++i) {
+                    var error = $root.api.AccountResponse.verify(message.accounts[i]);
+                    if (error)
+                        return "accounts." + error;
+                }
+            }
+            if (message.createdAt != null && message.hasOwnProperty("createdAt"))
+                if (!$util.isInteger(message.createdAt) && !(message.createdAt && $util.isInteger(message.createdAt.low) && $util.isInteger(message.createdAt.high)))
+                    return "createdAt: integer|Long expected";
+            return null;
+        };
+
+        /**
+         * Creates a WalletResult message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.WalletResult
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.WalletResult} WalletResult
+         */
+        WalletResult.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.WalletResult)
+                return object;
+            var message = new $root.api.WalletResult();
+            if (object.id != null)
+                message.id = String(object.id);
+            if (object.name != null)
+                message.name = String(object.name);
+            if (object.source != null)
+                message.source = String(object.source);
+            if (object.accounts) {
+                if (!Array.isArray(object.accounts))
+                    throw TypeError(".api.WalletResult.accounts: array expected");
+                message.accounts = [];
+                for (var i = 0; i < object.accounts.length; ++i) {
+                    if (typeof object.accounts[i] !== "object")
+                        throw TypeError(".api.WalletResult.accounts: object expected");
+                    message.accounts[i] = $root.api.AccountResponse.fromObject(object.accounts[i]);
+                }
+            }
+            if (object.createdAt != null)
+                if ($util.Long)
+                    (message.createdAt = $util.Long.fromValue(object.createdAt)).unsigned = false;
+                else if (typeof object.createdAt === "string")
+                    message.createdAt = parseInt(object.createdAt, 10);
+                else if (typeof object.createdAt === "number")
+                    message.createdAt = object.createdAt;
+                else if (typeof object.createdAt === "object")
+                    message.createdAt = new $util.LongBits(object.createdAt.low >>> 0, object.createdAt.high >>> 0).toNumber();
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a WalletResult message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.WalletResult
+         * @static
+         * @param {api.WalletResult} message WalletResult
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        WalletResult.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.arrays || options.defaults)
+                object.accounts = [];
+            if (options.defaults) {
+                object.id = "";
+                object.name = "";
+                object.source = "";
+                if ($util.Long) {
+                    var long = new $util.Long(0, 0, false);
+                    object.createdAt = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+                } else
+                    object.createdAt = options.longs === String ? "0" : 0;
+            }
+            if (message.id != null && message.hasOwnProperty("id"))
+                object.id = message.id;
+            if (message.name != null && message.hasOwnProperty("name"))
+                object.name = message.name;
+            if (message.source != null && message.hasOwnProperty("source"))
+                object.source = message.source;
+            if (message.accounts && message.accounts.length) {
+                object.accounts = [];
+                for (var j = 0; j < message.accounts.length; ++j)
+                    object.accounts[j] = $root.api.AccountResponse.toObject(message.accounts[j], options);
+            }
+            if (message.createdAt != null && message.hasOwnProperty("createdAt"))
+                if (typeof message.createdAt === "number")
+                    object.createdAt = options.longs === String ? String(message.createdAt) : message.createdAt;
+                else
+                    object.createdAt = options.longs === String ? $util.Long.prototype.toString.call(message.createdAt) : options.longs === Number ? new $util.LongBits(message.createdAt.low >>> 0, message.createdAt.high >>> 0).toNumber() : message.createdAt;
+            return object;
+        };
+
+        /**
+         * Converts this WalletResult to JSON.
+         * @function toJSON
+         * @memberof api.WalletResult
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        WalletResult.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return WalletResult;
+    })();
+
     api.HdStoreImportParam = (function() {
 
         /**
          * Properties of a HdStoreImportParam.
          * @memberof api
          * @interface IHdStoreImportParam
-         * @property {string|null} [chainType] HdStoreImportParam chainType
          * @property {string|null} [mnemonic] HdStoreImportParam mnemonic
          * @property {string|null} [password] HdStoreImportParam password
-         * @property {string|null} [path] HdStoreImportParam path
          * @property {string|null} [source] HdStoreImportParam source
          * @property {string|null} [name] HdStoreImportParam name
-         * @property {string|null} [network] HdStoreImportParam network
-         * @property {string|null} [segWit] HdStoreImportParam segWit
          * @property {string|null} [passwordHint] HdStoreImportParam passwordHint
          * @property {boolean|null} [overwrite] HdStoreImportParam overwrite
          */
@@ -941,14 +1249,6 @@ $root.api = (function() {
         }
 
         /**
-         * HdStoreImportParam chainType.
-         * @member {string} chainType
-         * @memberof api.HdStoreImportParam
-         * @instance
-         */
-        HdStoreImportParam.prototype.chainType = "";
-
-        /**
          * HdStoreImportParam mnemonic.
          * @member {string} mnemonic
          * @memberof api.HdStoreImportParam
@@ -965,14 +1265,6 @@ $root.api = (function() {
         HdStoreImportParam.prototype.password = "";
 
         /**
-         * HdStoreImportParam path.
-         * @member {string} path
-         * @memberof api.HdStoreImportParam
-         * @instance
-         */
-        HdStoreImportParam.prototype.path = "";
-
-        /**
          * HdStoreImportParam source.
          * @member {string} source
          * @memberof api.HdStoreImportParam
@@ -987,22 +1279,6 @@ $root.api = (function() {
          * @instance
          */
         HdStoreImportParam.prototype.name = "";
-
-        /**
-         * HdStoreImportParam network.
-         * @member {string} network
-         * @memberof api.HdStoreImportParam
-         * @instance
-         */
-        HdStoreImportParam.prototype.network = "";
-
-        /**
-         * HdStoreImportParam segWit.
-         * @member {string} segWit
-         * @memberof api.HdStoreImportParam
-         * @instance
-         */
-        HdStoreImportParam.prototype.segWit = "";
 
         /**
          * HdStoreImportParam passwordHint.
@@ -1044,26 +1320,18 @@ $root.api = (function() {
         HdStoreImportParam.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.chainType != null && message.hasOwnProperty("chainType"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.chainType);
             if (message.mnemonic != null && message.hasOwnProperty("mnemonic"))
-                writer.uint32(/* id 2, wireType 2 =*/18).string(message.mnemonic);
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.mnemonic);
             if (message.password != null && message.hasOwnProperty("password"))
-                writer.uint32(/* id 3, wireType 2 =*/26).string(message.password);
-            if (message.path != null && message.hasOwnProperty("path"))
-                writer.uint32(/* id 4, wireType 2 =*/34).string(message.path);
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.password);
             if (message.source != null && message.hasOwnProperty("source"))
-                writer.uint32(/* id 5, wireType 2 =*/42).string(message.source);
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.source);
             if (message.name != null && message.hasOwnProperty("name"))
-                writer.uint32(/* id 6, wireType 2 =*/50).string(message.name);
-            if (message.network != null && message.hasOwnProperty("network"))
-                writer.uint32(/* id 7, wireType 2 =*/58).string(message.network);
-            if (message.segWit != null && message.hasOwnProperty("segWit"))
-                writer.uint32(/* id 8, wireType 2 =*/66).string(message.segWit);
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.name);
             if (message.passwordHint != null && message.hasOwnProperty("passwordHint"))
-                writer.uint32(/* id 9, wireType 2 =*/74).string(message.passwordHint);
+                writer.uint32(/* id 5, wireType 2 =*/42).string(message.passwordHint);
             if (message.overwrite != null && message.hasOwnProperty("overwrite"))
-                writer.uint32(/* id 10, wireType 0 =*/80).bool(message.overwrite);
+                writer.uint32(/* id 6, wireType 0 =*/48).bool(message.overwrite);
             return writer;
         };
 
@@ -1099,33 +1367,21 @@ $root.api = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.chainType = reader.string();
-                    break;
-                case 2:
                     message.mnemonic = reader.string();
                     break;
-                case 3:
+                case 2:
                     message.password = reader.string();
                     break;
-                case 4:
-                    message.path = reader.string();
-                    break;
-                case 5:
+                case 3:
                     message.source = reader.string();
                     break;
-                case 6:
+                case 4:
                     message.name = reader.string();
                     break;
-                case 7:
-                    message.network = reader.string();
-                    break;
-                case 8:
-                    message.segWit = reader.string();
-                    break;
-                case 9:
+                case 5:
                     message.passwordHint = reader.string();
                     break;
-                case 10:
+                case 6:
                     message.overwrite = reader.bool();
                     break;
                 default:
@@ -1163,30 +1419,18 @@ $root.api = (function() {
         HdStoreImportParam.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
-            if (message.chainType != null && message.hasOwnProperty("chainType"))
-                if (!$util.isString(message.chainType))
-                    return "chainType: string expected";
             if (message.mnemonic != null && message.hasOwnProperty("mnemonic"))
                 if (!$util.isString(message.mnemonic))
                     return "mnemonic: string expected";
             if (message.password != null && message.hasOwnProperty("password"))
                 if (!$util.isString(message.password))
                     return "password: string expected";
-            if (message.path != null && message.hasOwnProperty("path"))
-                if (!$util.isString(message.path))
-                    return "path: string expected";
             if (message.source != null && message.hasOwnProperty("source"))
                 if (!$util.isString(message.source))
                     return "source: string expected";
             if (message.name != null && message.hasOwnProperty("name"))
                 if (!$util.isString(message.name))
                     return "name: string expected";
-            if (message.network != null && message.hasOwnProperty("network"))
-                if (!$util.isString(message.network))
-                    return "network: string expected";
-            if (message.segWit != null && message.hasOwnProperty("segWit"))
-                if (!$util.isString(message.segWit))
-                    return "segWit: string expected";
             if (message.passwordHint != null && message.hasOwnProperty("passwordHint"))
                 if (!$util.isString(message.passwordHint))
                     return "passwordHint: string expected";
@@ -1208,22 +1452,14 @@ $root.api = (function() {
             if (object instanceof $root.api.HdStoreImportParam)
                 return object;
             var message = new $root.api.HdStoreImportParam();
-            if (object.chainType != null)
-                message.chainType = String(object.chainType);
             if (object.mnemonic != null)
                 message.mnemonic = String(object.mnemonic);
             if (object.password != null)
                 message.password = String(object.password);
-            if (object.path != null)
-                message.path = String(object.path);
             if (object.source != null)
                 message.source = String(object.source);
             if (object.name != null)
                 message.name = String(object.name);
-            if (object.network != null)
-                message.network = String(object.network);
-            if (object.segWit != null)
-                message.segWit = String(object.segWit);
             if (object.passwordHint != null)
                 message.passwordHint = String(object.passwordHint);
             if (object.overwrite != null)
@@ -1245,33 +1481,21 @@ $root.api = (function() {
                 options = {};
             var object = {};
             if (options.defaults) {
-                object.chainType = "";
                 object.mnemonic = "";
                 object.password = "";
-                object.path = "";
                 object.source = "";
                 object.name = "";
-                object.network = "";
-                object.segWit = "";
                 object.passwordHint = "";
                 object.overwrite = false;
             }
-            if (message.chainType != null && message.hasOwnProperty("chainType"))
-                object.chainType = message.chainType;
             if (message.mnemonic != null && message.hasOwnProperty("mnemonic"))
                 object.mnemonic = message.mnemonic;
             if (message.password != null && message.hasOwnProperty("password"))
                 object.password = message.password;
-            if (message.path != null && message.hasOwnProperty("path"))
-                object.path = message.path;
             if (message.source != null && message.hasOwnProperty("source"))
                 object.source = message.source;
             if (message.name != null && message.hasOwnProperty("name"))
                 object.name = message.name;
-            if (message.network != null && message.hasOwnProperty("network"))
-                object.network = message.network;
-            if (message.segWit != null && message.hasOwnProperty("segWit"))
-                object.segWit = message.segWit;
             if (message.passwordHint != null && message.hasOwnProperty("passwordHint"))
                 object.passwordHint = message.passwordHint;
             if (message.overwrite != null && message.hasOwnProperty("overwrite"))
@@ -1823,216 +2047,6 @@ $root.api = (function() {
         return HdStoreDeriveParam;
     })();
 
-    api.BtcForkDeriveExtraParam = (function() {
-
-        /**
-         * Properties of a BtcForkDeriveExtraParam.
-         * @memberof api
-         * @interface IBtcForkDeriveExtraParam
-         * @property {string|null} [network] BtcForkDeriveExtraParam network
-         * @property {string|null} [segWit] BtcForkDeriveExtraParam segWit
-         */
-
-        /**
-         * Constructs a new BtcForkDeriveExtraParam.
-         * @memberof api
-         * @classdesc Represents a BtcForkDeriveExtraParam.
-         * @implements IBtcForkDeriveExtraParam
-         * @constructor
-         * @param {api.IBtcForkDeriveExtraParam=} [properties] Properties to set
-         */
-        function BtcForkDeriveExtraParam(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * BtcForkDeriveExtraParam network.
-         * @member {string} network
-         * @memberof api.BtcForkDeriveExtraParam
-         * @instance
-         */
-        BtcForkDeriveExtraParam.prototype.network = "";
-
-        /**
-         * BtcForkDeriveExtraParam segWit.
-         * @member {string} segWit
-         * @memberof api.BtcForkDeriveExtraParam
-         * @instance
-         */
-        BtcForkDeriveExtraParam.prototype.segWit = "";
-
-        /**
-         * Creates a new BtcForkDeriveExtraParam instance using the specified properties.
-         * @function create
-         * @memberof api.BtcForkDeriveExtraParam
-         * @static
-         * @param {api.IBtcForkDeriveExtraParam=} [properties] Properties to set
-         * @returns {api.BtcForkDeriveExtraParam} BtcForkDeriveExtraParam instance
-         */
-        BtcForkDeriveExtraParam.create = function create(properties) {
-            return new BtcForkDeriveExtraParam(properties);
-        };
-
-        /**
-         * Encodes the specified BtcForkDeriveExtraParam message. Does not implicitly {@link api.BtcForkDeriveExtraParam.verify|verify} messages.
-         * @function encode
-         * @memberof api.BtcForkDeriveExtraParam
-         * @static
-         * @param {api.IBtcForkDeriveExtraParam} message BtcForkDeriveExtraParam message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        BtcForkDeriveExtraParam.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.network != null && message.hasOwnProperty("network"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.network);
-            if (message.segWit != null && message.hasOwnProperty("segWit"))
-                writer.uint32(/* id 2, wireType 2 =*/18).string(message.segWit);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified BtcForkDeriveExtraParam message, length delimited. Does not implicitly {@link api.BtcForkDeriveExtraParam.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof api.BtcForkDeriveExtraParam
-         * @static
-         * @param {api.IBtcForkDeriveExtraParam} message BtcForkDeriveExtraParam message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        BtcForkDeriveExtraParam.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a BtcForkDeriveExtraParam message from the specified reader or buffer.
-         * @function decode
-         * @memberof api.BtcForkDeriveExtraParam
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {api.BtcForkDeriveExtraParam} BtcForkDeriveExtraParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        BtcForkDeriveExtraParam.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.BtcForkDeriveExtraParam();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.network = reader.string();
-                    break;
-                case 2:
-                    message.segWit = reader.string();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a BtcForkDeriveExtraParam message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof api.BtcForkDeriveExtraParam
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.BtcForkDeriveExtraParam} BtcForkDeriveExtraParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        BtcForkDeriveExtraParam.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a BtcForkDeriveExtraParam message.
-         * @function verify
-         * @memberof api.BtcForkDeriveExtraParam
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        BtcForkDeriveExtraParam.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.network != null && message.hasOwnProperty("network"))
-                if (!$util.isString(message.network))
-                    return "network: string expected";
-            if (message.segWit != null && message.hasOwnProperty("segWit"))
-                if (!$util.isString(message.segWit))
-                    return "segWit: string expected";
-            return null;
-        };
-
-        /**
-         * Creates a BtcForkDeriveExtraParam message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof api.BtcForkDeriveExtraParam
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {api.BtcForkDeriveExtraParam} BtcForkDeriveExtraParam
-         */
-        BtcForkDeriveExtraParam.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.BtcForkDeriveExtraParam)
-                return object;
-            var message = new $root.api.BtcForkDeriveExtraParam();
-            if (object.network != null)
-                message.network = String(object.network);
-            if (object.segWit != null)
-                message.segWit = String(object.segWit);
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a BtcForkDeriveExtraParam message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof api.BtcForkDeriveExtraParam
-         * @static
-         * @param {api.BtcForkDeriveExtraParam} message BtcForkDeriveExtraParam
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        BtcForkDeriveExtraParam.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults) {
-                object.network = "";
-                object.segWit = "";
-            }
-            if (message.network != null && message.hasOwnProperty("network"))
-                object.network = message.network;
-            if (message.segWit != null && message.hasOwnProperty("segWit"))
-                object.segWit = message.segWit;
-            return object;
-        };
-
-        /**
-         * Converts this BtcForkDeriveExtraParam to JSON.
-         * @function toJSON
-         * @memberof api.BtcForkDeriveExtraParam
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        BtcForkDeriveExtraParam.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return BtcForkDeriveExtraParam;
-    })();
-
     api.AccountResponse = (function() {
 
         /**
@@ -2495,27 +2509,26 @@ $root.api = (function() {
         return AccountsResponse;
     })();
 
-    api.HdStoreExtendedPublicKeyParam = (function() {
+    api.KeystoreCommonExportResult = (function() {
 
         /**
-         * Properties of a HdStoreExtendedPublicKeyParam.
+         * Properties of a KeystoreCommonExportResult.
          * @memberof api
-         * @interface IHdStoreExtendedPublicKeyParam
-         * @property {string|null} [id] HdStoreExtendedPublicKeyParam id
-         * @property {string|null} [password] HdStoreExtendedPublicKeyParam password
-         * @property {string|null} [chainType] HdStoreExtendedPublicKeyParam chainType
-         * @property {string|null} [address] HdStoreExtendedPublicKeyParam address
+         * @interface IKeystoreCommonExportResult
+         * @property {string|null} [id] KeystoreCommonExportResult id
+         * @property {api.KeyType|null} [type] KeystoreCommonExportResult type
+         * @property {string|null} [value] KeystoreCommonExportResult value
          */
 
         /**
-         * Constructs a new HdStoreExtendedPublicKeyParam.
+         * Constructs a new KeystoreCommonExportResult.
          * @memberof api
-         * @classdesc Represents a HdStoreExtendedPublicKeyParam.
-         * @implements IHdStoreExtendedPublicKeyParam
+         * @classdesc Represents a KeystoreCommonExportResult.
+         * @implements IKeystoreCommonExportResult
          * @constructor
-         * @param {api.IHdStoreExtendedPublicKeyParam=} [properties] Properties to set
+         * @param {api.IKeystoreCommonExportResult=} [properties] Properties to set
          */
-        function HdStoreExtendedPublicKeyParam(properties) {
+        function KeystoreCommonExportResult(properties) {
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -2523,100 +2536,90 @@ $root.api = (function() {
         }
 
         /**
-         * HdStoreExtendedPublicKeyParam id.
+         * KeystoreCommonExportResult id.
          * @member {string} id
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @memberof api.KeystoreCommonExportResult
          * @instance
          */
-        HdStoreExtendedPublicKeyParam.prototype.id = "";
+        KeystoreCommonExportResult.prototype.id = "";
 
         /**
-         * HdStoreExtendedPublicKeyParam password.
-         * @member {string} password
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * KeystoreCommonExportResult type.
+         * @member {api.KeyType} type
+         * @memberof api.KeystoreCommonExportResult
          * @instance
          */
-        HdStoreExtendedPublicKeyParam.prototype.password = "";
+        KeystoreCommonExportResult.prototype.type = 0;
 
         /**
-         * HdStoreExtendedPublicKeyParam chainType.
-         * @member {string} chainType
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * KeystoreCommonExportResult value.
+         * @member {string} value
+         * @memberof api.KeystoreCommonExportResult
          * @instance
          */
-        HdStoreExtendedPublicKeyParam.prototype.chainType = "";
+        KeystoreCommonExportResult.prototype.value = "";
 
         /**
-         * HdStoreExtendedPublicKeyParam address.
-         * @member {string} address
-         * @memberof api.HdStoreExtendedPublicKeyParam
-         * @instance
-         */
-        HdStoreExtendedPublicKeyParam.prototype.address = "";
-
-        /**
-         * Creates a new HdStoreExtendedPublicKeyParam instance using the specified properties.
+         * Creates a new KeystoreCommonExportResult instance using the specified properties.
          * @function create
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @memberof api.KeystoreCommonExportResult
          * @static
-         * @param {api.IHdStoreExtendedPublicKeyParam=} [properties] Properties to set
-         * @returns {api.HdStoreExtendedPublicKeyParam} HdStoreExtendedPublicKeyParam instance
+         * @param {api.IKeystoreCommonExportResult=} [properties] Properties to set
+         * @returns {api.KeystoreCommonExportResult} KeystoreCommonExportResult instance
          */
-        HdStoreExtendedPublicKeyParam.create = function create(properties) {
-            return new HdStoreExtendedPublicKeyParam(properties);
+        KeystoreCommonExportResult.create = function create(properties) {
+            return new KeystoreCommonExportResult(properties);
         };
 
         /**
-         * Encodes the specified HdStoreExtendedPublicKeyParam message. Does not implicitly {@link api.HdStoreExtendedPublicKeyParam.verify|verify} messages.
+         * Encodes the specified KeystoreCommonExportResult message. Does not implicitly {@link api.KeystoreCommonExportResult.verify|verify} messages.
          * @function encode
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @memberof api.KeystoreCommonExportResult
          * @static
-         * @param {api.IHdStoreExtendedPublicKeyParam} message HdStoreExtendedPublicKeyParam message or plain object to encode
+         * @param {api.IKeystoreCommonExportResult} message KeystoreCommonExportResult message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        HdStoreExtendedPublicKeyParam.encode = function encode(message, writer) {
+        KeystoreCommonExportResult.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
             if (message.id != null && message.hasOwnProperty("id"))
                 writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
-            if (message.password != null && message.hasOwnProperty("password"))
-                writer.uint32(/* id 2, wireType 2 =*/18).string(message.password);
-            if (message.chainType != null && message.hasOwnProperty("chainType"))
-                writer.uint32(/* id 3, wireType 2 =*/26).string(message.chainType);
-            if (message.address != null && message.hasOwnProperty("address"))
-                writer.uint32(/* id 4, wireType 2 =*/34).string(message.address);
+            if (message.type != null && message.hasOwnProperty("type"))
+                writer.uint32(/* id 2, wireType 0 =*/16).int32(message.type);
+            if (message.value != null && message.hasOwnProperty("value"))
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.value);
             return writer;
         };
 
         /**
-         * Encodes the specified HdStoreExtendedPublicKeyParam message, length delimited. Does not implicitly {@link api.HdStoreExtendedPublicKeyParam.verify|verify} messages.
+         * Encodes the specified KeystoreCommonExportResult message, length delimited. Does not implicitly {@link api.KeystoreCommonExportResult.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @memberof api.KeystoreCommonExportResult
          * @static
-         * @param {api.IHdStoreExtendedPublicKeyParam} message HdStoreExtendedPublicKeyParam message or plain object to encode
+         * @param {api.IKeystoreCommonExportResult} message KeystoreCommonExportResult message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        HdStoreExtendedPublicKeyParam.encodeDelimited = function encodeDelimited(message, writer) {
+        KeystoreCommonExportResult.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a HdStoreExtendedPublicKeyParam message from the specified reader or buffer.
+         * Decodes a KeystoreCommonExportResult message from the specified reader or buffer.
          * @function decode
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @memberof api.KeystoreCommonExportResult
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {api.HdStoreExtendedPublicKeyParam} HdStoreExtendedPublicKeyParam
+         * @returns {api.KeystoreCommonExportResult} KeystoreCommonExportResult
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        HdStoreExtendedPublicKeyParam.decode = function decode(reader, length) {
+        KeystoreCommonExportResult.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.HdStoreExtendedPublicKeyParam();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.KeystoreCommonExportResult();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -2624,13 +2627,10 @@ $root.api = (function() {
                     message.id = reader.string();
                     break;
                 case 2:
-                    message.password = reader.string();
+                    message.type = reader.int32();
                     break;
                 case 3:
-                    message.chainType = reader.string();
-                    break;
-                case 4:
-                    message.address = reader.string();
+                    message.value = reader.string();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -2641,486 +2641,131 @@ $root.api = (function() {
         };
 
         /**
-         * Decodes a HdStoreExtendedPublicKeyParam message from the specified reader or buffer, length delimited.
+         * Decodes a KeystoreCommonExportResult message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @memberof api.KeystoreCommonExportResult
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.HdStoreExtendedPublicKeyParam} HdStoreExtendedPublicKeyParam
+         * @returns {api.KeystoreCommonExportResult} KeystoreCommonExportResult
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        HdStoreExtendedPublicKeyParam.decodeDelimited = function decodeDelimited(reader) {
+        KeystoreCommonExportResult.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a HdStoreExtendedPublicKeyParam message.
+         * Verifies a KeystoreCommonExportResult message.
          * @function verify
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @memberof api.KeystoreCommonExportResult
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        HdStoreExtendedPublicKeyParam.verify = function verify(message) {
+        KeystoreCommonExportResult.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
             if (message.id != null && message.hasOwnProperty("id"))
                 if (!$util.isString(message.id))
                     return "id: string expected";
-            if (message.password != null && message.hasOwnProperty("password"))
-                if (!$util.isString(message.password))
-                    return "password: string expected";
-            if (message.chainType != null && message.hasOwnProperty("chainType"))
-                if (!$util.isString(message.chainType))
-                    return "chainType: string expected";
-            if (message.address != null && message.hasOwnProperty("address"))
-                if (!$util.isString(message.address))
-                    return "address: string expected";
+            if (message.type != null && message.hasOwnProperty("type"))
+                switch (message.type) {
+                default:
+                    return "type: enum value expected";
+                case 0:
+                case 1:
+                    break;
+                }
+            if (message.value != null && message.hasOwnProperty("value"))
+                if (!$util.isString(message.value))
+                    return "value: string expected";
             return null;
         };
 
         /**
-         * Creates a HdStoreExtendedPublicKeyParam message from a plain object. Also converts values to their respective internal types.
+         * Creates a KeystoreCommonExportResult message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @memberof api.KeystoreCommonExportResult
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {api.HdStoreExtendedPublicKeyParam} HdStoreExtendedPublicKeyParam
+         * @returns {api.KeystoreCommonExportResult} KeystoreCommonExportResult
          */
-        HdStoreExtendedPublicKeyParam.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.HdStoreExtendedPublicKeyParam)
+        KeystoreCommonExportResult.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.KeystoreCommonExportResult)
                 return object;
-            var message = new $root.api.HdStoreExtendedPublicKeyParam();
+            var message = new $root.api.KeystoreCommonExportResult();
             if (object.id != null)
                 message.id = String(object.id);
-            if (object.password != null)
-                message.password = String(object.password);
-            if (object.chainType != null)
-                message.chainType = String(object.chainType);
-            if (object.address != null)
-                message.address = String(object.address);
+            switch (object.type) {
+            case "MNEMONIC":
+            case 0:
+                message.type = 0;
+                break;
+            case "PRIVATE_KEY":
+            case 1:
+                message.type = 1;
+                break;
+            }
+            if (object.value != null)
+                message.value = String(object.value);
             return message;
         };
 
         /**
-         * Creates a plain object from a HdStoreExtendedPublicKeyParam message. Also converts values to other types if specified.
+         * Creates a plain object from a KeystoreCommonExportResult message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @memberof api.KeystoreCommonExportResult
          * @static
-         * @param {api.HdStoreExtendedPublicKeyParam} message HdStoreExtendedPublicKeyParam
+         * @param {api.KeystoreCommonExportResult} message KeystoreCommonExportResult
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        HdStoreExtendedPublicKeyParam.toObject = function toObject(message, options) {
+        KeystoreCommonExportResult.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
             if (options.defaults) {
                 object.id = "";
-                object.password = "";
-                object.chainType = "";
-                object.address = "";
+                object.type = options.enums === String ? "MNEMONIC" : 0;
+                object.value = "";
             }
             if (message.id != null && message.hasOwnProperty("id"))
                 object.id = message.id;
-            if (message.password != null && message.hasOwnProperty("password"))
-                object.password = message.password;
-            if (message.chainType != null && message.hasOwnProperty("chainType"))
-                object.chainType = message.chainType;
-            if (message.address != null && message.hasOwnProperty("address"))
-                object.address = message.address;
+            if (message.type != null && message.hasOwnProperty("type"))
+                object.type = options.enums === String ? $root.api.KeyType[message.type] : message.type;
+            if (message.value != null && message.hasOwnProperty("value"))
+                object.value = message.value;
             return object;
         };
 
         /**
-         * Converts this HdStoreExtendedPublicKeyParam to JSON.
+         * Converts this KeystoreCommonExportResult to JSON.
          * @function toJSON
-         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @memberof api.KeystoreCommonExportResult
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        HdStoreExtendedPublicKeyParam.prototype.toJSON = function toJSON() {
+        KeystoreCommonExportResult.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return HdStoreExtendedPublicKeyParam;
+        return KeystoreCommonExportResult;
     })();
 
-    api.HdStoreExtendedPublicKeyResponse = (function() {
-
-        /**
-         * Properties of a HdStoreExtendedPublicKeyResponse.
-         * @memberof api
-         * @interface IHdStoreExtendedPublicKeyResponse
-         * @property {string|null} [extendedPublicKey] HdStoreExtendedPublicKeyResponse extendedPublicKey
-         */
-
-        /**
-         * Constructs a new HdStoreExtendedPublicKeyResponse.
-         * @memberof api
-         * @classdesc Represents a HdStoreExtendedPublicKeyResponse.
-         * @implements IHdStoreExtendedPublicKeyResponse
-         * @constructor
-         * @param {api.IHdStoreExtendedPublicKeyResponse=} [properties] Properties to set
-         */
-        function HdStoreExtendedPublicKeyResponse(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * HdStoreExtendedPublicKeyResponse extendedPublicKey.
-         * @member {string} extendedPublicKey
-         * @memberof api.HdStoreExtendedPublicKeyResponse
-         * @instance
-         */
-        HdStoreExtendedPublicKeyResponse.prototype.extendedPublicKey = "";
-
-        /**
-         * Creates a new HdStoreExtendedPublicKeyResponse instance using the specified properties.
-         * @function create
-         * @memberof api.HdStoreExtendedPublicKeyResponse
-         * @static
-         * @param {api.IHdStoreExtendedPublicKeyResponse=} [properties] Properties to set
-         * @returns {api.HdStoreExtendedPublicKeyResponse} HdStoreExtendedPublicKeyResponse instance
-         */
-        HdStoreExtendedPublicKeyResponse.create = function create(properties) {
-            return new HdStoreExtendedPublicKeyResponse(properties);
-        };
-
-        /**
-         * Encodes the specified HdStoreExtendedPublicKeyResponse message. Does not implicitly {@link api.HdStoreExtendedPublicKeyResponse.verify|verify} messages.
-         * @function encode
-         * @memberof api.HdStoreExtendedPublicKeyResponse
-         * @static
-         * @param {api.IHdStoreExtendedPublicKeyResponse} message HdStoreExtendedPublicKeyResponse message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        HdStoreExtendedPublicKeyResponse.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.extendedPublicKey != null && message.hasOwnProperty("extendedPublicKey"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.extendedPublicKey);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified HdStoreExtendedPublicKeyResponse message, length delimited. Does not implicitly {@link api.HdStoreExtendedPublicKeyResponse.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof api.HdStoreExtendedPublicKeyResponse
-         * @static
-         * @param {api.IHdStoreExtendedPublicKeyResponse} message HdStoreExtendedPublicKeyResponse message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        HdStoreExtendedPublicKeyResponse.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a HdStoreExtendedPublicKeyResponse message from the specified reader or buffer.
-         * @function decode
-         * @memberof api.HdStoreExtendedPublicKeyResponse
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {api.HdStoreExtendedPublicKeyResponse} HdStoreExtendedPublicKeyResponse
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        HdStoreExtendedPublicKeyResponse.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.HdStoreExtendedPublicKeyResponse();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.extendedPublicKey = reader.string();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a HdStoreExtendedPublicKeyResponse message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof api.HdStoreExtendedPublicKeyResponse
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.HdStoreExtendedPublicKeyResponse} HdStoreExtendedPublicKeyResponse
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        HdStoreExtendedPublicKeyResponse.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a HdStoreExtendedPublicKeyResponse message.
-         * @function verify
-         * @memberof api.HdStoreExtendedPublicKeyResponse
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        HdStoreExtendedPublicKeyResponse.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.extendedPublicKey != null && message.hasOwnProperty("extendedPublicKey"))
-                if (!$util.isString(message.extendedPublicKey))
-                    return "extendedPublicKey: string expected";
-            return null;
-        };
-
-        /**
-         * Creates a HdStoreExtendedPublicKeyResponse message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof api.HdStoreExtendedPublicKeyResponse
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {api.HdStoreExtendedPublicKeyResponse} HdStoreExtendedPublicKeyResponse
-         */
-        HdStoreExtendedPublicKeyResponse.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.HdStoreExtendedPublicKeyResponse)
-                return object;
-            var message = new $root.api.HdStoreExtendedPublicKeyResponse();
-            if (object.extendedPublicKey != null)
-                message.extendedPublicKey = String(object.extendedPublicKey);
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a HdStoreExtendedPublicKeyResponse message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof api.HdStoreExtendedPublicKeyResponse
-         * @static
-         * @param {api.HdStoreExtendedPublicKeyResponse} message HdStoreExtendedPublicKeyResponse
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        HdStoreExtendedPublicKeyResponse.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults)
-                object.extendedPublicKey = "";
-            if (message.extendedPublicKey != null && message.hasOwnProperty("extendedPublicKey"))
-                object.extendedPublicKey = message.extendedPublicKey;
-            return object;
-        };
-
-        /**
-         * Converts this HdStoreExtendedPublicKeyResponse to JSON.
-         * @function toJSON
-         * @memberof api.HdStoreExtendedPublicKeyResponse
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        HdStoreExtendedPublicKeyResponse.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return HdStoreExtendedPublicKeyResponse;
-    })();
-
-    api.KeystoreCommonAccountsParam = (function() {
-
-        /**
-         * Properties of a KeystoreCommonAccountsParam.
-         * @memberof api
-         * @interface IKeystoreCommonAccountsParam
-         * @property {string|null} [id] KeystoreCommonAccountsParam id
-         */
-
-        /**
-         * Constructs a new KeystoreCommonAccountsParam.
-         * @memberof api
-         * @classdesc Represents a KeystoreCommonAccountsParam.
-         * @implements IKeystoreCommonAccountsParam
-         * @constructor
-         * @param {api.IKeystoreCommonAccountsParam=} [properties] Properties to set
-         */
-        function KeystoreCommonAccountsParam(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * KeystoreCommonAccountsParam id.
-         * @member {string} id
-         * @memberof api.KeystoreCommonAccountsParam
-         * @instance
-         */
-        KeystoreCommonAccountsParam.prototype.id = "";
-
-        /**
-         * Creates a new KeystoreCommonAccountsParam instance using the specified properties.
-         * @function create
-         * @memberof api.KeystoreCommonAccountsParam
-         * @static
-         * @param {api.IKeystoreCommonAccountsParam=} [properties] Properties to set
-         * @returns {api.KeystoreCommonAccountsParam} KeystoreCommonAccountsParam instance
-         */
-        KeystoreCommonAccountsParam.create = function create(properties) {
-            return new KeystoreCommonAccountsParam(properties);
-        };
-
-        /**
-         * Encodes the specified KeystoreCommonAccountsParam message. Does not implicitly {@link api.KeystoreCommonAccountsParam.verify|verify} messages.
-         * @function encode
-         * @memberof api.KeystoreCommonAccountsParam
-         * @static
-         * @param {api.IKeystoreCommonAccountsParam} message KeystoreCommonAccountsParam message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        KeystoreCommonAccountsParam.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.id != null && message.hasOwnProperty("id"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified KeystoreCommonAccountsParam message, length delimited. Does not implicitly {@link api.KeystoreCommonAccountsParam.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof api.KeystoreCommonAccountsParam
-         * @static
-         * @param {api.IKeystoreCommonAccountsParam} message KeystoreCommonAccountsParam message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        KeystoreCommonAccountsParam.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a KeystoreCommonAccountsParam message from the specified reader or buffer.
-         * @function decode
-         * @memberof api.KeystoreCommonAccountsParam
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {api.KeystoreCommonAccountsParam} KeystoreCommonAccountsParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        KeystoreCommonAccountsParam.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.KeystoreCommonAccountsParam();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.id = reader.string();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a KeystoreCommonAccountsParam message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof api.KeystoreCommonAccountsParam
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.KeystoreCommonAccountsParam} KeystoreCommonAccountsParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        KeystoreCommonAccountsParam.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a KeystoreCommonAccountsParam message.
-         * @function verify
-         * @memberof api.KeystoreCommonAccountsParam
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        KeystoreCommonAccountsParam.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.id != null && message.hasOwnProperty("id"))
-                if (!$util.isString(message.id))
-                    return "id: string expected";
-            return null;
-        };
-
-        /**
-         * Creates a KeystoreCommonAccountsParam message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof api.KeystoreCommonAccountsParam
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {api.KeystoreCommonAccountsParam} KeystoreCommonAccountsParam
-         */
-        KeystoreCommonAccountsParam.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.KeystoreCommonAccountsParam)
-                return object;
-            var message = new $root.api.KeystoreCommonAccountsParam();
-            if (object.id != null)
-                message.id = String(object.id);
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a KeystoreCommonAccountsParam message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof api.KeystoreCommonAccountsParam
-         * @static
-         * @param {api.KeystoreCommonAccountsParam} message KeystoreCommonAccountsParam
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        KeystoreCommonAccountsParam.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults)
-                object.id = "";
-            if (message.id != null && message.hasOwnProperty("id"))
-                object.id = message.id;
-            return object;
-        };
-
-        /**
-         * Converts this KeystoreCommonAccountsParam to JSON.
-         * @function toJSON
-         * @memberof api.KeystoreCommonAccountsParam
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        KeystoreCommonAccountsParam.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return KeystoreCommonAccountsParam;
+    /**
+     * KeyType enum.
+     * @name api.KeyType
+     * @enum {string}
+     * @property {number} MNEMONIC=0 MNEMONIC value
+     * @property {number} PRIVATE_KEY=1 PRIVATE_KEY value
+     */
+    api.KeyType = (function() {
+        var valuesById = {}, values = Object.create(valuesById);
+        values[valuesById[0] = "MNEMONIC"] = 0;
+        values[valuesById[1] = "PRIVATE_KEY"] = 1;
+        return values;
     })();
 
     api.PrivateKeyStoreImportParam = (function() {
@@ -3140,7 +2785,7 @@ $root.api = (function() {
         /**
          * Constructs a new PrivateKeyStoreImportParam.
          * @memberof api
-         * @classdesc Private key store
+         * @classdesc Represents a PrivateKeyStoreImportParam.
          * @implements IPrivateKeyStoreImportParam
          * @constructor
          * @param {api.IPrivateKeyStoreImportParam=} [properties] Properties to set
@@ -3688,7 +3333,7 @@ $root.api = (function() {
         /**
          * Constructs a new WalletKeyParam.
          * @memberof api
-         * @classdesc Keystore Common
+         * @classdesc Represents a WalletKeyParam.
          * @implements IWalletKeyParam
          * @constructor
          * @param {api.IWalletKeyParam=} [properties] Properties to set
@@ -4108,265 +3753,6 @@ $root.api = (function() {
         return KeystoreCommonExistsParam;
     })();
 
-    api.KeystoreCommonExportResult = (function() {
-
-        /**
-         * Properties of a KeystoreCommonExportResult.
-         * @memberof api
-         * @interface IKeystoreCommonExportResult
-         * @property {string|null} [id] KeystoreCommonExportResult id
-         * @property {api.KeyType|null} [type] KeystoreCommonExportResult type
-         * @property {string|null} [value] KeystoreCommonExportResult value
-         */
-
-        /**
-         * Constructs a new KeystoreCommonExportResult.
-         * @memberof api
-         * @classdesc Represents a KeystoreCommonExportResult.
-         * @implements IKeystoreCommonExportResult
-         * @constructor
-         * @param {api.IKeystoreCommonExportResult=} [properties] Properties to set
-         */
-        function KeystoreCommonExportResult(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * KeystoreCommonExportResult id.
-         * @member {string} id
-         * @memberof api.KeystoreCommonExportResult
-         * @instance
-         */
-        KeystoreCommonExportResult.prototype.id = "";
-
-        /**
-         * KeystoreCommonExportResult type.
-         * @member {api.KeyType} type
-         * @memberof api.KeystoreCommonExportResult
-         * @instance
-         */
-        KeystoreCommonExportResult.prototype.type = 0;
-
-        /**
-         * KeystoreCommonExportResult value.
-         * @member {string} value
-         * @memberof api.KeystoreCommonExportResult
-         * @instance
-         */
-        KeystoreCommonExportResult.prototype.value = "";
-
-        /**
-         * Creates a new KeystoreCommonExportResult instance using the specified properties.
-         * @function create
-         * @memberof api.KeystoreCommonExportResult
-         * @static
-         * @param {api.IKeystoreCommonExportResult=} [properties] Properties to set
-         * @returns {api.KeystoreCommonExportResult} KeystoreCommonExportResult instance
-         */
-        KeystoreCommonExportResult.create = function create(properties) {
-            return new KeystoreCommonExportResult(properties);
-        };
-
-        /**
-         * Encodes the specified KeystoreCommonExportResult message. Does not implicitly {@link api.KeystoreCommonExportResult.verify|verify} messages.
-         * @function encode
-         * @memberof api.KeystoreCommonExportResult
-         * @static
-         * @param {api.IKeystoreCommonExportResult} message KeystoreCommonExportResult message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        KeystoreCommonExportResult.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.id != null && message.hasOwnProperty("id"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
-            if (message.type != null && message.hasOwnProperty("type"))
-                writer.uint32(/* id 2, wireType 0 =*/16).int32(message.type);
-            if (message.value != null && message.hasOwnProperty("value"))
-                writer.uint32(/* id 3, wireType 2 =*/26).string(message.value);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified KeystoreCommonExportResult message, length delimited. Does not implicitly {@link api.KeystoreCommonExportResult.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof api.KeystoreCommonExportResult
-         * @static
-         * @param {api.IKeystoreCommonExportResult} message KeystoreCommonExportResult message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        KeystoreCommonExportResult.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a KeystoreCommonExportResult message from the specified reader or buffer.
-         * @function decode
-         * @memberof api.KeystoreCommonExportResult
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {api.KeystoreCommonExportResult} KeystoreCommonExportResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        KeystoreCommonExportResult.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.KeystoreCommonExportResult();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.id = reader.string();
-                    break;
-                case 2:
-                    message.type = reader.int32();
-                    break;
-                case 3:
-                    message.value = reader.string();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a KeystoreCommonExportResult message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof api.KeystoreCommonExportResult
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.KeystoreCommonExportResult} KeystoreCommonExportResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        KeystoreCommonExportResult.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a KeystoreCommonExportResult message.
-         * @function verify
-         * @memberof api.KeystoreCommonExportResult
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        KeystoreCommonExportResult.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.id != null && message.hasOwnProperty("id"))
-                if (!$util.isString(message.id))
-                    return "id: string expected";
-            if (message.type != null && message.hasOwnProperty("type"))
-                switch (message.type) {
-                default:
-                    return "type: enum value expected";
-                case 0:
-                case 1:
-                    break;
-                }
-            if (message.value != null && message.hasOwnProperty("value"))
-                if (!$util.isString(message.value))
-                    return "value: string expected";
-            return null;
-        };
-
-        /**
-         * Creates a KeystoreCommonExportResult message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof api.KeystoreCommonExportResult
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {api.KeystoreCommonExportResult} KeystoreCommonExportResult
-         */
-        KeystoreCommonExportResult.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.KeystoreCommonExportResult)
-                return object;
-            var message = new $root.api.KeystoreCommonExportResult();
-            if (object.id != null)
-                message.id = String(object.id);
-            switch (object.type) {
-            case "MNEMONIC":
-            case 0:
-                message.type = 0;
-                break;
-            case "PRIVATE_KEY":
-            case 1:
-                message.type = 1;
-                break;
-            }
-            if (object.value != null)
-                message.value = String(object.value);
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a KeystoreCommonExportResult message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof api.KeystoreCommonExportResult
-         * @static
-         * @param {api.KeystoreCommonExportResult} message KeystoreCommonExportResult
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        KeystoreCommonExportResult.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults) {
-                object.id = "";
-                object.type = options.enums === String ? "MNEMONIC" : 0;
-                object.value = "";
-            }
-            if (message.id != null && message.hasOwnProperty("id"))
-                object.id = message.id;
-            if (message.type != null && message.hasOwnProperty("type"))
-                object.type = options.enums === String ? $root.api.KeyType[message.type] : message.type;
-            if (message.value != null && message.hasOwnProperty("value"))
-                object.value = message.value;
-            return object;
-        };
-
-        /**
-         * Converts this KeystoreCommonExportResult to JSON.
-         * @function toJSON
-         * @memberof api.KeystoreCommonExportResult
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        KeystoreCommonExportResult.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return KeystoreCommonExportResult;
-    })();
-
-    /**
-     * KeyType enum.
-     * @name api.KeyType
-     * @enum {string}
-     * @property {number} MNEMONIC=0 MNEMONIC value
-     * @property {number} PRIVATE_KEY=1 PRIVATE_KEY value
-     */
-    api.KeyType = (function() {
-        var valuesById = {}, values = Object.create(valuesById);
-        values[valuesById[0] = "MNEMONIC"] = 0;
-        values[valuesById[1] = "PRIVATE_KEY"] = 1;
-        return values;
-    })();
-
     api.KeystoreCommonExistsResult = (function() {
 
         /**
@@ -4577,6 +3963,193 @@ $root.api = (function() {
         return KeystoreCommonExistsResult;
     })();
 
+    api.KeystoreCommonAccountsParam = (function() {
+
+        /**
+         * Properties of a KeystoreCommonAccountsParam.
+         * @memberof api
+         * @interface IKeystoreCommonAccountsParam
+         * @property {string|null} [id] KeystoreCommonAccountsParam id
+         */
+
+        /**
+         * Constructs a new KeystoreCommonAccountsParam.
+         * @memberof api
+         * @classdesc Represents a KeystoreCommonAccountsParam.
+         * @implements IKeystoreCommonAccountsParam
+         * @constructor
+         * @param {api.IKeystoreCommonAccountsParam=} [properties] Properties to set
+         */
+        function KeystoreCommonAccountsParam(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * KeystoreCommonAccountsParam id.
+         * @member {string} id
+         * @memberof api.KeystoreCommonAccountsParam
+         * @instance
+         */
+        KeystoreCommonAccountsParam.prototype.id = "";
+
+        /**
+         * Creates a new KeystoreCommonAccountsParam instance using the specified properties.
+         * @function create
+         * @memberof api.KeystoreCommonAccountsParam
+         * @static
+         * @param {api.IKeystoreCommonAccountsParam=} [properties] Properties to set
+         * @returns {api.KeystoreCommonAccountsParam} KeystoreCommonAccountsParam instance
+         */
+        KeystoreCommonAccountsParam.create = function create(properties) {
+            return new KeystoreCommonAccountsParam(properties);
+        };
+
+        /**
+         * Encodes the specified KeystoreCommonAccountsParam message. Does not implicitly {@link api.KeystoreCommonAccountsParam.verify|verify} messages.
+         * @function encode
+         * @memberof api.KeystoreCommonAccountsParam
+         * @static
+         * @param {api.IKeystoreCommonAccountsParam} message KeystoreCommonAccountsParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        KeystoreCommonAccountsParam.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified KeystoreCommonAccountsParam message, length delimited. Does not implicitly {@link api.KeystoreCommonAccountsParam.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.KeystoreCommonAccountsParam
+         * @static
+         * @param {api.IKeystoreCommonAccountsParam} message KeystoreCommonAccountsParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        KeystoreCommonAccountsParam.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a KeystoreCommonAccountsParam message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.KeystoreCommonAccountsParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.KeystoreCommonAccountsParam} KeystoreCommonAccountsParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        KeystoreCommonAccountsParam.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.KeystoreCommonAccountsParam();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a KeystoreCommonAccountsParam message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.KeystoreCommonAccountsParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.KeystoreCommonAccountsParam} KeystoreCommonAccountsParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        KeystoreCommonAccountsParam.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a KeystoreCommonAccountsParam message.
+         * @function verify
+         * @memberof api.KeystoreCommonAccountsParam
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        KeystoreCommonAccountsParam.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.id != null && message.hasOwnProperty("id"))
+                if (!$util.isString(message.id))
+                    return "id: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a KeystoreCommonAccountsParam message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.KeystoreCommonAccountsParam
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.KeystoreCommonAccountsParam} KeystoreCommonAccountsParam
+         */
+        KeystoreCommonAccountsParam.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.KeystoreCommonAccountsParam)
+                return object;
+            var message = new $root.api.KeystoreCommonAccountsParam();
+            if (object.id != null)
+                message.id = String(object.id);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a KeystoreCommonAccountsParam message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.KeystoreCommonAccountsParam
+         * @static
+         * @param {api.KeystoreCommonAccountsParam} message KeystoreCommonAccountsParam
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        KeystoreCommonAccountsParam.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults)
+                object.id = "";
+            if (message.id != null && message.hasOwnProperty("id"))
+                object.id = message.id;
+            return object;
+        };
+
+        /**
+         * Converts this KeystoreCommonAccountsParam to JSON.
+         * @function toJSON
+         * @memberof api.KeystoreCommonAccountsParam
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        KeystoreCommonAccountsParam.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return KeystoreCommonAccountsParam;
+    })();
+
     api.SignParam = (function() {
 
         /**
@@ -4593,7 +4166,7 @@ $root.api = (function() {
         /**
          * Constructs a new SignParam.
          * @memberof api
-         * @classdesc Sign Transaction
+         * @classdesc Represents a SignParam.
          * @implements ISignParam
          * @constructor
          * @param {api.ISignParam=} [properties] Properties to set
@@ -4856,318 +4429,6 @@ $root.api = (function() {
         };
 
         return SignParam;
-    })();
-
-    api.WalletResult = (function() {
-
-        /**
-         * Properties of a WalletResult.
-         * @memberof api
-         * @interface IWalletResult
-         * @property {string|null} [id] WalletResult id
-         * @property {string|null} [name] WalletResult name
-         * @property {string|null} [source] WalletResult source
-         * @property {Array.<api.IAccountResponse>|null} [accounts] WalletResult accounts
-         * @property {number|Long|null} [createdAt] WalletResult createdAt
-         */
-
-        /**
-         * Constructs a new WalletResult.
-         * @memberof api
-         * @classdesc Represents a WalletResult.
-         * @implements IWalletResult
-         * @constructor
-         * @param {api.IWalletResult=} [properties] Properties to set
-         */
-        function WalletResult(properties) {
-            this.accounts = [];
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * WalletResult id.
-         * @member {string} id
-         * @memberof api.WalletResult
-         * @instance
-         */
-        WalletResult.prototype.id = "";
-
-        /**
-         * WalletResult name.
-         * @member {string} name
-         * @memberof api.WalletResult
-         * @instance
-         */
-        WalletResult.prototype.name = "";
-
-        /**
-         * WalletResult source.
-         * @member {string} source
-         * @memberof api.WalletResult
-         * @instance
-         */
-        WalletResult.prototype.source = "";
-
-        /**
-         * WalletResult accounts.
-         * @member {Array.<api.IAccountResponse>} accounts
-         * @memberof api.WalletResult
-         * @instance
-         */
-        WalletResult.prototype.accounts = $util.emptyArray;
-
-        /**
-         * WalletResult createdAt.
-         * @member {number|Long} createdAt
-         * @memberof api.WalletResult
-         * @instance
-         */
-        WalletResult.prototype.createdAt = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-        /**
-         * Creates a new WalletResult instance using the specified properties.
-         * @function create
-         * @memberof api.WalletResult
-         * @static
-         * @param {api.IWalletResult=} [properties] Properties to set
-         * @returns {api.WalletResult} WalletResult instance
-         */
-        WalletResult.create = function create(properties) {
-            return new WalletResult(properties);
-        };
-
-        /**
-         * Encodes the specified WalletResult message. Does not implicitly {@link api.WalletResult.verify|verify} messages.
-         * @function encode
-         * @memberof api.WalletResult
-         * @static
-         * @param {api.IWalletResult} message WalletResult message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        WalletResult.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.id != null && message.hasOwnProperty("id"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
-            if (message.name != null && message.hasOwnProperty("name"))
-                writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
-            if (message.source != null && message.hasOwnProperty("source"))
-                writer.uint32(/* id 3, wireType 2 =*/26).string(message.source);
-            if (message.accounts != null && message.accounts.length)
-                for (var i = 0; i < message.accounts.length; ++i)
-                    $root.api.AccountResponse.encode(message.accounts[i], writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
-            if (message.createdAt != null && message.hasOwnProperty("createdAt"))
-                writer.uint32(/* id 5, wireType 0 =*/40).int64(message.createdAt);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified WalletResult message, length delimited. Does not implicitly {@link api.WalletResult.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof api.WalletResult
-         * @static
-         * @param {api.IWalletResult} message WalletResult message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        WalletResult.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a WalletResult message from the specified reader or buffer.
-         * @function decode
-         * @memberof api.WalletResult
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {api.WalletResult} WalletResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        WalletResult.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.WalletResult();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.id = reader.string();
-                    break;
-                case 2:
-                    message.name = reader.string();
-                    break;
-                case 3:
-                    message.source = reader.string();
-                    break;
-                case 4:
-                    if (!(message.accounts && message.accounts.length))
-                        message.accounts = [];
-                    message.accounts.push($root.api.AccountResponse.decode(reader, reader.uint32()));
-                    break;
-                case 5:
-                    message.createdAt = reader.int64();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a WalletResult message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof api.WalletResult
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.WalletResult} WalletResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        WalletResult.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a WalletResult message.
-         * @function verify
-         * @memberof api.WalletResult
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        WalletResult.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.id != null && message.hasOwnProperty("id"))
-                if (!$util.isString(message.id))
-                    return "id: string expected";
-            if (message.name != null && message.hasOwnProperty("name"))
-                if (!$util.isString(message.name))
-                    return "name: string expected";
-            if (message.source != null && message.hasOwnProperty("source"))
-                if (!$util.isString(message.source))
-                    return "source: string expected";
-            if (message.accounts != null && message.hasOwnProperty("accounts")) {
-                if (!Array.isArray(message.accounts))
-                    return "accounts: array expected";
-                for (var i = 0; i < message.accounts.length; ++i) {
-                    var error = $root.api.AccountResponse.verify(message.accounts[i]);
-                    if (error)
-                        return "accounts." + error;
-                }
-            }
-            if (message.createdAt != null && message.hasOwnProperty("createdAt"))
-                if (!$util.isInteger(message.createdAt) && !(message.createdAt && $util.isInteger(message.createdAt.low) && $util.isInteger(message.createdAt.high)))
-                    return "createdAt: integer|Long expected";
-            return null;
-        };
-
-        /**
-         * Creates a WalletResult message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof api.WalletResult
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {api.WalletResult} WalletResult
-         */
-        WalletResult.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.WalletResult)
-                return object;
-            var message = new $root.api.WalletResult();
-            if (object.id != null)
-                message.id = String(object.id);
-            if (object.name != null)
-                message.name = String(object.name);
-            if (object.source != null)
-                message.source = String(object.source);
-            if (object.accounts) {
-                if (!Array.isArray(object.accounts))
-                    throw TypeError(".api.WalletResult.accounts: array expected");
-                message.accounts = [];
-                for (var i = 0; i < object.accounts.length; ++i) {
-                    if (typeof object.accounts[i] !== "object")
-                        throw TypeError(".api.WalletResult.accounts: object expected");
-                    message.accounts[i] = $root.api.AccountResponse.fromObject(object.accounts[i]);
-                }
-            }
-            if (object.createdAt != null)
-                if ($util.Long)
-                    (message.createdAt = $util.Long.fromValue(object.createdAt)).unsigned = false;
-                else if (typeof object.createdAt === "string")
-                    message.createdAt = parseInt(object.createdAt, 10);
-                else if (typeof object.createdAt === "number")
-                    message.createdAt = object.createdAt;
-                else if (typeof object.createdAt === "object")
-                    message.createdAt = new $util.LongBits(object.createdAt.low >>> 0, object.createdAt.high >>> 0).toNumber();
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a WalletResult message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof api.WalletResult
-         * @static
-         * @param {api.WalletResult} message WalletResult
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        WalletResult.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.arrays || options.defaults)
-                object.accounts = [];
-            if (options.defaults) {
-                object.id = "";
-                object.name = "";
-                object.source = "";
-                if ($util.Long) {
-                    var long = new $util.Long(0, 0, false);
-                    object.createdAt = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
-                } else
-                    object.createdAt = options.longs === String ? "0" : 0;
-            }
-            if (message.id != null && message.hasOwnProperty("id"))
-                object.id = message.id;
-            if (message.name != null && message.hasOwnProperty("name"))
-                object.name = message.name;
-            if (message.source != null && message.hasOwnProperty("source"))
-                object.source = message.source;
-            if (message.accounts && message.accounts.length) {
-                object.accounts = [];
-                for (var j = 0; j < message.accounts.length; ++j)
-                    object.accounts[j] = $root.api.AccountResponse.toObject(message.accounts[j], options);
-            }
-            if (message.createdAt != null && message.hasOwnProperty("createdAt"))
-                if (typeof message.createdAt === "number")
-                    object.createdAt = options.longs === String ? String(message.createdAt) : message.createdAt;
-                else
-                    object.createdAt = options.longs === String ? $util.Long.prototype.toString.call(message.createdAt) : options.longs === Number ? new $util.LongBits(message.createdAt.low >>> 0, message.createdAt.high >>> 0).toNumber() : message.createdAt;
-            return object;
-        };
-
-        /**
-         * Converts this WalletResult to JSON.
-         * @function toJSON
-         * @memberof api.WalletResult
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        WalletResult.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return WalletResult;
     })();
 
     api.ExternalAddressParam = (function() {
@@ -6079,6 +5340,657 @@ $root.api = (function() {
         })();
 
         return ExternalAddressExtra;
+    })();
+
+    api.BtcForkDeriveExtraParam = (function() {
+
+        /**
+         * Properties of a BtcForkDeriveExtraParam.
+         * @memberof api
+         * @interface IBtcForkDeriveExtraParam
+         * @property {string|null} [network] BtcForkDeriveExtraParam network
+         * @property {string|null} [segWit] BtcForkDeriveExtraParam segWit
+         */
+
+        /**
+         * Constructs a new BtcForkDeriveExtraParam.
+         * @memberof api
+         * @classdesc Represents a BtcForkDeriveExtraParam.
+         * @implements IBtcForkDeriveExtraParam
+         * @constructor
+         * @param {api.IBtcForkDeriveExtraParam=} [properties] Properties to set
+         */
+        function BtcForkDeriveExtraParam(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * BtcForkDeriveExtraParam network.
+         * @member {string} network
+         * @memberof api.BtcForkDeriveExtraParam
+         * @instance
+         */
+        BtcForkDeriveExtraParam.prototype.network = "";
+
+        /**
+         * BtcForkDeriveExtraParam segWit.
+         * @member {string} segWit
+         * @memberof api.BtcForkDeriveExtraParam
+         * @instance
+         */
+        BtcForkDeriveExtraParam.prototype.segWit = "";
+
+        /**
+         * Creates a new BtcForkDeriveExtraParam instance using the specified properties.
+         * @function create
+         * @memberof api.BtcForkDeriveExtraParam
+         * @static
+         * @param {api.IBtcForkDeriveExtraParam=} [properties] Properties to set
+         * @returns {api.BtcForkDeriveExtraParam} BtcForkDeriveExtraParam instance
+         */
+        BtcForkDeriveExtraParam.create = function create(properties) {
+            return new BtcForkDeriveExtraParam(properties);
+        };
+
+        /**
+         * Encodes the specified BtcForkDeriveExtraParam message. Does not implicitly {@link api.BtcForkDeriveExtraParam.verify|verify} messages.
+         * @function encode
+         * @memberof api.BtcForkDeriveExtraParam
+         * @static
+         * @param {api.IBtcForkDeriveExtraParam} message BtcForkDeriveExtraParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        BtcForkDeriveExtraParam.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.network != null && message.hasOwnProperty("network"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.network);
+            if (message.segWit != null && message.hasOwnProperty("segWit"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.segWit);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified BtcForkDeriveExtraParam message, length delimited. Does not implicitly {@link api.BtcForkDeriveExtraParam.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.BtcForkDeriveExtraParam
+         * @static
+         * @param {api.IBtcForkDeriveExtraParam} message BtcForkDeriveExtraParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        BtcForkDeriveExtraParam.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a BtcForkDeriveExtraParam message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.BtcForkDeriveExtraParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.BtcForkDeriveExtraParam} BtcForkDeriveExtraParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        BtcForkDeriveExtraParam.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.BtcForkDeriveExtraParam();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.network = reader.string();
+                    break;
+                case 2:
+                    message.segWit = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a BtcForkDeriveExtraParam message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.BtcForkDeriveExtraParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.BtcForkDeriveExtraParam} BtcForkDeriveExtraParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        BtcForkDeriveExtraParam.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a BtcForkDeriveExtraParam message.
+         * @function verify
+         * @memberof api.BtcForkDeriveExtraParam
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        BtcForkDeriveExtraParam.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.network != null && message.hasOwnProperty("network"))
+                if (!$util.isString(message.network))
+                    return "network: string expected";
+            if (message.segWit != null && message.hasOwnProperty("segWit"))
+                if (!$util.isString(message.segWit))
+                    return "segWit: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a BtcForkDeriveExtraParam message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.BtcForkDeriveExtraParam
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.BtcForkDeriveExtraParam} BtcForkDeriveExtraParam
+         */
+        BtcForkDeriveExtraParam.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.BtcForkDeriveExtraParam)
+                return object;
+            var message = new $root.api.BtcForkDeriveExtraParam();
+            if (object.network != null)
+                message.network = String(object.network);
+            if (object.segWit != null)
+                message.segWit = String(object.segWit);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a BtcForkDeriveExtraParam message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.BtcForkDeriveExtraParam
+         * @static
+         * @param {api.BtcForkDeriveExtraParam} message BtcForkDeriveExtraParam
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        BtcForkDeriveExtraParam.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.network = "";
+                object.segWit = "";
+            }
+            if (message.network != null && message.hasOwnProperty("network"))
+                object.network = message.network;
+            if (message.segWit != null && message.hasOwnProperty("segWit"))
+                object.segWit = message.segWit;
+            return object;
+        };
+
+        /**
+         * Converts this BtcForkDeriveExtraParam to JSON.
+         * @function toJSON
+         * @memberof api.BtcForkDeriveExtraParam
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        BtcForkDeriveExtraParam.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return BtcForkDeriveExtraParam;
+    })();
+
+    api.HdStoreExtendedPublicKeyParam = (function() {
+
+        /**
+         * Properties of a HdStoreExtendedPublicKeyParam.
+         * @memberof api
+         * @interface IHdStoreExtendedPublicKeyParam
+         * @property {string|null} [id] HdStoreExtendedPublicKeyParam id
+         * @property {string|null} [password] HdStoreExtendedPublicKeyParam password
+         * @property {string|null} [chainType] HdStoreExtendedPublicKeyParam chainType
+         * @property {string|null} [address] HdStoreExtendedPublicKeyParam address
+         */
+
+        /**
+         * Constructs a new HdStoreExtendedPublicKeyParam.
+         * @memberof api
+         * @classdesc Represents a HdStoreExtendedPublicKeyParam.
+         * @implements IHdStoreExtendedPublicKeyParam
+         * @constructor
+         * @param {api.IHdStoreExtendedPublicKeyParam=} [properties] Properties to set
+         */
+        function HdStoreExtendedPublicKeyParam(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * HdStoreExtendedPublicKeyParam id.
+         * @member {string} id
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @instance
+         */
+        HdStoreExtendedPublicKeyParam.prototype.id = "";
+
+        /**
+         * HdStoreExtendedPublicKeyParam password.
+         * @member {string} password
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @instance
+         */
+        HdStoreExtendedPublicKeyParam.prototype.password = "";
+
+        /**
+         * HdStoreExtendedPublicKeyParam chainType.
+         * @member {string} chainType
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @instance
+         */
+        HdStoreExtendedPublicKeyParam.prototype.chainType = "";
+
+        /**
+         * HdStoreExtendedPublicKeyParam address.
+         * @member {string} address
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @instance
+         */
+        HdStoreExtendedPublicKeyParam.prototype.address = "";
+
+        /**
+         * Creates a new HdStoreExtendedPublicKeyParam instance using the specified properties.
+         * @function create
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @static
+         * @param {api.IHdStoreExtendedPublicKeyParam=} [properties] Properties to set
+         * @returns {api.HdStoreExtendedPublicKeyParam} HdStoreExtendedPublicKeyParam instance
+         */
+        HdStoreExtendedPublicKeyParam.create = function create(properties) {
+            return new HdStoreExtendedPublicKeyParam(properties);
+        };
+
+        /**
+         * Encodes the specified HdStoreExtendedPublicKeyParam message. Does not implicitly {@link api.HdStoreExtendedPublicKeyParam.verify|verify} messages.
+         * @function encode
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @static
+         * @param {api.IHdStoreExtendedPublicKeyParam} message HdStoreExtendedPublicKeyParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        HdStoreExtendedPublicKeyParam.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+            if (message.password != null && message.hasOwnProperty("password"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.password);
+            if (message.chainType != null && message.hasOwnProperty("chainType"))
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.chainType);
+            if (message.address != null && message.hasOwnProperty("address"))
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.address);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified HdStoreExtendedPublicKeyParam message, length delimited. Does not implicitly {@link api.HdStoreExtendedPublicKeyParam.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @static
+         * @param {api.IHdStoreExtendedPublicKeyParam} message HdStoreExtendedPublicKeyParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        HdStoreExtendedPublicKeyParam.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a HdStoreExtendedPublicKeyParam message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.HdStoreExtendedPublicKeyParam} HdStoreExtendedPublicKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        HdStoreExtendedPublicKeyParam.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.HdStoreExtendedPublicKeyParam();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                case 2:
+                    message.password = reader.string();
+                    break;
+                case 3:
+                    message.chainType = reader.string();
+                    break;
+                case 4:
+                    message.address = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a HdStoreExtendedPublicKeyParam message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.HdStoreExtendedPublicKeyParam} HdStoreExtendedPublicKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        HdStoreExtendedPublicKeyParam.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a HdStoreExtendedPublicKeyParam message.
+         * @function verify
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        HdStoreExtendedPublicKeyParam.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.id != null && message.hasOwnProperty("id"))
+                if (!$util.isString(message.id))
+                    return "id: string expected";
+            if (message.password != null && message.hasOwnProperty("password"))
+                if (!$util.isString(message.password))
+                    return "password: string expected";
+            if (message.chainType != null && message.hasOwnProperty("chainType"))
+                if (!$util.isString(message.chainType))
+                    return "chainType: string expected";
+            if (message.address != null && message.hasOwnProperty("address"))
+                if (!$util.isString(message.address))
+                    return "address: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a HdStoreExtendedPublicKeyParam message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.HdStoreExtendedPublicKeyParam} HdStoreExtendedPublicKeyParam
+         */
+        HdStoreExtendedPublicKeyParam.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.HdStoreExtendedPublicKeyParam)
+                return object;
+            var message = new $root.api.HdStoreExtendedPublicKeyParam();
+            if (object.id != null)
+                message.id = String(object.id);
+            if (object.password != null)
+                message.password = String(object.password);
+            if (object.chainType != null)
+                message.chainType = String(object.chainType);
+            if (object.address != null)
+                message.address = String(object.address);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a HdStoreExtendedPublicKeyParam message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @static
+         * @param {api.HdStoreExtendedPublicKeyParam} message HdStoreExtendedPublicKeyParam
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        HdStoreExtendedPublicKeyParam.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.id = "";
+                object.password = "";
+                object.chainType = "";
+                object.address = "";
+            }
+            if (message.id != null && message.hasOwnProperty("id"))
+                object.id = message.id;
+            if (message.password != null && message.hasOwnProperty("password"))
+                object.password = message.password;
+            if (message.chainType != null && message.hasOwnProperty("chainType"))
+                object.chainType = message.chainType;
+            if (message.address != null && message.hasOwnProperty("address"))
+                object.address = message.address;
+            return object;
+        };
+
+        /**
+         * Converts this HdStoreExtendedPublicKeyParam to JSON.
+         * @function toJSON
+         * @memberof api.HdStoreExtendedPublicKeyParam
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        HdStoreExtendedPublicKeyParam.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return HdStoreExtendedPublicKeyParam;
+    })();
+
+    api.HdStoreExtendedPublicKeyResponse = (function() {
+
+        /**
+         * Properties of a HdStoreExtendedPublicKeyResponse.
+         * @memberof api
+         * @interface IHdStoreExtendedPublicKeyResponse
+         * @property {string|null} [extendedPublicKey] HdStoreExtendedPublicKeyResponse extendedPublicKey
+         */
+
+        /**
+         * Constructs a new HdStoreExtendedPublicKeyResponse.
+         * @memberof api
+         * @classdesc Represents a HdStoreExtendedPublicKeyResponse.
+         * @implements IHdStoreExtendedPublicKeyResponse
+         * @constructor
+         * @param {api.IHdStoreExtendedPublicKeyResponse=} [properties] Properties to set
+         */
+        function HdStoreExtendedPublicKeyResponse(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * HdStoreExtendedPublicKeyResponse extendedPublicKey.
+         * @member {string} extendedPublicKey
+         * @memberof api.HdStoreExtendedPublicKeyResponse
+         * @instance
+         */
+        HdStoreExtendedPublicKeyResponse.prototype.extendedPublicKey = "";
+
+        /**
+         * Creates a new HdStoreExtendedPublicKeyResponse instance using the specified properties.
+         * @function create
+         * @memberof api.HdStoreExtendedPublicKeyResponse
+         * @static
+         * @param {api.IHdStoreExtendedPublicKeyResponse=} [properties] Properties to set
+         * @returns {api.HdStoreExtendedPublicKeyResponse} HdStoreExtendedPublicKeyResponse instance
+         */
+        HdStoreExtendedPublicKeyResponse.create = function create(properties) {
+            return new HdStoreExtendedPublicKeyResponse(properties);
+        };
+
+        /**
+         * Encodes the specified HdStoreExtendedPublicKeyResponse message. Does not implicitly {@link api.HdStoreExtendedPublicKeyResponse.verify|verify} messages.
+         * @function encode
+         * @memberof api.HdStoreExtendedPublicKeyResponse
+         * @static
+         * @param {api.IHdStoreExtendedPublicKeyResponse} message HdStoreExtendedPublicKeyResponse message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        HdStoreExtendedPublicKeyResponse.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.extendedPublicKey != null && message.hasOwnProperty("extendedPublicKey"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.extendedPublicKey);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified HdStoreExtendedPublicKeyResponse message, length delimited. Does not implicitly {@link api.HdStoreExtendedPublicKeyResponse.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.HdStoreExtendedPublicKeyResponse
+         * @static
+         * @param {api.IHdStoreExtendedPublicKeyResponse} message HdStoreExtendedPublicKeyResponse message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        HdStoreExtendedPublicKeyResponse.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a HdStoreExtendedPublicKeyResponse message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.HdStoreExtendedPublicKeyResponse
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.HdStoreExtendedPublicKeyResponse} HdStoreExtendedPublicKeyResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        HdStoreExtendedPublicKeyResponse.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.HdStoreExtendedPublicKeyResponse();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.extendedPublicKey = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a HdStoreExtendedPublicKeyResponse message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.HdStoreExtendedPublicKeyResponse
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.HdStoreExtendedPublicKeyResponse} HdStoreExtendedPublicKeyResponse
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        HdStoreExtendedPublicKeyResponse.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a HdStoreExtendedPublicKeyResponse message.
+         * @function verify
+         * @memberof api.HdStoreExtendedPublicKeyResponse
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        HdStoreExtendedPublicKeyResponse.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.extendedPublicKey != null && message.hasOwnProperty("extendedPublicKey"))
+                if (!$util.isString(message.extendedPublicKey))
+                    return "extendedPublicKey: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a HdStoreExtendedPublicKeyResponse message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.HdStoreExtendedPublicKeyResponse
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.HdStoreExtendedPublicKeyResponse} HdStoreExtendedPublicKeyResponse
+         */
+        HdStoreExtendedPublicKeyResponse.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.HdStoreExtendedPublicKeyResponse)
+                return object;
+            var message = new $root.api.HdStoreExtendedPublicKeyResponse();
+            if (object.extendedPublicKey != null)
+                message.extendedPublicKey = String(object.extendedPublicKey);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a HdStoreExtendedPublicKeyResponse message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.HdStoreExtendedPublicKeyResponse
+         * @static
+         * @param {api.HdStoreExtendedPublicKeyResponse} message HdStoreExtendedPublicKeyResponse
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        HdStoreExtendedPublicKeyResponse.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults)
+                object.extendedPublicKey = "";
+            if (message.extendedPublicKey != null && message.hasOwnProperty("extendedPublicKey"))
+                object.extendedPublicKey = message.extendedPublicKey;
+            return object;
+        };
+
+        /**
+         * Converts this HdStoreExtendedPublicKeyResponse to JSON.
+         * @function toJSON
+         * @memberof api.HdStoreExtendedPublicKeyResponse
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        HdStoreExtendedPublicKeyResponse.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return HdStoreExtendedPublicKeyResponse;
     })();
 
     api.CacheDerivedKeyParam = (function() {
@@ -7345,9 +7257,8 @@ $root.transaction = (function() {
          * @property {string|null} [to] BtcForkTxInput to
          * @property {number|Long|null} [amount] BtcForkTxInput amount
          * @property {Array.<transaction.IUtxo>|null} [unspents] BtcForkTxInput unspents
-         * @property {string|null} [memo] BtcForkTxInput memo
          * @property {number|Long|null} [fee] BtcForkTxInput fee
-         * @property {number|null} [changeIdx] BtcForkTxInput changeIdx
+         * @property {number|null} [changeAddressIndex] BtcForkTxInput changeAddressIndex
          * @property {string|null} [changeAddress] BtcForkTxInput changeAddress
          * @property {string|null} [network] BtcForkTxInput network
          * @property {string|null} [segWit] BtcForkTxInput segWit
@@ -7394,14 +7305,6 @@ $root.transaction = (function() {
         BtcForkTxInput.prototype.unspents = $util.emptyArray;
 
         /**
-         * BtcForkTxInput memo.
-         * @member {string} memo
-         * @memberof transaction.BtcForkTxInput
-         * @instance
-         */
-        BtcForkTxInput.prototype.memo = "";
-
-        /**
          * BtcForkTxInput fee.
          * @member {number|Long} fee
          * @memberof transaction.BtcForkTxInput
@@ -7410,12 +7313,12 @@ $root.transaction = (function() {
         BtcForkTxInput.prototype.fee = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
         /**
-         * BtcForkTxInput changeIdx.
-         * @member {number} changeIdx
+         * BtcForkTxInput changeAddressIndex.
+         * @member {number} changeAddressIndex
          * @memberof transaction.BtcForkTxInput
          * @instance
          */
-        BtcForkTxInput.prototype.changeIdx = 0;
+        BtcForkTxInput.prototype.changeAddressIndex = 0;
 
         /**
          * BtcForkTxInput changeAddress.
@@ -7472,18 +7375,16 @@ $root.transaction = (function() {
             if (message.unspents != null && message.unspents.length)
                 for (var i = 0; i < message.unspents.length; ++i)
                     $root.transaction.Utxo.encode(message.unspents[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
-            if (message.memo != null && message.hasOwnProperty("memo"))
-                writer.uint32(/* id 4, wireType 2 =*/34).string(message.memo);
             if (message.fee != null && message.hasOwnProperty("fee"))
-                writer.uint32(/* id 5, wireType 0 =*/40).int64(message.fee);
-            if (message.changeIdx != null && message.hasOwnProperty("changeIdx"))
-                writer.uint32(/* id 6, wireType 0 =*/48).uint32(message.changeIdx);
+                writer.uint32(/* id 4, wireType 0 =*/32).int64(message.fee);
+            if (message.changeAddressIndex != null && message.hasOwnProperty("changeAddressIndex"))
+                writer.uint32(/* id 5, wireType 0 =*/40).uint32(message.changeAddressIndex);
             if (message.changeAddress != null && message.hasOwnProperty("changeAddress"))
-                writer.uint32(/* id 7, wireType 2 =*/58).string(message.changeAddress);
+                writer.uint32(/* id 6, wireType 2 =*/50).string(message.changeAddress);
             if (message.network != null && message.hasOwnProperty("network"))
-                writer.uint32(/* id 8, wireType 2 =*/66).string(message.network);
+                writer.uint32(/* id 7, wireType 2 =*/58).string(message.network);
             if (message.segWit != null && message.hasOwnProperty("segWit"))
-                writer.uint32(/* id 9, wireType 2 =*/74).string(message.segWit);
+                writer.uint32(/* id 8, wireType 2 =*/66).string(message.segWit);
             return writer;
         };
 
@@ -7530,21 +7431,18 @@ $root.transaction = (function() {
                     message.unspents.push($root.transaction.Utxo.decode(reader, reader.uint32()));
                     break;
                 case 4:
-                    message.memo = reader.string();
-                    break;
-                case 5:
                     message.fee = reader.int64();
                     break;
-                case 6:
-                    message.changeIdx = reader.uint32();
+                case 5:
+                    message.changeAddressIndex = reader.uint32();
                     break;
-                case 7:
+                case 6:
                     message.changeAddress = reader.string();
                     break;
-                case 8:
+                case 7:
                     message.network = reader.string();
                     break;
-                case 9:
+                case 8:
                     message.segWit = reader.string();
                     break;
                 default:
@@ -7597,15 +7495,12 @@ $root.transaction = (function() {
                         return "unspents." + error;
                 }
             }
-            if (message.memo != null && message.hasOwnProperty("memo"))
-                if (!$util.isString(message.memo))
-                    return "memo: string expected";
             if (message.fee != null && message.hasOwnProperty("fee"))
                 if (!$util.isInteger(message.fee) && !(message.fee && $util.isInteger(message.fee.low) && $util.isInteger(message.fee.high)))
                     return "fee: integer|Long expected";
-            if (message.changeIdx != null && message.hasOwnProperty("changeIdx"))
-                if (!$util.isInteger(message.changeIdx))
-                    return "changeIdx: integer expected";
+            if (message.changeAddressIndex != null && message.hasOwnProperty("changeAddressIndex"))
+                if (!$util.isInteger(message.changeAddressIndex))
+                    return "changeAddressIndex: integer expected";
             if (message.changeAddress != null && message.hasOwnProperty("changeAddress"))
                 if (!$util.isString(message.changeAddress))
                     return "changeAddress: string expected";
@@ -7651,8 +7546,6 @@ $root.transaction = (function() {
                     message.unspents[i] = $root.transaction.Utxo.fromObject(object.unspents[i]);
                 }
             }
-            if (object.memo != null)
-                message.memo = String(object.memo);
             if (object.fee != null)
                 if ($util.Long)
                     (message.fee = $util.Long.fromValue(object.fee)).unsigned = false;
@@ -7662,8 +7555,8 @@ $root.transaction = (function() {
                     message.fee = object.fee;
                 else if (typeof object.fee === "object")
                     message.fee = new $util.LongBits(object.fee.low >>> 0, object.fee.high >>> 0).toNumber();
-            if (object.changeIdx != null)
-                message.changeIdx = object.changeIdx >>> 0;
+            if (object.changeAddressIndex != null)
+                message.changeAddressIndex = object.changeAddressIndex >>> 0;
             if (object.changeAddress != null)
                 message.changeAddress = String(object.changeAddress);
             if (object.network != null)
@@ -7695,13 +7588,12 @@ $root.transaction = (function() {
                     object.amount = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
                 } else
                     object.amount = options.longs === String ? "0" : 0;
-                object.memo = "";
                 if ($util.Long) {
                     var long = new $util.Long(0, 0, false);
                     object.fee = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
                 } else
                     object.fee = options.longs === String ? "0" : 0;
-                object.changeIdx = 0;
+                object.changeAddressIndex = 0;
                 object.changeAddress = "";
                 object.network = "";
                 object.segWit = "";
@@ -7718,15 +7610,13 @@ $root.transaction = (function() {
                 for (var j = 0; j < message.unspents.length; ++j)
                     object.unspents[j] = $root.transaction.Utxo.toObject(message.unspents[j], options);
             }
-            if (message.memo != null && message.hasOwnProperty("memo"))
-                object.memo = message.memo;
             if (message.fee != null && message.hasOwnProperty("fee"))
                 if (typeof message.fee === "number")
                     object.fee = options.longs === String ? String(message.fee) : message.fee;
                 else
                     object.fee = options.longs === String ? $util.Long.prototype.toString.call(message.fee) : options.longs === Number ? new $util.LongBits(message.fee.low >>> 0, message.fee.high >>> 0).toNumber() : message.fee;
-            if (message.changeIdx != null && message.hasOwnProperty("changeIdx"))
-                object.changeIdx = message.changeIdx;
+            if (message.changeAddressIndex != null && message.hasOwnProperty("changeAddressIndex"))
+                object.changeAddressIndex = message.changeAddressIndex;
             if (message.changeAddress != null && message.hasOwnProperty("changeAddress"))
                 object.changeAddress = message.changeAddress;
             if (message.network != null && message.hasOwnProperty("network"))
@@ -7966,7 +7856,7 @@ $root.transaction = (function() {
          * Properties of a TronTxInput.
          * @memberof transaction
          * @interface ITronTxInput
-         * @property {Uint8Array|null} [rawData] TronTxInput rawData
+         * @property {string|null} [rawData] TronTxInput rawData
          */
 
         /**
@@ -7986,11 +7876,11 @@ $root.transaction = (function() {
 
         /**
          * TronTxInput rawData.
-         * @member {Uint8Array} rawData
+         * @member {string} rawData
          * @memberof transaction.TronTxInput
          * @instance
          */
-        TronTxInput.prototype.rawData = $util.newBuffer([]);
+        TronTxInput.prototype.rawData = "";
 
         /**
          * Creates a new TronTxInput instance using the specified properties.
@@ -8017,7 +7907,7 @@ $root.transaction = (function() {
             if (!writer)
                 writer = $Writer.create();
             if (message.rawData != null && message.hasOwnProperty("rawData"))
-                writer.uint32(/* id 1, wireType 2 =*/10).bytes(message.rawData);
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.rawData);
             return writer;
         };
 
@@ -8053,7 +7943,7 @@ $root.transaction = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.rawData = reader.bytes();
+                    message.rawData = reader.string();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -8091,8 +7981,8 @@ $root.transaction = (function() {
             if (typeof message !== "object" || message === null)
                 return "object expected";
             if (message.rawData != null && message.hasOwnProperty("rawData"))
-                if (!(message.rawData && typeof message.rawData.length === "number" || $util.isString(message.rawData)))
-                    return "rawData: buffer expected";
+                if (!$util.isString(message.rawData))
+                    return "rawData: string expected";
             return null;
         };
 
@@ -8109,10 +7999,7 @@ $root.transaction = (function() {
                 return object;
             var message = new $root.transaction.TronTxInput();
             if (object.rawData != null)
-                if (typeof object.rawData === "string")
-                    $util.base64.decode(object.rawData, message.rawData = $util.newBuffer($util.base64.length(object.rawData)), 0);
-                else if (object.rawData.length)
-                    message.rawData = object.rawData;
+                message.rawData = String(object.rawData);
             return message;
         };
 
@@ -8130,15 +8017,9 @@ $root.transaction = (function() {
                 options = {};
             var object = {};
             if (options.defaults)
-                if (options.bytes === String)
-                    object.rawData = "";
-                else {
-                    object.rawData = [];
-                    if (options.bytes !== Array)
-                        object.rawData = $util.newBuffer(object.rawData);
-                }
+                object.rawData = "";
             if (message.rawData != null && message.hasOwnProperty("rawData"))
-                object.rawData = options.bytes === String ? $util.base64.encode(message.rawData, 0, message.rawData.length) : options.bytes === Array ? Array.prototype.slice.call(message.rawData) : message.rawData;
+                object.rawData = message.rawData;
             return object;
         };
 
@@ -8162,7 +8043,7 @@ $root.transaction = (function() {
          * Properties of a TronTxOutput.
          * @memberof transaction
          * @interface ITronTxOutput
-         * @property {Uint8Array|null} [signature] TronTxOutput signature
+         * @property {Array.<string>|null} [signatures] TronTxOutput signatures
          */
 
         /**
@@ -8174,6 +8055,7 @@ $root.transaction = (function() {
          * @param {transaction.ITronTxOutput=} [properties] Properties to set
          */
         function TronTxOutput(properties) {
+            this.signatures = [];
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -8181,12 +8063,12 @@ $root.transaction = (function() {
         }
 
         /**
-         * TronTxOutput signature.
-         * @member {Uint8Array} signature
+         * TronTxOutput signatures.
+         * @member {Array.<string>} signatures
          * @memberof transaction.TronTxOutput
          * @instance
          */
-        TronTxOutput.prototype.signature = $util.newBuffer([]);
+        TronTxOutput.prototype.signatures = $util.emptyArray;
 
         /**
          * Creates a new TronTxOutput instance using the specified properties.
@@ -8212,8 +8094,9 @@ $root.transaction = (function() {
         TronTxOutput.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.signature != null && message.hasOwnProperty("signature"))
-                writer.uint32(/* id 1, wireType 2 =*/10).bytes(message.signature);
+            if (message.signatures != null && message.signatures.length)
+                for (var i = 0; i < message.signatures.length; ++i)
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.signatures[i]);
             return writer;
         };
 
@@ -8249,7 +8132,9 @@ $root.transaction = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.signature = reader.bytes();
+                    if (!(message.signatures && message.signatures.length))
+                        message.signatures = [];
+                    message.signatures.push(reader.string());
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -8286,9 +8171,13 @@ $root.transaction = (function() {
         TronTxOutput.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
-            if (message.signature != null && message.hasOwnProperty("signature"))
-                if (!(message.signature && typeof message.signature.length === "number" || $util.isString(message.signature)))
-                    return "signature: buffer expected";
+            if (message.signatures != null && message.hasOwnProperty("signatures")) {
+                if (!Array.isArray(message.signatures))
+                    return "signatures: array expected";
+                for (var i = 0; i < message.signatures.length; ++i)
+                    if (!$util.isString(message.signatures[i]))
+                        return "signatures: string[] expected";
+            }
             return null;
         };
 
@@ -8304,11 +8193,13 @@ $root.transaction = (function() {
             if (object instanceof $root.transaction.TronTxOutput)
                 return object;
             var message = new $root.transaction.TronTxOutput();
-            if (object.signature != null)
-                if (typeof object.signature === "string")
-                    $util.base64.decode(object.signature, message.signature = $util.newBuffer($util.base64.length(object.signature)), 0);
-                else if (object.signature.length)
-                    message.signature = object.signature;
+            if (object.signatures) {
+                if (!Array.isArray(object.signatures))
+                    throw TypeError(".transaction.TronTxOutput.signatures: array expected");
+                message.signatures = [];
+                for (var i = 0; i < object.signatures.length; ++i)
+                    message.signatures[i] = String(object.signatures[i]);
+            }
             return message;
         };
 
@@ -8325,16 +8216,13 @@ $root.transaction = (function() {
             if (!options)
                 options = {};
             var object = {};
-            if (options.defaults)
-                if (options.bytes === String)
-                    object.signature = "";
-                else {
-                    object.signature = [];
-                    if (options.bytes !== Array)
-                        object.signature = $util.newBuffer(object.signature);
-                }
-            if (message.signature != null && message.hasOwnProperty("signature"))
-                object.signature = options.bytes === String ? $util.base64.encode(message.signature, 0, message.signature.length) : options.bytes === Array ? Array.prototype.slice.call(message.signature) : message.signature;
+            if (options.arrays || options.defaults)
+                object.signatures = [];
+            if (message.signatures && message.signatures.length) {
+                object.signatures = [];
+                for (var j = 0; j < message.signatures.length; ++j)
+                    object.signatures[j] = message.signatures[j];
+            }
             return object;
         };
 
