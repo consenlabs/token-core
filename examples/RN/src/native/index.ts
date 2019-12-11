@@ -104,7 +104,8 @@ const tcxApi = async(method: any, params: any) => {
       param: any
     })
 
-    console.log(`${method} params`, params)
+    console.log(`-------------- ${method} -------------------`)
+    console.log(`${method} params`, JSON.stringify(params))
     const buffer = TcxAction.encode(message).finish()
     const hexStr = Buffer.from(buffer).toString('hex')
     console.log(`${method} hexStr: `, hexStr)
@@ -112,15 +113,15 @@ const tcxApi = async(method: any, params: any) => {
     console.log(`${method} res: `, res)
     const retBuf = Buffer.from(res, 'hex')
     const result = ResType.decode(retBuf)
-    console.log(`${method} decode res: `, result)
+    console.log(`${method} decode res: `, JSON.stringify(result))
     return result
   } catch (error) {
-    console.log(`${method} error`, error)
+    console.warn(`${method} error`, error)
     const errBuf = Buffer.from(error, 'hex')
-    console.log(`${method} errBuf`, errBuf)
+    console.warn(`${method} errBuf`, errBuf)
     const ResponseType = protoRoot.api.Response
     const err = ResponseType.decode(errBuf)
-    console.log(`${method} decode err`, err)
+    console.warn(`${method} decode err`, err)
     throw err
   }
 }

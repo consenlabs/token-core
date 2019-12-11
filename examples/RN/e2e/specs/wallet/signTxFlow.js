@@ -1,7 +1,7 @@
 /**
- * mnemonic flow test
+ * sign tx flow test
  *
- * import -> sign -> export -> delete
+ * import -> sign
  */
 
 import signTx from './base/signTx'

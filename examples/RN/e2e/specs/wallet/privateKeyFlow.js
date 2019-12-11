@@ -1,7 +1,7 @@
 /**
- * mnemonic flow test
+ * privateKey flow test
  *
- * import -> sign -> export -> delete
+ * import -> export
  */
 
 import importPrivateKey from './base/importPrivateKey'
@@ -36,7 +36,7 @@ export default function () {
       let privateKey = PRIVATEKEYS[`${chainType}_MAINNET_PRIVATEKEY`]
       let address = ADDRESSES[chainType + '_MAINNET_PRIVATEKEY_ADDRESS']
       let network = 'MAINNET'
-      it(`should import ${chainType} wallet, network is ${network}, privateKey is ${privateKey} and the expected is ${address}`, async () => {
+      it(`should import ${chainType} wallet, network is ${network}, privateKey is ${privateKey} and the expected address is ${address}`, async () => {
         const params = formatPrivateKeyStoreParams({
           privateKey,
           chainType,

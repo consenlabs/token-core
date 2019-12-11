@@ -168,7 +168,6 @@ class CPK extends React.Component<Props, State> {
         overwrite: true,
         passwordHint: ''
       }
-      console.log('params', params)
       this.setState({ isLoading: true })
       const res = await walletAPI.hdStoreImport(params)
       const deriveParams = {

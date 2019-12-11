@@ -1,7 +1,7 @@
 /**
- * mnemonic flow test
+ * create flow test
  *
- * import -> sign -> export -> delete
+ * create -> export -> import
  */
 
 import create from './base/create'
@@ -16,7 +16,6 @@ export default function () {
         let network = NETWORKS[networkIndex]
 
         it(`should create ${chainType} wallet, network is ${network}`, async () => {
-          // const { chainType, mnemonic, password, address, network } = params
           const params = formatHdStoreParams({
             chainType,
             password: PASSWORD,

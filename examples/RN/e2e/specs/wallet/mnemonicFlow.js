@@ -1,7 +1,7 @@
 /**
  * mnemonic flow test
  *
- * import -> sign -> export -> delete
+ * import -> verify keystore -> delete
  */
 
 import importMnemonic from './base/importMnemonic'
@@ -57,8 +57,7 @@ export default function () {
           let mnemonic = MNEMONICS[mnemonicIndex]
           let address = ADDRESSES[chainType + '_' + network + '_' + mnemonicIndex + '_ADDRESS']
 
-          it(`should import ${chainType} wallet, network is ${network}, mnemonic is ${mnemonicIndex} and the expected address is ${address}`, async () => {
-            // const { chainType, mnemonic, password, address, network } = params
+          it(`should import ${chainType} wallet, network is ${network}, mnemonic is ${mnemonic} and the expected address is ${address}`, async () => {
             const params = formatHdStoreParams({
               mnemonic,
               chainType,

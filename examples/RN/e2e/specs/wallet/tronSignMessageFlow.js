@@ -1,3 +1,8 @@
+/**
+ * sign message flow test
+ *
+ * import -> sign
+ */
 
 import tronSignMessage from './base/tronSignMessage'
 
