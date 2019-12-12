@@ -29,7 +29,10 @@ build-ios-example: ##@build generate the iOS compiled file
 	./tools/ios-example-build.sh
 
 build-ios-rn-example: ##@build generate the iOS RN compiled file
-	./tools/ios-rn-example-build.sh
+	sh ./tools/ios-rn-example-build.sh
+
+build-android-rn-example: ##@build generate the Android RN compiled file
+	sh ./tools/android-rn-example-build.sh
 
 e2e: ##@test run e2e test
 	(cd examples/RN && yarn)

@@ -42,8 +42,8 @@ export default async function (params) {
   await id('keystoreCommonAccounts').tap()
   await waitFor(id('accounts')).toExist().withTimeout(2000)
 
-  await id('keystoreCommonDelete').tap()
-  await waitFor(id('deleteSuccess')).toExist().withTimeout(2000)
+  // await id('keystoreCommonDelete').tap()
+  // await waitFor(id('deleteSuccess')).toExist().withTimeout(2000)
 
   // go back
   await id('goBack').tap()
