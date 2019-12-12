@@ -235,7 +235,7 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
     let accounts_rsp = AccountsResponse {
         accounts: account_responses,
     };
-
+    flush_keystore(keystore);
     encode_message(accounts_rsp)
 }
 
