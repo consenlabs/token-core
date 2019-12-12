@@ -7,7 +7,6 @@ export default async function (params) {
 
   await id('input-mnemonic').tap()
   await id('input-mnemonic').replaceText(mnemonic)
-  // await id('input-mnemonic').typeText(' ')
 
   await id('input-password').tap()
   await id('input-password').replaceText(password)
@@ -22,11 +21,16 @@ export default async function (params) {
   await id('input-segWit').replaceText(segWit)
 
   // dismiss keyboard
-  // await label('return').tap()
+  await label('return').tap()
 
   await id('import').tap()
   await waitFor(id('import-address')).toExist().withTimeout(2000)
   await toHaveText('import-address', address)
+
+  // export
+  await id('export').tap()
+  await waitFor(id('expected-mnemonic')).toExist().withTimeout(2000)
+  await toHaveText('expected-mnemonic', mnemonic)
 
   // keystore
   await id('keystoreCommonVerify').tap()

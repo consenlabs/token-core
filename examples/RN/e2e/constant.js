@@ -2,7 +2,7 @@ export const CHAINTYPES = ['BITCOINCASH', 'LITECOIN', 'TRON']
 export const NETWORKS = ['MAINNET', 'TESTNET']
 
 export const PASSWORD = '123123123!@#$%'
-
+// MNEMONIC_12
 export const MNEMONIC_12 = 'inject kidney empty canal shadow pact comfort wife crush horse wife sketch'
 // TESTNET MNEMONIC_12 ADDRESS
 export const BITCOINCASH_TESTNET_MNEMONIC_12_ADDRESS = 'qqurlwqukz3lcujttcyvlzaagppnd4c37chrtrylmc'
@@ -28,7 +28,7 @@ export const BITCOINCASH_MAINNET_MNEMONIC_12_PRIVATEKEY = 'L39VXyorp19JfsEJfbD7T
 export const LITECOIN_MAINNET_MNEMONIC_12_PRIVATEKEY = 'T4oDFhweKSqfPjiebJb6hoCLJKNFsWTYHfodfGyuoGy5yHoete7k'
 export const TRON_MAINNET_MNEMONIC_12_PRIVATEKEY = 'b2a3f2ad9ea57b03aae9584a50b36e8b8f9ddfdc1b5c2ca26f90a041fb28f260'
 
-
+// MNEMONIC_24
 export const MNEMONIC_24 = 'install mass display evidence cave prize echo soda clever beef orphan canyon hint area jar you crazy salad cradle balance solve club yellow advice'
 
 // MAINNET MNEMONIC_24 ADDRESS

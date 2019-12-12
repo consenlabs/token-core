@@ -16,6 +16,9 @@ export default async function (params) {
   await id('input-segWit').tap()
   await id('input-segWit').replaceText(segWit)
 
+  // dismiss keyboard
+  await label('return').tap()
+
   await id('create').tap()
 
   await waitFor(id('expected-address')).toExist().withTimeout(2000)

@@ -21,7 +21,8 @@ export default async function (params) {
   await id('input-segWit').replaceText(segWit)
 
   // dismiss keyboard
-  // await label('return').tap()
+  await label('return').tap()
+  
   await id('import').tap()
   await waitFor(id('import-address')).toExist().withTimeout(2000)
   await toHaveText('import-address', address)
@@ -30,6 +31,19 @@ export default async function (params) {
   await id('export-btn').tap()
   await waitFor(id('export-privateKey')).toExist().withTimeout(2000)
   await toHaveText('export-privateKey', privateKey)
+
+  // keystore
+  await id('keystoreCommonVerify').tap()
+  await waitFor(id('verifySuccess')).toExist().withTimeout(2000)
+
+  await id('keystoreCommonExists').tap()
+  await waitFor(id('isExists')).toExist().withTimeout(2000)
+
+  await id('keystoreCommonAccounts').tap()
+  await waitFor(id('accounts')).toExist().withTimeout(2000)
+
+  await id('keystoreCommonDelete').tap()
+  await waitFor(id('deleteSuccess')).toExist().withTimeout(2000)
 
   // go back
   await id('goBack').tap()

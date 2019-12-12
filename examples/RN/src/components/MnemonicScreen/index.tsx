@@ -8,7 +8,7 @@ interface Props {
 }
 
 interface State {
-  mnemonic: string
+  mnemonic: any
   password: string
   segWit: string
   id: string | null | undefined
@@ -20,6 +20,7 @@ interface State {
   isExists: any
   accounts: any
   deleteSuccess: any
+  exportMnemonic: any
 }
 
 class CMP extends React.Component<Props, State> {
@@ -52,10 +53,12 @@ class CMP extends React.Component<Props, State> {
       isExists: false,
       deleteSuccess: false,
       accounts: '',
+      exportMnemonic: '',
     }
   }
+
   render() {
-    const { mnemonic, password, chainType, network, segWit, address, isLoading } = this.state
+    const { mnemonic, password, chainType, network, segWit, address, isLoading, exportMnemonic } = this.state
     const inputs = {
       mnemonic,
       password,
@@ -89,6 +92,14 @@ class CMP extends React.Component<Props, State> {
             onPress={this.handleImport}
           />
           {!!address && <Text testID="import-address">{address}</Text>}
+        </View>
+        <View>
+          <Button
+            testID="export"
+            title="export"
+            onPress={this.handleExport}
+          />
+          {!!exportMnemonic && <Text testID="expected-mnemonic">{exportMnemonic}</Text>}
         </View>
         {this.renderKeystore()}
       </View>
@@ -218,6 +229,18 @@ class CMP extends React.Component<Props, State> {
       // @ts-ignore
       const address = accountsRes.accounts[0].address
       this.setState({ id: res.id, address, isLoading: false })
+    } catch (err) {
+      this.setState({ isLoading: false })
+      Alert.alert('', err.message)
+    }
+  }
+
+  handleExport = async () => {
+    const { id, password } = this.state
+    try {
+      this.setState({ isLoading: true })
+      const res = await walletAPI.hdStoreExport({ id, password })
+      this.setState({ exportMnemonic: res.value, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
       Alert.alert('', err.message)
