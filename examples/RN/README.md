@@ -2,21 +2,22 @@
 
 This is React Native Demo Project
 
-## Requirements
+## requirements
 - Make sure you have Xcode installed (tested with Xcode 11.2.1).
 - Make sure you have iOS simulators installed (tested with iPhone 11 Pro Max/iOS 13.2).
 - Make sure you have node installed (tested with node 12.12).
 
 ## generate the compiled files
 
-```
-./tools/ios-example-build.sh
+In the root directory
+```bash
+build-ios-rn-example
 ```
 
 ## install
 
 1. install node_modules
-```
+```bash
 yarn install
 ```
 
@@ -24,16 +25,20 @@ yarn install
 ```bash
 (cd ios && pod install)
 ```
+3. generate the Protocol Buffers
+```bash
+yarn pbjs
+```
 
 ## run
 
 - run iOS
-```
+```bash
 yarn ios
 ```
 
 - run Android
-```
+```bash
 yarn android
 ```
 
@@ -43,12 +48,17 @@ We use [Detox](https://github.com/wix/Detox) for e2e test.
 1. install applesimutils
 
 A collection of utils for Apple simulators, Detox uses it to communicate with the simulator.
-```
+```bash
 brew tap wix/brew
 brew install applesimutils
 ```
 
 2. run
-```
+```bash
 yarn e2e
+```
+
+or debug
+```bash
+yarn e2e:debug
 ```
