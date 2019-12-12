@@ -7,6 +7,9 @@ mod transaction_helper;
 
 use failure::Fail;
 
+pub use address::CkbAddress;
+pub use transaction::{CkbTxInput, CkbTxOutput};
+
 #[derive(Fail, Debug, PartialEq)]
 pub enum Error {
     #[fail(display = "invalid_output_point")]

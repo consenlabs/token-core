@@ -11,6 +11,7 @@ tcx-chain = { path = "../tcx-chain" }
 tcx-btc-fork = {path = "../tcx-btc-fork"}
 tcx-bch = {path = "../tcx-bch"}
 tcx-tron = {path = "../tcx-tron"}
+tcx-ckb = {path = "../tcx-ckb"}
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants"}
 

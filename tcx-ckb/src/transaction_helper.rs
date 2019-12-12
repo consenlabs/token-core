@@ -1,5 +1,5 @@
 use crate::serializer::Serializer;
-use crate::transaction::{CachedCell, Script, TxInput, Witness};
+use crate::transaction::{CachedCell, Script, CkbTxInput, Witness};
 
 use super::Error;
 use crate::hash::blake2b_256;

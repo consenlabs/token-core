@@ -3,7 +3,7 @@ use tcx_chain::{Keystore, Result, TransactionSigner};
 
 use crate::hash::new_blake2b;
 use crate::serializer::Serializer;
-use crate::transaction::{CachedCell, CellInput, OutPoint, TxInput, TxOutput, Witness};
+use crate::transaction::{CachedCell, CellInput, OutPoint, CkbTxInput, CkbTxOutput, Witness};
 use crate::Error;
 use std::collections::HashMap;
 use tcx_chain::ChainSigner;
@@ -122,8 +122,8 @@ impl<'a> CkbTxSigner<'a> {
     }
 }
 
-impl TransactionSigner<TxInput, TxOutput> for Keystore {
-    fn sign_transaction(&mut self, symbol: &str, address: &str, tx: &TxInput) -> Result<TxOutput> {
+impl TransactionSigner<CkbTxInput, CkbTxOutput> for Keystore {
+    fn sign_transaction(&mut self, symbol: &str, address: &str, tx: &CkbTxInput) -> Result<CkbTxOutput> {
         if tx.witnesses.len() == 0 {
             return Err(Error::RequiredWitness.into());
         }
@@ -159,7 +159,7 @@ impl TransactionSigner<TxInput, TxOutput> for Keystore {
 
         let signed_witnesses = signer.sign_witnesses(&tx.tx_hash, &tx.witnesses, &input_cells)?;
 
-        let tx_output = TxOutput {
+        let tx_output = CkbTxOutput {
             tx_hash: tx.tx_hash.clone(),
             witnesses: signed_witnesses,
         };
@@ -171,7 +171,7 @@ impl TransactionSigner<TxInput, TxOutput> for Keystore {
 #[cfg(test)]
 mod tests {
     use crate::address::CkbAddress;
-    use crate::transaction::{CachedCell, CellInput, OutPoint, Script, TxInput, Witness};
+    use crate::transaction::{CachedCell, CellInput, OutPoint, Script, CkbTxInput, Witness};
     use tcx_chain::{Keystore, TransactionSigner};
     use tcx_constants::{CoinInfo, CurveType};
 
@@ -305,12 +305,12 @@ mod tests {
             },
         ];
 
-        let tx_input = TxInput {
+        let tx_input = CkbTxInput {
             inputs,
             witnesses,
             tx_hash,
             cached_cells,
-            ..TxInput::default()
+            ..CkbTxInput::default()
         };
 
         let mut ks = Keystore::from_private_key(

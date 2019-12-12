@@ -7,6 +7,7 @@ use prost::Message;
 use serde_json::Value;
 use tcx_primitive::{private_key_without_version, verify_private_key, FromHex, TypedPrivateKey};
 
+use tcx_ckb::{CkbTxOutput, CkbTxInput, CkbAddress};
 use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
     address::BtcForkAddress, BtcForkSegWitTransaction, BtcForkSignedTxOutput, BtcForkTransaction,
@@ -62,10 +63,12 @@ fn derive_account<'a, 'b>(
         &derivation.seg_wit,
     )?;
     coin_info.derivation_path = derivation.path.to_owned();
+
     match derivation.chain_type.as_str() {
         "BITCOINCASH" => keystore.derive_coin::<BchAddress>(&coin_info),
         "LITECOIN" => keystore.derive_coin::<BtcForkAddress>(&coin_info),
         "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
+        "NERVOS_CKB" => keystore.derive_coin::<CkbAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -481,6 +484,7 @@ pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
     match param.chain_type.as_str() {
         "BITCOINCASH" | "LITECOIN" => sign_btc_fork_transaction(&param, keystore),
         "TRON" => sign_tron_tx(&param, keystore),
+        "NERVOS_CKB" => sign_nervos_ckb(&param, keystore),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -500,6 +504,15 @@ pub fn sign_btc_fork_transaction(param: &SignParam, keystore: &mut Keystore) -> 
         let tran = BtcForkTransaction::new(input, coin);
         keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
     };
+    encode_message(signed_tx)
+}
+
+pub fn sign_nervos_ckb(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: CkbTxInput =
+        CkbTxInput::decode(&param.input.as_ref().expect("tx_iput").value.clone()).expect("CkbTxInput");
+
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+
     encode_message(signed_tx)
 }
 
