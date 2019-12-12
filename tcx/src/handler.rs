@@ -27,11 +27,12 @@ use crate::api::{
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
 use crate::filemanager::{
-    cache_keystore, find_keystore_id_by_address, flush_keystore, WALLET_FILE_DIR,
+    cache_keystore, clean_keystore, find_keystore_id_by_address, flush_keystore, WALLET_FILE_DIR,
 };
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 use std::collections::HashMap;
 use std::process::exit;
+use std::sync::RwLockReadGuard;
 use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::{CoinInfo, CurveType};
@@ -43,7 +44,7 @@ use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 #[repr(C)]
 pub struct Buffer {
     pub data: *mut u8,
-    pub len: usize,
+    pub len: i64,
 }
 
 pub fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
@@ -82,7 +83,15 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
     *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
     *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
 
-    let p = Path::new(&file_dir);
+    scan_keystores();
+
+    Ok(())
+}
+
+pub fn scan_keystores() -> Result<()> {
+    clean_keystore();
+    let file_dir: RwLockReadGuard<'_, std::string::String> = WALLET_FILE_DIR.read().unwrap();
+    let p = Path::new(file_dir.as_str());
     let walk_dir = std::fs::read_dir(p).expect("read dir");
     for entry in walk_dir {
         let entry = entry.expect("DirEntry");
@@ -229,7 +238,7 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
     let accounts_rsp = AccountsResponse {
         accounts: account_responses,
     };
-
+    flush_keystore(keystore);
     encode_message(accounts_rsp)
 }
 
@@ -426,7 +435,6 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
     }
     let map = &mut KEYSTORE_MAP.write().unwrap();
 
-    // todo: check the key_type
     let founded: Option<&Keystore> = map
         .values()
         .find(|keystore| keystore.key_hash() == key_hash);
@@ -541,21 +549,26 @@ mod tests {
         KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
         PrivateKeyStoreImportParam, Response, SignParam, WalletKeyParam, WalletResult,
     };
+    use crate::filemanager::KEYSTORE_MAP;
     use crate::filemanager::WALLET_FILE_DIR;
     use crate::handler::{
         encode_message, hd_store_create, hd_store_derive, hd_store_export,
         keystore_common_accounts, keystore_common_delete, keystore_common_exists,
-        keystore_common_verify, private_key_store_export, private_key_store_import, sign_tx,
+        keystore_common_verify, private_key_store_export, private_key_store_import, scan_keystores,
+        sign_tx,
     };
     use crate::handler::{hd_store_import, init_token_core_x};
     use prost::Message;
     use serde_json::error::ErrorCode::ExpectedObjectOrArray;
+    use std::collections::HashMap;
     use std::ffi::{CStr, CString};
     use std::fs::remove_file;
     use std::os::raw::c_char;
     use std::panic;
     use std::path::Path;
+    use std::sync::{RwLockReadGuard, RwLockWriteGuard};
     use tcx_btc_fork::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
+    use tcx_chain::Keystore;
     use tcx_tron::transaction::{TronTxInput, TronTxOutput};
 
     static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
@@ -586,6 +599,27 @@ mod tests {
         let result = panic::catch_unwind(|| test());
         //        teardown();
         assert!(result.is_ok())
+    }
+
+    #[test]
+    pub fn test_scan_keystores() {
+        run_test(|| {
+            let mut keystore_count = 0;
+            {
+                let mut map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
+                    KEYSTORE_MAP.write().unwrap();
+                keystore_count = map.len();
+                map.clear();
+                assert_eq!(0, map.len());
+            }
+            scan_keystores();
+            {
+                let mut map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
+                    KEYSTORE_MAP.write().unwrap();
+
+                assert_eq!(keystore_count, map.len());
+            }
+        })
     }
 
     #[test]
