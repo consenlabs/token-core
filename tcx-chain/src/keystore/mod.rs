@@ -126,8 +126,12 @@ pub enum Keystore {
 }
 
 impl Keystore {
-    pub fn from_private_key(private_key:&str, password:&str) -> Keystore {
-        Keystore::PrivateKey(PrivateKeystore::from_private_key(private_key, password, Source::Wif))
+    pub fn from_private_key(private_key: &str, password: &str) -> Keystore {
+        Keystore::PrivateKey(PrivateKeystore::from_private_key(
+            private_key,
+            password,
+            Source::Wif,
+        ))
     }
 
     pub fn id(&self) -> String {
