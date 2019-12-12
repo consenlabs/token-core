@@ -568,6 +568,7 @@ mod tests {
     use std::panic;
     use std::path::Path;
     use tcx_btc_fork::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
+    use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
     use tcx_tron::transaction::{TronTxInput, TronTxOutput};
 
     static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
@@ -966,6 +967,116 @@ mod tests {
                 "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
                 result.accounts.first().unwrap().address
             );
+        })
+    }
+
+    #[test]
+    pub fn test_sign_ckb_tx() {
+        run_test(|| {
+            let param = HdStoreImportParam {
+                mnemonic: MNEMONIC.to_string(),
+                password: PASSWORD.to_string(),
+                source: "MNEMONIC".to_string(),
+                name: "test-wallet".to_string(),
+                password_hint: "imtoken".to_string(),
+                overwrite: true,
+            };
+            let ret = hd_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(&ret).unwrap();
+
+            let derivation = Derivation {
+                chain_type: "NERVOS_CKB".to_string(),
+                path: "m/44'/309'/0'/0/0".to_string(),
+                network: "TESTNET".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            };
+            let param = HdStoreDeriveParam {
+                id: import_result.id.to_string(),
+                password: PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+
+            let ret = hd_store_derive(&encode_message(param).unwrap()).unwrap();
+            let rsp: AccountsResponse = AccountsResponse::decode(ret).unwrap();
+
+            let out_points = vec![
+                OutPoint {
+                    tx_hash: hex::decode(
+                        "fb9c020db967e84af1fbd755df5bc23427e2ed70f73e07895a0c394f6195f083",
+                    )
+                    .unwrap(),
+                    index: 0,
+                },
+                OutPoint {
+                    tx_hash: hex::decode(
+                        "fb9c020db967e84af1fbd755df5bc23427e2ed70f73e07895a0c394f6195f083",
+                    )
+                    .unwrap(),
+                    index: 1,
+                },
+            ];
+
+            let code_hash =
+                hex::decode("9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8")
+                    .unwrap();
+
+            let input = CkbTxInput {
+                inputs: vec![
+                    CellInput {
+                        previous_output: Some(out_points[0].clone()),
+                        since: "".to_string(),
+                    },
+                    CellInput {
+                        previous_output: Some(out_points[1].clone()),
+                        since: "".to_string(),
+                    },
+                ],
+                witnesses: vec![Witness::default(), Witness::default()],
+                cached_cells: vec![
+                    CachedCell {
+                        capacity: 0,
+                        lock: Some(Script {
+                            hash_type: "type".to_string(),
+                            code_hash: code_hash.clone(),
+                            args: hex::decode("b45772677603bccc71194b2557067fb361c1e093").unwrap(),
+                        }),
+                        out_point: Some(out_points[0].clone()),
+                        derive_path: "0/1".to_string(),
+                    },
+                    CachedCell {
+                        capacity: 0,
+                        lock: Some(Script {
+                            hash_type: "type".to_string(),
+                            code_hash: code_hash.clone(),
+                            args: hex::decode("2d79d9ed37184c1136bcfbe229947a137f80dec0").unwrap(),
+                        }),
+                        out_point: Some(out_points[1].clone()),
+                        derive_path: "1/0".to_string(),
+                    },
+                ],
+                tx_hash: hex::decode(
+                    "102b8e88daadf1b035577b4d5ea4f604be965df6a918e72daeff6c0c40753401",
+                )
+                .unwrap(),
+            };
+
+            let tx = SignParam {
+                id: import_result.id.to_string(),
+                password: PASSWORD.to_string(),
+                chain_type: "NERVOS_CKB".to_string(),
+                address: rsp.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(input).unwrap(),
+                }),
+            };
+            let tx_bytes = encode_message(tx).unwrap();
+            let ret = sign_tx(&tx_bytes).unwrap();
+            let output: CkbTxOutput = CkbTxOutput::decode(&ret).unwrap();
+            assert_eq!("5500000010000000550000005500000041000000776e010ac7e7166afa50fe54cfecf0a7106a2f11e8110e071ccab67cb30ed5495aa5c5f5ca2967a2fe4a60d5ad8c811382e51d8f916ba2911552bef6dedeca8a00", hex::encode(output.witnesses[0].serialize()));
+            assert_eq!("5500000010000000550000005500000041000000914591d8abd5233740207337b0588fec58cad63143ddf204970526022b6db26d68311e9af49e1625e3a90e8a66eb1694632558d561d1e5d02cc7c7254e2d546100", hex::encode(output.witnesses[1].serialize()));
+            remove_created_wallet(&import_result.id);
         })
     }
 

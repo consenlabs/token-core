@@ -8,7 +8,7 @@ mod transaction_helper;
 use failure::Fail;
 
 pub use address::CkbAddress;
-pub use transaction::{CkbTxInput, CkbTxOutput};
+pub use transaction::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum Error {

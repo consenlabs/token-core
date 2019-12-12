@@ -26,9 +26,8 @@ message CellInput {
 message CachedCell {
     int64 capacity = 1;
     Script lock = 2;
-    Script type = 3;
-    OutPoint outPoint = 4;
-    string derivePath = 5;
+    OutPoint outPoint = 3;
+    string derivePath = 4;
 }
 
 message CkbTxInput {

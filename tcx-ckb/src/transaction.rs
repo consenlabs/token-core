@@ -37,10 +37,8 @@ pub struct CachedCell {
     #[prost(message, optional, tag = "2")]
     pub lock: ::std::option::Option<Script>,
     #[prost(message, optional, tag = "3")]
-    pub r#type: ::std::option::Option<Script>,
-    #[prost(message, optional, tag = "4")]
     pub out_point: ::std::option::Option<OutPoint>,
-    #[prost(string, tag = "5")]
+    #[prost(string, tag = "4")]
     pub derive_path: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
