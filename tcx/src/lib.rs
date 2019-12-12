@@ -192,6 +192,7 @@ pub unsafe extern "C" fn get_last_err() -> Buffer {
                 is_success: false,
                 error: err.to_string(),
             };
+            eprintln!("{:#?}", rsp);
             let mut rsp_bytes = encode_message(rsp).expect("encode error");
             wrap_buffer(rsp_bytes)
         } else {

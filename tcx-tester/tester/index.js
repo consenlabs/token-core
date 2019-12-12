@@ -3,6 +3,11 @@ var fs = require('fs');
 var path = require('path');
 const { spawnSync } = require( 'child_process' );
 
+var log4js = require('log4js');
+var logger = log4js.getLogger();
+logger.level = 'info';
+logger.info("begin tcx tester:");
+
 var outDir = "../test_result";
 var jsonIn = "../json_in";
 
@@ -22,59 +27,69 @@ function walkDir(dir, callback) {
     });
 };
 
-protobuf.load('google/protobuf/any.proto', function (err, root) {
-    if (err) {
-        throw err;
-    }
-
+async function test() {
+    let protoDir = "../../tcx-proto/src";
+    let protoFiles = fs.readdirSync(protoDir)
+    .filter(f => { return f.endsWith(".proto") }).map(f => {
+            return path.join(protoDir, f);
+    });
+    protoFiles.push('google/protobuf/any.proto');
+    let root = await protobuf.load(protoFiles);
     var Any = root.lookup('Any');
+    var TcxAction = root.lookup('TcxAction');
 
-    protobuf.load('api.proto', function (err, root) {
-        if (err) {
-            throw err;
-        }
+    const generate_pb = (dir, f) => {
+        var filePath = path.join(dir, f);
+        var fileContent = fs.readFileSync(filePath);
+        var payload = JSON.parse(fileContent.toString());
 
-        var TcxAction = root.lookup('TcxAction');
-        const generate_pb = (dir, f) => {
-            var filePath = path.join(dir, f);
-            var fileContent = fs.readFileSync(filePath);
-            console.log(fileContent.toString());
-            var payload = JSON.parse(fileContent.toString());
+        var param = payload.param;
 
-            var param = payload.param;
-
-            // var paramBytes = encode(param);
-            var ParamType = root.lookupType(param.type);
-            var encodedParam = ParamType.create(param);
+        if (payload.method.startsWith("sign")) {
+            var ParamType = root.lookupType(param.input.type);
+            var encodedParam = ParamType.create(param.input);
             var any = Any.create({
-                type_url: param.type,
+                type_url: param.input.type,
                 value: ParamType.encode(encodedParam).finish(),
             })
-            payload.param = any;
+            param.input = any;
+        }
+        
+        var ParamType = root.lookupType(param.type);
+        var encodedParam = ParamType.create(param);
+        var any = Any.create({
+            type_url: param.type,
+            value: ParamType.encode(encodedParam).finish(),
+        })
+        payload.param = any;
 
-                var ParamType = root.lookupType(param.type);
-                var encodedParam = ParamType.create(param);
-                var any = Any.create({
-                    type_url: param.type,
-                    value: ParamType.encode(encodedParam).finish(),
-                })
-                payload.param = any;
+        var message = TcxAction.create({
+            "method": payload.method,
+            "param": any
+        });
+        var buffer = TcxAction.encode(message).finish();
+        var hexStr = buffer.toString('hex');
+        logger.info(`test input: ${f}, method: ${payload.method}`);
+        logger.debug(`param: `, JSON.stringify(payload, "", 2));
+        logger.debug(`encoded hex: ${hexStr}`);
+        const cmd = spawnSync( '../../target/debug/tcx-tester', [hexStr] );
+        
 
-                var message = TcxAction.create({
-                    "method": payload.method,
-                    "param": any
-                });
-                var buffer = TcxAction.encode(message).finish();
-                var hexStr = buffer.toString('hex');
-                const ls = spawnSync( '../../target/debug/tcx-tester', [hexStr] );
+        if (cmd.stderr && cmd.stderr.toString()) {
+            logger.error(`test failed: ${cmd.stderr.toString()}`);
+            fs.writeFileSync(path.join(outDir, f), cmd.stderr.toString());
+        } else {
+            logger.info("test result: ", cmd.stdout.toString());
+            fs.writeFileSync(path.join(outDir, f), cmd.stdout.toString());
+        }
+        
+    }
 
-                fs.writeFileSync(path.join(outDir, f), ls.stdout.toString());
-            }
+    clearAllFiles(outDir);
+    walkDir(jsonIn, generate_pb);
+    console.log("All test finished");
 
-        clearAllFiles(outDir);
-        walkDir(jsonIn, generate_pb);
-        console.log("Generate Success");
-    });
-});
+}
 
 
+test();

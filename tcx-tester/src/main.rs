@@ -1,4 +1,4 @@
-use tcx::{call_tcx_api, wrap_buffer};
+use tcx::{call_tcx_api, get_last_err, wrap_buffer};
 
 use bytes::BytesMut;
 use prost::Message;
@@ -25,4 +25,5 @@ fn main() {
     let bytes = hex::decode(hex).expect("decode hex");
     let param_buf = wrap_buffer(bytes);
     unsafe { call_tcx_api(param_buf) };
+    unsafe { get_last_err() };
 }

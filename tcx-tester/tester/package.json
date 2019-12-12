@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "log4js": "^6.1.0",
     "protobufjs": "^6.8.8"
   }
 }
