@@ -41,6 +41,30 @@ extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
 
+#[macro_use]
+extern crate log;
+extern crate android_logger;
+
+use android_logger::{Config, FilterBuilder};
+use log::Level;
+
+fn native_activity_create() {
+    android_logger::init_once(
+        Config::default()
+            .with_min_level(Level::Trace) // limit log level
+            .with_tag("mytag") // logs will show under mytag tag
+            .with_filter(
+                // configure messages for specific crate
+                FilterBuilder::new()
+                    .parse("debug,hello::crate=error")
+                    .build(),
+            ),
+    );
+
+    trace!("this is a verbose {}", "message");
+    error!("this is printed by default");
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn free_string(s: *mut c_char) {
     if s.is_null() {
@@ -72,10 +96,13 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 
 /// dispatch protobuf rpc call
 #[no_mangle]
-pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
-    println!("receive call");
-    let data = std::slice::from_raw_parts_mut(buf.data, buf.len as usize);
-    println!("receive data: {}", hex::encode(data.to_vec().clone()));
+pub unsafe extern "C" fn call_tcx_api(data: *const u8) -> Buffer {
+    error!("receive call");
+    //    error!()
+    error!("is x86_64");
+    error!("receive data {:?}", data);
+    let data = std::slice::from_raw_parts(data, 137);
+
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
     let mut reply: Vec<u8> = match action.method.to_lowercase().as_str() {
         "init_token_core_x" => landingpad(|| {
@@ -140,6 +167,8 @@ pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
 }
 
 fn init_token_core_x_internal(v: &Value) -> Result<()> {
+    native_activity_create();
+
     let file_dir = v["fileDir"].as_str().expect("fileDir");
     let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
     let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
