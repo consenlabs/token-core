@@ -24,8 +24,9 @@ pub mod handler;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
     encode_message, hd_store_create, hd_store_derive, hd_store_export, hd_store_import,
-    keystore_common_delete, keystore_common_exists, keystore_common_verify,
-    private_key_store_export, private_key_store_import, sign_tx, tron_sign_message, Buffer,
+    keystore_common_accounts, keystore_common_delete, keystore_common_exists,
+    keystore_common_verify, private_key_store_export, private_key_store_import, sign_tx,
+    tron_sign_message, Buffer,
 };
 mod filemanager;
 use crate::filemanager::{
@@ -100,7 +101,7 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
             landingpad(|| keystore_common_exists(&action.param.unwrap().value))
         }
         "keystore_common_accounts" => {
-            landingpad(|| keystore_common_exists(&action.param.unwrap().value))
+            landingpad(|| keystore_common_accounts(&action.param.unwrap().value))
         }
 
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
@@ -212,13 +213,13 @@ mod tests {
     use std::path::Path;
     use std::str::FromStr;
 
-    use crate::api::{InitTokenCoreXParam, WalletResult};
+    use crate::api::{InitTokenCoreXParam, KeystoreCommonExistsResult, WalletResult};
     use crate::init_token_core_x;
     use bytes::BytesMut;
     use prost::Message;
     use tcx_chain::HdKeystore;
 
-    static WALLET_ID: &'static str = "9c6cbc21-1c43-4c8b-bb7a-5e538f908819";
+    static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
 
     fn _to_c_char(str: &str) -> *const c_char {
         CString::new(str).unwrap().into_raw()
@@ -296,33 +297,39 @@ mod tests {
         });
     }
 
-    #[test]
-    fn test_call_tcx_api() {
-        run_test(|| {
-            //        let param_hex = "0a17696e69745f746f6b656e5f636f72655f785f706172616d124b0a176170692e496e6974546f6b656e436f726558506172616d12300a0c2e2e2f746573742d646174611a203943304333303838394342434335453031414235423242423838373135373939";
-            //        let mut param_bytes = hex::decode(param_hex).unwrap();
-            ////            let param_buf = Buffer {
-            ////                data: param_bytes.as_mut_ptr(),
-            ////                len: param_bytes.len(),
-            ////            };
-            //        let param_buf = wrap_buffer(param_bytes);
-            //        let ret_buf = unsafe { call_tcx_api(param_buf) };
+    //    #[test]
+    //    fn test_call_tcx_api() {
+    //        run_test(|| {
+    //            let param_hex = "0a0f68645f73746f72655f64657269766512730a166170692e486453746f7265446572697665506172616d12590a2437626262656262662d636565662d343761622d386639372d30373239623861316132616312093132333132333132331a260a084c495445434f494e120f6d2f3434272f32272f30272f302f301a074d41494e4e45542a00";
+    //            let mut param_bytes = hex::decode(param_hex).unwrap();
+    //            let param_buf = Buffer {
+    //                data: param_bytes.as_mut_ptr(),
+    //                len: param_bytes.len(),
+    //            };
+    //            let ret_buf = unsafe { call_tcx_api(param_buf) };
+    //            let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
+    //            let ret: WalletResult = WalletResult::decode(ret_bytes).unwrap();
+    //            assert_eq!(
+    //                "LRB53mz8PmBPDBH8HFp3f5bVHxJ9Bqx8PH",
+    //                ret.accounts.first().unwrap().address
+    //            );
+    //        });
+    //    }
 
-            let param_hex = "0a0f68645f73746f72655f696d706f727412ac010a0f68645f73746f72655f696d706f72741298010a0b424954434f494e43415348124a696e6a656374206b69646e657920656d7074792063616e616c20736861646f77207061637420636f6d666f7274207769666520637275736820686f727365207769666520736b657463681a043132333422116d2f3434272f313435272f30272f302f302a084d4e454d4f4e4943320d4d4e454d4f4e49432d746573743a074d41494e4e45544a005001";
-            let mut param_bytes = hex::decode(param_hex).unwrap();
-            //            let param_buf = Buffer {
-            //                data: param_bytes.as_mut_ptr(),
-            //                len: param_bytes.len(),
-            //            };
-            let param_buf = wrap_buffer(param_bytes);
-            let ret_buf = unsafe { call_tcx_api(param_buf) };
-            let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
-            let ret: WalletResult = WalletResult::decode(ret_bytes).unwrap();
-            println!("{:#?}", ret);
-            assert_eq!(
-                "LRB53mz8PmBPDBH8HFp3f5bVHxJ9Bqx8PH",
-                ret.accounts.first().unwrap().address
-            );
-        });
+    #[test]
+    fn test_encode_empty_struct() {
+        //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult {
+        //            is_exists: false,
+        //            id: "".to_string()
+        //        };
+        //        let hex_value = hex::encode(encode_message(param).unwrap());
+        //        assert_eq!("08001200", hex_value);
+        let bytes = hex::decode("1211756e737570706f727465645f636861696e").unwrap();
+        let rsp = Response::decode(bytes);
+        println!("{:?}", rsp);
+        //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult::decode(bytes).unwrap();
+        //        let param2: KeystoreCommonExistsResult =
+        //            KeystoreCommonExistsResult::decode(vec![]).unwrap();
+        //        assert_eq!(param.is_exists, param2.is_exists);
     }
 }

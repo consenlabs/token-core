@@ -35,17 +35,22 @@ protobuf.load('google/protobuf/any.proto', function (err, root) {
         }
 
         var TcxAction = root.lookup('TcxAction');
+        const generate_pb = (dir, f) => {
+            var filePath = path.join(dir, f);
+            var fileContent = fs.readFileSync(filePath);
+            console.log(fileContent.toString());
+            var payload = JSON.parse(fileContent.toString());
 
-        protobuf.load("api_params.proto", function (err, root) {
-            if (err)
-                throw err;
-            const generate_pb = (dir, f) => {
-                var filePath = path.join(dir, f);
-                var fileContent = fs.readFileSync(filePath);
-                console.log(fileContent.toString());
-                var payload = JSON.parse(fileContent.toString());
+            var param = payload.param;
 
-                var param = payload.param;
+            // var paramBytes = encode(param);
+            var ParamType = root.lookupType(param.type);
+            var encodedParam = ParamType.create(param);
+            var any = Any.create({
+                type_url: param.type,
+                value: ParamType.encode(encodedParam).finish(),
+            })
+            payload.param = any;
 
                 var ParamType = root.lookupType(param.type);
                 var encodedParam = ParamType.create(param);
@@ -66,13 +71,10 @@ protobuf.load('google/protobuf/any.proto', function (err, root) {
                 fs.writeFileSync(path.join(outDir, f), ls.stdout.toString());
             }
 
-            
-            clearAllFiles(outDir);
-            walkDir(jsonIn, generate_pb);
-            console.log("Generate Success");
-        });
+        clearAllFiles(outDir);
+        walkDir(jsonIn, generate_pb);
+        console.log("Generate Success");
     });
-
 });
 
 

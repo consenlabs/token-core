@@ -115,7 +115,7 @@ lazy_static! {
             xprv_prefix: [0x04, 0x88, 0xAD, 0xE4],
         });
         networks.push(BtcForkNetwork {
-            coin: "BITCOIN-TESTNET",
+            coin: "BITCOIN",
             network: "TESTNET",
             seg_wit: "NONE",
             hrp: "bc",

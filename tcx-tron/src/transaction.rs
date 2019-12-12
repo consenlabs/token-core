@@ -1,13 +1,23 @@
+/// This file only contains tron related messages.
+// ref: https://developers.tron.network/docs/transaction
+
+/// FUNCTION: sign_tx(SignParam{input: TronTxInput}): TronTxOutput
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TronTxInput {
-    #[prost(bytes, tag = "1")]
-    pub raw_data: std::vec::Vec<u8>,
+    /// hex string
+    #[prost(string, tag = "1")]
+    pub raw_data: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TronTxOutput {
-    #[prost(bytes, tag = "1")]
-    pub signature: std::vec::Vec<u8>,
+    /// hex string
+    #[prost(string, repeated, tag = "1")]
+    pub signatures: ::std::vec::Vec<std::string::String>,
 }
+/// FUNCTION: tron_sign_message(SignParam): TronMessageOutput
+///
+/// This api use the a common struct named `SignParam`, you should
+/// build the `TronMessageInput` and put it in the `input` field
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TronMessageInput {
     #[prost(string, tag = "1")]

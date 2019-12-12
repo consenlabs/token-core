@@ -1,14 +1,24 @@
 syntax = "proto3";
 package transaction;
 
+/// This file only contains tron related messages.
+// ref: https://developers.tron.network/docs/transaction
+
+// FUNCTION: sign_tx(SignParam{input: TronTxInput}): TronTxOutput
 message TronTxInput {
-    bytes rawData = 1;
+    // hex string
+    string rawData = 1;
 }
 
 message TronTxOutput {
-    bytes signature = 1;
+    // hex string
+    repeated string signatures = 1;
 }
 
+// FUNCTION: tron_sign_message(SignParam): TronMessageOutput
+//
+// This api use the a common struct named `SignParam`, you should
+// build the `TronMessageInput` and put it in the `input` field
 message TronMessageInput {
     string value = 1;
     bool isHex = 2;
