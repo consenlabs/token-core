@@ -5,7 +5,9 @@ buildscript {
         buildToolsVersion = "28.0.3"
         minSdkVersion = 22
         compileSdkVersion = 28
-        targetSdkVersion = 28
+        // fix run e2e tests in release mode
+        // https://github.com/wix/Detox/issues/1600#issuecomment-545424003
+        targetSdkVersion = 27
         kotlinVersion = '1.3.10'
     }
     repositories {
