@@ -10,8 +10,15 @@ This is React Native Demo Project
 ## generate the compiled files
 
 In the root directory
+
+- iOS:
 ```bash
 build-ios-rn-example
+```
+
+- Android:
+```bash
+build-android-rn-example
 ```
 
 ## install
@@ -53,7 +60,7 @@ brew tap wix/brew
 brew install applesimutils
 ```
 
-2. run
+- run iOS
 ```bash
 yarn e2e
 ```
@@ -61,4 +68,14 @@ yarn e2e
 or debug
 ```bash
 yarn e2e:debug
+```
+
+- run Android
+```bash
+yarn e2e:android
+```
+
+or debug
+```bash
+yarn e2e:debug:android
 ```

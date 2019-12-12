@@ -17,7 +17,10 @@
     "e2er": "yarn e2e --reuse",
     "e2e:debug:build:android": "detox build --configuration=android.emu.debug",
     "e2e:debug:test:android": "detox test --configuration=android.emu.debug",
-    "e2e:debug:android": "npm run e2e:debug:build:android && npm run e2e:debug:test:android"
+    "e2e:debug:android": "npm run e2e:debug:build:android && npm run e2e:debug:test:android",
+    "e2e:build:android": "detox build --configuration=android.emu.release",
+    "e2e:test:android": "detox test --configuration=android.emu.release",
+    "e2e:android": "npm run e2e:build:android && npm run e2e:test:android"
   },
   "dependencies": {
     "buffer": "^5.4.3",
