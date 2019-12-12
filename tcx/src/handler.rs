@@ -7,7 +7,6 @@ use prost::Message;
 use serde_json::Value;
 use tcx_primitive::{private_key_without_version, verify_private_key, FromHex, TypedPrivateKey};
 
-use tcx_ckb::{CkbTxOutput, CkbTxInput, CkbAddress};
 use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
     address::BtcForkAddress, BtcForkSegWitTransaction, BtcForkSignedTxOutput, BtcForkTransaction,
@@ -15,6 +14,7 @@ use tcx_btc_fork::{
 };
 use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
 use tcx_chain::{Keystore, KeystoreGuard};
+use tcx_ckb::{CkbAddress, CkbTxInput, CkbTxOutput};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::TrxAddress;
 
@@ -509,7 +509,8 @@ pub fn sign_btc_fork_transaction(param: &SignParam, keystore: &mut Keystore) -> 
 
 pub fn sign_nervos_ckb(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
     let input: CkbTxInput =
-        CkbTxInput::decode(&param.input.as_ref().expect("tx_iput").value.clone()).expect("CkbTxInput");
+        CkbTxInput::decode(&param.input.as_ref().expect("tx_iput").value.clone())
+            .expect("CkbTxInput");
 
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
 
