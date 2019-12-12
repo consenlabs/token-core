@@ -73,9 +73,7 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 /// dispatch protobuf rpc call
 #[no_mangle]
 pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
-    println!("receive call");
     let data = std::slice::from_raw_parts_mut(buf.data, buf.len as usize);
-    println!("receive data: {}", hex::encode(data.to_vec().clone()));
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
     let mut reply: Vec<u8> = match action.method.to_lowercase().as_str() {
         "init_token_core_x" => landingpad(|| {
