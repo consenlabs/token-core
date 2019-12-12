@@ -1,5 +1,5 @@
 use crate::serializer::Serializer;
-use crate::transaction::{Script, Witness};
+use crate::transaction::{CachedCell, Script, TxInput, Witness};
 
 use super::Error;
 use crate::hash::blake2b_256;
@@ -130,8 +130,8 @@ mod tests {
         };
 
         assert_eq!(
-            witness.serialize(),
-            hex::decode("10000000100000001000000010000000").unwrap()
+            hex::encode(witness.serialize()),
+            "10000000100000001000000010000000"
         );
 
         let witness = Witness {
@@ -140,8 +140,8 @@ mod tests {
             output_type: vec![0x20],
         };
         assert_eq!(
-            witness.serialize(),
-            hex::decode("1a00000010000000100000001500000001000000100100000020").unwrap()
+            hex::encode(witness.serialize()),
+            "1a00000010000000100000001500000001000000100100000020"
         );
     }
 }

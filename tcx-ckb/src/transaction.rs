@@ -71,8 +71,8 @@ pub struct CachedCell {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TxInput {
-    #[prost(string, tag = "1")]
-    pub version: std::string::String,
+    #[prost(int32, tag = "1")]
+    pub version: i32,
     #[prost(message, repeated, tag = "2")]
     pub cell_deps: ::std::vec::Vec<CellDep>,
     #[prost(bytes, repeated, tag = "3")]
@@ -92,6 +92,8 @@ pub struct TxInput {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TxOutput {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(bytes, tag = "1")]
+    pub tx_hash: std::vec::Vec<u8>,
+    #[prost(message, repeated, tag = "2")]
     pub witnesses: ::std::vec::Vec<Witness>,
 }

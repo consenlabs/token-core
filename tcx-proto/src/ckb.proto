@@ -49,7 +49,7 @@ message CachedCell {
 }
 
 message TxInput {
-    string version = 1;
+    int32 version = 1;
 
     repeated CellDep cellDeps = 2;
     repeated bytes headerDeps = 3;
@@ -64,6 +64,7 @@ message TxInput {
 }
 
 message TxOutput {
-    repeated Witness witnesses = 1;
+    bytes txHash = 1;
+    repeated Witness witnesses = 2;
 }
 

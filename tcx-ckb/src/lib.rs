@@ -1,7 +1,7 @@
 mod address;
 mod hash;
 mod serializer;
-//mod signer;
+mod signer;
 mod transaction;
 mod transaction_helper;
 
