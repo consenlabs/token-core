@@ -15,7 +15,7 @@ import {
 const SIGN_MESSAGE = [
   {
     mnemonic: MNEMONIC_12,
-    signature: "7209610445e867cf2a36ea301bb5d1fbc3da597fd2ce4bb7fa64796fbf0620a4175e9f841cbf60d12c26737797217c0082fdb3caa8e44079e04ec3f93e86bbea1c",
+    signature: "16417c6489da3a88ef980bf0a42551b9e76181d03e7334548ab3cb36e7622a484482722882a29e2fe4587b95c739a68624ebf9ada5f013a9340d883f03fcf9af1b",
     password: PASSWORD,
     chainType: "TRON",
     address: TRON_TESTNET_MNEMONIC_12_ADDRESS,
