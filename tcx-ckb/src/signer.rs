@@ -304,7 +304,7 @@ mod tests {
         ks.unlock_by_password("Password");
 
         let coin_info = CoinInfo {
-            coin: "CKB".to_string(),
+            coin: "NERVOS".to_string(),
             derivation_path: "".to_string(),
             curve: CurveType::SECP256k1,
             network: "TESTNET".to_string(),
@@ -314,7 +314,7 @@ mod tests {
         let account = ks.derive_coin::<CkbAddress>(&coin_info).unwrap().clone();
 
         let tx_output = ks
-            .sign_transaction("CKB", &account.address, &tx_input)
+            .sign_transaction("NERVOS", &account.address, &tx_input)
             .unwrap();
 
         // same as the input length
@@ -337,7 +337,7 @@ mod tests {
         ks.unlock_by_password("Password");
 
         let coin_info = CoinInfo {
-            coin: "CKB".to_string(),
+            coin: "NERVOS".to_string(),
             derivation_path: "".to_string(),
             curve: CurveType::SECP256k1,
             network: "TESTNET".to_string(),
@@ -347,7 +347,7 @@ mod tests {
         let account = ks.derive_coin::<CkbAddress>(&coin_info).unwrap().clone();
 
         let tx_output = ks
-            .sign_transaction("CKB", &account.address, &tx_input)
+            .sign_transaction("NERVOS", &account.address, &tx_input)
             .unwrap();
 
         // same as the input length

@@ -97,14 +97,14 @@ lazy_static! {
             seg_wit: "".to_string(),
         });
         coin_infos.push(CoinInfo {
-            coin: "NERVOS_CKB".to_string(),
+            coin: "NERVOS".to_string(),
             derivation_path: "m/44'/309'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             network: "MAINNET".to_string(),
             seg_wit: "".to_string(),
         });
         coin_infos.push(CoinInfo {
-            coin: "NERVOS_CKB".to_string(),
+            coin: "NERVOS".to_string(),
             derivation_path: "m/44'/309'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             network: "TESTNET".to_string(),

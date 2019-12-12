@@ -68,7 +68,7 @@ fn derive_account<'a, 'b>(
         "BITCOINCASH" => keystore.derive_coin::<BchAddress>(&coin_info),
         "LITECOIN" => keystore.derive_coin::<BtcForkAddress>(&coin_info),
         "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
-        "NERVOS_CKB" => keystore.derive_coin::<CkbAddress>(&coin_info),
+        "NERVOS" => keystore.derive_coin::<CkbAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -484,7 +484,7 @@ pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
     match param.chain_type.as_str() {
         "BITCOINCASH" | "LITECOIN" => sign_btc_fork_transaction(&param, keystore),
         "TRON" => sign_tron_tx(&param, keystore),
-        "NERVOS_CKB" => sign_nervos_ckb(&param, keystore),
+        "NERVOS" => sign_nervos_ckb(&param, keystore),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -757,7 +757,7 @@ mod tests {
                     chain_id: "".to_string(),
                 },
                 Derivation {
-                    chain_type: "NERVOS_CKB".to_string(),
+                    chain_type: "NERVOS".to_string(),
                     path: "m/44'/309'/0'/0/0".to_string(),
                     network: "TESTNET".to_string(),
                     seg_wit: "".to_string(),
@@ -985,7 +985,7 @@ mod tests {
             let import_result: WalletResult = WalletResult::decode(&ret).unwrap();
 
             let derivation = Derivation {
-                chain_type: "NERVOS_CKB".to_string(),
+                chain_type: "NERVOS".to_string(),
                 path: "m/44'/309'/0'/0/0".to_string(),
                 network: "TESTNET".to_string(),
                 seg_wit: "".to_string(),
@@ -1064,7 +1064,7 @@ mod tests {
             let tx = SignParam {
                 id: import_result.id.to_string(),
                 password: PASSWORD.to_string(),
-                chain_type: "NERVOS_CKB".to_string(),
+                chain_type: "NERVOS".to_string(),
                 address: rsp.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
                     type_url: "imtoken".to_string(),
