@@ -23,44 +23,21 @@ message CellInput {
     string since = 2;
 }
 
-message CellOutput {
-   int64 capacity = 1;
-   Script lock = 2;
-   Script type = 3;
-}
-
-message CellDep {
-   OutPoint outPoint = 1;
-   string depType = 2;
-}
-
 message CachedCell {
-    bytes blockHash = 1 ;
-    int64 capacity = 2;
-    Script lock = 3;
+    int64 capacity = 1;
+    Script lock = 2;
+    Script type = 3;
     OutPoint outPoint = 4;
-    bool cellbase = 5;
-    int32 outputDataLen = 6;
-    string status = 7;
-    bytes dataHash = 8;
-    Script type = 9;
-
-    string derivePath = 10;
+    string derivePath = 5;
 }
 
 message CkbTxInput {
-    int32 version = 1;
+    repeated CellInput inputs = 1;
+    repeated Witness witnesses = 2;
 
-    repeated CellDep cellDeps = 2;
-    repeated bytes headerDeps = 3;
-    repeated CellInput inputs = 4;
-    repeated CellOutput outputs = 5;
-    repeated Witness witnesses = 6;
-    repeated bytes outputsData = 7;
+    repeated CachedCell cachedCells = 3;
 
-    repeated CachedCell cachedCells = 8;
-
-    bytes txHash = 9;
+    bytes txHash = 4;
 }
 
 message CkbTxOutput {

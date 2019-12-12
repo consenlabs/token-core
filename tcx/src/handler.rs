@@ -755,6 +755,13 @@ mod tests {
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
                 },
+                Derivation {
+                    chain_type: "NERVOS_CKB".to_string(),
+                    path: "m/44'/309'/0'/0/0".to_string(),
+                    network: "TESTNET".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                },
             ];
             let param = HdStoreDeriveParam {
                 id: import_result.id.to_string(),
@@ -764,7 +771,7 @@ mod tests {
             let derived_accounts_bytes = hd_store_derive(&encode_message(param).unwrap()).unwrap();
             let derived_accounts: AccountsResponse =
                 AccountsResponse::decode(derived_accounts_bytes).unwrap();
-            assert_eq!(4, derived_accounts.accounts.len());
+            assert_eq!(5, derived_accounts.accounts.len());
             assert_eq!(
                 "LQ3JqCohgLQ3x1CJXYERnJTy1ySaqr1E32",
                 derived_accounts.accounts[0].address
@@ -788,6 +795,11 @@ mod tests {
                 derived_accounts.accounts[3].address
             );
             assert_eq!("Sla41n5BdHqc1QmqA9DXjWNx13Fpq18u19jCaMbYbxClsPr7cr/gzXsbE+08wfNLuGgtVVY4/prpnv3/pdJ8KA/I/iOKvelKxuJgN9n2O5Q54CmObc0qJVZxcAQM0PbrKE9YJyGDkJNMLM+OmjEwjg==", derived_accounts.accounts[3].extended_xpub_key);
+
+            assert_eq!(
+                "ckt1qyqgkffut7e7md39tp5ts9vxssj7wdw8z4cquyflka",
+                derived_accounts.accounts[4].address
+            );
 
             remove_created_wallet(&import_result.id);
         })

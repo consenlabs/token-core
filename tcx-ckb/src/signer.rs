@@ -185,34 +185,13 @@ mod tests {
         let tx_hash =
             hex::decode("4a4bcfef1b7448e27edf533df2f1de9f56be05eba645fb83f42d55816797ad2a")
                 .unwrap();
-        let empty_witness = Witness {
-            lock: vec![],
-            input_type: vec![],
-            output_type: vec![],
-        };
-        let witnesses = vec![
-            empty_witness.clone(),
-            empty_witness.clone(),
-            empty_witness.clone(),
-            empty_witness.clone(),
-        ];
 
-        let cached_default = CachedCell {
-            derive_path: "".to_string(),
-            r#type: Some(Script {
-                args: vec![],
-                code_hash: vec![],
-                hash_type: "".to_string(),
-            }),
-            block_hash: vec![],
-            capacity: 0,
-            lock: None,
-            out_point: None,
-            cellbase: false,
-            output_data_len: 0,
-            status: "".to_string(),
-            data_hash: vec![],
-        };
+        let witnesses = vec![
+            Witness::default(),
+            Witness::default(),
+            Witness::default(),
+            Witness::default(),
+        ];
 
         let cached_cells = vec![
             CachedCell {
@@ -233,7 +212,7 @@ mod tests {
                     .unwrap(),
                     hash_type: "type".to_string(),
                 }),
-                ..cached_default.clone()
+                ..CachedCell::default()
             },
             CachedCell {
                 out_point: Some({
@@ -253,7 +232,7 @@ mod tests {
                     .unwrap(),
                     hash_type: "type".to_string(),
                 }),
-                ..cached_default.clone()
+                ..CachedCell::default()
             },
             CachedCell {
                 out_point: Some({
@@ -273,7 +252,7 @@ mod tests {
                     .unwrap(),
                     hash_type: "type".to_string(),
                 }),
-                ..cached_default.clone()
+                ..CachedCell::default()
             },
         ];
 
@@ -342,11 +321,11 @@ mod tests {
         assert_eq!(tx_output.witnesses.len(), 4);
         assert_eq!(
             tx_output.witnesses[3].serialize(),
-            empty_witness.serialize()
+            Witness::default().serialize()
         );
         assert_eq!(
             tx_output.witnesses[2].serialize(),
-            empty_witness.serialize()
+            Witness::default().serialize()
         );
 
         assert_eq!(hex::encode(tx_output.witnesses[0].serialize()), "5500000010000000550000005500000041000000d59792eee1e67747d25a36304bf155665a9b552ecda2d84390ba6acfc422dc3f4b599165078ed98c4e930dec79866b50984f3458c5010faefce6574b9659329501");
@@ -375,11 +354,11 @@ mod tests {
         assert_eq!(tx_output.witnesses.len(), 4);
         assert_eq!(
             tx_output.witnesses[3].serialize(),
-            empty_witness.serialize()
+            Witness::default().serialize()
         );
         assert_eq!(
             tx_output.witnesses[2].serialize(),
-            empty_witness.serialize()
+            Witness::default().serialize()
         );
 
         assert_eq!(hex::encode(tx_output.witnesses[1].serialize()), "550000001000000055000000550000004100000091af5eeb1632565dc4a9fb1c6e08d1f1c7da96e10ee00595a2db208f1d15faca03332a1f0f7a0f8522f6e112bb8dde4ed0015d1683b998744a0d8644f0dfd0f800");
