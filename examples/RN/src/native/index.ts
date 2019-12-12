@@ -80,7 +80,7 @@ const getParamsAndResponseType = (method: any, params: any) => {
         InputType,
       ]
     }
-    case 'tron_sign_message':
+    case 'tron_sign_msg':
       return [
         protoRoot.api.SignParam,
         protoRoot.transaction.TronMessageOutput,
@@ -197,6 +197,6 @@ export default {
 
   async tronSignMessage(params: api.ISignParam): Promise<transaction.ITronMessageOutput> {
     // @ts-ignore
-    return tcxApi('tron_sign_message', params)
+    return tcxApi('tron_sign_msg', params)
   },
 }

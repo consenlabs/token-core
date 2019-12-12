@@ -324,9 +324,10 @@ mod tests {
         //        };
         //        let hex_value = hex::encode(encode_message(param).unwrap());
         //        assert_eq!("08001200", hex_value);
-        let bytes = hex::decode("1211756e737570706f727465645f636861696e").unwrap();
+        let bytes = hex::decode("1212756e737570706f727465645f6d6574686f64").unwrap();
         let rsp = Response::decode(bytes);
         println!("{:?}", rsp);
+        assert_eq!(1, 1);
         //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult::decode(bytes).unwrap();
         //        let param2: KeystoreCommonExistsResult =
         //            KeystoreCommonExistsResult::decode(vec![]).unwrap();

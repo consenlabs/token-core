@@ -20,7 +20,7 @@ const SIGN_MESSAGE = [
     chainType: "TRON",
     address: TRON_TESTNET_MNEMONIC_12_ADDRESS,
     input: {
-      value: '0x645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76',
+      value: '645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76',
       isHex: true,
       isTronHeader: true,
     }

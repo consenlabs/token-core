@@ -60,13 +60,13 @@
         "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/RN.app",
         "build": "xcodebuild -workspace ios/RN.xcworkspace -scheme RN -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build",
         "type": "ios.simulator",
-        "name": "iPhone 11 Pro Max, iOS 13.2"
+        "name": "iPhone 11 Pro Max"
       },
       "ios.sim.release": {
         "binaryPath": "ios/build/Build/Products/Release-iphonesimulator/RN.app",
         "build": "xcodebuild -workspace ios/RN.xcworkspace  -scheme RN -configuration Release -sdk iphonesimulator -derivedDataPath ios/build",
         "type": "ios.simulator",
-        "name": "iPhone 11 Pro Max, iOS 13.2"
+        "name": "iPhone 11 Pro Max"
       }
     }
   }
