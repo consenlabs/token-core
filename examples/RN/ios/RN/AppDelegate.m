@@ -11,7 +11,7 @@
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTRootView.h>
 #import "tcx.h"
-#import "WalletAPI.h"
+#import "TcxApi.h"
 
 @implementation AppDelegate
 
@@ -71,11 +71,6 @@
     clear_err();
     const char *param = [jsonString cStringUsingEncoding:NSASCIIStringEncoding];
     init_token_core_x(param);
-    const char *cError = get_last_err_message();
-    NSString *lastError = [NSString stringWithUTF8String:cError];
-    if (lastError.length > 0) {
-      NSLog(@"init error %@", lastError);
-    }
   }
     
   rootView.backgroundColor = [[UIColor alloc] initWithRed:1.0f green:1.0f blue:1.0f alpha:1];

@@ -4,15 +4,8 @@ extern crate prost_build;
 fn main() {
     // tcx-api
     env::set_var("OUT_DIR", "../tcx/src");
-    prost_build::compile_protos(
-        &[
-            "src/api.proto",
-            "src/api_params.proto",
-            "src/cache_derived_key.proto",
-        ],
-        &["src/"],
-    )
-    .unwrap();
+    prost_build::compile_protos(&["src/api.proto", "src/cache_derived_key.proto"], &["src/"])
+        .unwrap();
 
     //    // tcx-chain
     //    env::set_var("OUT_DIR", "../tcx-chain/src");

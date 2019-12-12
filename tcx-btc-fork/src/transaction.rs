@@ -1,3 +1,9 @@
+/// This file only contains btc chain(including forks) related messages.
+// ref:
+// - https://en.bitcoin.it/wiki/Transaction
+// - https://www.bitcoincash.org/spec/transaction.html
+
+/// FUNCTION: sign_tx(SignParam{input: BtcForkTxInput}): BtcForkSignedTxOutput
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Utxo {
     #[prost(string, tag = "1")]
@@ -23,17 +29,15 @@ pub struct BtcForkTxInput {
     pub amount: i64,
     #[prost(message, repeated, tag = "3")]
     pub unspents: ::std::vec::Vec<Utxo>,
-    #[prost(string, tag = "4")]
-    pub memo: std::string::String,
-    #[prost(int64, tag = "5")]
+    #[prost(int64, tag = "4")]
     pub fee: i64,
-    #[prost(uint32, tag = "6")]
-    pub change_idx: u32,
-    #[prost(string, tag = "7")]
+    #[prost(uint32, tag = "5")]
+    pub change_address_index: u32,
+    #[prost(string, tag = "6")]
     pub change_address: std::string::String,
-    #[prost(string, tag = "8")]
+    #[prost(string, tag = "7")]
     pub network: std::string::String,
-    #[prost(string, tag = "9")]
+    #[prost(string, tag = "8")]
     pub seg_wit: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
