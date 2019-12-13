@@ -581,9 +581,9 @@ mod tests {
     use std::ffi::{CStr, CString};
     use std::fs::{create_dir, remove_file};
     use std::os::raw::c_char;
-    use std::panic;
     use std::path::Path;
     use std::sync::{RwLockReadGuard, RwLockWriteGuard};
+    use std::{fs, panic};
     use tcx_btc_fork::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
     use tcx_chain::Keystore;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
@@ -599,7 +599,7 @@ mod tests {
     fn setup() {
         let p = Path::new("/tmp/imtoken/wallets");
         if !p.exists() {
-            create_dir(p);
+            fs::create_dir_all(p);
         }
 
         let param = InitTokenCoreXParam {

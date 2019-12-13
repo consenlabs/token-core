@@ -30,9 +30,10 @@ jobs:
       - run: |
           mkdir -p /tmp/imtoken
       - uses: actions-rs/cargo@v1
+        run: echo "::set-env name=KDF_ROUNDS::1024"
         with:
           command: test
-          args: --verbose --all
+          args: --verbose --all -- --test-threads=1
 
   fmt:
     name: Rustfmt
