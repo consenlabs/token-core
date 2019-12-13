@@ -27,6 +27,8 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - run: |
+          mkdir -p /tmp/imtoken
       - uses: actions-rs/cargo@v1
         with:
           command: test
