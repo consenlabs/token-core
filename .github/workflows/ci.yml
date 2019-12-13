@@ -28,9 +28,8 @@ jobs:
           toolchain: stable
           override: true
       - run: |
-          mkdir -p /tmp/imtoken
+        echo "::set-env name=KDF_ROUNDS::1024"
       - uses: actions-rs/cargo@v1
-        run: echo "::set-env name=KDF_ROUNDS::1024"
         with:
           command: test
           args: --verbose --all -- --test-threads=1
