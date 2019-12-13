@@ -129,7 +129,7 @@ lazy_static! {
         networks.push(BtcForkNetwork {
             coin: "BITCOINCASH",
             network: "MAINNET",
-            seg_wit: "NONE",
+            seg_wit: "",
             hrp: "bitcoincash",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
@@ -140,7 +140,7 @@ lazy_static! {
         networks.push(BtcForkNetwork {
             coin: "BITCOINCASH",
             network: "TESTNET",
-            seg_wit: "NONE",
+            seg_wit: "",
             hrp: "bitcoincash",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0xc4,

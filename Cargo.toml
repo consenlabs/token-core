@@ -11,5 +11,5 @@ members = [
     "tcx-ckb",
     "tcx",
 
-    "tcx-fuzz-target",
+    "tcx-tester",
 ]

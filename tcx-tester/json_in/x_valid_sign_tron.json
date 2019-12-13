@@ -1,0 +1,15 @@
+{
+    "type": "api.TcxAction",
+    "method": "sign_tx",
+    "param": {
+        "type": "api.SignParam",
+        "id": "",
+        "password": "imtoken",
+        "chainType": "TRON",
+        "address": "",
+        "input": {
+            "type": "transaction.TronTxInput",
+            "rawData": ""
+        }
+    }
+}

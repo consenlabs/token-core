@@ -49,6 +49,8 @@ pub struct Buffer {
 }
 
 pub fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
+    // todo: delete print
+    println!("{:#?}", msg);
     let mut buf = BytesMut::with_capacity(msg.encoded_len());
     msg.encode(&mut buf)?;
     Ok(buf.to_vec())
@@ -173,6 +175,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     meta.source = Source::Mnemonic;
 
     let mut ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta);
+
     let mut keystore = Keystore::Hd(ks);
 
     if founded.is_some() {
