@@ -3,7 +3,6 @@ use crate::numberic_util;
 use crate::Error;
 use crate::Result;
 use bitcoin_hashes::hex::{FromHex, ToHex};
-use digest::Digest;
 use serde::{Deserialize, Serialize};
 
 const CREDENTIAL_LEN: usize = 64usize;
@@ -114,7 +113,7 @@ impl KdfParams for SCryptParams {
         let inner_params =
             scrypt::ScryptParams::new(log_n as u8, self.r, self.p).expect("init scrypt params");
 
-        scrypt::scrypt(password, &salt_bytes, &inner_params, out);
+        scrypt::scrypt(password, &salt_bytes, &inner_params, out).expect("can not execute scrypt");
     }
 
     fn set_salt(&mut self, salt: &str) {
