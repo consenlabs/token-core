@@ -1,10 +1,18 @@
+//! CKB uses Molecule serialization format, Please follow this
+//! document https://github.com/nervosnetwork/rfcs/blob/1ed0da3c1fee42650e6f385346f76cdc9c140c6e/rfcs/0008-serialization/0008-serialization.md#molecule
+//! for more details
 use byteorder::{ByteOrder, LittleEndian};
 
 pub struct Serializer();
 
 impl Serializer {
     fn calculate_offsets(element_lengths: &Vec<u32>) -> (u32, Vec<u32>) {
-        let header_length = 4 + 4 * element_lengths.len() as u32;
+        const FULL_LENGTH_SIZE: u32 = 4; // 4 bytes
+        const OFFSET_SIZE: u32 = 4; // 4 bytes
+
+        // offsets only used for dynamic vec in molecule, serialize all offsets of items as 32 bit unsigned integer in little-endian
+        // The result like "|size| record 1 offset | record 2 offset | ...",
+        let header_length = FULL_LENGTH_SIZE + OFFSET_SIZE * element_lengths.len() as u32;
         let mut offsets = vec![];
         let mut total = header_length;
 
@@ -38,6 +46,16 @@ impl Serializer {
         ret
     }
 
+    /// Serialize dynamic vector
+    ///
+    /// There are three steps of serializing a dynvec:
+    ///
+    /// Serialize the full size in bytes as a 32 bit unsigned integer in little-endian.
+    /// Serialize all offset of items as 32 bit unsigned integer in little-endian.
+    /// Serialize all items in it.
+    ///
+    /// call calculate_offsets method for get offsets of items
+    ///
     pub fn serialize_dynamic_vec(values: &Vec<Vec<u8>>) -> Vec<u8> {
         let mut body: Vec<u8> = vec![];
         let mut element_lengths: Vec<u32> = vec![];
