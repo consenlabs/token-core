@@ -49,7 +49,6 @@ pub struct Buffer {
 }
 
 pub fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
-    // todo: delete print
     println!("{:#?}", msg);
     let mut buf = BytesMut::with_capacity(msg.encoded_len());
     msg.encode(&mut buf)?;
@@ -576,7 +575,7 @@ mod tests {
     use serde_json::error::ErrorCode::ExpectedObjectOrArray;
     use std::collections::HashMap;
     use std::ffi::{CStr, CString};
-    use std::fs::remove_file;
+    use std::fs::{create_dir, remove_file};
     use std::os::raw::c_char;
     use std::panic;
     use std::path::Path;
@@ -586,7 +585,6 @@ mod tests {
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
     use tcx_tron::transaction::{TronTxInput, TronTxOutput};
 
-    static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
@@ -595,8 +593,13 @@ mod tests {
         "calm release clay imitate top extend close draw quiz refuse shuffle injury";
 
     fn setup() {
+        let p = Path::new("/tmp/imtoken/wallets");
+        if !p.exists() {
+            create_dir(p);
+        }
+
         let param = InitTokenCoreXParam {
-            file_dir: "../test-data".to_string(),
+            file_dir: "/tmp/imtoken/wallets".to_string(),
             xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
             xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
         };
@@ -606,13 +609,32 @@ mod tests {
         }
     }
 
+    fn teardown() {
+        let p = Path::new("/tmp/imtoken/wallets");
+        let walk_dir = std::fs::read_dir(p).expect("read dir");
+        for entry in walk_dir {
+            let entry = entry.expect("DirEntry");
+            let fp = entry.path();
+            if !fp
+                .file_name()
+                .expect("file_name")
+                .to_str()
+                .expect("file_name str")
+                .ends_with(".json")
+            {
+                continue;
+            }
+            remove_file(fp.as_path());
+        }
+    }
+
     fn run_test<T>(test: T) -> ()
     where
         T: FnOnce() -> () + panic::UnwindSafe,
     {
         setup();
         let result = panic::catch_unwind(|| test());
-        //        teardown();
+        teardown();
         assert!(result.is_ok())
     }
 
@@ -662,7 +684,6 @@ mod tests {
                 password: PASSWORD.to_string(),
                 source: "MNEMONIC".to_string(),
                 name: "test-wallet".to_string(),
-
                 password_hint: "imtoken".to_string(),
                 overwrite: true,
             };
@@ -733,11 +754,26 @@ mod tests {
         })
     }
 
+    fn import_default_wallet() -> WalletResult {
+        let param = HdStoreImportParam {
+            mnemonic: MNEMONIC.to_string(),
+            password: PASSWORD.to_string(),
+            source: "MNEMONIC".to_string(),
+            name: "test-wallet".to_string(),
+            password_hint: "imtoken".to_string(),
+            overwrite: true,
+        };
+        let ret = hd_store_import(&encode_message(param).unwrap()).unwrap();
+        WalletResult::decode(&ret).unwrap()
+    }
+
     #[test]
     pub fn test_hd_store_export() {
         run_test(|| {
+            let wallet = import_default_wallet();
+
             let param = WalletKeyParam {
-                id: WALLET_ID.to_string(),
+                id: wallet.id.to_string(),
                 password: PASSWORD.to_string(),
             };
             let ret = hd_store_export(&encode_message(param).unwrap()).unwrap();
@@ -916,8 +952,9 @@ mod tests {
     #[test]
     pub fn test_keystore_common_verify() {
         run_test(|| {
+            let wallet = import_default_wallet();
             let param: WalletKeyParam = WalletKeyParam {
-                id: WALLET_ID.to_string(),
+                id: wallet.id.to_string(),
                 password: PASSWORD.to_string(),
             };
 
@@ -926,7 +963,7 @@ mod tests {
             assert!(result.is_success);
 
             let param: WalletKeyParam = WalletKeyParam {
-                id: WALLET_ID.to_string(),
+                id: wallet.id.to_string(),
                 password: "WRONG PASSWORD".to_string(),
             };
 
@@ -976,6 +1013,7 @@ mod tests {
     #[test]
     pub fn test_keystore_common_exists() {
         run_test(|| {
+            let wallet = import_default_wallet();
             let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
                 r#type: KeyType::Mnemonic as i32,
                 value: MNEMONIC.to_string(),
@@ -985,23 +1023,42 @@ mod tests {
             let result: KeystoreCommonExistsResult =
                 KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
             assert!(result.is_exists);
-            assert_eq!(result.id, "7719d1e3-3f67-439f-a18e-d9ae413e00e1");
+            assert_eq!(result.id, wallet.id);
         })
     }
 
     #[test]
     pub fn test_keystore_common_accounts() {
         run_test(|| {
+            let wallet = import_default_wallet();
+
             let param: KeystoreCommonAccountsParam = KeystoreCommonAccountsParam {
-                id: WALLET_ID.to_string(),
+                id: wallet.id.to_string(),
             };
 
             let ret_bytes = keystore_common_accounts(&encode_message(param).unwrap()).unwrap();
             let result: AccountsResponse = AccountsResponse::decode(&ret_bytes).unwrap();
-            assert_eq!(1, result.accounts.len());
+            assert_eq!(0, result.accounts.len());
+
+            let derivations = vec![Derivation {
+                chain_type: "LITECOIN".to_string(),
+                path: "m/44'/2'/0'/0/0".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                chain_id: "".to_string(),
+            }];
+            let param = HdStoreDeriveParam {
+                id: wallet.id.to_string(),
+                password: PASSWORD.to_string(),
+                derivations,
+            };
+            let derived_accounts_bytes = hd_store_derive(&encode_message(param).unwrap()).unwrap();
+            let derived_accounts: AccountsResponse =
+                AccountsResponse::decode(derived_accounts_bytes).unwrap();
+            assert_eq!(1, derived_accounts.accounts.len());
             assert_eq!(
-                "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
-                result.accounts.first().unwrap().address
+                "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP",
+                derived_accounts.accounts[0].address
             );
         })
     }
@@ -1170,8 +1227,9 @@ mod tests {
     fn remove_created_wallet(wid: &str) {
         let file_dir = WALLET_FILE_DIR.read().unwrap();
 
-        let full_file_path = format!("{}/{}.json", "../test-data", wid);
+        let full_file_path = format!("{}/{}.json", "/tmp/imtoken/wallets", wid);
         let p = Path::new(&full_file_path);
+        println!("{:?}", p);
         remove_file(p);
     }
 }
