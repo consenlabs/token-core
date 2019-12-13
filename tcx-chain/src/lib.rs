@@ -23,7 +23,8 @@ mod keystore;
 mod signer;
 
 pub use keystore::{
-    Account, Address, HdKeystore, Keystore, KeystoreGuard, Metadata, PrivateKeystore, Source,
+    key_hash_from_mnemonic, Account, Address, HdKeystore, Keystore, KeystoreGuard, Metadata,
+    PrivateKeystore, Source,
 };
 pub use signer::{ChainSigner, MessageSigner, TransactionSigner};
 

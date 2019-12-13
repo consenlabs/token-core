@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 
 use tcx_constants::{CoinInfo, CurveType};
 
-pub use self::{guard::KeystoreGuard, hd::HdKeystore, private::PrivateKeystore};
+pub use self::{
+    guard::KeystoreGuard, hd::key_hash_from_mnemonic, hd::HdKeystore, private::PrivateKeystore,
+};
 use crate::signer::ChainSigner;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
@@ -486,7 +488,7 @@ mod tests {
         assert!(keystore.determinable());
         assert_eq!(
             keystore.key_hash(),
-            "efbe00a55ddd4c5350e295a9533d28f93cac001bfdad8cf4275140461ea03e9e"
+            "512115eca3ae86646aeb06861d551e403b54350968ad9a247aadd5e7dace9d33"
         );
 
         let pk_store = PrivateKeystore::from_private_key(

@@ -1,4 +1,4 @@
-use bip39::{Language, Mnemonic};
+use bip39::{Language, Mnemonic, Seed};
 
 use uuid::Uuid;
 
@@ -29,6 +29,12 @@ struct Cache {
 pub struct HdKeystore {
     store: Store,
     cache: Option<Cache>,
+}
+
+pub fn key_hash_from_mnemonic(mnemonic: &str) -> String {
+    let mn = Mnemonic::from_phrase(mnemonic, Language::English).unwrap();
+    let seed = Seed::new(&mn, "");
+    sha256(seed.as_bytes())
 }
 
 impl HdKeystore {
@@ -156,7 +162,7 @@ impl HdKeystore {
     }
 
     pub fn from_mnemonic(mnemonic: &str, password: &str, meta: Metadata) -> HdKeystore {
-        let key_hash = sha256(mnemonic.as_bytes());
+        let key_hash = key_hash_from_mnemonic(mnemonic);
 
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         HdKeystore {

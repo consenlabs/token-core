@@ -12,7 +12,7 @@ use tcx_btc_fork::{
     address::BtcForkAddress, BtcForkSegWitTransaction, BtcForkSignedTxOutput, BtcForkTransaction,
     BtcForkTxInput,
 };
-use tcx_chain::Keystore;
+use tcx_chain::{key_hash_from_mnemonic, Keystore};
 use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
 use tcx_ckb::{CkbAddress, CkbTxInput};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
@@ -32,12 +32,13 @@ use crate::filemanager::{
 };
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 
+use crate::api::KeyType::Mnemonic;
 use std::sync::RwLockReadGuard;
 use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
-use tcx_crypto::hash::{hex_sha256, str_sha256};
+use tcx_crypto::hash::{hex_sha256, sha256, str_sha256};
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
@@ -156,7 +157,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     let mut founded_id: Option<String> = None;
     {
-        let key_hash = str_sha256(&param.mnemonic);
+        let key_hash = key_hash_from_mnemonic(&param.mnemonic);
         let map = KEYSTORE_MAP.read().unwrap();
         if let Some(founded) = map
             .values()
@@ -428,7 +429,7 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
         KeystoreCommonExistsParam::decode(data).expect("keystore_common_exists params");
     let key_hash: String;
     if param.r#type == KeyType::Mnemonic as i32 {
-        key_hash = str_sha256(&param.value);
+        key_hash = key_hash_from_mnemonic(&param.value);
     } else {
         let mut val = param.value.to_string();
         let decoded = hex::decode(param.value.to_string());
@@ -1018,7 +1019,7 @@ mod tests {
             let wallet = import_default_wallet();
             let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
                 r#type: KeyType::Mnemonic as i32,
-                value: MNEMONIC.to_string(),
+                value: format!("{}", MNEMONIC).to_string(),
             };
 
             let ret_bytes = keystore_common_exists(&encode_message(param).unwrap()).unwrap();
