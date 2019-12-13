@@ -300,7 +300,7 @@ mod tests {
             "dcec27d0d975b0378471183a03f7071dea8532aaf968be796719ecd20af6988f",
             "Password",
         );
-        ks.unlock_by_password("Password");
+        ks.unlock_by_password("Password").unwrap();
 
         let coin_info = CoinInfo {
             coin: "NERVOS".to_string(),
@@ -333,7 +333,7 @@ mod tests {
             "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
             "Password",
         );
-        ks.unlock_by_password("Password");
+        ks.unlock_by_password("Password").unwrap();
 
         let coin_info = CoinInfo {
             coin: "NERVOS".to_string(),
