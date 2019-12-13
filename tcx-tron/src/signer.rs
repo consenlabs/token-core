@@ -12,7 +12,6 @@ use tcx_primitive::PrivateKey;
 use failure::format_err;
 
 use crate::keccak;
-use tcx_constants::coin_info::coin_info_from_param;
 
 // http://jsoneditoronline.org/index.html?id=2b86a8503ba641bebed73f32b4ac9c42
 //{

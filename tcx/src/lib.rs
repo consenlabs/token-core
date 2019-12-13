@@ -203,7 +203,7 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{KEYSTORE_MAP, WALLET_FILE_DIR};
+    use crate::filemanager::{KEYSTORE_MAP, WALLET_FILE_DIR};
     use serde_json::Value;
     use std::ffi::{CStr, CString};
     use std::fs::remove_file;

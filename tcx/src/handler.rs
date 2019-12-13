@@ -154,16 +154,19 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let param: HdStoreImportParam =
         HdStoreImportParam::decode(data).expect("import wallet from mnemonic");
 
-    let mut founded: Option<&Keystore> = None;
+    let mut founded_id: Option<String> = None;
     {
         let key_hash = str_sha256(&param.mnemonic);
         let map = KEYSTORE_MAP.read().unwrap();
-        founded = map
+        if let Some(founded) = map
             .values()
-            .find(|keystore| keystore.key_hash() == key_hash);
+            .find(|keystore| keystore.key_hash() == key_hash)
+        {
+            founded_id = Some(founded.id());
+        }
     }
 
-    if founded.is_some() && !param.overwrite {
+    if founded_id.is_some() && !param.overwrite {
         return Err(format_err!("{}", "wallet_exists"));
     }
 
@@ -176,8 +179,8 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     let mut keystore = Keystore::Hd(ks);
 
-    if founded.is_some() {
-        keystore.set_id(&founded.unwrap().id())
+    if founded_id.is_some() {
+        keystore.set_id(&founded_id.unwrap());
     }
 
     flush_keystore(&keystore)?;

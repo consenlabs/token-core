@@ -288,7 +288,9 @@ mod tests {
     use crate::keystore::metadata_default_time;
     use bitcoin_hashes::hex::ToHex;
 
+    use crate::Source;
     use std::string::ToString;
+    use tcx_constants::CurveType;
     use tcx_primitive::TypedPublicKey;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
