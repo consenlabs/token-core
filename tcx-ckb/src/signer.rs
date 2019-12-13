@@ -1,9 +1,8 @@
-use failure::Fail;
 use tcx_chain::{Keystore, Result, TransactionSigner};
 
 use crate::hash::new_blake2b;
 use crate::serializer::Serializer;
-use crate::transaction::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Witness};
+use crate::transaction::{CachedCell, CkbTxInput, CkbTxOutput, OutPoint, Witness};
 use crate::Error;
 use std::collections::HashMap;
 use tcx_chain::ChainSigner;

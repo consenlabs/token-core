@@ -2,7 +2,7 @@ use crate::hash::blake2b_160;
 use bech32::ToBase32;
 use tcx_chain::{Address, Result};
 use tcx_constants::CoinInfo;
-use tcx_primitive::{PublicKey, TypedPublicKey};
+use tcx_primitive::TypedPublicKey;
 
 pub struct CkbAddress();
 

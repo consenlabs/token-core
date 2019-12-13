@@ -1,6 +1,4 @@
 use byteorder::{ByteOrder, LittleEndian};
-use std::collections::HashMap;
-use tcx_chain::Result;
 
 pub struct Serializer();
 

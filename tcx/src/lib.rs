@@ -59,7 +59,7 @@ pub unsafe extern "C" fn free_const_string(s: *const c_char) {
 
 #[no_mangle]
 pub unsafe extern "C" fn free_buf(buf: Buffer) {
-    let s = std::slice::from_raw_parts_mut(buf.data, buf.len);
+    let s = std::slice::from_raw_parts_mut(buf.data, buf.len as usize);
     let s = s.as_mut_ptr();
     Box::from_raw(s);
 }
@@ -73,11 +73,17 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 /// dispatch protobuf rpc call
 #[no_mangle]
 pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
-    let data = std::slice::from_raw_parts_mut(buf.data, buf.len);
+    println!("receive call");
+    let data = std::slice::from_raw_parts_mut(buf.data, buf.len as usize);
+    println!("receive data: {}", hex::encode(data.to_vec().clone()));
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
     let mut reply: Vec<u8> = match action.method.to_lowercase().as_str() {
         "init_token_core_x" => landingpad(|| {
             handler::init_token_core_x(&action.param.unwrap().value);
+            Ok(vec![])
+        }),
+        "scan_keystores" => landingpad(|| {
+            handler::scan_keystores();
             Ok(vec![])
         }),
         "hd_store_create" => landingpad(|| hd_store_create(&action.param.unwrap().value)),
@@ -107,6 +113,7 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
 
         "tron_sign_msg" => landingpad(|| tron_sign_message(&action.param.unwrap().value)),
+
         _ => landingpad(|| Err(format_err!("unsupported_method"))),
     };
 
@@ -118,7 +125,10 @@ pub fn wrap_buffer(to_wrap: Vec<u8>) -> Buffer {
     let data = to_wrap.as_mut_ptr();
     let len = to_wrap.len();
     std::mem::forget(to_wrap);
-    Buffer { data, len }
+    Buffer {
+        data,
+        len: len as i64,
+    }
 }
 
 #[no_mangle]
