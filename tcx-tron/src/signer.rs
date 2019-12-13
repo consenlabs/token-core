@@ -1,13 +1,11 @@
 use crate::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 use tcx_chain::{
-    Keystore, MessageSigner as TraitMessageSigner, Result,
+    ChainSigner, Keystore, MessageSigner as TraitMessageSigner, Result,
     TransactionSigner as TraitTransactionSigner,
 };
 
 use bitcoin_hashes::sha256::Hash;
 use bitcoin_hashes::Hash as TraitHash;
-
-use tcx_primitive::PrivateKey;
 
 use failure::format_err;
 
@@ -54,8 +52,7 @@ impl TraitTransactionSigner<TronTxInput, TronTxOutput> for Keystore {
         let data = hex::decode(&tx.raw_data)?;
         let hash = Hash::hash(&data);
 
-        let sk = &self.find_private_key(symbol, address)?;
-        let sign_result = sk.sign_recoverable(&hash[..]);
+        let sign_result = self.sign_recoverable_hash(&hash[..], symbol, address, None);
 
         match sign_result {
             Ok(r) => Ok(TronTxOutput {
@@ -90,8 +87,7 @@ impl TraitMessageSigner<TronMessageInput, TronMessageOutput> for Keystore {
         let to_hash = [header, &data].concat();
 
         let hash = keccak(&to_hash);
-        let sk = &self.find_private_key(symbol, address)?;
-        let mut sign_result = sk.sign_recoverable(&hash[..])?;
+        let mut sign_result = self.sign_recoverable_hash(&hash[..], symbol, address, None)?;
         sign_result[64] = sign_result[64] + 27;
         Ok(TronMessageOutput {
             signature: hex::encode(sign_result),
@@ -105,13 +101,12 @@ mod tests {
     use crate::address::Address;
 
     use bitcoin::util::misc::hex_bytes;
-    use digest::Digest;
 
+    use tcx_chain::Metadata;
     use tcx_chain::{HdKeystore, Keystore, KeystoreGuard};
-    use tcx_chain::{Metadata, TransactionSigner};
     use tcx_constants::CoinInfo;
     use tcx_constants::CurveType;
-    use tcx_primitive::Secp256k1PrivateKey;
+    use tcx_primitive::{PrivateKey, Secp256k1PrivateKey};
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =

@@ -34,7 +34,7 @@ mod tests {
     use super::Address;
     use tcx_chain::Address as TraitAddress;
     use tcx_constants::{CoinInfo, CurveType};
-    use tcx_primitive::{PublicKey, TypedPublicKey};
+    use tcx_primitive::TypedPublicKey;
 
     #[test]
     fn tron_address() {
