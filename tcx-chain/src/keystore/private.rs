@@ -7,11 +7,15 @@ use super::Error;
 use super::Result;
 use crate::keystore::Store;
 
-use tcx_crypto::hash::hex_sha256;
+use tcx_crypto::hash::{dsha256, hex_dsha256};
 use tcx_primitive::{
     KeyManage, PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPrivateKey,
 };
 use uuid::Uuid;
+
+pub fn key_hash_from_private_key(data: &[u8]) -> String {
+    hex::encode(dsha256(data)[..20].to_vec())
+}
 
 pub struct PrivateKeystore {
     store: Store,
@@ -87,9 +91,10 @@ impl PrivateKeystore {
     }
 
     pub fn from_private_key(private_key: &str, password: &str, source: Source) -> PrivateKeystore {
-        let key_hash = hex_sha256(private_key);
-        let pk_bytes = hex::decode(private_key).expect("valid private_key");
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, &pk_bytes);
+        let key_data: Vec<u8> = hex::decode(private_key).expect("hex can't decode");
+        let key_hash = key_hash_from_private_key(&key_data);
+        //        let pk_bytes = hex::decode(private_key).expect("valid private_key");
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, &key_data);
 
         let meta = Metadata {
             source,

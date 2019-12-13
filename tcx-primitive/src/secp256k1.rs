@@ -161,9 +161,9 @@ pub fn verify_private_key(private_key: &str, coin: &CoinInfo) -> Result<String> 
     Ok(private_key.to_string())
 }
 
-pub fn private_key_without_version(private_key: &str) -> Result<String> {
+pub fn private_key_without_version(private_key: &str) -> Result<Vec<u8>> {
     let (pk, _version) = Secp256k1PrivateKey::from_ss58check_with_version(private_key)?;
-    Ok(hex::encode(pk.to_bytes()))
+    Ok(pk.to_bytes())
 }
 
 #[cfg(test)]

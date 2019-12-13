@@ -12,7 +12,7 @@ use tcx_btc_fork::{
     address::BtcForkAddress, BtcForkSegWitTransaction, BtcForkSignedTxOutput, BtcForkTransaction,
     BtcForkTxInput,
 };
-use tcx_chain::{key_hash_from_mnemonic, Keystore};
+use tcx_chain::{key_hash_from_mnemonic, key_hash_from_private_key, Keystore};
 use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
 use tcx_ckb::{CkbAddress, CkbTxInput};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
@@ -38,7 +38,7 @@ use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
-use tcx_crypto::hash::{hex_sha256, sha256, str_sha256};
+use tcx_crypto::hash::{dsha256, hex_dsha256, str_dsha256};
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
@@ -390,7 +390,6 @@ pub fn keystore_common_verify(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    // todo: check if need return is_success : false
     if keystore.verify_password(&param.password) {
         let rsp = Response {
             is_success: true,
@@ -431,12 +430,14 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
     if param.r#type == KeyType::Mnemonic as i32 {
         key_hash = key_hash_from_mnemonic(&param.value);
     } else {
-        let mut val = param.value.to_string();
+        let mut key_data: Vec<u8>;
         let decoded = hex::decode(param.value.to_string());
-        if decoded.is_err() {
-            val = private_key_without_version(&param.value)?;
+        if decoded.is_ok() {
+            key_data = decoded.unwrap();
+        } else {
+            key_data = private_key_without_version(&param.value)?;
         }
-        key_hash = hex_sha256(&val);
+        key_hash = key_hash_from_private_key(&key_data);
     }
     let map = &mut KEYSTORE_MAP.write().unwrap();
 
