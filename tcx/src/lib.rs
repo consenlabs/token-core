@@ -96,14 +96,14 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 
 /// dispatch protobuf rpc call
 #[no_mangle]
-pub unsafe extern "C" fn call_tcx_api(data: *const u8) -> Buffer {
+pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
     error!("receive call");
-    //    error!()
-    error!("is x86_64");
-    error!("receive data {:?}", data);
-    let data = std::slice::from_raw_parts(data, 137);
-
+    let hex_c_str = unsafe { CStr::from_ptr(hex_str) };
+    let hex_str = hex_c_str.to_str().expect("parse_arguments to_str");
+    error!("hex string: {}", hex_str);
+    let data = hex::decode(hex_str).expect("parse_arguments to_str");
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
+    error!("decode data ok");
     let mut reply: Vec<u8> = match action.method.to_lowercase().as_str() {
         "init_token_core_x" => landingpad(|| {
             handler::init_token_core_x(&action.param.unwrap().value);
@@ -144,7 +144,8 @@ pub unsafe extern "C" fn call_tcx_api(data: *const u8) -> Buffer {
         _ => landingpad(|| Err(format_err!("unsupported_method"))),
     };
 
-    wrap_buffer(reply)
+    let ret_str = hex::encode(reply);
+    CString::new(ret_str).unwrap().into_raw()
 }
 
 pub fn wrap_buffer(to_wrap: Vec<u8>) -> Buffer {
