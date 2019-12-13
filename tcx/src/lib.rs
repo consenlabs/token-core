@@ -41,30 +41,6 @@ extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
 
-#[macro_use]
-extern crate log;
-extern crate android_logger;
-
-use android_logger::{Config, FilterBuilder};
-use log::Level;
-
-fn native_activity_create() {
-    android_logger::init_once(
-        Config::default()
-            .with_min_level(Level::Trace) // limit log level
-            .with_tag("mytag") // logs will show under mytag tag
-            .with_filter(
-                // configure messages for specific crate
-                FilterBuilder::new()
-                    .parse("debug,hello::crate=error")
-                    .build(),
-            ),
-    );
-
-    trace!("this is a verbose {}", "message");
-    error!("this is printed by default");
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn free_string(s: *mut c_char) {
     if s.is_null() {
@@ -97,13 +73,11 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 /// dispatch protobuf rpc call
 #[no_mangle]
 pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
-    error!("receive call");
     let hex_c_str = unsafe { CStr::from_ptr(hex_str) };
     let hex_str = hex_c_str.to_str().expect("parse_arguments to_str");
-    error!("hex string: {}", hex_str);
-    let data = hex::decode(hex_str).expect("parse_arguments to_str");
+
+    let data = hex::decode(hex_str).expect("parse_arguments hex decode");
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
-    error!("decode data ok");
     let mut reply: Vec<u8> = match action.method.to_lowercase().as_str() {
         "init_token_core_x" => landingpad(|| {
             handler::init_token_core_x(&action.param.unwrap().value);
@@ -168,8 +142,6 @@ pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
 }
 
 fn init_token_core_x_internal(v: &Value) -> Result<()> {
-    native_activity_create();
-
     let file_dir = v["fileDir"].as_str().expect("fileDir");
     let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
     let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
@@ -220,7 +192,7 @@ pub unsafe extern "C" fn clear_err() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_last_err() -> Buffer {
+pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
     LAST_ERROR.with(|e| {
         if let Some(ref err) = *e.borrow() {
             let rsp = Response {
@@ -228,10 +200,10 @@ pub unsafe extern "C" fn get_last_err() -> Buffer {
                 error: err.to_string(),
             };
             let mut rsp_bytes = encode_message(rsp).expect("encode error");
-            wrap_buffer(rsp_bytes)
+            let ret_str = hex::encode(rsp_bytes);
+            CString::new(ret_str).unwrap().into_raw()
         } else {
-            let mut rsp: Vec<u8> = vec![];
-            wrap_buffer(rsp)
+            CString::new("").unwrap().into_raw()
         }
     })
 }
