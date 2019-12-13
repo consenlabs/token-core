@@ -2,7 +2,6 @@ use crate::signer::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
 
-use bech32::FromBase32;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Error as BtcAddressError;
 use bitcoin::util::address::Payload;
@@ -304,13 +303,11 @@ mod tests {
     use crate::signer::ScriptPubKeyComponent;
     use crate::tcx_chain::Address;
 
-    use bitcoin::util::bip32::ExtendedPrivKey;
     use std::str::FromStr;
     use tcx_constants::btc_fork_network::network_from_param;
-    use tcx_constants::{network_from_coin, CoinInfo, CurveType};
+    use tcx_constants::{CoinInfo, CurveType};
     use tcx_primitive::{
-        Bip32DeterministicPrivateKey, Derive, DerivePath, DeterministicPrivateKey,
-        Secp256k1PrivateKey, Ss58Codec,
+        Bip32DeterministicPrivateKey, Derive, DerivePath, DeterministicPrivateKey, Ss58Codec,
     };
 
     #[test]

@@ -12,18 +12,18 @@ use tcx_btc_fork::{
     address::BtcForkAddress, BtcForkSegWitTransaction, BtcForkSignedTxOutput, BtcForkTransaction,
     BtcForkTxInput,
 };
+use tcx_chain::Keystore;
 use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
-use tcx_chain::{Keystore, KeystoreGuard};
-use tcx_ckb::{CkbAddress, CkbTxInput, CkbTxOutput};
+use tcx_ckb::{CkbAddress, CkbTxInput};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::TrxAddress;
 
 use crate::api::hd_store_derive_param::Derivation;
 use crate::api::{
-    AccountResponse, AccountsResponse, ExternalAddressParam, HdStoreCreateParam,
-    HdStoreDeriveParam, HdStoreImportParam, KeyType, KeystoreCommonAccountsParam,
-    KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
-    PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
+    AccountResponse, AccountsResponse, HdStoreCreateParam, HdStoreDeriveParam, HdStoreImportParam,
+    KeyType, KeystoreCommonAccountsParam, KeystoreCommonExistsParam, KeystoreCommonExistsResult,
+    KeystoreCommonExportResult, PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response,
+    WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
@@ -31,12 +31,11 @@ use crate::filemanager::{
     cache_keystore, clean_keystore, find_keystore_id_by_address, flush_keystore, WALLET_FILE_DIR,
 };
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
-use std::collections::HashMap;
-use std::process::exit;
+
 use std::sync::RwLockReadGuard;
 use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
-use tcx_constants::{CoinInfo, CurveType};
+use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::hash::{hex_sha256, str_sha256};
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
@@ -159,7 +158,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     {
         let key_hash = str_sha256(&param.mnemonic);
         let map = KEYSTORE_MAP.read().unwrap();
-        let founded: Option<&Keystore> = map
+        founded = map
             .values()
             .find(|keystore| keystore.key_hash() == key_hash);
     }
@@ -173,7 +172,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     meta.password_hint = param.password_hint.to_owned();
     meta.source = Source::Mnemonic;
 
-    let mut ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta);
+    let ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta);
 
     let mut keystore = Keystore::Hd(ks);
 
@@ -217,7 +216,7 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
     let param: HdStoreDeriveParam =
         HdStoreDeriveParam::decode(data).expect("hd_store_derive_param");
     let mut map = KEYSTORE_MAP.write().unwrap();
-    let mut keystore: &mut Keystore = match map.get_mut(&param.id) {
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
@@ -285,7 +284,7 @@ pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     keystore.unlock_by_password(&param.password)?;
 
-    let mut coin_info = coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
+    let coin_info = coin_info_from_param(&param.chain_type, &param.network, &param.seg_wit)?;
     //    coin_info.derivation_path = param.path.to_string();
     let account = match param.chain_type.as_str() {
         "BITCOINCASH" => keystore.derive_coin::<BchAddress>(&coin_info),

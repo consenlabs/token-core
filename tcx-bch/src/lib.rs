@@ -26,7 +26,7 @@ mod tests {
     use crate::BchAddress;
 
     use serde_json::Value;
-    use std::str::FromStr;
+
     use tcx_chain::KeystoreGuard;
     use tcx_chain::{HdKeystore, Keystore, Metadata};
     use tcx_constants::CoinInfo;

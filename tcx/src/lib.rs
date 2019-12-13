@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs;
 use std::io::Read;
@@ -8,14 +7,9 @@ use std::path::Path;
 use prost::Message;
 use serde_json::Value;
 
-use tcx_bch::BchAddress;
-use tcx_btc_fork::{address::BtcForkAddress, ExternalAddress};
-use tcx_chain::TransactionSigner;
-use tcx_chain::{HdKeystore, MessageSigner, Metadata, Source};
-use tcx_chain::{Keystore, KeystoreGuard};
+use tcx_chain::HdKeystore;
+use tcx_chain::Keystore;
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
-use tcx_primitive::verify_private_key;
-use tcx_tron::TrxAddress;
 
 pub mod api;
 use crate::api::{Response, TcxAction};
@@ -29,10 +23,7 @@ use crate::handler::{
     tron_sign_message, Buffer,
 };
 mod filemanager;
-use crate::filemanager::{
-    cache_keystore, delete_keystore_file, find_keystore_id_by_address, flush_keystore,
-    KEYSTORE_MAP, WALLET_FILE_DIR,
-};
+use crate::filemanager::{cache_keystore, WALLET_FILE_DIR};
 
 #[macro_use]
 extern crate failure;
@@ -78,7 +69,7 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
 
     let data = hex::decode(hex_str).expect("parse_arguments hex decode");
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
-    let mut reply: Vec<u8> = match action.method.to_lowercase().as_str() {
+    let reply: Vec<u8> = match action.method.to_lowercase().as_str() {
         "init_token_core_x" => landingpad(|| {
             handler::init_token_core_x(&action.param.unwrap().value);
             Ok(vec![])
@@ -200,7 +191,7 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
                 error: err.to_string(),
             };
             eprintln!("{:#?}", rsp);
-            let mut rsp_bytes = encode_message(rsp).expect("encode error");
+            let rsp_bytes = encode_message(rsp).expect("encode error");
             let ret_str = hex::encode(rsp_bytes);
             CString::new(ret_str).unwrap().into_raw()
         } else {

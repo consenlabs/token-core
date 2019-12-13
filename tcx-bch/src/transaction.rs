@@ -32,7 +32,6 @@ mod tests {
     use super::*;
     use crate::address::BchAddress;
 
-    use bch_addr::Converter;
     use std::marker::PhantomData;
     use std::str::FromStr;
     use tcx_btc_fork::BtcForkTxInput;

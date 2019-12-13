@@ -1,7 +1,7 @@
 use crate::curve::CurveType;
 use crate::Result;
 use failure::format_err;
-use serde_json::Value;
+
 use std::sync::RwLock;
 
 /// Blockchain basic config

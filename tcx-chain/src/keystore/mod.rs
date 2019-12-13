@@ -6,15 +6,15 @@ mod hd;
 mod private;
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+
 use tcx_constants::{CoinInfo, CurveType};
 
 pub use self::{guard::KeystoreGuard, hd::HdKeystore, private::PrivateKeystore};
 use crate::signer::ChainSigner;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
-    DeterministicPrivateKey, PrivateKey, TypedDeterministicPrivateKey, TypedDeterministicPublicKey,
-    TypedPrivateKey, TypedPublicKey,
+    DeterministicPrivateKey, PrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
+    TypedPublicKey,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -174,7 +174,7 @@ impl Keystore {
     pub fn determinable(&self) -> bool {
         match self {
             Keystore::PrivateKey(_) => false,
-            Keystore::Hd(ks) => true,
+            Keystore::Hd(_) => true,
         }
     }
 
@@ -329,7 +329,7 @@ mod tests {
     use crate::{HdKeystore, Keystore, Metadata, PrivateKeystore, Source};
     use serde_json::Value;
     use std::str::FromStr;
-    use tcx_constants::coin_info::coin_info_from_param;
+
     use tcx_primitive::{Ss58Codec, ToHex};
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";

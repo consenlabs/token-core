@@ -5,9 +5,6 @@ pub mod transaction;
 
 use core::result;
 use serde::{Deserialize, Serialize};
-use std::iter::IntoIterator;
-use std::str::FromStr;
-use tcx_chain::Address;
 
 #[macro_use]
 extern crate failure;

@@ -7,8 +7,6 @@ use tcx_chain::{
 use bitcoin_hashes::sha256::Hash;
 use bitcoin_hashes::Hash as TraitHash;
 
-use serde_json::Value;
-use std::convert::{TryFrom, TryInto};
 use tcx_primitive::PrivateKey;
 
 use failure::format_err;
@@ -54,7 +52,6 @@ impl TraitTransactionSigner<TronTxInput, TronTxOutput> for Keystore {
         tx: &TronTxInput,
     ) -> Result<TronTxOutput> {
         //        let mut raw = tx.raw.clone();
-        let coin_info = coin_info_from_param(&"TRON", "", "")?;
         let data = hex::decode(&tx.raw_data)?;
         let hash = Hash::hash(&data);
 
@@ -77,7 +74,6 @@ impl TraitMessageSigner<TronMessageInput, TronMessageOutput> for Keystore {
         address: &str,
         message: &TronMessageInput,
     ) -> Result<TronMessageOutput> {
-        let coin_info = coin_info_from_param(&"TRON", "", "")?;
         let data = match message.is_hex {
             true => {
                 let mut raw_hex: String = message.value.to_owned();
@@ -108,11 +104,10 @@ impl TraitMessageSigner<TronMessageInput, TronMessageOutput> for Keystore {
 mod tests {
     use super::*;
     use crate::address::Address;
-    use bitcoin::util::contracthash::Error::Secp;
+
     use bitcoin::util::misc::hex_bytes;
     use digest::Digest;
-    use serde_json::Value;
-    use std::convert::TryFrom;
+
     use tcx_chain::{HdKeystore, Keystore, KeystoreGuard};
     use tcx_chain::{Metadata, TransactionSigner};
     use tcx_constants::CoinInfo;

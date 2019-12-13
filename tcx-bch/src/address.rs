@@ -9,10 +9,8 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_btc_fork::{BtcForkAddress, PubKeyScript, ScriptPubKeyComponent};
 use tcx_chain::Address;
-use tcx_constants::{network_from_coin, CoinInfo};
-use tcx_primitive::{
-    PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPrivateKey, TypedPublicKey,
-};
+use tcx_constants::CoinInfo;
+use tcx_primitive::TypedPublicKey;
 
 fn _legacy_to_bch(addr: &str) -> Result<String> {
     let convert = Converter::new();
@@ -112,8 +110,6 @@ mod tests {
     use crate::address::{remove_bch_prefix, BchAddress};
     use bitcoin::util::misc::hex_bytes;
 
-    use bch_addr::{AddressFormat, Converter, Network};
-    use bitcoin::consensus::encode::Error::Secp256k1;
     use tcx_chain::Address;
     use tcx_constants::coin_info::coin_info_from_param;
     use tcx_constants::CurveType;

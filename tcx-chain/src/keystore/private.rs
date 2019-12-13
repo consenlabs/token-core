@@ -1,17 +1,12 @@
 use super::Account;
 use super::{Address, Metadata, Source};
-use tcx_constants::{CoinInfo, CurveType};
+use tcx_constants::CoinInfo;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 
 use super::Error;
 use super::Result;
-use crate::keystore::{Keystore, Store};
-use core::result;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::fmt;
-use std::fmt::{Display, Formatter};
-use std::iter::Map;
+use crate::keystore::Store;
+
 use tcx_crypto::hash::hex_sha256;
 use tcx_primitive::{
     KeyManage, PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPrivateKey,

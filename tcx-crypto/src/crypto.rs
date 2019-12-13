@@ -5,7 +5,6 @@ use crate::Result;
 use bitcoin_hashes::hex::{FromHex, ToHex};
 use digest::Digest;
 use serde::{Deserialize, Serialize};
-use sha2::Sha256;
 
 const CREDENTIAL_LEN: usize = 64usize;
 
@@ -318,7 +317,7 @@ mod tests {
 
     #[test]
     pub fn decrypt_crypto() {
-        let mut crypto: Crypto<Pbkdf2Params> = Crypto::new(PASSWORD, "TokenCoreX".as_bytes());
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(PASSWORD, "TokenCoreX".as_bytes());
         let cipher_bytes = crypto.decrypt(PASSWORD).expect("cipher bytes");
         assert_eq!("TokenCoreX", String::from_utf8(cipher_bytes).unwrap());
 

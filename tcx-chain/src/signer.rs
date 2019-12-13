@@ -1,5 +1,4 @@
 use crate::Result;
-use serde::{Deserialize, Serialize};
 
 pub trait TransactionSigner<Input, Output> {
     fn sign_transaction(&mut self, symbol: &str, address: &str, tx: &Input) -> Result<Output>;

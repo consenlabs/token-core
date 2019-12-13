@@ -1,13 +1,11 @@
 use bitcoin::util::base58;
 
 use crate::keccak;
-use failure::Fail;
+
 use tcx_chain::Address as TraitAddress;
 use tcx_chain::Result;
 use tcx_constants::CoinInfo;
-use tcx_primitive::{
-    PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPublicKey,
-};
+use tcx_primitive::TypedPublicKey;
 
 pub struct Address(pub String);
 
@@ -36,7 +34,7 @@ mod tests {
     use super::Address;
     use tcx_chain::Address as TraitAddress;
     use tcx_constants::{CoinInfo, CurveType};
-    use tcx_primitive::{PublicKey, Secp256k1PublicKey, TypedPublicKey};
+    use tcx_primitive::{PublicKey, TypedPublicKey};
 
     #[test]
     fn tron_address() {

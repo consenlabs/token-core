@@ -1,10 +1,10 @@
 use bytes::BytesMut;
 use prost::Message;
 use std::env;
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::os::raw::c_char;
 use tcx::api::InitTokenCoreXParam;
-use tcx::{call_tcx_api, get_last_err_message, wrap_buffer};
+use tcx::{call_tcx_api, get_last_err_message};
 
 pub fn encode_message(msg: impl Message) -> Vec<u8> {
     let mut buf = BytesMut::with_capacity(msg.encoded_len());

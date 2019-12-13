@@ -1,23 +1,18 @@
 use bip39::{Language, Mnemonic};
-use serde::{Deserialize, Serialize};
-use serde_json::json;
-use std::time::{SystemTime, UNIX_EPOCH};
+
 use uuid::Uuid;
 
-use super::guard::KeystoreGuard;
 use super::Account;
 use super::Address;
 use super::Result;
-use super::{Error, Metadata, Source};
+use super::{Error, Metadata};
 
-use crate::keystore::{Keystore, Store};
+use crate::keystore::Store;
 
-use core::{fmt, result};
-use serde_json::Value;
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
+
 use std::str::FromStr;
-use tcx_constants::{CoinInfo, CurveType};
+use tcx_constants::CoinInfo;
 use tcx_crypto::hash::{hex_sha256, sha256, str_sha256};
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
@@ -292,9 +287,9 @@ mod tests {
     use super::*;
     use crate::keystore::metadata_default_time;
     use bitcoin_hashes::hex::ToHex;
-    use serde_json::Map;
+
     use std::string::ToString;
-    use tcx_primitive::{PublicKey, TypedPublicKey};
+    use tcx_primitive::TypedPublicKey;
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
@@ -321,7 +316,7 @@ mod tests {
             Ok("mock_address".to_string())
         }
 
-        fn is_valid(address: &str) -> bool {
+        fn is_valid(_address: &str) -> bool {
             true
         }
     }
