@@ -17,7 +17,7 @@ use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_primitive::verify_private_key;
 use tcx_tron::TrxAddress;
 
-mod api;
+pub mod api;
 use crate::api::{Response, TcxAction};
 pub mod error_handling;
 pub mod handler;
@@ -59,7 +59,7 @@ pub unsafe extern "C" fn free_const_string(s: *const c_char) {
 
 #[no_mangle]
 pub unsafe extern "C" fn free_buf(buf: Buffer) {
-    let s = std::slice::from_raw_parts_mut(buf.data, buf.len);
+    let s = std::slice::from_raw_parts_mut(buf.data, buf.len as usize);
     let s = s.as_mut_ptr();
     Box::from_raw(s);
 }
@@ -72,12 +72,19 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 
 /// dispatch protobuf rpc call
 #[no_mangle]
-pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
-    let data = std::slice::from_raw_parts_mut(buf.data, buf.len);
+pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
+    let hex_c_str = unsafe { CStr::from_ptr(hex_str) };
+    let hex_str = hex_c_str.to_str().expect("parse_arguments to_str");
+
+    let data = hex::decode(hex_str).expect("parse_arguments hex decode");
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
     let mut reply: Vec<u8> = match action.method.to_lowercase().as_str() {
         "init_token_core_x" => landingpad(|| {
             handler::init_token_core_x(&action.param.unwrap().value);
+            Ok(vec![])
+        }),
+        "scan_keystores" => landingpad(|| {
+            handler::scan_keystores();
             Ok(vec![])
         }),
         "hd_store_create" => landingpad(|| hd_store_create(&action.param.unwrap().value)),
@@ -107,10 +114,12 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
 
         "tron_sign_msg" => landingpad(|| tron_sign_message(&action.param.unwrap().value)),
+
         _ => landingpad(|| Err(format_err!("unsupported_method"))),
     };
 
-    wrap_buffer(reply)
+    let ret_str = hex::encode(reply);
+    CString::new(ret_str).unwrap().into_raw()
 }
 
 pub fn wrap_buffer(to_wrap: Vec<u8>) -> Buffer {
@@ -118,7 +127,10 @@ pub fn wrap_buffer(to_wrap: Vec<u8>) -> Buffer {
     let data = to_wrap.as_mut_ptr();
     let len = to_wrap.len();
     std::mem::forget(to_wrap);
-    Buffer { data, len }
+    Buffer {
+        data,
+        len: len as i64,
+    }
 }
 
 #[no_mangle]
@@ -180,18 +192,19 @@ pub unsafe extern "C" fn clear_err() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_last_err() -> Buffer {
+pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
     LAST_ERROR.with(|e| {
         if let Some(ref err) = *e.borrow() {
             let rsp = Response {
                 is_success: false,
                 error: err.to_string(),
             };
+            eprintln!("{:#?}", rsp);
             let mut rsp_bytes = encode_message(rsp).expect("encode error");
-            wrap_buffer(rsp_bytes)
+            let ret_str = hex::encode(rsp_bytes);
+            CString::new(ret_str).unwrap().into_raw()
         } else {
-            let mut rsp: Vec<u8> = vec![];
-            wrap_buffer(rsp)
+            CString::new("").unwrap().into_raw()
         }
     })
 }

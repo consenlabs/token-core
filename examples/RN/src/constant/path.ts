@@ -56,15 +56,19 @@ export const PATH = {
   }
 }
 
-export const getChainPath = (chainType: __chainType, segWit = 'P2WPKH' as __segWit, chainId = 1 as number) => {
+export const getChainPath = (chainType: __chainType, network = 'TESTNET' as __networkType, segWit = 'P2WPKH' as __segWit) => {
+  let chainId = network === 'MAINNET' ? 0 : 1
   switch (chainType) {
     case 'BITCOIN':
+      chainId = network === 'MAINNET' ? 0 : 1
       return PATH[chainType][segWit][chainId as 0 | 1]
 
     case 'LITECOIN':
+      chainId = network === 'MAINNET' ? 2 : 1
       return PATH[chainType]['NONE'][chainId as 1 | 2]
 
     case 'BITCOINCASH':
+      chainId = network === 'MAINNET' ? 145 : 1
       return PATH[chainType][chainId as 1 | 145]
 
     default:

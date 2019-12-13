@@ -13,6 +13,10 @@ lazy_static! {
     pub static ref WALLET_FILE_DIR: RwLock<String> = RwLock::new("../test-data".to_string());
 }
 
+pub fn clean_keystore() {
+    KEYSTORE_MAP.write().unwrap().clear()
+}
+
 pub fn cache_keystore(keystore: Keystore) {
     KEYSTORE_MAP
         .write()

@@ -210,7 +210,6 @@ impl HdKeystore {
             ext_pub_key,
             seg_wit: coin_info.seg_wit.to_string(),
         };
-
         self.store.active_accounts.push(account.clone());
 
         Ok(&self.store.active_accounts.last().unwrap())
