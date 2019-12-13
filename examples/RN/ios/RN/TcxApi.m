@@ -16,27 +16,22 @@
 RCT_EXPORT_MODULE();
 
 RCT_EXPORT_METHOD(callTcxApi:(NSString *)hex resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+  clear_err();
 
-  NSData *data = [NSData dataFromHexString:hex];
-  if (!data.length) {
-      NSLog(@"Got an error");
-  } else {
-    clear_err();
-    Buffer param;
-    param.data = (uint8_t * )data.bytes;
-    param.len = data.length;
-    Buffer result = call_tcx_api(param);
-    
-    Buffer error = get_last_err();
-    if (error.len > 0) {
-      NSData *errData = [NSData dataWithBytes:error.data length:error.len];;
-      free_buf(error);
-      reject(@"", errData.hexadecimalString, nil);
-    } else {
-      NSData *resultData = [NSData dataWithBytes:result.data length:result.len];
-      resolve(resultData.hexadecimalString);
-    }
+  const char *result = call_tcx_api([hex UTF8String]);
+  const char *error = get_last_err_message();
+  
+  NSString *errorStr = [[NSString alloc] initWithUTF8String:error];
+  NSString *resultData = [[NSString alloc] initWithUTF8String:result];
+  
+  free_const_string(error);
+  free_const_string(result);
+  
+  if (errorStr.length > 0) {
+    reject(@"", errorStr, nil);
+    return;
   }
+  resolve(resultData);
   
 }
 

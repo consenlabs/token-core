@@ -72,8 +72,11 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 
 /// dispatch protobuf rpc call
 #[no_mangle]
-pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
-    let data = std::slice::from_raw_parts_mut(buf.data, buf.len as usize);
+pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
+    let hex_c_str = unsafe { CStr::from_ptr(hex_str) };
+    let hex_str = hex_c_str.to_str().expect("parse_arguments to_str");
+
+    let data = hex::decode(hex_str).expect("parse_arguments hex decode");
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
     let mut reply: Vec<u8> = match action.method.to_lowercase().as_str() {
         "init_token_core_x" => landingpad(|| {
@@ -115,7 +118,8 @@ pub unsafe extern "C" fn call_tcx_api(buf: Buffer) -> Buffer {
         _ => landingpad(|| Err(format_err!("unsupported_method"))),
     };
 
-    wrap_buffer(reply)
+    let ret_str = hex::encode(reply);
+    CString::new(ret_str).unwrap().into_raw()
 }
 
 pub fn wrap_buffer(to_wrap: Vec<u8>) -> Buffer {
@@ -188,7 +192,7 @@ pub unsafe extern "C" fn clear_err() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_last_err() -> Buffer {
+pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
     LAST_ERROR.with(|e| {
         if let Some(ref err) = *e.borrow() {
             let rsp = Response {
@@ -197,10 +201,10 @@ pub unsafe extern "C" fn get_last_err() -> Buffer {
             };
             eprintln!("{:#?}", rsp);
             let mut rsp_bytes = encode_message(rsp).expect("encode error");
-            wrap_buffer(rsp_bytes)
+            let ret_str = hex::encode(rsp_bytes);
+            CString::new(ret_str).unwrap().into_raw()
         } else {
-            let mut rsp: Vec<u8> = vec![];
-            wrap_buffer(rsp)
+            CString::new("").unwrap().into_raw()
         }
     })
 }
