@@ -1,0 +1,34 @@
+syntax = "proto3";
+package transaction;
+
+/// This file only contains btc chain(including forks) related messages.
+// ref:
+// - https://en.bitcoin.it/wiki/Transaction
+// - https://www.bitcoincash.org/spec/transaction.html
+
+// FUNCTION: sign_tx(SignParam{input: BtcForkTxInput}): BtcForkSignedTxOutput
+message Utxo {
+    string txHash = 1;
+    int32 vout = 2;
+    int64 amount = 3;
+    string address = 4;
+    string scriptPubKey = 5;
+    string derivedPath = 6;
+    int64 sequence = 7;
+}
+
+message BtcForkTxInput {
+    string to = 1;
+    int64 amount = 2;
+    repeated Utxo unspents = 3;
+    int64 fee = 4;
+    uint32 changeAddressIndex = 5;
+    string changeAddress = 6;
+    string network = 7;
+    string segWit = 8;
+}
+
+message BtcForkSignedTxOutput {
+    string signature = 1;
+    string txHash = 2;
+}

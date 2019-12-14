@@ -15,10 +15,14 @@ pub type Result<T> = result::Result<T, failure::Error>;
 pub use crate::bip32::{Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey};
 pub use crate::derive::{get_account_path, Derive, DeriveJunction, DerivePath};
 pub use crate::ecc::{
-    DeterministicPrivateKey, DeterministicPublicKey, Ecdsa, EcdsaSignature, PrivateKey, PublicKey,
+    DeterministicPrivateKey, DeterministicPublicKey, DeterministicType, KeyManage, PrivateKey,
+    PublicKey, TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
+    TypedPublicKey,
 };
 pub use crate::rand::generate_mnemonic;
-pub use crate::secp256k1::{verify_wif, Secp256k1PrivateKey, Secp256k1PublicKey};
+pub use crate::secp256k1::{
+    private_key_without_version, verify_private_key, Secp256k1PrivateKey, Secp256k1PublicKey,
+};
 
 /// Key that can be encoded to/from SS58.
 pub trait Ss58Codec: Sized {
@@ -32,4 +36,12 @@ pub trait Ss58Codec: Sized {
 
     /// Return the ss58-check string for this key.
     fn to_ss58check_with_version(&self, version: &[u8]) -> String;
+}
+
+pub trait ToHex: Sized {
+    fn to_hex(&self) -> String;
+}
+
+pub trait FromHex: Sized {
+    fn from_hex(hex: &str) -> Result<Self>;
 }

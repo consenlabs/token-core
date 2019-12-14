@@ -4,9 +4,10 @@ use bitcoin::Transaction;
 use bitcoin_hashes::sha256d;
 use std::str::FromStr;
 use tcx_btc_fork::bip143_with_forkid::SighashComponentsWithForkId;
-use tcx_btc_fork::transaction::{LegacyTransactionSignComponent, SignHasher};
+use tcx_btc_fork::signer::{LegacyTransactionSignComponent, SignHasher};
+use tcx_btc_fork::transaction::Utxo;
+use tcx_btc_fork::BitcoinForkSinger;
 use tcx_btc_fork::PubKeyScript;
-use tcx_btc_fork::{BitcoinForkTransaction, Utxo};
 
 const BCH_FORK_ID: u32 = 0x41;
 
@@ -24,21 +25,22 @@ impl SignHasher for BchSignHasher {
 }
 
 pub type BchTransaction =
-    BitcoinForkTransaction<BchAddress, LegacyTransactionSignComponent<BchSignHasher>>;
+    BitcoinForkSinger<BchAddress, LegacyTransactionSignComponent<BchSignHasher>>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::address::BchAddress;
 
-    use bch_addr::Converter;
     use std::marker::PhantomData;
     use std::str::FromStr;
+    use tcx_btc_fork::BtcForkTxInput;
+    use tcx_constants::coin_info::coin_info_from_param;
     use tcx_primitive::{PrivateKey, Secp256k1PrivateKey};
 
     #[test]
     pub fn bch_signer() {
-        let unspents = vec![Utxo {
+        let utxo = Utxo {
             tx_hash: "09c3a49c1d01f6341c43ea43dd0de571664a45b4e7d9211945cb3046006a98e2".to_string(),
             vout: 0,
             amount: 100000,
@@ -46,21 +48,26 @@ mod tests {
             script_pub_key: "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac".to_string(),
             derived_path: "1/0".to_string(),
             sequence: 0,
-        }];
-        let tran =
-            BitcoinForkTransaction::<BchAddress, LegacyTransactionSignComponent<BchSignHasher>> {
-                to: "qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s".to_string(),
-                amount: 93454,
-                unspents,
-                memo: "".to_string(),
-                fee: 6000,
-                change_idx: Some(1u32),
-                change_address: None,
-                coin: "BITCOINCASH".to_string(),
-                _marker_s: PhantomData,
-                _marker_t: PhantomData,
-            };
-        //
+        };
+        let unspents = vec![utxo];
+        let input = BtcForkTxInput {
+            to: "qq40fskqshxem2gvz0xkf34ww3h6zwv4dcr7pm0z6s".to_string(),
+            amount: 93454,
+            unspents,
+            fee: 6000,
+            change_address_index: 1u32,
+            change_address: "".to_string(),
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
+        };
+        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE").unwrap();
+        let tran = BitcoinForkSinger::<BchAddress, LegacyTransactionSignComponent<BchSignHasher>> {
+            tx_input: input,
+            coin_info,
+            _marker_s: PhantomData,
+            _marker_t: PhantomData,
+        };
+
         let prv_key = Secp256k1PrivateKey::from_slice(
             &hex::decode("b0dabbf9ffed224fbca3b41a9e446b3d0b6240c6d2957197a8ab75bbf2e1a5d4")
                 .unwrap(),

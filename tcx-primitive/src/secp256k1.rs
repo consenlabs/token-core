@@ -1,8 +1,5 @@
 use crate::constant::SECP256K1_ENGINE;
-use crate::ecc::{
-    key_types, KeyError, KeyTypeId, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey,
-    TypedKey,
-};
+use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
 
 use bitcoin::Network;
 
@@ -13,7 +10,7 @@ use bitcoin::util::base58;
 
 use bitcoin::secp256k1::Message;
 use std::io;
-use tcx_constants::network_from_coin;
+use tcx_constants::{network_from_coin, CoinInfo};
 
 fn transform_secp256k1_error(err: secp256k1::Error) -> KeyError {
     match err {
@@ -91,6 +88,10 @@ impl TraitPrivateKey for Secp256k1PrivateKey {
         let signed_bytes = [sign[..].to_vec(), vec![(recover_id.to_i32()) as u8]].concat();
         Ok(signed_bytes)
     }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        self.0.to_bytes()
+    }
 }
 
 impl std::fmt::Display for Secp256k1PublicKey {
@@ -100,26 +101,18 @@ impl std::fmt::Display for Secp256k1PublicKey {
 }
 
 impl TraitPublicKey for Secp256k1PublicKey {
-    fn write_into<W: io::Write>(&self, mut writer: W) {
-        self.0.write_into(writer);
-    }
-
     fn from_slice(data: &[u8]) -> Result<Self> {
         let key = PublicKey::from_slice(data)?;
         Ok(Secp256k1PublicKey(key))
     }
 
+    fn write_into<W: io::Write>(&self, writer: W) {
+        self.0.write_into(writer);
+    }
+
     fn to_bytes(&self) -> Vec<u8> {
         self.0.to_bytes()
     }
-}
-
-impl TypedKey for Secp256k1PublicKey {
-    const KEY_TYPE: KeyTypeId = key_types::SECP256K1;
-}
-
-impl TypedKey for Secp256k1PrivateKey {
-    const KEY_TYPE: KeyTypeId = key_types::SECP256K1;
 }
 
 impl Ss58Codec for Secp256k1PrivateKey {
@@ -156,29 +149,34 @@ impl Ss58Codec for Secp256k1PrivateKey {
     }
 }
 
-pub fn verify_wif(wif: &str, coin: &str) -> Result<String> {
+pub fn verify_private_key(private_key: &str, coin: &CoinInfo) -> Result<String> {
     if let Some(network) = network_from_coin(coin) {
-        let (pk, version) = Secp256k1PrivateKey::from_ss58check_with_version(wif)?;
+        let (pk, version) = Secp256k1PrivateKey::from_ss58check_with_version(private_key)?;
         if version[0] != network.private_prefix {
             return Err(KeyError::InvalidPrivateKey.into());
+        } else {
+            return Ok(hex::encode(pk.to_bytes()));
         }
     }
-    Ok(wif.to_string())
+    Ok(private_key.to_string())
+}
+
+pub fn private_key_without_version(private_key: &str) -> Result<Vec<u8>> {
+    let (pk, _version) = Secp256k1PrivateKey::from_ss58check_with_version(private_key)?;
+    Ok(pk.to_bytes())
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::derive::Derive;
 
-    use super::{verify_wif, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec};
+    use super::{verify_private_key, Secp256k1PrivateKey, Ss58Codec};
 
-    use crate::{DerivePath, PrivateKey, PublicKey};
-    use bip39::{Language, Mnemonic, Seed};
+    use crate::{PrivateKey, PublicKey};
 
-    use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
     use bitcoin_hashes::hex::ToHex;
     use bitcoin_hashes::Hash;
-    use std::str::FromStr;
+
+    use tcx_constants::coin_info::coin_info_from_param;
 
     #[test]
     fn secp256k1_prv_key() {
@@ -201,52 +199,17 @@ mod tests {
         let msg = "TokenCoreX";
         let hash = bitcoin_hashes::sha256::Hash::hash(msg.as_bytes());
         let signed_bytes = prv_key.sign(&hash.into_inner()).unwrap();
-        /*
         assert_eq!("304402202514266dc7d807ecd69f6d5d03dae7d68619b2c562d8ac77f60e186f4fde4f2202207fbedf5642b095e4a37e71432c99e2b1144f8b9d73a0018be04e6d5ddbd26146", signed_bytes.to_hex());
-        */
 
         let wrong_signed = prv_key.sign(&[0, 1, 2, 3]);
-        /*
         assert_eq!(
             format!("{}", wrong_signed.err().unwrap()),
             "invalid_message"
         )
-        */
-    }
-
-    fn default_seed() -> Seed {
-        let mn = Mnemonic::from_phrase(
-            "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
-            Language::English,
-        )
-        .unwrap();
-        Seed::new(&mn, "")
-    }
-
-    #[test]
-    fn test_encode_with_network() {
-        /*
-        let xpub = "tpubDDDcs8o1LaKXKXaPTEVBUZJYTgNAte4xj24MtFCMsfrHku93ZZjy87CGyz93dcocR6x6JHdusHodD9EVcSQuDbmkAWznWZtvyqyMDqS6VK4";
-        let (xpub_key, version) = ExtendedPubKey::from_ss58check_with_version(xpub).unwrap();
-        //        xpub_key.coin = Some("BITCOIN".to_owned());
-        let ret = xpub_key.to_ss58check_with_version(&[0x04, 0x88, 0xB2, 0x1E]);
-        assert_eq!("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8", ret);
-
-        let xprv = "tprv8g8UWPRHxaNWXZN3uoaiNpyYyaDr2j5Dvcj1vxLxKcEF653k7xcN9wq9eT73wBM1HzE9hmWJbAPXvDvaMXqGWm81UcVpHnmATfH2JJrfhGg";
-        let (xprv_key, version) = ExtendedPrivKey::from_ss58check_with_version(xprv).unwrap();
-        let ret = xprv_key.to_ss58check_with_version(&[0x04, 0x88, 0xAD, 0xE4]);
-        assert_eq!("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS", ret);
-        */
     }
 
     #[test]
     fn private_key() {
-        /*
-        let private_key = Secp256k1PrivateKey::from_extended("xprv9yTXj46xZJYRvk8XFEjDDBMZfSodoD3Db4ou4XvVqdjmJUJf8bGceCThjGwPvoxgvYhNhftYRoojTNNqEKVKhhrQwyHWdS37YZXbrcJr8HS").unwrap();
-        assert!(private_key.is_extendable());
-        let wif = private_key.private_key().to_ss58check_with_version(&[0x80]);
-        assert_eq!("L2saPfZaQWXY6AMxBdLy4UdR8M3xz698fVo3HY5rmRPZDgHe2nAD", wif);
-
         let private_key =
             Secp256k1PrivateKey::from_wif("L2saPfZaQWXY6AMxBdLy4UdR8M3xz698fVo3HY5rmRPZDgHe2nAD")
                 .unwrap();
@@ -254,13 +217,11 @@ mod tests {
             "L2saPfZaQWXY6AMxBdLy4UdR8M3xz698fVo3HY5rmRPZDgHe2nAD",
             private_key.to_ss58check_with_version(&[0x80])
         );
-        */
     }
 
     #[test]
     fn wif_with_version() {
-        /*
-        let (pk, version) = PrivateKey::from_ss58check_with_version(
+        let (pk, version) = Secp256k1PrivateKey::from_ss58check_with_version(
             "T8XwS9GfbPi73xQtwyQWLF2qXxFCkEtfdHNkrVrjXJijx8qEkHj9",
         )
         .unwrap();
@@ -272,37 +233,20 @@ mod tests {
             "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
             pk.to_ss58check_with_version(&[0x80])
         )
-        */
-    }
-
-    #[test]
-    fn ypub_test() {
-        /*
-        let (epk, version) = ExtendedPrivKey::from_ss58check_with_version("uprv91G7gZkzehuMVxDJTYE6tLivdF8e4rvzSu1LFfKw3b2Qx1Aj8vpoFnHdfUZ3hmi9jsvPifmZ24RTN2KhwB8BfMLTVqaBReibyaFFcTP1s9n").unwrap();
-        assert_eq!("uprv91G7gZkzehuMVxDJTYE6tLivdF8e4rvzSu1LFfKw3b2Qx1Aj8vpoFnHdfUZ3hmi9jsvPifmZ24RTN2KhwB8BfMLTVqaBReibyaFFcTP1s9n", epk.to_ss58check_with_version(&version));
-        */
     }
 
     #[test]
     fn verify_wif_test() {
-        let ret = verify_wif(
-            "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
-            "BITCOIN",
-        );
-        assert!(ret.is_ok());
-        let ret = verify_wif(
+        let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
+        let ret = verify_private_key(
             "6v3S2CrndTdGH8QS1Fw9cWZKJWfee52KytmiB687HPbPBdobUX9",
-            "LITECOIN",
+            &coin_info,
         );
+
         assert!(ret.is_ok());
-        let ret = verify_wif(
-            "T77jSKLkPvX4SBgRN8v11jTdnHwb8ckrn7WLjXcNjLikug2dAhaP",
-            "LITECOIN",
-        );
-        assert!(ret.is_ok());
-        let ret = verify_wif(
+        let ret = verify_private_key(
             "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
-            "LITECOIN",
+            &coin_info,
         );
         assert!(ret.is_err());
         assert_eq!("invalid_private_key", format!("{}", ret.err().unwrap()))

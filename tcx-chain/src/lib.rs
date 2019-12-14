@@ -19,34 +19,14 @@ use core::result;
 extern crate failure;
 extern crate regex;
 
-pub mod keystore;
-pub mod keystore_guard;
-pub mod signer;
+mod keystore;
+mod signer;
 
-pub use keystore::{Account, HdKeystore, Metadata, Source};
-pub use signer::{
-    Message, MessageSigner, SignedMessage, SignedTransaction, Transaction, TransactionSigner,
-    TxSignResult,
+pub use keystore::{
+    key_hash_from_mnemonic, key_hash_from_private_key, Account, Address, HdKeystore, Keystore,
+    KeystoreGuard, Metadata, PrivateKeystore, Source,
 };
 
-pub type Result<T> = result::Result<T, failure::Error>;
+pub use signer::{ChainSigner, MessageSigner, TransactionSigner};
 
-#[derive(Fail, Debug, PartialEq)]
-pub enum Error {
-    #[fail(display = "invalid_mnemonic")]
-    InvalidMnemonic,
-    #[fail(display = "invalid_key_type")]
-    InvalidKeyType,
-    #[fail(display = "invalid_secp256k1_public_key")]
-    InvalidSecp256k1PublicKey,
-    #[fail(display = "unsupported_curve")]
-    UnsupportedCurve,
-    #[fail(display = "account_not_found")]
-    AccountNotFound,
-    #[fail(display = "can_not_derive_pair_from_seed")]
-    CanNotDerivePairFromSeed,
-    #[fail(display = "can_not_derive_key")]
-    CannotDeriveKey,
-    #[fail(display = "keystore_locked")]
-    KeystoreLocked,
-}
+pub type Result<T> = result::Result<T, failure::Error>;
