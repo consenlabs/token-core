@@ -32,13 +32,11 @@ use crate::filemanager::{
 };
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 
-use crate::api::KeyType::Mnemonic;
 use std::sync::RwLockReadGuard;
 use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
-use tcx_crypto::hash::{dsha256, hex_dsha256, str_dsha256};
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
@@ -85,7 +83,7 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
     *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
     *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
 
-    scan_keystores();
+    scan_keystores()?;
 
     Ok(())
 }
@@ -243,7 +241,7 @@ pub fn hd_store_derive(data: &[u8]) -> Result<Vec<u8>> {
     let accounts_rsp = AccountsResponse {
         accounts: account_responses,
     };
-    flush_keystore(keystore);
+    flush_keystore(keystore)?;
     encode_message(accounts_rsp)
 }
 
@@ -430,7 +428,7 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
     if param.r#type == KeyType::Mnemonic as i32 {
         key_hash = key_hash_from_mnemonic(&param.value);
     } else {
-        let mut key_data: Vec<u8>;
+        let key_data: Vec<u8>;
         let decoded = hex::decode(param.value.to_string());
         if decoded.is_ok() {
             key_data = decoded.unwrap();
@@ -549,7 +547,7 @@ pub fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
     }?;
 
     //    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
-    keystore.unlock_by_password(&param.password);
+    keystore.unlock_by_password(&param.password)?;
     let input: TronMessageInput =
         TronMessageInput::decode(param.input.expect("TronMessageInput").value.clone())
             .expect("TronMessageInput");
