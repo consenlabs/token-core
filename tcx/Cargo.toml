@@ -31,9 +31,6 @@ base64 = "0.10.1"
 [lib]
 name = "tcx"
 crate-type = ["staticlib", "cdylib", "rlib"]
-#link = "TrezorCrypto"
-build = "build.rs"
-
 
 [build-dependencies]
 prost-build = "0.5.0"
