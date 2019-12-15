@@ -12,8 +12,8 @@ use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
 use tcx_primitive::{
-    Bip32DeterministicPublicKey, Derive, DerivePath, PrivateKey, PublicKey,
-    TypedDeterministicPublicKey, DeterministicPublicKey, FromHex
+    Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPublicKey, FromHex, PrivateKey,
+    PublicKey, TypedDeterministicPublicKey,
 };
 
 use crate::transaction::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
