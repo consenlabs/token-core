@@ -7,7 +7,7 @@ use super::Error;
 use super::Result;
 use crate::keystore::Store;
 
-use tcx_crypto::hash::{dsha256, hex_dsha256};
+use tcx_crypto::hash::dsha256;
 use tcx_primitive::{
     KeyManage, PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPrivateKey,
 };
