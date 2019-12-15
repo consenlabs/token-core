@@ -428,7 +428,7 @@ mod tests {
     #[test]
     fn test_find_key() {
         let mut keystore = Keystore::from_json(KEYSTORE_JSON).unwrap();
-        keystore.unlock_by_password(PASSWORD);
+        keystore.unlock_by_password(PASSWORD).unwrap();
         let pk =
             keystore.find_private_key("BITCOINCASH", "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y21");
         assert!(pk.is_err());

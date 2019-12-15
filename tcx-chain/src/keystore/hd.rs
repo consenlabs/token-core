@@ -288,7 +288,6 @@ impl Display for HdKeystore {
 mod tests {
     use super::*;
     use crate::keystore::metadata_default_time;
-    use bitcoin_hashes::hex::ToHex;
 
     use crate::Source;
     use std::string::ToString;
@@ -350,11 +349,6 @@ mod tests {
         let mnemonic = keystore.mnemonic().unwrap();
         assert_eq!(mnemonic, MNEMONIC);
 
-        let expected_seed = "ee3fce3ccf05a2b58c851e321077a63ee2113235112a16fc783dc16279ff818a549ff735ac4406c624235db2d37108e34c6cbe853cbe09eb9e2369e6dd1c5aaa";
-
-        let seed = keystore.seed().unwrap();
-        assert_eq!(seed.to_hex(), expected_seed);
-
         let wrong_password_err = keystore.unlock_by_password("WrongPassword").err().unwrap();
         assert_eq!(format!("{}", wrong_password_err), "password_incorrect");
     }
@@ -369,7 +363,7 @@ mod tests {
             network: "MAINNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let _ = keystore.unlock_by_password(PASSWORD);
+        let _ = keystore.unlock_by_password(PASSWORD).unwrap();
 
         let acc = keystore.derive_coin::<MockAddress>(&coin_info).unwrap();
 
