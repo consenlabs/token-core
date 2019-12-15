@@ -80,12 +80,6 @@ impl HdKeystore {
         Ok(cache.mnemonic.to_string())
     }
 
-    pub(crate) fn seed(&self) -> Result<&Vec<u8>> {
-        let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
-
-        Ok(&cache.seed)
-    }
-
     pub(crate) fn find_private_key(&self, symbol: &str, address: &str) -> Result<TypedPrivateKey> {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
@@ -351,7 +345,7 @@ mod tests {
         assert_eq!(decrypted_mnemonic, MNEMONIC);
         assert_eq!(keystore.store.active_accounts.len(), 0);
 
-        keystore.unlock_by_password(PASSWORD);
+        keystore.unlock_by_password(PASSWORD).unwrap();
 
         let mnemonic = keystore.mnemonic().unwrap();
         assert_eq!(mnemonic, MNEMONIC);
