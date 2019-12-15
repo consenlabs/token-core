@@ -15,8 +15,6 @@ pub struct BtcForkNetwork {
 }
 
 pub struct HdVersion {
-    pub_prefix: String,
-    prv_prefix: String,
     pub_version: [u8; 4],
     prv_version: [u8; 4],
 }
@@ -154,14 +152,10 @@ lazy_static! {
     static ref HD_VERSIONS: RwLock<Vec<HdVersion>> = {
         let mut versions = Vec::new();
         versions.push(HdVersion {
-            pub_prefix: "xpub".to_string(),
-            prv_prefix: "xprv".to_string(),
             pub_version: [0x04, 0x88, 0xB2, 0x1E],
             prv_version: [0x04, 0x88, 0xAD, 0xE4],
         });
         versions.push(HdVersion {
-            pub_prefix: "tpub".to_string(),
-            prv_prefix: "tprv".to_string(),
             pub_version: [0x04, 0x35, 0x87, 0xCF],
             prv_version: [0x04, 0x35, 0x83, 0x94],
         });
