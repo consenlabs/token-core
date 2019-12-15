@@ -103,8 +103,6 @@ pub trait DeterministicPrivateKey: Derive {
     fn deterministic_public_key(&self) -> Self::DeterministicPublicKey;
 }
 
-pub struct KeyManage();
-
 pub enum TypedPrivateKey {
     Secp256k1(Secp256k1PrivateKey),
 }

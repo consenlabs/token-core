@@ -37,16 +37,8 @@ pub(crate) struct Store {
 pub enum Error {
     #[fail(display = "invalid_mnemonic")]
     InvalidMnemonic,
-    #[fail(display = "invalid_key_type")]
-    InvalidKeyType,
-    #[fail(display = "invalid_secp256k1_public_key")]
-    InvalidSecp256k1PublicKey,
-    #[fail(display = "unsupported_curve")]
-    UnsupportedCurve,
     #[fail(display = "account_not_found")]
     AccountNotFound,
-    #[fail(display = "can_not_derive_pair_from_seed")]
-    CanNotDerivePairFromSeed,
     #[fail(display = "can_not_derive_key")]
     CannotDeriveKey,
     #[fail(display = "keystore_locked")]

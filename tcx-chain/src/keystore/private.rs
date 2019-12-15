@@ -8,9 +8,7 @@ use super::Result;
 use crate::keystore::Store;
 
 use tcx_crypto::hash::dsha256;
-use tcx_primitive::{
-    KeyManage, PrivateKey, PublicKey, Secp256k1PrivateKey, Secp256k1PublicKey, TypedPrivateKey,
-};
+use tcx_primitive::{PrivateKey, PublicKey, TypedPrivateKey};
 use uuid::Uuid;
 
 pub fn key_hash_from_private_key(data: &[u8]) -> String {
