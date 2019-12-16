@@ -24,11 +24,10 @@ use crate::handler::{
 };
 mod filemanager;
 use crate::filemanager::{cache_keystore, WALLET_FILE_DIR};
+extern crate serde_json;
 
 #[macro_use]
 extern crate failure;
-#[macro_use]
-extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
 
@@ -64,18 +63,18 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 /// dispatch protobuf rpc call
 #[no_mangle]
 pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
-    let hex_c_str = unsafe { CStr::from_ptr(hex_str) };
+    let hex_c_str = CStr::from_ptr(hex_str);
     let hex_str = hex_c_str.to_str().expect("parse_arguments to_str");
 
     let data = hex::decode(hex_str).expect("parse_arguments hex decode");
     let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
     let reply: Vec<u8> = match action.method.to_lowercase().as_str() {
         "init_token_core_x" => landingpad(|| {
-            handler::init_token_core_x(&action.param.unwrap().value);
+            handler::init_token_core_x(&action.param.unwrap().value).unwrap();
             Ok(vec![])
         }),
         "scan_keystores" => landingpad(|| {
-            handler::scan_keystores();
+            handler::scan_keystores().unwrap();
             Ok(vec![])
         }),
         "hd_store_create" => landingpad(|| hd_store_create(&action.param.unwrap().value)),
@@ -204,15 +203,12 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 mod tests {
     use super::*;
     use crate::filemanager::{KEYSTORE_MAP, WALLET_FILE_DIR};
-    use serde_json::Value;
     use std::ffi::{CStr, CString};
     use std::fs::remove_file;
     use std::os::raw::c_char;
     use std::panic;
     use std::path::Path;
-    use std::str::FromStr;
 
-    use crate::api::{InitTokenCoreXParam, KeystoreCommonExistsResult, WalletResult};
     use crate::init_token_core_x;
     use bytes::BytesMut;
     use prost::Message;

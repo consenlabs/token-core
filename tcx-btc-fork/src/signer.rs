@@ -1,4 +1,4 @@
-use tcx_chain::{HdKeystore, Keystore, Source, TransactionSigner};
+use tcx_chain::{Keystore, TransactionSigner};
 
 use bitcoin::{OutPoint, Script, Transaction, TxIn, TxOut};
 use bitcoin_hashes::sha256d::Hash as Hash256;
@@ -12,9 +12,8 @@ use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
 use tcx_primitive::{
-    Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPrivateKey,
-    DeterministicPublicKey, PrivateKey, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec,
-    TypedDeterministicPublicKey, TypedPrivateKey,
+    Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPublicKey, FromHex, PrivateKey,
+    PublicKey, TypedDeterministicPublicKey,
 };
 
 use crate::transaction::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
@@ -25,8 +24,6 @@ use bitcoin_hashes::hex::ToHex as HashToHex;
 use std::marker::PhantomData;
 use tcx_chain::Address;
 use tcx_constants::CoinInfo;
-use tcx_primitive::FromHex;
-use tcx_primitive::{get_account_path, PublicKey};
 
 const DUST: u64 = 546;
 const SIGHASH_ALL: u8 = 0x01;
@@ -92,22 +89,6 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
             _marker_s: PhantomData,
             _marker_t: PhantomData,
         }
-    }
-
-    fn collect_key_pair_paths(&self, path: &str) -> Result<Vec<String>> {
-        let mut paths: Vec<String> = vec![];
-        let account_path = get_account_path(path)?;
-
-        for unspent in &self.tx_input.unspents {
-            let derived_path = unspent.derived_path.trim();
-            let path_with_space = derived_path.replace("/", " ");
-
-            let path_idxs: Vec<&str> = path_with_space.split(' ').collect();
-            ensure!(path_idxs.len() == 2, "derived path must be x/x");
-
-            paths.push(format!("{}/{}", account_path, derived_path));
-        }
-        Ok(paths)
     }
 
     fn receive_script_pubkey(&self) -> Result<Script> {

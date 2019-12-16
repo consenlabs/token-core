@@ -13,7 +13,7 @@ use std::collections::HashMap;
 
 use std::str::FromStr;
 use tcx_constants::CoinInfo;
-use tcx_crypto::hash::{dsha256, hex_dsha256, str_dsha256};
+use tcx_crypto::hash::dsha256;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
     generate_mnemonic, get_account_path, Derive, DerivePath, DeterministicType, ToHex,
@@ -78,12 +78,6 @@ impl HdKeystore {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
         Ok(cache.mnemonic.to_string())
-    }
-
-    pub(crate) fn seed(&self) -> Result<&Vec<u8>> {
-        let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
-
-        Ok(&cache.seed)
     }
 
     pub(crate) fn find_private_key(&self, symbol: &str, address: &str) -> Result<TypedPrivateKey> {
@@ -294,7 +288,6 @@ impl Display for HdKeystore {
 mod tests {
     use super::*;
     use crate::keystore::metadata_default_time;
-    use bitcoin_hashes::hex::ToHex;
 
     use crate::Source;
     use std::string::ToString;
@@ -351,15 +344,10 @@ mod tests {
         assert_eq!(decrypted_mnemonic, MNEMONIC);
         assert_eq!(keystore.store.active_accounts.len(), 0);
 
-        keystore.unlock_by_password(PASSWORD);
+        keystore.unlock_by_password(PASSWORD).unwrap();
 
         let mnemonic = keystore.mnemonic().unwrap();
         assert_eq!(mnemonic, MNEMONIC);
-
-        let expected_seed = "ee3fce3ccf05a2b58c851e321077a63ee2113235112a16fc783dc16279ff818a549ff735ac4406c624235db2d37108e34c6cbe853cbe09eb9e2369e6dd1c5aaa";
-
-        let seed = keystore.seed().unwrap();
-        assert_eq!(seed.to_hex(), expected_seed);
 
         let wrong_password_err = keystore.unlock_by_password("WrongPassword").err().unwrap();
         assert_eq!(format!("{}", wrong_password_err), "password_incorrect");
@@ -375,7 +363,7 @@ mod tests {
             network: "MAINNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let _ = keystore.unlock_by_password(PASSWORD);
+        let _ = keystore.unlock_by_password(PASSWORD).unwrap();
 
         let acc = keystore.derive_coin::<MockAddress>(&coin_info).unwrap();
 

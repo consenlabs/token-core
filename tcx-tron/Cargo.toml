@@ -14,7 +14,7 @@ prost = "0.5.0"
 bytes = "0.4.12"
 
 hex-literal = "0.1.4"
-bitcoin = "0.20.0"
+bitcoin = "0.21.0"
 secp256k1 = {version ="0.15", features = ["recovery"] }
 tiny-bip39 = "0.6.0"
 bitcoin_hashes = "0.7"

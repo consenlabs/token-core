@@ -16,10 +16,7 @@ use tcx_chain::Address;
 use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcForkNetwork};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CoinInfo;
-use tcx_primitive::{
-    DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey, Secp256k1PrivateKey,
-    Secp256k1PublicKey, Ss58Codec, TypedPublicKey,
-};
+use tcx_primitive::{Ss58Codec, TypedPublicKey};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BtcForkAddress {
