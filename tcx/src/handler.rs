@@ -155,7 +155,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     let mut founded_id: Option<String> = None;
     {
-        let key_hash = key_hash_from_mnemonic(&param.mnemonic);
+        let key_hash = key_hash_from_mnemonic(&param.mnemonic)?;
         let map = KEYSTORE_MAP.read().unwrap();
         if let Some(founded) = map
             .values()
@@ -174,7 +174,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     meta.password_hint = param.password_hint.to_owned();
     meta.source = Source::Mnemonic;
 
-    let ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta);
+    let ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta)?;
 
     let mut keystore = Keystore::Hd(ks);
 
@@ -426,7 +426,7 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
         KeystoreCommonExistsParam::decode(data).expect("keystore_common_exists params");
     let key_hash: String;
     if param.r#type == KeyType::Mnemonic as i32 {
-        key_hash = key_hash_from_mnemonic(&param.value);
+        key_hash = key_hash_from_mnemonic(&param.value)?;
     } else {
         let key_data: Vec<u8>;
         let decoded = hex::decode(param.value.to_string());
@@ -596,6 +596,7 @@ mod tests {
             fs::create_dir_all(p);
         }
 
+        *tcx_crypto::KDF_ROUNDS.write().unwrap() = 1024;
         let param = InitTokenCoreXParam {
             file_dir: "/tmp/imtoken/wallets".to_string(),
             xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
@@ -710,6 +711,30 @@ mod tests {
                 "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r"
             );
             remove_created_wallet(&import_result.id);
+        })
+    }
+
+    #[test]
+    pub fn test_hd_store_import_invalid_params() {
+        run_test(|| {
+            let invalid_mnemonics = vec![
+                "inject kidney empty canal shadow pact comfort wife crush horse",
+                "inject kidney empty canal shadow pact comfort wife crush horse wife wife",
+                "inject kidney empty canal shadow pact comfort wife crush horse hello",
+            ];
+            for mn in invalid_mnemonics {
+                let param = HdStoreImportParam {
+                    mnemonic: format!("{} {}", MNEMONIC, "hello"),
+                    password: PASSWORD.to_string(),
+                    source: "MNEMONIC".to_string(),
+                    name: "test-wallet".to_string(),
+                    password_hint: "imtoken".to_string(),
+                    overwrite: true,
+                };
+
+                let ret = hd_store_import(&encode_message(param).unwrap());
+                assert!(ret.is_err());
+            }
         })
     }
 
@@ -871,6 +896,57 @@ mod tests {
                 "ckt1qyqgkffut7e7md39tp5ts9vxssj7wdw8z4cquyflka",
                 derived_accounts.accounts[4].address
             );
+
+            remove_created_wallet(&import_result.id);
+        })
+    }
+
+    #[test]
+    pub fn test_hd_store_derive_invalid_param() {
+        run_test(|| {
+            let param = HdStoreImportParam {
+                mnemonic: OTHER_MNEMONIC.to_string(),
+                password: PASSWORD.to_string(),
+                source: "MNEMONIC".to_string(),
+                name: "test-wallet".to_string(),
+                password_hint: "imtoken".to_string(),
+                overwrite: true,
+            };
+            let ret = hd_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(&ret).unwrap();
+
+            let invalid_derivations = vec![
+                Derivation {
+                    chain_type: "WRONG_CHAIN_TYPE".to_string(),
+                    path: "m/44'/2'/0'/0/0".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "LITECOIN".to_string(),
+                    path: "WRONG/PATH".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "P2WPKH".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "LITECOIN".to_string(),
+                    path: "49'/1'/0'/0/0".to_string(),
+                    network: "TESTNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+            ];
+            for derivation in invalid_derivations {
+                let param = HdStoreDeriveParam {
+                    id: import_result.id.to_string(),
+                    password: PASSWORD.to_string(),
+                    derivations: vec![derivation],
+                };
+                let ret = hd_store_derive(&encode_message(param).unwrap());
+                assert!(ret.is_err());
+            }
 
             remove_created_wallet(&import_result.id);
         })

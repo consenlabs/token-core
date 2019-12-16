@@ -472,7 +472,7 @@ mod tests {
         assert_eq!(0, keystore.accounts().len());
         assert!(keystore.determinable());
 
-        let hd_store = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default());
+        let hd_store = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default()).unwrap();
         let keystore = Hd(hd_store);
         assert_eq!(0, keystore.accounts().len());
         assert!(keystore.determinable());
