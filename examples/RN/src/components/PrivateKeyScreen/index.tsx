@@ -147,6 +147,13 @@ class CPK extends React.Component<Props, State> {
           />
           {!!deleteSuccess && <Text testID="deleteSuccess">{`deleteSuccess`}</Text>}
         </View>
+        <View>
+          <Button
+            testID="clearOutput"
+            title="clearOutput"
+            onPress={this.clearOutput}
+          />
+        </View>
       </View>
     )
   }
@@ -234,6 +241,17 @@ class CPK extends React.Component<Props, State> {
       this.setState({ isLoading: false })
       Alert.alert('', err.message)
     }
+  }
+
+  clearOutput = async () => {
+    this.setState({ 
+      address: '',
+      exportPrivateKey: '',
+      verifySuccess: '',
+      isExists: '',
+      accounts: '',
+      deleteSuccess: ''
+    })
   }
 
 }

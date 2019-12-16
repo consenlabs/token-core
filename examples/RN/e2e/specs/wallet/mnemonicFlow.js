@@ -1,13 +1,14 @@
 /**
  * mnemonic flow test
  *
- * import -> verify keystore -> delete
+ * import -> export -> repeat import -> verify keystore -> delete
  */
 
 import importMnemonic from './base/importMnemonic'
 
 import {
   PASSWORD,
+  REPEAT_PASSWORD,
   MNEMONIC_12,
   MNEMONIC_24,
   CHAINTYPES,
@@ -25,6 +26,7 @@ import {
   LITECOIN_MAINNET_MNEMONIC_24_ADDRESS,
   TRON_MAINNET_MNEMONIC_24_ADDRESS,
 } from '../../constant'
+
 import { formatHdStoreParams } from '../../chain'
 
 export const MNEMONICS = {
@@ -46,7 +48,7 @@ export const ADDRESSES = {
   TRON_TESTNET_MNEMONIC_24_ADDRESS,
 }
 
-export default function () {
+export default function (repeatImport, runRobust) {
   describe('⏳ mnemonic flow', () => {
     for (const chainIndex in CHAINTYPES) {
       for (const networkIndex in NETWORKS) {
@@ -65,7 +67,7 @@ export default function () {
               network,
               segWit: 'NONE',
             })
-            await importMnemonic({ ...params, address })
+            await importMnemonic({ ...params, address, repeatImport, runRobust, REPEAT_PASSWORD})
           })
         }
       }
