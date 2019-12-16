@@ -203,15 +203,12 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 mod tests {
     use super::*;
     use crate::filemanager::{KEYSTORE_MAP, WALLET_FILE_DIR};
-    use serde_json::Value;
     use std::ffi::{CStr, CString};
     use std::fs::remove_file;
     use std::os::raw::c_char;
     use std::panic;
     use std::path::Path;
-    use std::str::FromStr;
 
-    use crate::api::{InitTokenCoreXParam, KeystoreCommonExistsResult, WalletResult};
     use crate::init_token_core_x;
     use bytes::BytesMut;
     use prost::Message;

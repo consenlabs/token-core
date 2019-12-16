@@ -304,7 +304,7 @@ mod tests {
     #[test]
     pub fn pbkdf2_params_default_test() {
         let param = Pbkdf2Params::default();
-        let mut default = Pbkdf2Params {
+        let default = Pbkdf2Params {
             c: default_kdf_rounds(),
             prf: "hmac-sha256".to_owned(),
             dklen: 32,

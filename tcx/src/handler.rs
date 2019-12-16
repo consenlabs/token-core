@@ -574,15 +574,11 @@ mod tests {
     };
     use crate::handler::{hd_store_import, init_token_core_x};
     use prost::Message;
-    use serde_json::error::ErrorCode::ExpectedObjectOrArray;
     use std::collections::HashMap;
-    use std::ffi::{CStr, CString};
-    use std::fs::{create_dir, remove_file};
-    use std::os::raw::c_char;
+    use std::fs::remove_file;
     use std::path::Path;
-    use std::sync::{RwLockReadGuard, RwLockWriteGuard};
+    use std::sync::RwLockWriteGuard;
     use std::{fs, panic};
-    use tcx_btc_fork::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
     use tcx_chain::Keystore;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
     use tcx_tron::transaction::{TronTxInput, TronTxOutput};
