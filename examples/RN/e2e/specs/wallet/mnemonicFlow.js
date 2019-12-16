@@ -5,6 +5,7 @@
  */
 
 import importMnemonic from './base/importMnemonic'
+import robustImportMnemonic from './base/robustImportMnemonic'
 
 import {
   PASSWORD,
@@ -67,10 +68,31 @@ export default function (repeatImport, runRobust) {
               network,
               segWit: 'NONE',
             })
-            await importMnemonic({ ...params, address, repeatImport, runRobust, REPEAT_PASSWORD})
+            // await importMnemonic({ ...params, address, repeatImport, REPEAT_PASSWORD})
           })
         }
       }
+    }
+
+    for (const chainIndex in CHAINTYPES) {
+
+      let chainType = CHAINTYPES[chainIndex]
+      let network = 'MAINNET'
+      let mnemonic = MNEMONIC_12
+      let address = ADDRESSES[chainType + '_' + network + '_MNEMONIC_12_ADDRESS']
+
+      it(`should roubust import ${chainType} wallet, network is ${network}, mnemonic is ${mnemonic} and the expected address is ${address}`, async () => {
+        const params = formatHdStoreParams({
+          mnemonic,
+          chainType,
+          password: PASSWORD,
+          network,
+          segWit: 'NONE',
+        })
+        if (runRobust) {
+          await robustImportMnemonic({ ...params, address })
+        }
+      })
     }
   })
 }
