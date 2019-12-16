@@ -1093,24 +1093,19 @@ mod tests {
 
             let out_points = vec![
                 OutPoint {
-                    tx_hash: hex::decode(
-                        "fb9c020db967e84af1fbd755df5bc23427e2ed70f73e07895a0c394f6195f083",
-                    )
-                    .unwrap(),
+                    tx_hash: "0xfb9c020db967e84af1fbd755df5bc23427e2ed70f73e07895a0c394f6195f083"
+                        .to_owned(),
                     index: 0,
                 },
                 OutPoint {
-                    tx_hash: hex::decode(
-                        "fb9c020db967e84af1fbd755df5bc23427e2ed70f73e07895a0c394f6195f083",
-                    )
-                    .unwrap(),
+                    tx_hash: "0xfb9c020db967e84af1fbd755df5bc23427e2ed70f73e07895a0c394f6195f083"
+                        .to_owned(),
                     index: 1,
                 },
             ];
 
             let code_hash =
-                hex::decode("9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8")
-                    .unwrap();
+                "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8".to_owned();
 
             let input = CkbTxInput {
                 inputs: vec![
@@ -1130,7 +1125,7 @@ mod tests {
                         lock: Some(Script {
                             hash_type: "type".to_string(),
                             code_hash: code_hash.clone(),
-                            args: hex::decode("b45772677603bccc71194b2557067fb361c1e093").unwrap(),
+                            args: "0xb45772677603bccc71194b2557067fb361c1e093".to_owned(),
                         }),
                         out_point: Some(out_points[0].clone()),
                         derive_path: "0/1".to_string(),
@@ -1140,16 +1135,14 @@ mod tests {
                         lock: Some(Script {
                             hash_type: "type".to_string(),
                             code_hash: code_hash.clone(),
-                            args: hex::decode("2d79d9ed37184c1136bcfbe229947a137f80dec0").unwrap(),
+                            args: "0x2d79d9ed37184c1136bcfbe229947a137f80dec0".to_owned(),
                         }),
                         out_point: Some(out_points[1].clone()),
                         derive_path: "1/0".to_string(),
                     },
                 ],
-                tx_hash: hex::decode(
-                    "102b8e88daadf1b035577b4d5ea4f604be965df6a918e72daeff6c0c40753401",
-                )
-                .unwrap(),
+                tx_hash: "0x102b8e88daadf1b035577b4d5ea4f604be965df6a918e72daeff6c0c40753401"
+                    .to_owned(),
             };
 
             let tx = SignParam {
@@ -1165,8 +1158,9 @@ mod tests {
             let tx_bytes = encode_message(tx).unwrap();
             let ret = sign_tx(&tx_bytes).unwrap();
             let output: CkbTxOutput = CkbTxOutput::decode(&ret).unwrap();
-            assert_eq!("5500000010000000550000005500000041000000776e010ac7e7166afa50fe54cfecf0a7106a2f11e8110e071ccab67cb30ed5495aa5c5f5ca2967a2fe4a60d5ad8c811382e51d8f916ba2911552bef6dedeca8a00", hex::encode(output.witnesses[0].serialize()));
-            assert_eq!("5500000010000000550000005500000041000000914591d8abd5233740207337b0588fec58cad63143ddf204970526022b6db26d68311e9af49e1625e3a90e8a66eb1694632558d561d1e5d02cc7c7254e2d546100", hex::encode(output.witnesses[1].serialize()));
+            assert_eq!("5500000010000000550000005500000041000000776e010ac7e7166afa50fe54cfecf0a7106a2f11e8110e071ccab67cb30ed5495aa5c5f5ca2967a2fe4a60d5ad8c811382e51d8f916ba2911552bef6dedeca8a00", hex::encode(output.witnesses[0].serialize().unwrap()));
+            assert_eq!("5500000010000000550000005500000041000000914591d8abd5233740207337b0588fec58cad63143ddf204970526022b6db26d68311e9af49e1625e3a90e8a66eb1694632558d561d1e5d02cc7c7254e2d546100", hex::encode(output.witnesses[1].serialize().unwrap()));
+
             remove_created_wallet(&import_result.id);
         })
     }

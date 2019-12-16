@@ -2,19 +2,19 @@ syntax = "proto3";
 package transaction;
 
 message OutPoint {
-   bytes txHash = 1;
+   string txHash = 1;
    int32 index = 2;
 }
 
 message Witness {
-    bytes lock = 1;
-    bytes inputType = 2;
-    bytes outputType = 3;
+    string lock = 1;
+    string inputType = 2;
+    string outputType = 3;
 }
 
 message Script {
-   bytes args = 1;
-   bytes codeHash = 2;
+   string args = 1;
+   string codeHash = 2;
    string hashType = 3;
 }
 
@@ -36,11 +36,11 @@ message CkbTxInput {
 
     repeated CachedCell cachedCells = 3;
 
-    bytes txHash = 4;
+    string txHash = 4;
 }
 
 message CkbTxOutput {
-    bytes txHash = 1;
+    string txHash = 1;
     repeated Witness witnesses = 2;
 }
 
