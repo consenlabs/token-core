@@ -2,6 +2,8 @@ export const CHAINTYPES = ['BITCOINCASH', 'LITECOIN', 'TRON']
 export const NETWORKS = ['MAINNET', 'TESTNET']
 
 export const PASSWORD = '123123123!@#$%'
+export const REPEAT_PASSWORD = '123412341234!@#$%'
+
 // MNEMONIC_12
 export const MNEMONIC_12 = 'inject kidney empty canal shadow pact comfort wife crush horse wife sketch'
 // TESTNET MNEMONIC_12 ADDRESS
