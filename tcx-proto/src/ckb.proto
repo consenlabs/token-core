@@ -41,6 +41,6 @@ message CkbTxInput {
 
 message CkbTxOutput {
     string txHash = 1;
-    repeated Witness witnesses = 2;
+    repeated string witnesses = 2;
 }
 

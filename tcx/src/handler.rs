@@ -1158,8 +1158,8 @@ mod tests {
             let tx_bytes = encode_message(tx).unwrap();
             let ret = sign_tx(&tx_bytes).unwrap();
             let output: CkbTxOutput = CkbTxOutput::decode(&ret).unwrap();
-            assert_eq!("5500000010000000550000005500000041000000776e010ac7e7166afa50fe54cfecf0a7106a2f11e8110e071ccab67cb30ed5495aa5c5f5ca2967a2fe4a60d5ad8c811382e51d8f916ba2911552bef6dedeca8a00", hex::encode(output.witnesses[0].serialize().unwrap()));
-            assert_eq!("5500000010000000550000005500000041000000914591d8abd5233740207337b0588fec58cad63143ddf204970526022b6db26d68311e9af49e1625e3a90e8a66eb1694632558d561d1e5d02cc7c7254e2d546100", hex::encode(output.witnesses[1].serialize().unwrap()));
+            assert_eq!("0x5500000010000000550000005500000041000000776e010ac7e7166afa50fe54cfecf0a7106a2f11e8110e071ccab67cb30ed5495aa5c5f5ca2967a2fe4a60d5ad8c811382e51d8f916ba2911552bef6dedeca8a00", output.witnesses[0]);
+            assert_eq!("0x5500000010000000550000005500000041000000914591d8abd5233740207337b0588fec58cad63143ddf204970526022b6db26d68311e9af49e1625e3a90e8a66eb1694632558d561d1e5d02cc7c7254e2d546100",output.witnesses[1]);
 
             remove_created_wallet(&import_result.id);
         })
