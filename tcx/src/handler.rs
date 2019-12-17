@@ -608,7 +608,7 @@ mod tests {
     fn setup() {
         let p = Path::new("/tmp/imtoken/wallets");
         if !p.exists() {
-            fs::create_dir_all(p);
+            fs::create_dir_all(p).expect("shoud create filedir");
         }
 
         *tcx_crypto::KDF_ROUNDS.write().unwrap() = 1024;
@@ -618,9 +618,7 @@ mod tests {
             xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
         };
 
-        unsafe {
-            init_token_core_x(&encode_message(param).unwrap());
-        }
+        init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");
     }
 
     fn teardown() {
@@ -638,7 +636,7 @@ mod tests {
             {
                 continue;
             }
-            remove_file(fp.as_path());
+            remove_file(fp.as_path()).expect("should remove file");
         }
     }
 
@@ -663,9 +661,9 @@ mod tests {
                 map.clear();
                 assert_eq!(0, map.len());
             }
-            scan_keystores();
+            scan_keystores().expect("should rescan keystores");
             {
-                let mut map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
+                let map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
                     KEYSTORE_MAP.write().unwrap();
 
                 assert_eq!(keystore_count, map.len());
@@ -1104,7 +1102,6 @@ mod tests {
             let ret: KeystoreCommonExistsResult =
                 KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
             assert_eq!(false, ret.is_exists);
-            remove_created_wallet(&import_result.id);
         })
     }
 
@@ -1432,11 +1429,11 @@ mod tests {
     }
 
     fn remove_created_wallet(wid: &str) {
-        let file_dir = WALLET_FILE_DIR.read().unwrap();
+        let _file_dir = WALLET_FILE_DIR.read().unwrap();
 
         let full_file_path = format!("{}/{}.json", "/tmp/imtoken/wallets", wid);
         let p = Path::new(&full_file_path);
         println!("{:?}", p);
-        remove_file(p);
+        remove_file(p).expect("should remove file");
     }
 }

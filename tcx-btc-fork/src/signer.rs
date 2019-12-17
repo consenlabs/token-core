@@ -444,7 +444,7 @@ mod tests {
             };
 
         let mut keystore = Keystore::from_json(keystore_json).unwrap();
-        keystore.unlock_by_password("imtoken1");
+        let _ = keystore.unlock_by_password("imtoken1");
         let expected = keystore
             .sign_transaction("LITECOIN", "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN", &tran)
             .unwrap();
@@ -578,7 +578,7 @@ mod tests {
             };
 
         let mut keystore = Keystore::from_json(keystore_json).unwrap();
-        keystore.unlock_by_password("imtoken1");
+        let _ = keystore.unlock_by_password("imtoken1");
         let ret =
             keystore.sign_transaction("LITECOIN", "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN", &tran);
         assert!(ret.is_err());
