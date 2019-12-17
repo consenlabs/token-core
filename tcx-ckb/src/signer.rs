@@ -50,7 +50,7 @@ impl<'a> CkbTxSigner<'a> {
                 ws.extend(&witnesses[input_cells.len()..]);
             }
 
-            let path = &input_cells[item.1[0]].derive_path;
+            let path = &input_cells[item.1[0]].derived_path;
 
             let signed_witness = self.sign_witness_group(tx_hash, &ws, path)?;
             raw_witnesses[item.1[0]] = signed_witness.try_to_string()?;

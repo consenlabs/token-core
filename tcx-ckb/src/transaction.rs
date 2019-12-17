@@ -39,7 +39,7 @@ pub struct CachedCell {
     #[prost(message, optional, tag = "3")]
     pub out_point: ::std::option::Option<OutPoint>,
     #[prost(string, tag = "4")]
-    pub derive_path: std::string::String,
+    pub derived_path: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CkbTxInput {

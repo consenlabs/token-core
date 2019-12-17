@@ -1128,7 +1128,7 @@ mod tests {
                             args: "0xb45772677603bccc71194b2557067fb361c1e093".to_owned(),
                         }),
                         out_point: Some(out_points[0].clone()),
-                        derive_path: "0/1".to_string(),
+                        derived_path: "0/1".to_string(),
                     },
                     CachedCell {
                         capacity: 0,
@@ -1138,7 +1138,7 @@ mod tests {
                             args: "0x2d79d9ed37184c1136bcfbe229947a137f80dec0".to_owned(),
                         }),
                         out_point: Some(out_points[1].clone()),
-                        derive_path: "1/0".to_string(),
+                        derived_path: "1/0".to_string(),
                     },
                 ],
                 tx_hash: "0x102b8e88daadf1b035577b4d5ea4f604be965df6a918e72daeff6c0c40753401"
