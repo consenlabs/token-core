@@ -56,6 +56,6 @@ pub struct CkbTxInput {
 pub struct CkbTxOutput {
     #[prost(string, tag = "1")]
     pub tx_hash: std::string::String,
-    #[prost(message, repeated, tag = "2")]
-    pub witnesses: ::std::vec::Vec<Witness>,
+    #[prost(string, repeated, tag = "2")]
+    pub witnesses: ::std::vec::Vec<std::string::String>,
 }

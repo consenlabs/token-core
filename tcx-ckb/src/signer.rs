@@ -25,7 +25,7 @@ impl<'a> CkbTxSigner<'a> {
         tx_hash: &[u8],
         witnesses: &Vec<Witness>,
         input_cells: &Vec<&CachedCell>,
-    ) -> Result<Vec<Witness>> {
+    ) -> Result<Vec<String>> {
         // tx_hash must be 256 bit length
         if tx_hash.len() != 32 {
             return Err(Error::InvalidTxHash.into());
@@ -37,7 +37,10 @@ impl<'a> CkbTxSigner<'a> {
 
         let grouped_scripts = self.group_script(input_cells)?;
 
-        let mut raw_witnesses = witnesses.to_vec();
+        let mut raw_witnesses: Vec<String> = vec![];
+        for w in witnesses.iter() {
+            raw_witnesses.push(w.try_to_string()?)
+        }
 
         for item in grouped_scripts.iter() {
             let mut ws = vec![];
@@ -50,7 +53,7 @@ impl<'a> CkbTxSigner<'a> {
             let path = &input_cells[item.1[0]].derive_path;
 
             let signed_witness = self.sign_witness_group(tx_hash, &ws, path)?;
-            raw_witnesses[item.1[0]] = signed_witness;
+            raw_witnesses[item.1[0]] = signed_witness.try_to_string()?;
         }
 
         Ok(raw_witnesses)
@@ -312,16 +315,10 @@ mod tests {
 
         // same as the input length
         assert_eq!(tx_output.witnesses.len(), 4);
-        assert_eq!(
-            tx_output.witnesses[3].serialize().unwrap(),
-            Witness::default().serialize().unwrap(),
-        );
-        assert_eq!(
-            tx_output.witnesses[2].serialize().unwrap(),
-            Witness::default().serialize().unwrap(),
-        );
+        assert_eq!(tx_output.witnesses[3], "0x");
+        assert_eq!(tx_output.witnesses[2], "0x");
 
-        assert_eq!(hex::encode(tx_output.witnesses[0].serialize().unwrap()), "5500000010000000550000005500000041000000d59792eee1e67747d25a36304bf155665a9b552ecda2d84390ba6acfc422dc3f4b599165078ed98c4e930dec79866b50984f3458c5010faefce6574b9659329501");
+        assert_eq!(tx_output.witnesses[0], "0x5500000010000000550000005500000041000000d59792eee1e67747d25a36304bf155665a9b552ecda2d84390ba6acfc422dc3f4b599165078ed98c4e930dec79866b50984f3458c5010faefce6574b9659329501");
 
         let mut ks = Keystore::from_private_key(
             "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
@@ -345,15 +342,9 @@ mod tests {
 
         // same as the input length
         assert_eq!(tx_output.witnesses.len(), 4);
-        assert_eq!(
-            tx_output.witnesses[3].serialize().unwrap(),
-            Witness::default().serialize().unwrap(),
-        );
-        assert_eq!(
-            tx_output.witnesses[2].serialize().unwrap(),
-            Witness::default().serialize().unwrap(),
-        );
+        assert_eq!(tx_output.witnesses[3], "0x");
+        assert_eq!(tx_output.witnesses[2], "0x");
 
-        assert_eq!(hex::encode(tx_output.witnesses[1].serialize().unwrap()), "550000001000000055000000550000004100000091af5eeb1632565dc4a9fb1c6e08d1f1c7da96e10ee00595a2db208f1d15faca03332a1f0f7a0f8522f6e112bb8dde4ed0015d1683b998744a0d8644f0dfd0f800");
+        assert_eq!(tx_output.witnesses[1], "0x550000001000000055000000550000004100000091af5eeb1632565dc4a9fb1c6e08d1f1c7da96e10ee00595a2db208f1d15faca03332a1f0f7a0f8522f6e112bb8dde4ed0015d1683b998744a0d8644f0dfd0f800");
     }
 }
