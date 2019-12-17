@@ -1,5 +1,6 @@
 pub mod aes;
 pub mod crypto;
+pub mod hash;
 pub mod numberic_util;
 
 use core::result;
@@ -10,9 +11,6 @@ use std::sync::RwLock;
 extern crate failure;
 #[macro_use]
 extern crate lazy_static;
-#[allow(unused_imports)]
-#[macro_use]
-extern crate hex_literal;
 
 pub type Result<T> = result::Result<T, failure::Error>;
 
@@ -33,4 +31,5 @@ lazy_static! {
         RwLock::new("B888D25EC8C12BD5043777B1AC49F872".to_string());
     pub static ref XPUB_COMMON_IV: RwLock<String> =
         RwLock::new("9C0C30889CBCC5E01AB5B2BB88715799".to_string());
+    pub static ref KDF_ROUNDS: RwLock<i32> = RwLock::new(262144);
 }

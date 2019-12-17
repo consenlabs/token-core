@@ -8,10 +8,13 @@ edition = "2018"
 tcx-crypto = { path = "../tcx-crypto" }
 tcx-chain = { path = "../tcx-chain" }
 tcx-primitive = { path = "../tcx-primitive" }
+tcx-constants = { path = "../tcx-constants" }
+
+prost = "0.5.0"
+bytes = "0.4.12"
 
 hex-literal = "0.1.4"
-keccak-hash = "0.2.0"
-bitcoin = "0.20.0"
+bitcoin = "0.21.0"
 secp256k1 = {version ="0.15", features = ["recovery"] }
 tiny-bip39 = "0.6.0"
 bitcoin_hashes = "0.7"
@@ -25,4 +28,6 @@ num-integer = "0.1"
 byteorder = "1.3.2"
 bytebuffer = "0.2.1"
 hex = "0.3.1"
-protobuf = { version = "2", features = ["with-bytes"] }
+sha3 = "0.8.2"
+digest = "0.8.1"
+

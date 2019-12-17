@@ -1,4 +1,8 @@
 # TokenCoreX
+
+[![Build status](https://travis-ci.org/consenlabs/token-core.svg?branch=dev)](https://travis-ci.org/consenlabs/token-core)
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/imtoken-wallet/token-core)
+
 Next generation core inside imToken Wallet.
 
 WARNING: not production ready yet.

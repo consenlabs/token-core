@@ -1,22 +1,29 @@
 use crate::Result;
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TxSignResult {
-    #[serde(rename = "sign")]
-    pub signature: String,
-    #[serde(rename = "hash")]
-    pub tx_hash: String,
-    pub wtx_id: String,
+pub trait TransactionSigner<Input, Output> {
+    fn sign_transaction(&mut self, symbol: &str, address: &str, tx: &Input) -> Result<Output>;
 }
 
-impl SignedTransaction for TxSignResult {}
+//pub trait Message: Sized {}
+//pub trait SignedMessage: Sized {}
+pub trait MessageSigner<Input, Output> {
+    fn sign_message(&mut self, symbol: &str, address: &str, message: &Input) -> Result<Output>;
+}
 
-pub trait Transaction: Sized {}
+pub trait ChainSigner {
+    fn sign_recoverable_hash(
+        &mut self,
+        data: &[u8],
+        symbol: &str,
+        address: &str,
+        path: Option<&str>,
+    ) -> Result<Vec<u8>>;
 
-pub trait SignedTransaction: Sized {}
-
-pub trait TransactionSigner<Input: Transaction, Output: SignedTransaction> {
-    fn sign_transaction(&self, tx: &Input, password: Option<&str>) -> Result<Output>;
+    fn sign_hash(
+        &mut self,
+        data: &[u8],
+        symbol: &str,
+        address: &str,
+        path: Option<&str>,
+    ) -> Result<Vec<u8>>;
 }

@@ -1,0 +1,46 @@
+syntax = "proto3";
+package transaction;
+
+message OutPoint {
+   string txHash = 1;
+   int32 index = 2;
+}
+
+message Witness {
+    string lock = 1;
+    string inputType = 2;
+    string outputType = 3;
+}
+
+message Script {
+   string args = 1;
+   string codeHash = 2;
+   string hashType = 3;
+}
+
+message CellInput {
+    OutPoint previousOutput = 1;
+    string since = 2;
+}
+
+message CachedCell {
+    int64 capacity = 1;
+    Script lock = 2;
+    OutPoint outPoint = 3;
+    string derivePath = 4;
+}
+
+message CkbTxInput {
+    repeated CellInput inputs = 1;
+    repeated Witness witnesses = 2;
+
+    repeated CachedCell cachedCells = 3;
+
+    string txHash = 4;
+}
+
+message CkbTxOutput {
+    string txHash = 1;
+    repeated Witness witnesses = 2;
+}
+
