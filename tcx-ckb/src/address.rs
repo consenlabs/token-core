@@ -22,7 +22,7 @@ impl Address for CkbAddress {
         Ok(bech32::encode(prefix, buf.to_base32())?)
     }
 
-    fn is_valid(address: &str) -> bool {
+    fn is_valid(address: &str, _coin: &CoinInfo) -> bool {
         let ret = bech32::decode(address);
         if ret.is_err() {
             return false;

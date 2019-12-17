@@ -319,7 +319,7 @@ mod tests {
             Ok("mock_address".to_string())
         }
 
-        fn is_valid(_address: &str) -> bool {
+        fn is_valid(_address: &str, _coin: &CoinInfo) -> bool {
             true
         }
     }

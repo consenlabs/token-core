@@ -62,7 +62,7 @@ pub trait Address {
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
     fn from_public_key(public_key: &TypedPublicKey, coin: &CoinInfo) -> Result<String>;
 
-    fn is_valid(address: &str) -> bool;
+    fn is_valid(address: &str, coin: &CoinInfo) -> bool;
 }
 
 /// Source to remember which format it comes from
@@ -489,5 +489,12 @@ mod tests {
         let keystore = PrivateKey(pk_store);
         assert_eq!(0, keystore.accounts().len());
         assert!(!keystore.determinable());
+
+        let ret = HdKeystore::from_mnemonic(
+            format!("{} hello", MNEMONIC).as_str(),
+            PASSWORD,
+            Metadata::default(),
+        );
+        assert!(ret.is_err())
     }
 }

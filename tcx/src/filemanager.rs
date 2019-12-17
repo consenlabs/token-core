@@ -11,6 +11,7 @@ use crate::error_handling::Result;
 lazy_static! {
     pub static ref KEYSTORE_MAP: RwLock<HashMap<String, Keystore>> = RwLock::new(HashMap::new());
     pub static ref WALLET_FILE_DIR: RwLock<String> = RwLock::new("../test-data".to_string());
+    pub static ref IS_DEBUG: RwLock<bool> = RwLock::new(false);
 }
 
 pub fn clean_keystore() {
