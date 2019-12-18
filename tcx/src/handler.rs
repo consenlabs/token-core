@@ -117,7 +117,9 @@ pub fn scan_keystores() -> Result<()> {
         let v: Value = serde_json::from_str(&contents).expect("read json from content");
 
         let version = v["version"].as_i64().expect("version");
-        if version != i64::from(HdKeystore::VERSION) {
+        if version != i64::from(HdKeystore::VERSION)
+            && version != i64::from(PrivateKeystore::VERSION)
+        {
             continue;
         }
         let keystore = Keystore::from_json(&contents)?;
@@ -618,7 +620,6 @@ mod tests {
         };
 
         init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");
-
     }
 
     fn teardown() {
