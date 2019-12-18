@@ -9,10 +9,10 @@ tcx-crypto = { path = "../tcx-crypto" }
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants" }
 
-bitcoin = "0.20.0"
+bitcoin = "0.21.0"
 byteorder = "1.2"
 secp256k1 = {version ="0.15", features = ["recovery"] }
-tiny-bip39 = "0.6.0"
+tiny-bip39 = "0.6.2"
 bitcoin_hashes = "0.7"
 uuid = { version = "0.7", features = ["serde", "v4"] }
 serde = { version = "1.0", features = ["derive"] }

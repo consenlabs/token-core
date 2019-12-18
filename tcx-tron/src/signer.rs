@@ -147,7 +147,8 @@ mod tests {
         };
 
         let meta = Metadata::default();
-        let mut keystore = Keystore::Hd(HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta));
+        let mut keystore =
+            Keystore::Hd(HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta).unwrap());
 
         let coin_info = CoinInfo {
             coin: "TRON".to_string(),

@@ -15,10 +15,7 @@ pub use self::{
 };
 use crate::signer::ChainSigner;
 use tcx_crypto::{Crypto, Pbkdf2Params};
-use tcx_primitive::{
-    DeterministicPrivateKey, PrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
-    TypedPublicKey,
-};
+use tcx_primitive::{TypedDeterministicPublicKey, TypedPrivateKey, TypedPublicKey};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,16 +34,8 @@ pub(crate) struct Store {
 pub enum Error {
     #[fail(display = "invalid_mnemonic")]
     InvalidMnemonic,
-    #[fail(display = "invalid_key_type")]
-    InvalidKeyType,
-    #[fail(display = "invalid_secp256k1_public_key")]
-    InvalidSecp256k1PublicKey,
-    #[fail(display = "unsupported_curve")]
-    UnsupportedCurve,
     #[fail(display = "account_not_found")]
     AccountNotFound,
-    #[fail(display = "can_not_derive_pair_from_seed")]
-    CanNotDerivePairFromSeed,
     #[fail(display = "can_not_derive_key")]
     CannotDeriveKey,
     #[fail(display = "keystore_locked")]
@@ -73,7 +62,7 @@ pub trait Address {
     // Incompatible between the trait `Address:PubKey is not implemented for `&<impl curve::PrivateKey as curve::PrivateKey>::PublicKey`
     fn from_public_key(public_key: &TypedPublicKey, coin: &CoinInfo) -> Result<String>;
 
-    fn is_valid(address: &str) -> bool;
+    fn is_valid(address: &str, coin: &CoinInfo) -> bool;
 }
 
 /// Source to remember which format it comes from
@@ -439,7 +428,7 @@ mod tests {
     #[test]
     fn test_find_key() {
         let mut keystore = Keystore::from_json(KEYSTORE_JSON).unwrap();
-        keystore.unlock_by_password(PASSWORD);
+        keystore.unlock_by_password(PASSWORD).unwrap();
         let pk =
             keystore.find_private_key("BITCOINCASH", "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y21");
         assert!(pk.is_err());
@@ -483,7 +472,7 @@ mod tests {
         assert_eq!(0, keystore.accounts().len());
         assert!(keystore.determinable());
 
-        let hd_store = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default());
+        let hd_store = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default()).unwrap();
         let keystore = Hd(hd_store);
         assert_eq!(0, keystore.accounts().len());
         assert!(keystore.determinable());
@@ -500,5 +489,12 @@ mod tests {
         let keystore = PrivateKey(pk_store);
         assert_eq!(0, keystore.accounts().len());
         assert!(!keystore.determinable());
+
+        let ret = HdKeystore::from_mnemonic(
+            format!("{} hello", MNEMONIC).as_str(),
+            PASSWORD,
+            Metadata::default(),
+        );
+        assert!(ret.is_err())
     }
 }

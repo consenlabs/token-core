@@ -130,5 +130,3 @@ pub fn coin_info_from_param(chain_type: &str, network: &str, seg_wit: &str) -> R
         Ok(coins.pop().expect("coin_info_from_param"))
     }
 }
-
-const NETWORK_COINS: [&str; 3] = ["BITCOINCASH", "LITECOIN", "BITCOIN"];

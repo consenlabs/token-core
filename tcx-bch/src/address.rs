@@ -73,9 +73,18 @@ impl Address for BchAddress {
         _legacy_to_bch(&addr)
     }
 
-    fn is_valid(address: &str) -> bool {
+    fn is_valid(address: &str, coin: &CoinInfo) -> bool {
         let converter = Converter::default();
-        converter.is_legacy_addr(address) || converter.is_cash_addr(address)
+
+        if converter.is_legacy_addr(address) || converter.is_cash_addr(address) {
+            if converter.is_mainnet_addr(address) {
+                return coin.network == "MAINNET";
+            } else {
+                return coin.network == "TESTNET";
+            }
+        } else {
+            return false;
+        }
     }
 }
 
@@ -211,16 +220,26 @@ mod tests {
 
     #[test]
     pub fn address_valid_test() {
+        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE").unwrap();
         assert!(BchAddress::is_valid(
-            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
+            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy",
+            &coin_info
+        ));
+        let coin_info = coin_info_from_param("BITCOINCASH", "TESTNET", "NONE").unwrap();
+        assert!(BchAddress::is_valid(
+            "bchtest:qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8",
+            &coin_info
         ));
         assert!(BchAddress::is_valid(
-            "bchtest:qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
+            "2N54wJxopnWTvBfqgAPVWqXVEdaqoH7Suvf",
+            &coin_info
         ));
-        assert!(BchAddress::is_valid("2N54wJxopnWTvBfqgAPVWqXVEdaqoH7Suvf"));
+
+        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE").unwrap();
         assert!(!BchAddress::is_valid(
-            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ym"
+            "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ym",
+            &coin_info
         ));
-        assert!(!BchAddress::is_valid("1234"));
+        assert!(!BchAddress::is_valid("1234", &coin_info));
     }
 }
