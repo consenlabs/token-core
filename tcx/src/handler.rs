@@ -5,7 +5,7 @@ use std::path::Path;
 use bytes::BytesMut;
 use prost::Message;
 use serde_json::Value;
-use tcx_primitive::{private_key_without_version, verify_private_key, FromHex, TypedPrivateKey};
+use tcx_primitive::{private_key_without_version, FromHex, TypedPrivateKey};
 
 use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
@@ -27,9 +27,7 @@ use crate::api::{
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
-use crate::filemanager::{
-    cache_keystore, clean_keystore, find_keystore_id_by_address, flush_keystore, WALLET_FILE_DIR,
-};
+use crate::filemanager::{cache_keystore, clean_keystore, flush_keystore, WALLET_FILE_DIR};
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 
 use std::sync::RwLockReadGuard;
@@ -628,7 +626,7 @@ mod tests {
             }
             scan_keystores();
             {
-                let mut map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
+                let map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
                     KEYSTORE_MAP.write().unwrap();
 
                 assert_eq!(keystore_count, map.len());
@@ -1031,7 +1029,6 @@ mod tests {
     #[test]
     pub fn test_keystore_common_verify() {
         run_test(|| {
-            let wallet = import_default_wallet();
             let wallets = vec![import_default_pk_store(), import_default_wallet()];
             for wallet in wallets {
                 let param: WalletKeyParam = WalletKeyParam {
@@ -1341,8 +1338,6 @@ mod tests {
     }
 
     fn remove_created_wallet(wid: &str) {
-        let file_dir = WALLET_FILE_DIR.read().unwrap();
-
         let full_file_path = format!("{}/{}.json", "/tmp/imtoken/wallets", wid);
         let p = Path::new(&full_file_path);
         println!("{:?}", p);

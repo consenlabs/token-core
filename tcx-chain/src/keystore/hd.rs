@@ -207,7 +207,7 @@ impl HdKeystore {
             ext_pub_key,
             seg_wit: coin_info.seg_wit.to_string(),
         };
-        if let Some(founded) = self
+        if let Some(_) = self
             .store
             .active_accounts
             .iter()

@@ -15,7 +15,7 @@ use std::str::FromStr;
 use tcx_chain::Address;
 use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcForkNetwork};
 use tcx_constants::coin_info::coin_info_from_param;
-use tcx_constants::{CoinInfo, CurveType};
+use tcx_constants::CoinInfo;
 use tcx_primitive::{Ss58Codec, TypedPrivateKey, TypedPublicKey};
 
 pub trait WifDisplay {

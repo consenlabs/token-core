@@ -9,8 +9,8 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use tcx_btc_fork::{BtcForkAddress, PubKeyScript, ScriptPubKeyComponent};
 use tcx_chain::Address;
-use tcx_constants::{CoinInfo, CurveType};
-use tcx_primitive::{Ss58Codec, TypedPrivateKey, TypedPrivateKeyDisplay, TypedPublicKey};
+use tcx_constants::CoinInfo;
+use tcx_primitive::TypedPublicKey;
 
 fn _legacy_to_bch(addr: &str) -> Result<String> {
     let convert = Converter::new();

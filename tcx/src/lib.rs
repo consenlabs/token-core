@@ -211,9 +211,6 @@ mod tests {
     use std::path::Path;
 
     use crate::init_token_core_x;
-    use bytes::BytesMut;
-    use prost::Message;
-    use tcx_chain::HdKeystore;
 
     static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
 
