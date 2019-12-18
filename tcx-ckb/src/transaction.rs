@@ -39,7 +39,7 @@ pub struct CachedCell {
     #[prost(message, optional, tag = "3")]
     pub out_point: ::std::option::Option<OutPoint>,
     #[prost(string, tag = "4")]
-    pub derive_path: std::string::String,
+    pub derived_path: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CkbTxInput {
@@ -56,6 +56,6 @@ pub struct CkbTxInput {
 pub struct CkbTxOutput {
     #[prost(string, tag = "1")]
     pub tx_hash: std::string::String,
-    #[prost(message, repeated, tag = "2")]
-    pub witnesses: ::std::vec::Vec<Witness>,
+    #[prost(string, repeated, tag = "2")]
+    pub witnesses: ::std::vec::Vec<std::string::String>,
 }

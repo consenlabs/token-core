@@ -45,6 +45,20 @@ impl Witness {
             inner_serialize(&self.output_type)?,
         ]))
     }
+
+    fn is_empty(&self) -> Result<bool> {
+        Ok(hex_to_bytes(&self.lock)?.len() == 0
+            && hex_to_bytes(&self.input_type)?.len() == 0
+            && hex_to_bytes(&self.output_type)?.len() == 0)
+    }
+
+    pub fn try_to_string(&self) -> Result<String> {
+        if self.is_empty()? {
+            return Ok("0x".to_owned());
+        } else {
+            return Ok(format!("0x{}", hex::encode(self.serialize()?)));
+        }
+    }
 }
 
 #[cfg(test)]
@@ -131,6 +145,28 @@ mod tests {
         assert_eq!(
             hex::encode(witness.serialize().unwrap()),
             "1a00000010000000100000001500000001000000100100000020"
+        );
+    }
+
+    #[test]
+    fn to_string() {
+        let witness = Witness {
+            lock: "0x".to_owned(),
+            input_type: "0x".to_owned(),
+            output_type: "0x".to_owned(),
+        };
+
+        assert_eq!(witness.try_to_string().unwrap(), "0x");
+
+        let witness = Witness {
+            lock: "0x".to_owned(),
+            input_type: "0x10".to_owned(),
+            output_type: "0x20".to_owned(),
+        };
+
+        assert_eq!(
+            witness.try_to_string().unwrap(),
+            "0x1a00000010000000100000001500000001000000100100000020"
         );
     }
 }
