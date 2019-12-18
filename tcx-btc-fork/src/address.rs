@@ -38,8 +38,14 @@ impl Address for BtcForkAddress {
         Ok(addr.to_string())
     }
 
-    fn is_valid(address: &str) -> bool {
-        BtcForkAddress::from_str(address).is_ok()
+    fn is_valid(address: &str, coin: &CoinInfo) -> bool {
+        let ret = BtcForkAddress::from_str(address);
+        if ret.is_err() {
+            false
+        } else {
+            let addr: BtcForkAddress = ret.unwrap();
+            addr.network.network == coin.network
+        }
     }
 }
 
@@ -119,7 +125,7 @@ fn bech32_network(bech32: &str) -> Option<BtcForkNetwork> {
     }
 }
 
-fn _decode_base58(addr: &str) -> result::Result<Vec<u8>, BtcAddressError> {
+fn decode_base58(addr: &str) -> result::Result<Vec<u8>, BtcAddressError> {
     // Base58
     if addr.len() > 50 {
         return Err(BtcAddressError::Base58(base58::Error::InvalidLength(
@@ -174,7 +180,7 @@ impl FromStr for BtcForkAddress {
             });
         }
 
-        let data = _decode_base58(s)?;
+        let data = decode_base58(s)?;
         let (network, payload) = match data[0] {
             0 => {
                 let coin_info = coin_info_from_param("BITCOIN", "MAINNET", "NONE")
@@ -296,12 +302,13 @@ impl ScriptPubKeyComponent for BtcForkAddress {
 #[cfg(test)]
 mod tests {
     use crate::address::BtcForkAddress;
-
     use crate::signer::ScriptPubKeyComponent;
     use crate::tcx_chain::Address;
+    use tcx_constants::coin_info::coin_info_from_param;
 
     use std::str::FromStr;
     use tcx_constants::btc_fork_network::network_from_param;
+
     use tcx_constants::{CoinInfo, CurveType};
     use tcx_primitive::{
         Bip32DeterministicPrivateKey, Derive, DerivePath, DeterministicPrivateKey, Ss58Codec,
@@ -504,15 +511,24 @@ mod tests {
             "3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG"
         ));
         */
+        let coin = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
         assert!(BtcForkAddress::is_valid(
-            "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP"
+            "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP",
+            &coin
         ));
+        let coin = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH").unwrap();
         assert!(BtcForkAddress::is_valid(
-            "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW"
+            "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW",
+            &coin
         ));
+
+        let coin = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH").unwrap();
         assert!(!BtcForkAddress::is_valid(
-            "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDf"
+            "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDf",
+            &coin
         ));
-        assert!(!BtcForkAddress::is_valid("aaa"));
+
+        let coin = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH").unwrap();
+        assert!(!BtcForkAddress::is_valid("aaa", &coin));
     }
 }

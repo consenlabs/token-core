@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use tcx_chain::HdKeystore;
 use tcx_chain::Keystore;
-use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
+use tcx_crypto::{KDF_ROUNDS, XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 
 pub mod api;
 use crate::api::{Response, TcxAction};
@@ -24,12 +24,18 @@ use crate::handler::{
 };
 mod filemanager;
 use crate::filemanager::{cache_keystore, WALLET_FILE_DIR};
+use std::sync::RwLock;
+
 extern crate serde_json;
 
 #[macro_use]
 extern crate failure;
 #[macro_use]
 extern crate lazy_static;
+
+lazy_static! {
+    pub static ref IS_DEBUG: RwLock<bool> = RwLock::new(false);
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn free_string(s: *mut c_char) {
@@ -135,6 +141,13 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().expect("fileDir");
     let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
     let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
+    if let Some(is_debug) = v["isDebug"].as_bool() {
+        *IS_DEBUG.write().unwrap() = is_debug;
+        if is_debug {
+            *KDF_ROUNDS.write().unwrap() = 1024;
+        }
+    }
+
     *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
     *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
     *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
@@ -189,7 +202,7 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
                 is_success: false,
                 error: err.to_string(),
             };
-            eprintln!("{:#?}", rsp);
+            // eprintln!("{:#?}", rsp);
             let rsp_bytes = encode_message(rsp).expect("encode error");
             let ret_str = hex::encode(rsp_bytes);
             CString::new(ret_str).unwrap().into_raw()
