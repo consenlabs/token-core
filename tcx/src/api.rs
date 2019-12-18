@@ -81,15 +81,15 @@ pub struct HdStoreImportParam {
 ///
 /// derive new accounts from a hd keystore
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct HdStoreDeriveParam {
+pub struct KeystoreCommonDeriveParam {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
     #[prost(string, tag = "2")]
     pub password: std::string::String,
     #[prost(message, repeated, tag = "3")]
-    pub derivations: ::std::vec::Vec<hd_store_derive_param::Derivation>,
+    pub derivations: ::std::vec::Vec<keystore_common_derive_param::Derivation>,
 }
-pub mod hd_store_derive_param {
+pub mod keystore_common_derive_param {
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Derivation {
         #[prost(string, tag = "1")]
@@ -143,13 +143,7 @@ pub struct PrivateKeyStoreImportParam {
     pub private_key: std::string::String,
     #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(string, tag = "3")]
-    pub chain_type: std::string::String,
-    #[prost(string, tag = "4")]
-    pub network: std::string::String,
-    #[prost(string, tag = "5")]
-    pub seg_wit: std::string::String,
-    #[prost(bool, tag = "10")]
+    #[prost(bool, tag = "3")]
     pub overwrite: bool,
 }
 /// FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult
