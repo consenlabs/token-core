@@ -593,7 +593,7 @@ mod tests {
     fn setup() {
         let p = Path::new("/tmp/imtoken/wallets");
         if !p.exists() {
-            fs::create_dir_all(p);
+            fs::create_dir_all(p).unwrap();
         }
 
         let param = InitTokenCoreXParam {
@@ -602,9 +602,7 @@ mod tests {
             xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
         };
 
-        unsafe {
-            init_token_core_x(&encode_message(param).unwrap());
-        }
+        init_token_core_x(&encode_message(param).unwrap()).unwrap();
     }
 
     fn teardown() {
@@ -622,7 +620,7 @@ mod tests {
             {
                 continue;
             }
-            remove_file(fp.as_path());
+            remove_file(fp.as_path()).unwrap();
         }
     }
 
@@ -639,7 +637,7 @@ mod tests {
     #[test]
     pub fn test_scan_keystores() {
         run_test(|| {
-            let mut keystore_count = 0;
+            let keystore_count;
             {
                 let mut map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
                     KEYSTORE_MAP.write().unwrap();
@@ -647,9 +645,9 @@ mod tests {
                 map.clear();
                 assert_eq!(0, map.len());
             }
-            scan_keystores();
+            scan_keystores().unwrap();
             {
-                let mut map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
+                let map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
                     KEYSTORE_MAP.write().unwrap();
 
                 assert_eq!(keystore_count, map.len());
@@ -1217,11 +1215,11 @@ mod tests {
     }
 
     fn remove_created_wallet(wid: &str) {
-        let file_dir = WALLET_FILE_DIR.read().unwrap();
+        let _file_dir = WALLET_FILE_DIR.read().unwrap();
 
         let full_file_path = format!("{}/{}.json", "/tmp/imtoken/wallets", wid);
         let p = Path::new(&full_file_path);
         println!("{:?}", p);
-        remove_file(p);
+        remove_file(p).unwrap();
     }
 }

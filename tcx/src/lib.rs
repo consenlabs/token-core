@@ -210,9 +210,6 @@ mod tests {
     use std::path::Path;
 
     use crate::init_token_core_x;
-    use bytes::BytesMut;
-    use prost::Message;
-    use tcx_chain::HdKeystore;
 
     static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
 
@@ -262,14 +259,6 @@ mod tests {
         let result = panic::catch_unwind(|| test());
         //        teardown();
         assert!(result.is_ok())
-    }
-
-    fn remove_created_wallet(wid: &str) {
-        let file_dir = WALLET_FILE_DIR.read().unwrap();
-        let _file_dir_str = file_dir.to_string();
-        let full_file_path = format!("{}/{}.json", file_dir, wid);
-        let p = Path::new(&full_file_path);
-        remove_file(p);
     }
 
     #[test]
