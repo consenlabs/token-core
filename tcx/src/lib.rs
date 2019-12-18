@@ -17,10 +17,9 @@ pub mod error_handling;
 pub mod handler;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
-    encode_message, hd_store_create, hd_store_derive, hd_store_export, hd_store_import,
-    keystore_common_accounts, keystore_common_delete, keystore_common_exists,
-    keystore_common_verify, private_key_store_export, private_key_store_import, sign_tx,
-    tron_sign_message, Buffer,
+    encode_message, hd_store_create, hd_store_export, hd_store_import, keystore_common_accounts,
+    keystore_common_delete, keystore_common_derive, keystore_common_exists, keystore_common_verify,
+    private_key_store_export, private_key_store_import, sign_tx, tron_sign_message, Buffer,
 };
 mod filemanager;
 use crate::filemanager::{cache_keystore, WALLET_FILE_DIR};
@@ -86,7 +85,9 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "hd_store_create" => landingpad(|| hd_store_create(&action.param.unwrap().value)),
         "hd_store_import" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
         "hd_store_export" => landingpad(|| hd_store_export(&action.param.unwrap().value)),
-        "hd_store_derive" => landingpad(|| hd_store_derive(&action.param.unwrap().value)),
+        "keystore_common_derive" => {
+            landingpad(|| keystore_common_derive(&action.param.unwrap().value))
+        }
 
         "private_key_store_import" => {
             landingpad(|| private_key_store_import(&action.param.unwrap().value))
@@ -258,7 +259,9 @@ mod tests {
             let entry = entry.unwrap();
             let fp = entry.path();
             let file_name = fp.file_name().unwrap();
-            if file_name != ".gitignore" && file_name != "default_keystore.json" {
+            if file_name != ".gitignore"
+                && file_name.to_str().unwrap().starts_with("default_keystore")
+            {
                 let _ = remove_file(fp);
             }
         }
