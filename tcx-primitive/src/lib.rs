@@ -15,9 +15,8 @@ pub type Result<T> = result::Result<T, failure::Error>;
 pub use crate::bip32::{Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey};
 pub use crate::derive::{get_account_path, Derive, DeriveJunction, DerivePath};
 pub use crate::ecc::{
-    DeterministicPrivateKey, DeterministicPublicKey, DeterministicType, KeyManage, PrivateKey,
-    PublicKey, TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
-    TypedPublicKey,
+    DeterministicPrivateKey, DeterministicPublicKey, DeterministicType, PrivateKey, PublicKey,
+    TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey, TypedPublicKey,
 };
 pub use crate::rand::generate_mnemonic;
 pub use crate::secp256k1::{

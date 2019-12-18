@@ -24,7 +24,7 @@ fn main() {
     };
 
     // let hex_str = hex::encode(encode_message(param))
-    tcx::handler::init_token_core_x(&encode_message(param));
+    tcx::handler::init_token_core_x(&encode_message(param)).unwrap();
 
     let args: Vec<String> = env::args().collect();
     let hex = &args[1];
