@@ -508,7 +508,6 @@ pub fn sign_btc_fork_transaction(param: &SignParam, keystore: &mut Keystore) -> 
     let input: BtcForkTxInput =
         BtcForkTxInput::decode(&param.input.as_ref().expect("tx_input").value.clone())
             .expect("BitcoinForkTransactionInput");
-    println!("BtcForkInput {:#?}", input);
     let coin = coin_info_from_param(&param.chain_type, &input.network, &input.seg_wit)?;
 
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
