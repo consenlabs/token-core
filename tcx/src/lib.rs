@@ -246,7 +246,9 @@ mod tests {
             let entry = entry.unwrap();
             let fp = entry.path();
             let file_name = fp.file_name().unwrap();
-            if file_name != ".gitignore" && file_name != "default_keystore.json" {
+            if file_name != ".gitignore"
+                && file_name.to_str().unwrap().starts_with("default_keystore")
+            {
                 let _ = remove_file(fp);
             }
         }

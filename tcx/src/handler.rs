@@ -609,7 +609,7 @@ mod tests {
     {
         setup();
         let result = panic::catch_unwind(|| test());
-        teardown();
+        //        teardown();
         assert!(result.is_ok())
     }
 
@@ -1333,7 +1333,7 @@ mod tests {
             let output: TronTxOutput = TronTxOutput::decode(&ret).unwrap();
             let expected_sign = "7758c92df76d50774a67fdca6c90b922fc84be68c69164d4c7f500327bfa4b9655709b6b1f88e07e3bda266d7ca4b48c934557917692f63a31e301d79d7107d001";
             assert_eq!(expected_sign, output.signatures[0]);
-            remove_created_wallet(&import_result.id);
+            //            remove_created_wallet(&import_result.id);
         })
     }
 
