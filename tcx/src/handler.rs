@@ -47,7 +47,6 @@ pub struct Buffer {
 }
 
 pub fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
-    println!("{:#?}", msg);
     let mut buf = BytesMut::with_capacity(msg.encoded_len());
     msg.encode(&mut buf)?;
     Ok(buf.to_vec())
@@ -1001,8 +1000,8 @@ mod tests {
             let ret_bytes = keystore_common_exists(&encode_message(param).unwrap()).unwrap();
             let ret: KeystoreCommonExistsResult =
                 KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
+
             assert_eq!(false, ret.is_exists);
-            remove_created_wallet(&import_result.id);
         })
     }
 
@@ -1219,7 +1218,6 @@ mod tests {
 
         let full_file_path = format!("{}/{}.json", "/tmp/imtoken/wallets", wid);
         let p = Path::new(&full_file_path);
-        println!("{:?}", p);
         remove_file(p).unwrap();
     }
 }
