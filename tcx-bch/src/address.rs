@@ -119,11 +119,12 @@ mod tests {
     use crate::address::{remove_bch_prefix, BchAddress};
     use bitcoin::util::misc::hex_bytes;
 
+    use tcx_btc_fork::WifDisplay;
     use tcx_chain::Address;
     use tcx_constants::coin_info::coin_info_from_param;
     use tcx_constants::CurveType;
-    use tcx_primitive::PublicKey;
     use tcx_primitive::{PrivateKey, Secp256k1PrivateKey, TypedPublicKey};
+    use tcx_primitive::{PublicKey, TypedPrivateKey};
 
     #[test]
     pub fn test_convert() {
@@ -241,5 +242,34 @@ mod tests {
             &coin_info
         ));
         assert!(!BchAddress::is_valid("1234", &coin_info));
+    }
+
+    #[test]
+    pub fn test_wif_display() {
+        let sk =
+            Secp256k1PrivateKey::from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy")
+                .unwrap();
+        let typed_private_key = TypedPrivateKey::Secp256k1(sk);
+        let coin_infos = vec![
+            (
+                coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap(),
+                "T7kFQq8eJeq6JhQjRZENW33NT1Pdhwpuw95SyJVeMXPckupR26ch",
+            ),
+            (
+                coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap(),
+                "cSGyRzqKLLYkhJF8GL6df1148P3jJJuiByKfDvKcHfsTVmFfuwaS",
+            ),
+            (
+                coin_info_from_param("BITCOINCASH", "MAINNET", "NONE").unwrap(),
+                "L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy",
+            ),
+            (
+                coin_info_from_param("BITCOINCASH", "TESTNET", "NONE").unwrap(),
+                "cSGyRzqKLLYkhJF8GL6df1148P3jJJuiByKfDvKcHfsTVmFfuwaS",
+            ),
+        ];
+        for (coin_info, wif) in coin_infos {
+            assert_eq!(wif, typed_private_key.fmt(&coin_info).unwrap());
+        }
     }
 }

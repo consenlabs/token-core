@@ -194,4 +194,25 @@ mod tests {
         let err = invalid_path.expect_err("should throw invalid path");
         assert_eq!("invalid child number format", format!("{}", err));
     }
+
+    #[test]
+    fn derive_junction_parse_test() {
+        let valid_paths = vec![
+            "m/0'/0'/0'/0'/0'",
+            "m/0'/0'/0'/0/0",
+            "m/0'/0'/0'/0'",
+            "m/0'/0'/0'",
+            "m/0'/0'/0'/1'",
+        ];
+        for path in valid_paths {
+            let ret = DerivePath::from_str(path);
+            assert!(ret.is_ok());
+        }
+
+        let invalid_paths = vec!["/0'", "m/-1", "a/0", "m//0"];
+        for invalid_path in invalid_paths {
+            let ret = DerivePath::from_str(invalid_path);
+            assert!(ret.is_err());
+        }
+    }
 }
