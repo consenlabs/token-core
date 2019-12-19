@@ -328,7 +328,7 @@ mod tests {
     const MNEMONIC: &str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 
-    static KEYSTORE_JSON: &'static str = r#"
+    static HD_KEYSTORE_JSON: &'static str = r#"
         {
     "id": "7719d1e3-3f67-439f-a18e-d9ae413e00e1",
     "version": 11000,
@@ -368,9 +368,13 @@ mod tests {
 }
 "#;
 
+    static PK_KEYSTORE_JSON: &'static str = r#"
+    {"id":"89e6fc5d-ac9a-46ab-b53f-342a80f3d28b","version":11001,"keyHash":"4fc213ddcb6fa44a2e2f4c83d67502f88464e6ee","crypto":{"cipher":"aes-128-ctr","cipherparams":{"iv":"c0ecc72839f8a02cc37eb7b0dd0b93ba"},"ciphertext":"1239e5807e19f95d86567f81c162c69a5f4564ea17f487669a277334f4dcc7dc","kdf":"pbkdf2","kdfparams":{"c":1024,"prf":"hmac-sha256","dklen":32,"salt":"3c9df9eb95a014c77bbc8b9a06f4f14e0d08170dea71189c7cf377a3b2099404"},"mac":"909a6bfe1ad031901e80927b847a8fa8407fdcde56cfa374f7a732fb3b3a882d"},"activeAccounts":[{"address":"TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG","derivationPath":"","curve":"SECP256k1","coin":"TRON","network":"","segWit":"","extPubKey":""}],"imTokenMeta":{"name":"Unknown","passwordHint":"","timestamp":1576733295,"source":"PRIVATE"}}
+    "#;
+
     #[test]
     fn test_json() {
-        let keystore: Keystore = Keystore::from_json(KEYSTORE_JSON).unwrap();
+        let keystore: Keystore = Keystore::from_json(HD_KEYSTORE_JSON).unwrap();
         assert_eq!(1, keystore.accounts().len());
         assert_eq!(
             "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
@@ -379,13 +383,25 @@ mod tests {
 
         assert_eq!(
             Value::from_str(&keystore.to_json()).unwrap(),
-            Value::from_str(KEYSTORE_JSON).unwrap()
+            Value::from_str(HD_KEYSTORE_JSON).unwrap()
+        );
+
+        let keystore: Keystore = Keystore::from_json(PK_KEYSTORE_JSON).unwrap();
+        assert_eq!(1, keystore.accounts().len());
+        assert_eq!(
+            "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG",
+            keystore.accounts().first().unwrap().address
+        );
+
+        assert_eq!(
+            Value::from_str(&keystore.to_json()).unwrap(),
+            Value::from_str(PK_KEYSTORE_JSON).unwrap()
         );
     }
 
     #[test]
     fn test_keystore_non_sensitive() {
-        let mut keystore = Keystore::from_json(KEYSTORE_JSON).unwrap();
+        let mut keystore = Keystore::from_json(HD_KEYSTORE_JSON).unwrap();
         assert_eq!(keystore.id(), "7719d1e3-3f67-439f-a18e-d9ae413e00e1");
         keystore.set_id("test_set_id");
         assert_eq!("test_set_id", keystore.id());
@@ -399,7 +415,7 @@ mod tests {
 
     #[test]
     fn test_keystore_unlock() {
-        let mut keystore = Keystore::from_json(KEYSTORE_JSON).unwrap();
+        let mut keystore = Keystore::from_json(HD_KEYSTORE_JSON).unwrap();
 
         let export_ret = keystore.export();
         assert!(export_ret.is_err());
@@ -427,7 +443,7 @@ mod tests {
 
     #[test]
     fn test_find_key() {
-        let mut keystore = Keystore::from_json(KEYSTORE_JSON).unwrap();
+        let mut keystore = Keystore::from_json(HD_KEYSTORE_JSON).unwrap();
         keystore.unlock_by_password(PASSWORD).unwrap();
         let pk =
             keystore.find_private_key("BITCOINCASH", "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y21");

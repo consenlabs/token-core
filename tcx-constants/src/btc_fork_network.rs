@@ -1,5 +1,5 @@
 use crate::CoinInfo;
-use std::sync::RwLock;
+use parking_lot::RwLock;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BtcForkNetwork {
@@ -176,7 +176,7 @@ pub fn network_from_param(
     network: &str,
     seg_wit: &str,
 ) -> Option<BtcForkNetwork> {
-    let networks = BTC_FORK_NETWORKS.read().unwrap();
+    let networks = BTC_FORK_NETWORKS.read();
     //    let coin_uppercase = coin.to_uppercase();
     let mut ret: Vec<BtcForkNetwork> = networks
         .iter()
@@ -189,7 +189,7 @@ pub fn network_from_param(
 }
 
 pub fn network_form_hrp(hrp: &str) -> Option<BtcForkNetwork> {
-    let networks = BTC_FORK_NETWORKS.read().unwrap();
+    let networks = BTC_FORK_NETWORKS.read();
     let mut ret: Vec<BtcForkNetwork> = networks
         .iter()
         .filter(|x| x.hrp.eq(hrp))
@@ -199,7 +199,7 @@ pub fn network_form_hrp(hrp: &str) -> Option<BtcForkNetwork> {
 }
 
 pub fn coin_from_xpub_prefix(prefix: &[u8]) -> Option<String> {
-    let networks = BTC_FORK_NETWORKS.read().unwrap();
+    let networks = BTC_FORK_NETWORKS.read();
     networks
         .iter()
         .find(|x| x.xpub_prefix.eq(prefix))
@@ -207,7 +207,7 @@ pub fn coin_from_xpub_prefix(prefix: &[u8]) -> Option<String> {
 }
 
 pub fn pub_version_from_prv_version(prefix: &[u8]) -> Option<[u8; 4]> {
-    let networks = HD_VERSIONS.read().unwrap();
+    let networks = HD_VERSIONS.read();
     networks.iter().find(|x| x.prv_version.eq(prefix)).map(|x| {
         let mut version = [0; 4];
         version.copy_from_slice(&x.pub_version);
