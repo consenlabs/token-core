@@ -97,7 +97,7 @@ class CPK extends React.Component<Props, State> {
 
         <View>
           <Button
-            testID="export-btn"
+            testID="export"
             title="export"
             onPress={this.handleExport}
           />

@@ -1,86 +1,81 @@
-import { id, toHaveText, label, text } from '../../../utils.js'
+import { id, toHaveText, label, text, getTextValue } from '../../../utils.js'
 
 export default async function (params) {
-    const { chainType, mnemonic, password, network, segWit, address } = params
+    const { chainType, privateKey, password, address, network, segWit, repeatImport, runRobust, REPEAT_PASSWORD } = params
     // go to Mnemonic screen
-    await id('Mnemonic').tap()
-    await inputRightParams(chainType, mnemonic, password, network, segWit)
-
-    // invalid mnemonic (empty)
-    let invalidMnemonic = ''
-    let errorMessage = 'invalid word in phrase'
-    await inputInvalidMnemonic(invalidMnemonic, errorMessage)
-
-    // invalid mnemonic (word misspelling)
-    invalidMnemonic = 'inject kidney empty canal shadow pact comfort wife crush horse wife sketchs'
-    errorMessage = 'invalid word in phrase'
-    await inputInvalidMnemonic(invalidMnemonic, errorMessage)
+    await id('PrivateKey').tap()
     
-    // invalid mnemonic (11 words)
-    invalidMnemonic = 'inject kidney empty canal shadow pact comfort wife crush horse wife'
-    errorMessage = 'invalid number of words in phrase: 11'
-    await inputInvalidMnemonic(invalidMnemonic, errorMessage)
+    await inputRightParams (chainType, privateKey, password, network, segWit)
+    // invalid privateKey (empty)
+    let invalidPrivateKey = ''
+    let errorMessage = ''
+    
+    errorMessage = (chainType === 'TRON') ? 'invalid_private_key' : 'base58ck data not even long enough for a checksum'
+    await inputInvalidPrivateKey(invalidPrivateKey, errorMessage)
 
-    // invalid mnemonic 
-    invalidMnemonic = 'inject kidney empty canal shadow pact comfort wife crush horse wife sketch wife'
-    errorMessage = 'invalid number of words in phrase: 13'
-    await inputInvalidMnemonic(invalidMnemonic, errorMessage)
+    // invalid privateKey (error)
+    invalidPrivateKey = privateKey.substr(0, privateKey.length-7) + 'imToken'
+    errorMessage = (chainType === 'TRON') ? "hex can't decode: InvalidHexCharacter { c: 'i', index: 57 }" : 'base58ck checksum'
+    await inputInvalidPrivateKey(invalidPrivateKey, errorMessage)
 
-    // invalid mnemonic 
-    invalidMnemonic = 'inject kidney empty canal shadow pact comfort wife crush horse wife wife'
-    errorMessage = 'invalid checksum'
-    await inputInvalidMnemonic(invalidMnemonic, errorMessage)
-
-    await inputRightParams(chainType, mnemonic, password, network, segWit)
+    // invalid privateKey length-1
+    invalidPrivateKey = privateKey.substr(0, privateKey.length-1)
+    errorMessage = (chainType === 'TRON') ? "hex can't decode: OddLength" : 'base58ck checksum'
+    await inputInvalidPrivateKey(invalidPrivateKey, errorMessage)
+    
+    // invalid privateKey length+1
+    invalidPrivateKey = privateKey + 'i'
+    errorMessage = (chainType === 'TRON') ? "hex can't decode: OddLength" : 'base58ck checksum'
+    await inputInvalidPrivateKey(invalidPrivateKey, errorMessage)
+  
+    await inputRightParams (chainType, privateKey, password, network, segWit)
     // invalid password
     let invalidPassword = ''
     await inputInvalidPassword(invalidPassword, address)
     await deleteWallet('')
 
-    await inputRightParams(chainType, mnemonic, password, network, segWit)
-    // invalid chain type (empty)
+    await inputRightParams (chainType, privateKey, password, network, segWit)
+    // invalid ChainType 
     let invalidChainType = ''
-    errorMessage = 'unsupported_chain'
-    await inputInvalidChainType(invalidChainType, errorMessage)
-
-    // invalid chain type (BITCOIN)
-    invalidChainType = 'BITCOIN'
-    errorMessage = 'unsupported_chain'
-    await inputInvalidChainType(invalidChainType, errorMessage)
+    errorMessage = (chainType === 'TRON') ? 'unsupported_chain' : 'invalid_private_key'
+    invalidChainType = (chainType === 'BITCOINCASH') ? 'LITECOIN' : 'BITCOINCASH'
+    await inputInvalidChainType (invalidChainType, errorMessage)
 
     if (chainType != 'TRON') {
-        await inputRightParams(chainType, mnemonic, password, network, segWit)
+        await inputRightParams (chainType, privateKey, password, network, segWit)
+        // invalid network (TESTNET)
+        let invalidNetwork = 'TESTNET'
+        errorMessage = 'invalid_private_key'
+        await inputInvalidNetwork(invalidNetwork, errorMessage)
+
         // invalid network (empty)
-        let invalidNetwork = ''
+        invalidNetwork = ''
         errorMessage = 'unsupported_chain'
         await inputInvalidNetwork(invalidNetwork, errorMessage)
 
-        // invalid network (KOVAN)
-        invalidNetwork = 'KOVAN'
-        errorMessage = 'unsupported_chain'
-        await inputInvalidNetwork(invalidNetwork, errorMessage)
-
-        await inputRightParams(chainType, mnemonic, password, network, segWit)
         // invalid Segwit (GENERAL)
         let invalidSegwit = 'GENERAL'
         errorMessage = 'unsupported_chain'
-        await inputInvalidSegwit(invalidSegwit, errorMessage)
+        await inputInvalidSegwit (invalidSegwit, errorMessage)
     }
 
-    await inputRightParams(chainType, mnemonic, password, network, segWit)
-    // export mnemonic with invalid password
+    await inputRightParams (chainType, privateKey, password, network, segWit)
+    // export private key with invalid password
     invalidPassword = '123123123!@#$%^'
     errorMessage = 'password_incorrect'
-    await exportInvalidPassword(address, invalidPassword, errorMessage)
+    await exportInvalidPassword (address, invalidPassword, errorMessage)
+
     await deleteWallet(password)
+
     // go back
     await id('goBack').tap()
+    
 }
 
 
-export async function inputRightParams (chainType, mnemonic, password, network, segWit) {
-    await id('input-mnemonic').tap()
-    await id('input-mnemonic').replaceText(mnemonic)
+export async function inputRightParams (chainType, privateKey, password, network, segWit) {
+    await id('input-privateKey').tap()
+    await id('input-privateKey').replaceText(privateKey)
   
     await id('input-password').tap()
     await id('input-password').replaceText(password)
@@ -95,13 +90,21 @@ export async function inputRightParams (chainType, mnemonic, password, network, 
     await id('input-segWit').replaceText(segWit)
 }
 
-export async function inputInvalidMnemonic (invalidMnemonic, errorMessage) { 
-    await id('input-mnemonic').tap()
-    await id('input-mnemonic').replaceText(invalidMnemonic)
+export async function inputInvalidPrivateKey (invalidPrivateKey, errorMessage) { 
+    await id('input-privateKey').tap()
+    await id('input-privateKey').replaceText(invalidPrivateKey)
     await label('return').tap()
     await id('import').tap()
-    await expect(text(errorMessage)).toExist()
-    await text('OK').tap()
+
+    try {
+        await expect(text(errorMessage)).toExist()
+        await text('OK').tap()
+    } catch (error) {
+        let fullErrorMessage = await getTextValue(errorMessage)
+        if (fullErrorMessage.indexOf('does not match expected') > -1) {
+            await text('OK').tap()
+        }
+    }
 }
 
 export async function inputInvalidPassword (invalidPassword, address) {
@@ -160,7 +163,6 @@ export async function deleteWallet (password) {
     await id('input-password').tap()
     await id('input-password').replaceText(password)
     await label('return').tap()
-
     await id('keystoreCommonDelete').tap()
     await waitFor(id('deleteSuccess')).toExist().withTimeout(2000)
     await id('clearOutput').tap()

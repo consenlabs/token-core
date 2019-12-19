@@ -51,9 +51,11 @@ export default function () {
           network,
           segWit: 'NONE',
         })
+        /*
         let coverFlow = 'mnemonicCoverPrivateKey'
         await mnemonicPrivateKey({ ...params, address, mnemonic, REPEAT_PASSWORD, coverFlow})
-        coverFlow = 'privateKeyCoverMnemonic'
+        */
+        let coverFlow = 'privateKeyCoverMnemonic'
         await mnemonicPrivateKey({ ...params, address, mnemonic, REPEAT_PASSWORD, coverFlow})
       })
     }

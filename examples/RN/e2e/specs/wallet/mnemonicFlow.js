@@ -74,25 +74,27 @@ export default function (repeatImport, runRobust) {
       }
     }
 
-    for (const chainIndex in CHAINTYPES) {
+    if (runRobust) {
+      for (const chainIndex in CHAINTYPES) {
 
-      let chainType = CHAINTYPES[chainIndex]
-      let network = 'MAINNET'
-      let mnemonic = MNEMONIC_12
-      let address = ADDRESSES[chainType + '_' + network + '_MNEMONIC_12_ADDRESS']
-
-      it(`should roubust import ${chainType} wallet, network is ${network}, mnemonic is ${mnemonic} and the expected address is ${address}`, async () => {
-        const params = formatHdStoreParams({
-          mnemonic,
-          chainType,
-          password: PASSWORD,
-          network,
-          segWit: 'NONE',
+        let chainType = CHAINTYPES[chainIndex]
+        let network = 'MAINNET'
+        let mnemonic = MNEMONIC_12
+        let address = ADDRESSES[chainType + '_' + network + '_MNEMONIC_12_ADDRESS']
+  
+        it(`should roubust import ${chainType} wallet, network is ${network}, mnemonic is ${mnemonic} and the expected address is ${address}`, async () => {
+          const params = formatHdStoreParams({
+            mnemonic,
+            chainType,
+            password: PASSWORD,
+            network,
+            segWit: 'NONE',
+          })
+          
+            await robustImportMnemonic({ ...params, address })
+        
         })
-        if (runRobust) {
-          await robustImportMnemonic({ ...params, address })
-        }
-      })
+      }
     }
   })
 }

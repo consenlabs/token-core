@@ -43,7 +43,7 @@ export default async function (params) {
   }
 
   // export
-  await id('export-btn').tap()
+  await id('export').tap()
   await waitFor(id('export-privateKey')).toExist().withTimeout(2000)
   await toHaveText('export-privateKey', privateKey)
 
@@ -65,7 +65,7 @@ export default async function (params) {
   await id('clearOutput').tap()
 
   // wallet not found
-  await id('export-btn').tap()
+  await id('export').tap()
   await expect(text('wallet_not_found')).toExist()
   await text('OK').tap()
   // only e2e:debug 

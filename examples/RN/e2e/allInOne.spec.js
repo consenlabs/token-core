@@ -9,8 +9,8 @@ const repeatImport = true
 const runRobust = true
 
 createFlow()
-mnemonicFlow(repeatImport, runRobust)
-privateKeyFlow(repeatImport, runRobust)
-mnemonicPrivateKeyFlow()
-signTxFlow()
-tronSignMessageFlow()
+// mnemonicFlow(repeatImport, runRobust)
+// privateKeyFlow(repeatImport, runRobust)
+// mnemonicPrivateKeyFlow()
+// signTxFlow()
+// tronSignMessageFlow()

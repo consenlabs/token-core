@@ -1,4 +1,5 @@
 export const CHAINTYPES = ['BITCOINCASH', 'LITECOIN', 'TRON']
+// export const CHAINTYPES = ['BITCOINCASH']
 export const NETWORKS = ['MAINNET', 'TESTNET']
 
 export const PASSWORD = '123123123!@#$%'

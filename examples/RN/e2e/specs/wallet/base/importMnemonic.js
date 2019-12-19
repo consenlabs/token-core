@@ -1,7 +1,7 @@
 import { id, toHaveText, label, text } from '../../../utils.js'
 
 export default async function (params) {
-  const { chainType, mnemonic, password, address, network, segWit, repeatImport, runRobust, REPEAT_PASSWORD } = params
+  const { chainType, mnemonic, password, address, network, segWit, repeatImport, REPEAT_PASSWORD } = params
   // go to Mnemonic screen
   await id('Mnemonic').tap()
 
