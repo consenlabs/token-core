@@ -23,7 +23,7 @@ use crate::handler::{
 };
 mod filemanager;
 use crate::filemanager::{cache_keystore, WALLET_FILE_DIR};
-use std::sync::RwLock;
+use parking_lot::RwLock;
 
 extern crate serde_json;
 
@@ -144,15 +144,15 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
     let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
 
     if let Some(is_debug) = v["isDebug"].as_bool() {
-        *IS_DEBUG.write().unwrap() = is_debug;
+        *IS_DEBUG.write() = is_debug;
         if is_debug {
-            *KDF_ROUNDS.write().unwrap() = 1024;
+            *KDF_ROUNDS.write() = 1024;
         }
     }
 
-    *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
-    *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
-    *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
+    *WALLET_FILE_DIR.write() = file_dir.to_string();
+    *XPUB_COMMON_KEY_128.write() = xpub_common_key.to_string();
+    *XPUB_COMMON_IV.write() = xpub_common_iv.to_string();
     handler::scan_keystores();
     Ok(())
 }
@@ -223,7 +223,7 @@ mod tests {
 
     #[allow(dead_code)]
     fn teardown() {
-        let file_dir = WALLET_FILE_DIR.read().unwrap();
+        let file_dir = WALLET_FILE_DIR.read();
         let file_dir_str = file_dir.to_string();
         let p = Path::new(&file_dir_str);
         let walk_dir = std::fs::read_dir(p).unwrap();
@@ -263,7 +263,7 @@ mod tests {
                 init_token_core_x(_to_c_char(init_params));
             }
 
-            let map = KEYSTORE_MAP.read().unwrap();
+            let map = KEYSTORE_MAP.read();
             let ks: &Keystore = map.get(WALLET_ID).unwrap();
             assert_eq!(ks.id(), WALLET_ID);
         });

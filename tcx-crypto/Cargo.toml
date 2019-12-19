@@ -24,3 +24,4 @@ secp256k1 = {version ="0.15", features = ["recovery"] }
 hex = "0.4.0"
 lazy_static = "1.4.0"
 
+parking_lot = "0.10"
