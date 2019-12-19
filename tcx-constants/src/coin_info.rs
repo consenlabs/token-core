@@ -119,9 +119,11 @@ pub fn coin_info_from_param(chain_type: &str, network: &str, seg_wit: &str) -> R
     let coin_infos = COIN_INFOS.read().unwrap();
     let mut coins = coin_infos
         .iter()
-        .filter(|x| x.coin.as_str() == chain_type)
-        .filter(|x| x.network.as_str() == network || network.is_empty())
-        .filter(|x| x.seg_wit.as_str() == seg_wit || seg_wit.is_empty())
+        .filter(|x| {
+            x.coin.as_str() == chain_type
+                && (x.network.as_str() == network || network.is_empty())
+                && (x.seg_wit.as_str() == seg_wit || seg_wit.is_empty())
+        })
         .map(|x| x.clone())
         .collect::<Vec<CoinInfo>>();
     if coins.is_empty() {
