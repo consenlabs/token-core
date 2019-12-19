@@ -23,6 +23,7 @@ pub struct Bip32DeterministicPrivateKey(ExtendedPrivKey);
 
 pub struct Bip32DeterministicPublicKey(ExtendedPubKey);
 
+#[cfg_attr(tarpaulin, skip)]
 fn transform_bip32_error(err: Bip32Error) -> KeyError {
     match err {
         Bip32Error::Ecdsa(_) => KeyError::InvalidEcdsa,
@@ -242,8 +243,10 @@ impl Ss58Codec for Bip32DeterministicPrivateKey {
 
 #[cfg(test)]
 mod tests {
+    use crate::ToHex;
     use crate::{
-        Bip32DeterministicPrivateKey, Derive, DerivePath, DeterministicPrivateKey, PrivateKey,
+        ecc::DeterministicPublicKey, Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey,
+        Derive, DerivePath, DeterministicPrivateKey, PrivateKey, Ss58Codec,
     };
     use bip39::{Language, Mnemonic, Seed};
     use std::str::FromStr;
@@ -305,5 +308,15 @@ mod tests {
             .unwrap();
 
         assert_eq!(dsk.to_string(), "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
+    }
+
+    #[test]
+    fn from_xpub() {
+        let xpub = Bip32DeterministicPublicKey::from_ss58check_with_version("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx");
+        assert!(xpub.is_err());
+
+        let xpub = Bip32DeterministicPublicKey::from_ss58check_with_version("xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
+        assert!(xpub.is_ok());
+        assert_eq!(xpub.unwrap().0.to_hex(), "03a25f12b68000000044efc688fe25a1a677765526ed6737b4bfcfb0122589caab7ca4b223ffa9bb37029d23439ecb195eb06a0d44a608960d18702fd97e19c53451f0548f568207af77");
     }
 }

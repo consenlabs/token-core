@@ -12,6 +12,7 @@ use bitcoin::secp256k1::Message;
 use std::io;
 use tcx_constants::{network_from_coin, CoinInfo};
 
+#[cfg_attr(tarpaulin, skip)]
 fn transform_secp256k1_error(err: secp256k1::Error) -> KeyError {
     match err {
         secp256k1::Error::IncorrectSignature => KeyError::InvalidSignature,

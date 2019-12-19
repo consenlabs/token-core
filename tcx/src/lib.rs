@@ -33,26 +33,11 @@ lazy_static! {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn free_string(s: *mut c_char) {
-    if s.is_null() {
-        return;
-    }
-    CString::from_raw(s);
-}
-
-#[no_mangle]
 pub unsafe extern "C" fn free_const_string(s: *const c_char) {
     if s.is_null() {
         return;
     }
     CStr::from_ptr(s);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn free_buf(buf: Buffer) {
-    let s = std::slice::from_raw_parts_mut(buf.data, buf.len as usize);
-    let s = s.as_mut_ptr();
-    Box::from_raw(s);
 }
 
 fn parse_arguments(json_str: *const c_char) -> Value {
@@ -113,17 +98,6 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
 
     let ret_str = hex::encode(reply);
     CString::new(ret_str).unwrap().into_raw()
-}
-
-pub fn wrap_buffer(to_wrap: Vec<u8>) -> Buffer {
-    let mut to_wrap = to_wrap;
-    let data = to_wrap.as_mut_ptr();
-    let len = to_wrap.len();
-    std::mem::forget(to_wrap);
-    Buffer {
-        data,
-        len: len as i64,
-    }
 }
 
 #[no_mangle]

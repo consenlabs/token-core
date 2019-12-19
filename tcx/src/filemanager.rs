@@ -25,19 +25,6 @@ pub fn cache_keystore(keystore: Keystore) {
         .insert(keystore.id().to_owned(), keystore);
 }
 
-pub fn find_keystore_id_by_address(address: &str) -> Option<String> {
-    let map = KEYSTORE_MAP.read();
-    let mut k_id: Option<String> = None;
-    for (id, keystore) in map.borrow().iter() {
-        let mut iter = keystore.accounts().iter();
-        if iter.any(|a| a.address == address) {
-            k_id = Some(id.to_string());
-            break;
-        }
-    }
-    k_id
-}
-
 pub fn flush_keystore(ks: &Keystore) -> Result<()> {
     let json = ks.to_json();
 
