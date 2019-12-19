@@ -343,7 +343,8 @@ pub fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
     if keystore.verify_password(&param.password) {
         let pk_hex = keystore.export()?;
 
-        let coin_info = coin_info_from_param(&param.chain_type, &param.network, "NONE")?;
+        // private_key prefix is only about chain type and network
+        let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
         let value = if param.chain_type.as_str() == "TRON" {
             Ok(pk_hex.to_string())
         } else {
@@ -624,7 +625,7 @@ mod tests {
     {
         setup();
         let result = panic::catch_unwind(|| test());
-        //        teardown();
+        teardown();
         assert!(result.is_ok())
     }
 
@@ -1112,6 +1113,21 @@ mod tests {
                 export_result.value
             );
             assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+
+            let param: PrivateKeyStoreExportParam = PrivateKeyStoreExportParam {
+                id: import_result.id.to_string(),
+                password: PASSWORD.to_string(),
+                chain_type: "TRON".to_string(),
+                network: "".to_string(),
+            };
+            let ret_bytes = private_key_store_export(&encode_message(param).unwrap()).unwrap();
+            let export_result: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+            assert_eq!(
+                "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+                export_result.value
+            );
+            assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
             remove_created_wallet(&import_result.id);
         })
     }
@@ -1192,6 +1208,30 @@ mod tests {
             let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
                 r#type: KeyType::Mnemonic as i32,
                 value: format!("{}", MNEMONIC).to_string(),
+            };
+
+            let ret_bytes = keystore_common_exists(&encode_message(param).unwrap()).unwrap();
+            let result: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
+            assert!(result.is_exists);
+            assert_eq!(result.id, wallet.id);
+
+            let wallet = import_default_pk_store();
+            let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
+                r#type: KeyType::PrivateKey as i32,
+                value: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
+            };
+
+            let ret_bytes = keystore_common_exists(&encode_message(param).unwrap()).unwrap();
+            let result: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
+            assert!(result.is_exists);
+            assert_eq!(result.id, wallet.id);
+
+            let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
+                r#type: KeyType::PrivateKey as i32,
+                value: "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6"
+                    .to_string(),
             };
 
             let ret_bytes = keystore_common_exists(&encode_message(param).unwrap()).unwrap();
