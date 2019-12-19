@@ -1,14 +1,10 @@
 use std::ffi::{CStr, CString};
-use std::fs;
-use std::io::Read;
+
 use std::os::raw::c_char;
-use std::path::Path;
 
 use prost::Message;
 use serde_json::Value;
 
-use tcx_chain::HdKeystore;
-use tcx_chain::Keystore;
 use tcx_crypto::{KDF_ROUNDS, XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 
 pub mod api;
@@ -22,8 +18,8 @@ use crate::handler::{
     private_key_store_export, private_key_store_import, sign_tx, tron_sign_message, Buffer,
 };
 mod filemanager;
-use crate::filemanager::{cache_keystore, WALLET_FILE_DIR};
-use std::sync::RwLock;
+use crate::filemanager::WALLET_FILE_DIR;
+use parking_lot::RwLock;
 
 extern crate serde_json;
 
@@ -142,46 +138,18 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().expect("fileDir");
     let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
     let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
+
     if let Some(is_debug) = v["isDebug"].as_bool() {
-        *IS_DEBUG.write().unwrap() = is_debug;
+        *IS_DEBUG.write() = is_debug;
         if is_debug {
-            *KDF_ROUNDS.write().unwrap() = 1024;
+            *KDF_ROUNDS.write() = 1024;
         }
     }
 
-    *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
-    *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
-    *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
-
-    let p = Path::new(file_dir);
-    let walk_dir = std::fs::read_dir(p).expect("read dir");
-    for entry in walk_dir {
-        let entry = entry.expect("DirEntry");
-        let fp = entry.path();
-        if !fp
-            .file_name()
-            .expect("file_name")
-            .to_str()
-            .expect("file_name str")
-            .ends_with(".json")
-        {
-            continue;
-        }
-
-        let mut f = fs::File::open(fp).expect("open file");
-        let mut contents = String::new();
-
-        let _ = f.read_to_string(&mut contents);
-        let v: Value = serde_json::from_str(&contents).expect("read json from content");
-
-        let version = v["version"].as_i64().expect("version");
-        if version != i64::from(HdKeystore::VERSION) {
-            continue;
-        }
-        //        let keystore: HdKeystore = serde_json::from_str(&contents)?;
-        let keystore = Keystore::from_json(&contents)?;
-        cache_keystore(keystore);
-    }
+    *WALLET_FILE_DIR.write() = file_dir.to_string();
+    *XPUB_COMMON_KEY_128.write() = xpub_common_key.to_string();
+    *XPUB_COMMON_IV.write() = xpub_common_iv.to_string();
+    handler::scan_keystores();
     Ok(())
 }
 
@@ -224,6 +192,7 @@ mod tests {
     use std::path::Path;
 
     use crate::init_token_core_x;
+    use tcx_chain::Keystore;
 
     static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
 
@@ -251,7 +220,7 @@ mod tests {
 
     #[allow(dead_code)]
     fn teardown() {
-        let file_dir = WALLET_FILE_DIR.read().unwrap();
+        let file_dir = WALLET_FILE_DIR.read();
         let file_dir_str = file_dir.to_string();
         let p = Path::new(&file_dir_str);
         let walk_dir = std::fs::read_dir(p).unwrap();
@@ -291,45 +260,9 @@ mod tests {
                 init_token_core_x(_to_c_char(init_params));
             }
 
-            let map = KEYSTORE_MAP.read().unwrap();
+            let map = KEYSTORE_MAP.read();
             let ks: &Keystore = map.get(WALLET_ID).unwrap();
             assert_eq!(ks.id(), WALLET_ID);
         });
     }
-
-    // quick dirty protobuf debug tools
-    //            #[test]
-    //            fn test_call_tcx_api() {
-    //                run_test(|| unsafe {
-    //                    let param_hex = "0a1174726f6e5f7369676e5f6d65737361676512d5010a1174726f6e5f7369676e5f6d65737361676512bf010a2439346434376666642d366631382d343665302d613962652d373132646535363066363132120e31323331323331323321402324251a0454524f4e222254593275726f42655a3574724139515439366145576a3332584c6b414168513952322a5d0a1174726f6e5f7369676e5f6d65737361676512480a4230783634356330623762353831353862616262666136633663643561343861613733343061383734393137366231323065383531363231363738376131336463373610011801";
-    //                    let param_c_str = _to_c_char(param_hex);
-    //                    clear_err();
-    //                    let ret_buf = unsafe { call_tcx_api(param_c_str) };
-    //    //                let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
-    //                    let err = _to_str(get_last_err_message());
-    //
-    //                    let err_bytes = hex::decode(err).unwrap();
-    //
-    //                    println!("{:?}", Response::decode(err_bytes).unwrap());
-    //                    assert!(false);
-    //                });
-    //            }
-
-    //        #[test]
-    //        fn test_encode_empty_struct() {
-    //            //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult {
-    //            //            is_exists: false,
-    //            //            id: "".to_string()
-    //            //        };
-    //            //        let hex_value = hex::encode(encode_message(param).unwrap());
-    //            //        assert_eq!("08001200", hex_value);
-    //            let bytes = hex::decode("0a1174726f6e5f7369676e5f6d65737361676512d5010a1174726f6e5f7369676e5f6d65737361676512bf010a2439346434376666642d366631382d343665302d613962652d373132646535363066363132120e31323331323331323321402324251a0454524f4e222254593275726f42655a3574724139515439366145576a3332584c6b414168513952322a5d0a1174726f6e5f7369676e5f6d65737361676512480a4230783634356330623762353831353862616262666136633663643561343861613733343061383734393137366231323065383531363231363738376131336463373610011801").unwrap();
-    //            let param = KeystoreCommonExistsParam::decode(bytes).unwrap();
-    ////            let rsp = Response::decode(bytes);
-    //            println!("{:?}", param);
-    //            //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult::decode(bytes).unwrap();
-    //            //        let param2: KeystoreCommonExistsResult =
-    //            //            KeystoreCommonExistsResult::decode(vec![]).unwrap();
-    //            //        assert_eq!(param.is_exists, param2.is_exists);
-    //        }
 }
