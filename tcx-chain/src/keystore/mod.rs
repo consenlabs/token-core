@@ -126,6 +126,12 @@ impl Keystore {
         ))
     }
 
+    pub fn from_mnemonic(mnemonic: &str, password: &str, metadata: Metadata) -> Result<Keystore> {
+        Ok(Keystore::Hd(HdKeystore::from_mnemonic(
+            mnemonic, password, metadata,
+        )?))
+    }
+
     pub fn id(&self) -> String {
         self.store().id.to_string()
     }

@@ -46,17 +46,19 @@ impl Witness {
         ]))
     }
 
-    fn is_empty(&self) -> Result<bool> {
-        Ok(hex_to_bytes(&self.lock)?.len() == 0
-            && hex_to_bytes(&self.input_type)?.len() == 0
-            && hex_to_bytes(&self.output_type)?.len() == 0)
+    fn is_empty(value: &str) -> bool {
+        ((value.starts_with("0x") || value.starts_with("0x")) && value.len() == 2)
+            || value.len() == 0
     }
 
-    pub fn try_to_string(&self) -> Result<String> {
-        if self.is_empty()? {
-            return Ok("0x".to_owned());
+    pub fn to_raw(&self) -> Result<Vec<u8>> {
+        if Witness::is_empty(&self.lock)
+            && Witness::is_empty(&self.input_type)
+            && Witness::is_empty(&self.output_type)
+        {
+            Ok(vec![])
         } else {
-            return Ok(format!("0x{}", hex::encode(self.serialize()?)));
+            self.serialize()
         }
     }
 }
@@ -149,24 +151,13 @@ mod tests {
     }
 
     #[test]
-    fn to_string() {
+    fn witness_to_raw() {
         let witness = Witness {
             lock: "0x".to_owned(),
             input_type: "0x".to_owned(),
             output_type: "0x".to_owned(),
         };
 
-        assert_eq!(witness.try_to_string().unwrap(), "0x");
-
-        let witness = Witness {
-            lock: "0x".to_owned(),
-            input_type: "0x10".to_owned(),
-            output_type: "0x20".to_owned(),
-        };
-
-        assert_eq!(
-            witness.try_to_string().unwrap(),
-            "0x1a00000010000000100000001500000001000000100100000020"
-        );
+        assert_eq!("", hex::encode(witness.to_raw().unwrap()));
     }
 }

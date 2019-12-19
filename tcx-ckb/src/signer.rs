@@ -39,7 +39,7 @@ impl<'a> CkbTxSigner<'a> {
 
         let mut raw_witnesses: Vec<String> = vec![];
         for w in witnesses.iter() {
-            raw_witnesses.push(w.try_to_string()?)
+            raw_witnesses.push(format!("0x{}", hex::encode(w.to_raw()?)));
         }
 
         for item in grouped_scripts.iter() {
@@ -53,7 +53,7 @@ impl<'a> CkbTxSigner<'a> {
             let path = &input_cells[item.1[0]].derived_path;
 
             let signed_witness = self.sign_witness_group(tx_hash, &ws, path)?;
-            raw_witnesses[item.1[0]] = signed_witness.try_to_string()?;
+            raw_witnesses[item.1[0]] = format!("0x{}", hex::encode(signed_witness.serialize()?));
         }
 
         Ok(raw_witnesses)
@@ -86,7 +86,7 @@ impl<'a> CkbTxSigner<'a> {
         s.update(&serialized_empty_witness);
 
         for w in witness_group[1..].iter() {
-            let bytes = w.serialize()?;
+            let bytes = w.to_raw()?;
             s.update(&Serializer::serialize_u64(bytes.len() as u64));
             s.update(&bytes);
         }
@@ -190,33 +190,28 @@ impl TransactionSigner<CkbTxInput, CkbTxOutput> for Keystore {
 mod tests {
     use crate::address::CkbAddress;
     use crate::transaction::{CachedCell, CellInput, CkbTxInput, OutPoint, Script, Witness};
-    use tcx_chain::{Keystore, TransactionSigner};
+    use tcx_chain::{Keystore, Metadata, TransactionSigner};
     use tcx_constants::{CoinInfo, CurveType};
 
     #[test]
     fn sign_transaction() {
-        let tx_hash = "0x4a4bcfef1b7448e27edf533df2f1de9f56be05eba645fb83f42d55816797ad2a";
+        let tx_hash = "0x719933ec055272734ab709a80492edb44c083e6b675e5c37e5bb3f720fe88e5e";
 
-        let witnesses = vec![
-            Witness::default(),
-            Witness::default(),
-            Witness::default(),
-            Witness::default(),
-        ];
+        let witnesses = vec![Witness::default(), Witness::default(), Witness::default()];
 
         let cached_cells = vec![
             CachedCell {
                 out_point: Some({
                     OutPoint {
                         tx_hash:
-                            "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                            "0x67b35360a09ecbdaf7cef55bb9b58b194d1e067007c67d67520ee730fcd1f252"
                                 .to_owned(),
                         index: 0,
                     }
                 }),
                 lock: Some(Script {
-                    args: "0xedb5c73f2a4ad8df23467c9f3446f5851b5e33da".to_owned(),
-                    code_hash: "0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df2"
+                    args: "0xb1e8f5e7b4be7867ca6cd556ee3954a325979f45".to_owned(),
+                    code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
                         .to_owned(),
                     hash_type: "type".to_string(),
                 }),
@@ -226,16 +221,16 @@ mod tests {
                 out_point: Some({
                     OutPoint {
                         tx_hash:
-                            "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                            "0x67b35360a09ecbdaf7cef55bb9b58b194d1e067007c67d67520ee730fcd1f252"
                                 .to_owned(),
                         index: 1,
                     }
                 }),
                 lock: Some(Script {
-                    args: "0xe2fa82e70b062c8644b80ad7ecf6e015e5f352f6".to_owned(),
-                    code_hash: "0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df2"
+                    args: "0xb1e8f5e7b4be7867ca6cd556ee3954a325979f45".to_owned(),
+                    code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
                         .to_owned(),
-                    hash_type: "type".to_owned(),
+                    hash_type: "type".to_string(),
                 }),
                 ..CachedCell::default()
             },
@@ -243,16 +238,16 @@ mod tests {
                 out_point: Some({
                     OutPoint {
                         tx_hash:
-                            "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                            "0x67b35360a09ecbdaf7cef55bb9b58b194d1e067007c67d67520ee730fcd1f252"
                                 .to_owned(),
                         index: 2,
                     }
                 }),
                 lock: Some(Script {
-                    args: "0xedb5c73f2a4ad8df23467c9f3446f5851b5e33da".to_owned(),
-                    code_hash: "1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df2"
+                    args: "0xb1e8f5e7b4be7867ca6cd556ee3954a325979f45".to_owned(),
+                    code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
                         .to_owned(),
-                    hash_type: "type".to_owned(),
+                    hash_type: "type".to_string(),
                 }),
                 ..CachedCell::default()
             },
@@ -261,7 +256,7 @@ mod tests {
         let inputs = vec![
             CellInput {
                 previous_output: Some(OutPoint {
-                    tx_hash: "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                    tx_hash: "0x67b35360a09ecbdaf7cef55bb9b58b194d1e067007c67d67520ee730fcd1f252"
                         .to_owned(),
                     index: 0,
                 }),
@@ -269,7 +264,7 @@ mod tests {
             },
             CellInput {
                 previous_output: Some(OutPoint {
-                    tx_hash: "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                    tx_hash: "0x67b35360a09ecbdaf7cef55bb9b58b194d1e067007c67d67520ee730fcd1f252"
                         .to_owned(),
                     index: 1,
                 }),
@@ -277,7 +272,7 @@ mod tests {
             },
             CellInput {
                 previous_output: Some(OutPoint {
-                    tx_hash: "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                    tx_hash: "0x67b35360a09ecbdaf7cef55bb9b58b194d1e067007c67d67520ee730fcd1f252"
                         .to_owned(),
                     index: 2,
                 }),
@@ -293,58 +288,32 @@ mod tests {
             ..CkbTxInput::default()
         };
 
-        let mut ks = Keystore::from_private_key(
-            "dcec27d0d975b0378471183a03f7071dea8532aaf968be796719ecd20af6988f",
-            "Password",
-        );
-        ks.unlock_by_password("Password").unwrap();
-
         let coin_info = CoinInfo {
             coin: "NERVOS".to_string(),
-            derivation_path: "".to_string(),
+            derivation_path: "m/44'/309'/0'/0/0".to_string(),
             curve: CurveType::SECP256k1,
             network: "TESTNET".to_string(),
             seg_wit: "".to_string(),
         };
 
-        let account = ks.derive_coin::<CkbAddress>(&coin_info).unwrap().clone();
-
-        let tx_output = ks
-            .sign_transaction("NERVOS", &account.address, &tx_input)
-            .unwrap();
-
-        // same as the input length
-        assert_eq!(tx_output.witnesses.len(), 4);
-        assert_eq!(tx_output.witnesses[3], "0x");
-        assert_eq!(tx_output.witnesses[2], "0x");
-
-        assert_eq!(tx_output.witnesses[0], "0x5500000010000000550000005500000041000000d59792eee1e67747d25a36304bf155665a9b552ecda2d84390ba6acfc422dc3f4b599165078ed98c4e930dec79866b50984f3458c5010faefce6574b9659329501");
-
-        let mut ks = Keystore::from_private_key(
-            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        let mut ks = Keystore::from_mnemonic(
+            "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
             "Password",
-        );
+            Metadata::default(),
+        )
+        .unwrap();
         ks.unlock_by_password("Password").unwrap();
 
-        let coin_info = CoinInfo {
-            coin: "NERVOS".to_string(),
-            derivation_path: "".to_string(),
-            curve: CurveType::SECP256k1,
-            network: "TESTNET".to_string(),
-            seg_wit: "".to_string(),
-        };
-
         let account = ks.derive_coin::<CkbAddress>(&coin_info).unwrap().clone();
+
+        assert_eq!(
+            account.address,
+            "ckt1qyqtr684u76tu7r8efkd24hw8922xfvhnazskzdzy6"
+        );
 
         let tx_output = ks
             .sign_transaction("NERVOS", &account.address, &tx_input)
             .unwrap();
-
-        // same as the input length
-        assert_eq!(tx_output.witnesses.len(), 4);
-        assert_eq!(tx_output.witnesses[3], "0x");
-        assert_eq!(tx_output.witnesses[2], "0x");
-
-        assert_eq!(tx_output.witnesses[1], "0x550000001000000055000000550000004100000091af5eeb1632565dc4a9fb1c6e08d1f1c7da96e10ee00595a2db208f1d15faca03332a1f0f7a0f8522f6e112bb8dde4ed0015d1683b998744a0d8644f0dfd0f800");
+        assert_eq!(tx_output.witnesses[0], "0x55000000100000005500000055000000410000009b87828a6274850b4c8724a286b882aae3ace127c124e4f6687070c09e2533c80b33ace45005a4912f4d092e31f017a8dc9f2f97ef66fb5e2b5e9314ade9b60e00");
     }
 }
