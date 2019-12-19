@@ -634,7 +634,7 @@ mod tests {
         };
 
         init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");
-        let mut keystore_count;
+        let keystore_count;
         {
             let mut map = KEYSTORE_MAP.write();
             keystore_count = map.len();
