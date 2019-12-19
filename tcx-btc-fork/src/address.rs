@@ -42,7 +42,7 @@ pub struct BtcForkAddress {
 impl Address for BtcForkAddress {
     fn from_public_key(public_key: &TypedPublicKey, coin: &CoinInfo) -> Result<String> {
         let network = network_from_coin(&coin);
-        tcx_ensure!(network.is_some(), Error::UnsupportedChain);
+        tcx_ensure!(network.is_some(), Error::MissingNetwork);
         let network = network.expect("network");
 
         let addr = if coin.seg_wit.as_str() == "P2WPKH" {

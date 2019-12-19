@@ -12,7 +12,7 @@ use tcx_chain::Address;
 use tcx_constants::CoinInfo;
 use tcx_primitive::TypedPublicKey;
 
-fn _legacy_to_bch(addr: &str) -> Result<String> {
+fn legacy_to_bch(addr: &str) -> Result<String> {
     let convert = Converter::new();
     let bch_addr = if convert.is_legacy_addr(&addr) {
         convert
@@ -70,7 +70,7 @@ impl BchAddress {
 impl Address for BchAddress {
     fn from_public_key(public_key: &TypedPublicKey, coin: &CoinInfo) -> Result<String> {
         let addr = BtcForkAddress::from_public_key(public_key, coin)?;
-        _legacy_to_bch(&addr)
+        legacy_to_bch(&addr)
     }
 
     fn is_valid(address: &str, coin: &CoinInfo) -> bool {
@@ -91,7 +91,7 @@ impl Address for BchAddress {
 impl Display for BchAddress {
     fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
         let legacy = self.0.to_string();
-        let baddr = _legacy_to_bch(&legacy).expect("legacy_to_bch");
+        let baddr = legacy_to_bch(&legacy).expect("legacy_to_bch");
         std::fmt::Display::fmt(&baddr, f)
     }
 }
@@ -122,7 +122,7 @@ mod tests {
     use tcx_btc_fork::WifDisplay;
     use tcx_chain::Address;
     use tcx_constants::coin_info::coin_info_from_param;
-    use tcx_constants::CurveType;
+    use tcx_constants::{CoinInfo, CurveType};
     use tcx_primitive::{PrivateKey, Secp256k1PrivateKey, TypedPublicKey};
     use tcx_primitive::{PublicKey, TypedPrivateKey};
 
@@ -196,6 +196,16 @@ mod tests {
             format!("{}", addr),
             "qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
         );
+
+        let wrong_coin_info = CoinInfo {
+            coin: "BITCOINCASH".to_string(),
+            derivation_path: "".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "".to_string(),
+            seg_wit: "".to_string(),
+        };
+        let ret = BchAddress::from_public_key(&pk, &wrong_coin_info);
+        assert_eq!(format!("{}", ret.err().unwrap()), "missing_network");
     }
 
     #[test]
