@@ -142,6 +142,7 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
     let file_dir = v["fileDir"].as_str().expect("fileDir");
     let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
     let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
+
     if let Some(is_debug) = v["isDebug"].as_bool() {
         *IS_DEBUG.write().unwrap() = is_debug;
         if is_debug {
@@ -152,36 +153,7 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
     *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
     *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
     *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
-
-    let p = Path::new(file_dir);
-    let walk_dir = std::fs::read_dir(p).expect("read dir");
-    for entry in walk_dir {
-        let entry = entry.expect("DirEntry");
-        let fp = entry.path();
-        if !fp
-            .file_name()
-            .expect("file_name")
-            .to_str()
-            .expect("file_name str")
-            .ends_with(".json")
-        {
-            continue;
-        }
-
-        let mut f = fs::File::open(fp).expect("open file");
-        let mut contents = String::new();
-
-        let _ = f.read_to_string(&mut contents);
-        let v: Value = serde_json::from_str(&contents).expect("read json from content");
-
-        let version = v["version"].as_i64().expect("version");
-        if version != i64::from(HdKeystore::VERSION) {
-            continue;
-        }
-        //        let keystore: HdKeystore = serde_json::from_str(&contents)?;
-        let keystore = Keystore::from_json(&contents)?;
-        cache_keystore(keystore);
-    }
+    handler::scan_keystores();
     Ok(())
 }
 

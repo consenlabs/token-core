@@ -112,13 +112,12 @@ pub fn scan_keystores() -> Result<()> {
         let v: Value = serde_json::from_str(&contents).expect("read json from content");
 
         let version = v["version"].as_i64().expect("version");
-        if version != i64::from(HdKeystore::VERSION)
-            && version != i64::from(PrivateKeystore::VERSION)
+        if version == i64::from(HdKeystore::VERSION)
+            || version == i64::from(PrivateKeystore::VERSION)
         {
-            continue;
+            let keystore = Keystore::from_json(&contents)?;
+            cache_keystore(keystore);
         }
-        let keystore = Keystore::from_json(&contents)?;
-        cache_keystore(keystore);
     }
     Ok(())
 }
@@ -335,34 +334,33 @@ pub fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let param: PrivateKeyStoreExportParam =
         PrivateKeyStoreExportParam::decode(data).expect("private_key_store_export");
     let mut map = KEYSTORE_MAP.write().unwrap();
+
     let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    if keystore.verify_password(&param.password) {
-        let pk_hex = keystore.export()?;
+    keystore.unlock_by_password(&param.password);
 
-        // private_key prefix is only about chain type and network
-        let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
-        let value = if param.chain_type.as_str() == "TRON" {
-            Ok(pk_hex.to_string())
-        } else {
-            let bytes = hex::decode(pk_hex.to_string())?;
-            let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
-            typed_pk.fmt(&coin_info)
-        }?;
+    let pk_hex = keystore.export()?;
 
-        let export_result = KeystoreCommonExportResult {
-            id: keystore.id(),
-            r#type: KeyType::PrivateKey as i32,
-            value,
-        };
-
-        encode_message(export_result)
+    // private_key prefix is only about chain type and network
+    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
+    let value = if param.chain_type.as_str() == "TRON" {
+        Ok(pk_hex.to_string())
     } else {
-        Err(format_err!("{}", "password_incorrect"))
-    }
+        let bytes = hex::decode(pk_hex.to_string())?;
+        let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
+        typed_pk.fmt(&coin_info)
+    }?;
+
+    let export_result = KeystoreCommonExportResult {
+        id: keystore.id(),
+        r#type: KeyType::PrivateKey as i32,
+        value,
+    };
+
+    encode_message(export_result)
 }
 
 pub fn keystore_common_verify(data: &[u8]) -> Result<Vec<u8>> {
@@ -587,7 +585,6 @@ mod tests {
         if !p.exists() {
             fs::create_dir_all(p).expect("shoud create filedir");
         }
-        *tcx_crypto::KDF_ROUNDS.write().unwrap() = 1024;
 
         *tcx_crypto::KDF_ROUNDS.write().unwrap() = 1024;
         let param = InitTokenCoreXParam {
@@ -631,23 +628,28 @@ mod tests {
 
     #[test]
     pub fn test_scan_keystores() {
-        run_test(|| {
-            let keystore_count;
-            {
-                let mut map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
-                    KEYSTORE_MAP.write().unwrap();
-                keystore_count = map.len();
-                map.clear();
-                assert_eq!(0, map.len());
-            }
-            scan_keystores().expect("should rescan keystores");
-            {
-                let map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
-                    KEYSTORE_MAP.write().unwrap();
+        let param = InitTokenCoreXParam {
+            file_dir: "../test-data".to_string(),
+            xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
+            xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
+        };
 
-                assert_eq!(keystore_count, map.len());
-            }
-        })
+        init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");
+        let keystore_count;
+        {
+            let mut map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
+                KEYSTORE_MAP.write().unwrap();
+            keystore_count = map.len();
+            map.clear();
+            assert_eq!(0, map.len());
+        }
+        scan_keystores().expect("should rescan keystores");
+        {
+            let map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
+                KEYSTORE_MAP.write().unwrap();
+
+            assert_eq!(keystore_count, map.len());
+        }
     }
 
     #[test]
