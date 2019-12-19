@@ -184,7 +184,7 @@ impl Keystore {
         }
     }
 
-    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+    pub fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<Account> {
         match self {
             Keystore::PrivateKey(ks) => ks.derive_coin::<A>(coin_info),
             Keystore::Hd(ks) => ks.derive_coin::<A>(coin_info),

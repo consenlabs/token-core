@@ -89,6 +89,10 @@ pub trait DeterministicPrivateKey: Derive {
     fn deterministic_public_key(&self) -> Self::DeterministicPublicKey;
 }
 
+pub trait TypedPrivateKeyDisplay {
+    fn fmt(data: &[u8], network: &str) -> Result<String>;
+}
+
 pub enum TypedPrivateKey {
     Secp256k1(Secp256k1PrivateKey),
 }

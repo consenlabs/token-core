@@ -64,16 +64,23 @@ impl PrivateKeystore {
         TypedPrivateKey::from_slice(account.curve, private_key)
     }
 
-    pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+    pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<Account> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
         let sk = self.private_key.as_ref().unwrap();
 
         let account = Self::private_key_to_account::<A>(coin_info, sk)?;
-
-        self.store.active_accounts.push(account);
-
-        Ok(self.store.active_accounts.last().unwrap())
+        if let Some(_) = self
+            .store
+            .active_accounts
+            .iter()
+            .find(|x| x.address == account.address && x.coin == account.coin)
+        {
+            return Ok(account);
+        } else {
+            self.store.active_accounts.push(account.clone());
+            Ok(account)
+        }
     }
 
     /// Find an account by coin symbol

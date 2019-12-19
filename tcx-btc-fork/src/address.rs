@@ -16,7 +16,22 @@ use tcx_chain::Address;
 use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcForkNetwork};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CoinInfo;
-use tcx_primitive::{Ss58Codec, TypedPublicKey};
+use tcx_primitive::{Ss58Codec, TypedPrivateKey, TypedPublicKey};
+
+pub trait WifDisplay {
+    fn fmt(&self, coin_info: &CoinInfo) -> Result<String>;
+}
+
+impl WifDisplay for TypedPrivateKey {
+    fn fmt(&self, coin_info: &CoinInfo) -> Result<String> {
+        let network = network_from_coin(coin_info);
+        tcx_ensure!(network.is_some(), Error::UnsupportedChain);
+        // let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &data)?;
+        let key = self.as_secp256k1()?;
+        let version = vec![network.unwrap().private_prefix];
+        Ok(key.to_ss58check_with_version(&version))
+    }
+}
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BtcForkAddress {
