@@ -68,7 +68,7 @@ export default function (repeatImport, runRobust) {
               network,
               segWit: 'NONE',
             })
-            // await importMnemonic({ ...params, address, repeatImport, REPEAT_PASSWORD})
+            await importMnemonic({ ...params, address, repeatImport, runRobust, REPEAT_PASSWORD})
           })
         }
       }
