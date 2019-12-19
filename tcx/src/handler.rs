@@ -31,7 +31,6 @@ use crate::filemanager::{cache_keystore, clean_keystore, flush_keystore, WALLET_
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 
 use crate::IS_DEBUG;
-//use parking_lot::RwLock;
 use tcx_chain::Address;
 use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
@@ -564,14 +563,14 @@ mod tests {
     };
     use crate::handler::{hd_store_import, init_token_core_x};
     use prost::Message;
-    use std::collections::HashMap;
+
     use std::fs::remove_file;
     use std::path::Path;
-    use std::sync::RwLockWriteGuard;
+
     use std::{fs, panic};
     use tcx_btc_fork::transaction::BtcForkTxInput;
     use tcx_btc_fork::transaction::Utxo;
-    use tcx_chain::Keystore;
+
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
     use tcx_tron::transaction::{TronTxInput, TronTxOutput};
 
