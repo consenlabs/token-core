@@ -11,3 +11,4 @@ failure = "0.1.5"
 lazy_static = "1.4.0"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+parking_lot = "0.10"

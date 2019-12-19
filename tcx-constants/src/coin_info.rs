@@ -2,7 +2,7 @@ use crate::curve::CurveType;
 use crate::Result;
 use failure::format_err;
 
-use std::sync::RwLock;
+use parking_lot::RwLock;
 
 /// Blockchain basic config
 ///
@@ -116,7 +116,7 @@ lazy_static! {
 }
 
 pub fn coin_info_from_param(chain_type: &str, network: &str, seg_wit: &str) -> Result<CoinInfo> {
-    let coin_infos = COIN_INFOS.read().unwrap();
+    let coin_infos = COIN_INFOS.read();
     let mut coins = coin_infos
         .iter()
         .filter(|x| {
