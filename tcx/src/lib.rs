@@ -17,10 +17,9 @@ pub mod error_handling;
 pub mod handler;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
-    encode_message, hd_store_create, hd_store_derive, hd_store_export, hd_store_import,
-    keystore_common_accounts, keystore_common_delete, keystore_common_exists,
-    keystore_common_verify, private_key_store_export, private_key_store_import, sign_tx,
-    tron_sign_message, Buffer,
+    encode_message, hd_store_create, hd_store_export, hd_store_import, keystore_common_accounts,
+    keystore_common_delete, keystore_common_derive, keystore_common_exists, keystore_common_verify,
+    private_key_store_export, private_key_store_import, sign_tx, tron_sign_message, Buffer,
 };
 mod filemanager;
 use crate::filemanager::{cache_keystore, WALLET_FILE_DIR};
@@ -86,7 +85,9 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "hd_store_create" => landingpad(|| hd_store_create(&action.param.unwrap().value)),
         "hd_store_import" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
         "hd_store_export" => landingpad(|| hd_store_export(&action.param.unwrap().value)),
-        "hd_store_derive" => landingpad(|| hd_store_derive(&action.param.unwrap().value)),
+        "keystore_common_derive" => {
+            landingpad(|| keystore_common_derive(&action.param.unwrap().value))
+        }
 
         "private_key_store_import" => {
             landingpad(|| private_key_store_import(&action.param.unwrap().value))
@@ -258,7 +259,9 @@ mod tests {
             let entry = entry.unwrap();
             let fp = entry.path();
             let file_name = fp.file_name().unwrap();
-            if file_name != ".gitignore" && file_name != "default_keystore.json" {
+            if file_name != ".gitignore"
+                && file_name.to_str().unwrap().starts_with("default_keystore")
+            {
                 let _ = remove_file(fp);
             }
         }
@@ -294,40 +297,39 @@ mod tests {
         });
     }
 
-    //        #[test]
-    //        fn test_call_tcx_api() {
-    //            run_test(|| unsafe {
-    //                let param_hex = "0a1174726f6e5f7369676e5f6d65737361676512d5010a1174726f6e5f7369676e5f6d65737361676512bf010a2439346434376666642d366631382d343665302d613962652d373132646535363066363132120e31323331323331323321402324251a0454524f4e222254593275726f42655a3574724139515439366145576a3332584c6b414168513952322a5d0a1174726f6e5f7369676e5f6d65737361676512480a4230783634356330623762353831353862616262666136633663643561343861613733343061383734393137366231323065383531363231363738376131336463373610011801";
-    //                let mut param_bytes = hex::decode(param_hex).unwrap();
-    //                let param_buf = Buffer {
-    //                    data: param_bytes.as_mut_ptr(),
-    //                    len: param_bytes.len(),
-    //                };
-    //                clear_err();
-    //                let ret_buf = unsafe { call_tcx_api(param_buf) };
-    ////                let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
-    //                let err = get_last_err();
-    //                let err_bytes = unsafe { Vec::from_raw_parts(err.data, err.len, err.len) };
+    // quick dirty protobuf debug tools
+    //            #[test]
+    //            fn test_call_tcx_api() {
+    //                run_test(|| unsafe {
+    //                    let param_hex = "0a1174726f6e5f7369676e5f6d65737361676512d5010a1174726f6e5f7369676e5f6d65737361676512bf010a2439346434376666642d366631382d343665302d613962652d373132646535363066363132120e31323331323331323321402324251a0454524f4e222254593275726f42655a3574724139515439366145576a3332584c6b414168513952322a5d0a1174726f6e5f7369676e5f6d65737361676512480a4230783634356330623762353831353862616262666136633663643561343861613733343061383734393137366231323065383531363231363738376131336463373610011801";
+    //                    let param_c_str = _to_c_char(param_hex);
+    //                    clear_err();
+    //                    let ret_buf = unsafe { call_tcx_api(param_c_str) };
+    //    //                let ret_bytes = unsafe { Vec::from_raw_parts(ret_buf.data, ret_buf.len, ret_buf.len) };
+    //                    let err = _to_str(get_last_err_message());
     //
-    //                println!("{:?}", Response::decode(err_bytes).unwrap());
-    //                assert!(false);
-    //            });
-    //        }
+    //                    let err_bytes = hex::decode(err).unwrap();
+    //
+    //                    println!("{:?}", Response::decode(err_bytes).unwrap());
+    //                    assert!(false);
+    //                });
+    //            }
 
-    //    #[test]
-    //    fn test_encode_empty_struct() {
-    //        //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult {
-    //        //            is_exists: false,
-    //        //            id: "".to_string()
-    //        //        };
-    //        //        let hex_value = hex::encode(encode_message(param).unwrap());
-    //        //        assert_eq!("08001200", hex_value);
-    //        let bytes = hex::decode("1211756e737570706f727465645f636861696e").unwrap();
-    //        let rsp = Response::decode(bytes);
-    //        println!("{:?}", rsp);
-    //        //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult::decode(bytes).unwrap();
-    //        //        let param2: KeystoreCommonExistsResult =
-    //        //            KeystoreCommonExistsResult::decode(vec![]).unwrap();
-    //        //        assert_eq!(param.is_exists, param2.is_exists);
-    //    }
+    //        #[test]
+    //        fn test_encode_empty_struct() {
+    //            //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult {
+    //            //            is_exists: false,
+    //            //            id: "".to_string()
+    //            //        };
+    //            //        let hex_value = hex::encode(encode_message(param).unwrap());
+    //            //        assert_eq!("08001200", hex_value);
+    //            let bytes = hex::decode("0a1174726f6e5f7369676e5f6d65737361676512d5010a1174726f6e5f7369676e5f6d65737361676512bf010a2439346434376666642d366631382d343665302d613962652d373132646535363066363132120e31323331323331323321402324251a0454524f4e222254593275726f42655a3574724139515439366145576a3332584c6b414168513952322a5d0a1174726f6e5f7369676e5f6d65737361676512480a4230783634356330623762353831353862616262666136633663643561343861613733343061383734393137366231323065383531363231363738376131336463373610011801").unwrap();
+    //            let param = KeystoreCommonExistsParam::decode(bytes).unwrap();
+    ////            let rsp = Response::decode(bytes);
+    //            println!("{:?}", param);
+    //            //        let param: KeystoreCommonExistsResult = KeystoreCommonExistsResult::decode(bytes).unwrap();
+    //            //        let param2: KeystoreCommonExistsResult =
+    //            //            KeystoreCommonExistsResult::decode(vec![]).unwrap();
+    //            //        assert_eq!(param.is_exists, param2.is_exists);
+    //        }
 }

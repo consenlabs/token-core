@@ -175,7 +175,7 @@ impl HdKeystore {
         })
     }
 
-    pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+    pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<Account> {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
         let root = TypedDeterministicPrivateKey::from_seed(
@@ -207,9 +207,17 @@ impl HdKeystore {
             ext_pub_key,
             seg_wit: coin_info.seg_wit.to_string(),
         };
-        self.store.active_accounts.push(account.clone());
-
-        Ok(&self.store.active_accounts.last().unwrap())
+        if let Some(_) = self
+            .store
+            .active_accounts
+            .iter()
+            .find(|x| x.address == account.address && x.coin == account.coin)
+        {
+            return Ok(account);
+        } else {
+            self.store.active_accounts.push(account.clone());
+            Ok(account)
+        }
     }
 
     pub(crate) fn account(&self, symbol: &str, address: &str) -> Option<&Account> {
@@ -379,7 +387,7 @@ mod tests {
             coin: "BITCOIN".to_string(),
         };
 
-        assert_eq!(acc, &expected);
+        assert_eq!(acc, expected);
         assert_eq!(
             keystore.account("BITCOIN", "mock_address").unwrap(),
             &expected
