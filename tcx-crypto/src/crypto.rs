@@ -13,7 +13,7 @@ pub type Credential = [u8; CREDENTIAL_LEN];
 fn default_kdf_rounds() -> u32 {
     let v = env::var("KDF_ROUNDS");
     if v.is_err() {
-        *crate::KDF_ROUNDS.read().unwrap() as u32
+        *crate::KDF_ROUNDS.read() as u32
     } else {
         v.unwrap().parse::<u32>().unwrap()
     }

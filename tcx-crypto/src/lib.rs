@@ -5,7 +5,8 @@ pub mod numberic_util;
 
 use core::result;
 pub use crypto::{Crypto, EncPair, Pbkdf2Params};
-use std::sync::RwLock;
+//use std::sync::RwLock;
+use parking_lot::RwLock;
 
 #[macro_use]
 extern crate failure;
@@ -31,5 +32,5 @@ lazy_static! {
         RwLock::new("B888D25EC8C12BD5043777B1AC49F872".to_string());
     pub static ref XPUB_COMMON_IV: RwLock<String> =
         RwLock::new("9C0C30889CBCC5E01AB5B2BB88715799".to_string());
-    pub static ref KDF_ROUNDS: RwLock<i32> = RwLock::new(1024);
+    pub static ref KDF_ROUNDS: RwLock<i32> = RwLock::new(262144);
 }

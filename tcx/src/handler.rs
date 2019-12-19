@@ -31,7 +31,7 @@ use crate::filemanager::{cache_keystore, clean_keystore, flush_keystore, WALLET_
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 
 use crate::IS_DEBUG;
-use std::sync::RwLockReadGuard;
+//use parking_lot::RwLock;
 use tcx_chain::Address;
 use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
@@ -47,7 +47,7 @@ pub struct Buffer {
 }
 
 pub fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
-    if *IS_DEBUG.read().unwrap() {
+    if *IS_DEBUG.read() {
         println!("{:#?}", msg);
     }
     let mut buf = BytesMut::with_capacity(msg.encoded_len());
@@ -78,9 +78,9 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
         xpub_common_key,
         xpub_common_iv,
     } = InitTokenCoreXParam::decode(data).unwrap();
-    *WALLET_FILE_DIR.write().unwrap() = file_dir.to_string();
-    *XPUB_COMMON_KEY_128.write().unwrap() = xpub_common_key.to_string();
-    *XPUB_COMMON_IV.write().unwrap() = xpub_common_iv.to_string();
+    *WALLET_FILE_DIR.write() = file_dir.to_string();
+    *XPUB_COMMON_KEY_128.write() = xpub_common_key.to_string();
+    *XPUB_COMMON_IV.write() = xpub_common_iv.to_string();
 
     scan_keystores()?;
 
@@ -89,7 +89,7 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
 
 pub fn scan_keystores() -> Result<()> {
     clean_keystore();
-    let file_dir: RwLockReadGuard<'_, std::string::String> = WALLET_FILE_DIR.read().unwrap();
+    let file_dir = WALLET_FILE_DIR.read();
     let p = Path::new(file_dir.as_str());
     let walk_dir = std::fs::read_dir(p).expect("read dir");
     for entry in walk_dir {
@@ -157,7 +157,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let mut founded_id: Option<String> = None;
     {
         let key_hash = key_hash_from_mnemonic(&param.mnemonic)?;
-        let map = KEYSTORE_MAP.read().unwrap();
+        let map = KEYSTORE_MAP.read();
         if let Some(founded) = map
             .values()
             .find(|keystore| keystore.key_hash() == key_hash)
@@ -207,8 +207,8 @@ fn enc_xpub(xpub: &str, network: &str) -> Result<String> {
         ext_pub_key = xpk.to_ss58check_with_version(&[0x04, 0x35, 0x87, 0xCF]);
     }
 
-    let key = tcx_crypto::XPUB_COMMON_KEY_128.read().unwrap();
-    let iv = tcx_crypto::XPUB_COMMON_IV.read().unwrap();
+    let key = tcx_crypto::XPUB_COMMON_KEY_128.read();
+    let iv = tcx_crypto::XPUB_COMMON_IV.read();
     let key_bytes = hex::decode(&*key)?;
     let iv_bytes = hex::decode(&*iv)?;
     let encrypted = encrypt_pkcs7(&ext_pub_key.as_bytes(), &key_bytes, &iv_bytes)?;
@@ -218,13 +218,14 @@ fn enc_xpub(xpub: &str, network: &str) -> Result<String> {
 pub fn keystore_common_derive(data: &[u8]) -> Result<Vec<u8>> {
     let param: KeystoreCommonDeriveParam =
         KeystoreCommonDeriveParam::decode(data).expect("keystore_common_derive");
-    let mut map = KEYSTORE_MAP.write().unwrap();
+    let mut map = KEYSTORE_MAP.write();
     let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
     keystore.unlock_by_password(&param.password)?;
+
     let mut account_responses: Vec<AccountResponse> = vec![];
 
     for derivation in param.derivations {
@@ -252,7 +253,7 @@ pub fn keystore_common_derive(data: &[u8]) -> Result<Vec<u8>> {
 
 pub fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let param: WalletKeyParam = WalletKeyParam::decode(data).expect("keystore_common_delete");
-    let mut map = KEYSTORE_MAP.write().unwrap();
+    let mut map = KEYSTORE_MAP.write();
     let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
@@ -290,7 +291,7 @@ pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let mut founded_id: Option<String> = None;
     {
         let key_hash = key_hash_from_any_format_pk(&param.private_key)?;
-        let map = KEYSTORE_MAP.read().unwrap();
+        let map = KEYSTORE_MAP.read();
         if let Some(founded) = map
             .values()
             .find(|keystore| keystore.key_hash() == key_hash)
@@ -334,7 +335,7 @@ pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
 pub fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let param: PrivateKeyStoreExportParam =
         PrivateKeyStoreExportParam::decode(data).expect("private_key_store_export");
-    let mut map = KEYSTORE_MAP.write().unwrap();
+    let mut map = KEYSTORE_MAP.write();
     let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
@@ -366,7 +367,7 @@ pub fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
 
 pub fn keystore_common_verify(data: &[u8]) -> Result<Vec<u8>> {
     let param: WalletKeyParam = WalletKeyParam::decode(data).expect("keystore_common_delete");
-    let map = KEYSTORE_MAP.read().unwrap();
+    let map = KEYSTORE_MAP.read();
     let keystore: &Keystore = match map.get(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
@@ -385,7 +386,7 @@ pub fn keystore_common_verify(data: &[u8]) -> Result<Vec<u8>> {
 
 pub fn keystore_common_delete(data: &[u8]) -> Result<Vec<u8>> {
     let param: WalletKeyParam = WalletKeyParam::decode(data).expect("keystore_common_delete");
-    let mut map = KEYSTORE_MAP.write().unwrap();
+    let mut map = KEYSTORE_MAP.write();
     let keystore: &Keystore = match map.get(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
@@ -414,7 +415,7 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
     } else {
         key_hash = key_hash_from_any_format_pk(&param.value)?;
     }
-    let map = &mut KEYSTORE_MAP.write().unwrap();
+    let map = &mut KEYSTORE_MAP.write();
 
     let founded: Option<&Keystore> = map
         .values()
@@ -437,7 +438,7 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
 pub fn keystore_common_accounts(data: &[u8]) -> Result<Vec<u8>> {
     let param: KeystoreCommonAccountsParam =
         KeystoreCommonAccountsParam::decode(data).expect("keystore_common_accounts params");
-    let map = KEYSTORE_MAP.read().unwrap();
+    let map = KEYSTORE_MAP.read();
     let keystore: &Keystore = match map.get(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
@@ -467,7 +468,7 @@ pub fn keystore_common_accounts(data: &[u8]) -> Result<Vec<u8>> {
 pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
     let param: SignParam = SignParam::decode(data).expect("SignTxParam");
 
-    let mut map = KEYSTORE_MAP.write().unwrap();
+    let mut map = KEYSTORE_MAP.write();
     let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
@@ -530,7 +531,7 @@ pub fn sign_tron_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8
 pub fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
     let param: SignParam = SignParam::decode(data).expect("SignParam");
 
-    let mut map = KEYSTORE_MAP.write().unwrap();
+    let mut map = KEYSTORE_MAP.write();
     let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
@@ -586,9 +587,9 @@ mod tests {
         if !p.exists() {
             fs::create_dir_all(p).expect("shoud create filedir");
         }
-        *tcx_crypto::KDF_ROUNDS.write().unwrap() = 1024;
+        *tcx_crypto::KDF_ROUNDS.write() = 1024;
 
-        *tcx_crypto::KDF_ROUNDS.write().unwrap() = 1024;
+        *tcx_crypto::KDF_ROUNDS.write() = 1024;
         let param = InitTokenCoreXParam {
             file_dir: "/tmp/imtoken/wallets".to_string(),
             xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
@@ -633,16 +634,14 @@ mod tests {
         run_test(|| {
             let keystore_count;
             {
-                let mut map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
-                    KEYSTORE_MAP.write().unwrap();
+                let mut map = KEYSTORE_MAP.write();
                 keystore_count = map.len();
                 map.clear();
                 assert_eq!(0, map.len());
             }
             scan_keystores().expect("should rescan keystores");
             {
-                let map: RwLockWriteGuard<'_, HashMap<String, Keystore>> =
-                    KEYSTORE_MAP.write().unwrap();
+                let map = KEYSTORE_MAP.write();
 
                 assert_eq!(keystore_count, map.len());
             }
@@ -1541,6 +1540,12 @@ mod tests {
 
             remove_created_wallet(&import_result.id);
         })
+    }
+
+    #[test]
+    pub fn test_poison_err() {
+        let _ = import_default_wallet();
+        let _ = import_default_pk_store();
     }
 
     fn remove_created_wallet(wid: &str) {
