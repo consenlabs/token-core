@@ -35,7 +35,7 @@ export default async function (params) {
     await id('input-password').replaceText(REPEAT_PASSWORD)
 
     await id('import').tap()
-    await waitFor(id('import-address')).toExist().withTimeout(2000)
+    await expect(id('import-address')).toExist()
     await toHaveText('import-address', address)
 
     // dismiss keyboard

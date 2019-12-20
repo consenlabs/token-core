@@ -59,12 +59,13 @@ export default async function (params) {
         invalidNetwork = 'KOVAN'
         errorMessage = 'unsupported_chain'
         await inputInvalidNetwork(invalidNetwork, errorMessage)
-
-        await inputRightParams(chainType, mnemonic, password, network, segWit)
-        // invalid Segwit (GENERAL)
-        let invalidSegwit = 'GENERAL'
-        errorMessage = 'unsupported_chain'
-        await inputInvalidSegwit(invalidSegwit, errorMessage)
+        if (chainType != 'NERVOS') {
+            await inputRightParams(chainType, mnemonic, password, network, segWit)
+            // invalid Segwit (GENERAL)
+            let invalidSegwit = 'GENERAL'
+            errorMessage = 'unsupported_chain'
+            await inputInvalidSegwit(invalidSegwit, errorMessage)
+        }
     }
 
     await inputRightParams(chainType, mnemonic, password, network, segWit)

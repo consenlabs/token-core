@@ -42,8 +42,7 @@ export default async function (params) {
       await waitFor(id('mnemonicDeleteSuccess')).toExist().withTimeout(2000)
 
       await id('privateKeyDelete').tap()
-      await expect(text('wallet_not_found')).toExist()
-      await text('OK').tap()
+      await waitFor(id('privateKeyDeleteSuccess')).toExist().withTimeout(2000)
     
       // go back
       await id('goBack').tap()
@@ -87,8 +86,7 @@ export default async function (params) {
       await waitFor(id('privateKeyDeleteSuccess')).toExist().withTimeout(2000)
       
       await id('mnemonicDelete').tap()
-      await expect(text('wallet_not_found')).toExist()
-      await text('OK').tap()
+      await waitFor(id('mnemonicDeleteSuccess')).toExist().withTimeout(2000)
 
       // go back
       await id('goBack').tap()

@@ -10,7 +10,6 @@ import roubustImportPrivateKey from './base/robustImportPrivateKey'
 import {
   PASSWORD,
   REPEAT_PASSWORD,
-  CHAINTYPES,
   BITCOINCASH_MAINNET_MNEMONIC_12_PRIVATEKEY,
   LITECOIN_MAINNET_MNEMONIC_12_PRIVATEKEY,
   TRON_MAINNET_MNEMONIC_12_PRIVATEKEY,
@@ -20,6 +19,8 @@ import {
 } from '../../constant'
 
 import { formatPrivateKeyStoreParams } from '../../chain'
+
+export const CHAINTYPES = ['BITCOINCASH', 'LITECOIN', 'TRON']
 
 export const PRIVATEKEYS = {
   BITCOINCASH_MAINNET_MNEMONIC_12_PRIVATEKEY,
@@ -51,6 +52,8 @@ export default function (repeatImport, runRobust) {
         await importPrivateKey({ ...params, address, repeatImport, REPEAT_PASSWORD })
       })
     }
+
+    
 
     if (runRobust) {
       for (const chainIndex in CHAINTYPES) {

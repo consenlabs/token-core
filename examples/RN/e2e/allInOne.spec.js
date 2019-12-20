@@ -5,12 +5,12 @@ import signTxFlow from './specs/wallet/signTxFlow'
 import tronSignMessageFlow from './specs/wallet/tronSignMessageFlow'
 import mnemonicPrivateKeyFlow from './specs/wallet/mnemonicPrivateKeyFlow'
 
-const repeatImport = true
-const runRobust = true
+const repeatImport = false
+const runRobust = false
 
 createFlow()
-// mnemonicFlow(repeatImport, runRobust)
-// privateKeyFlow(repeatImport, runRobust)
-// mnemonicPrivateKeyFlow()
-// signTxFlow()
-// tronSignMessageFlow()
+mnemonicFlow(repeatImport, runRobust)
+privateKeyFlow(repeatImport, runRobust)
+mnemonicPrivateKeyFlow()
+signTxFlow()
+tronSignMessageFlow()

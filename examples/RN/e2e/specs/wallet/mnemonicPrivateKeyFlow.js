@@ -10,7 +10,6 @@ import mnemonicPrivateKey from './base/mnemonicPrivateKey'
 import {
   PASSWORD,
   REPEAT_PASSWORD,
-  CHAINTYPES,
   MNEMONIC_12,
   BITCOINCASH_MAINNET_MNEMONIC_12_PRIVATEKEY,
   LITECOIN_MAINNET_MNEMONIC_12_PRIVATEKEY,
@@ -21,6 +20,8 @@ import {
 } from '../../constant'
 
 import { formatPrivateKeyStoreParams } from '../../chain'
+
+export const CHAINTYPES = ['BITCOINCASH', 'LITECOIN', 'TRON']
 
 export const PRIVATEKEYS = {
   BITCOINCASH_MAINNET_MNEMONIC_12_PRIVATEKEY,
@@ -51,11 +52,11 @@ export default function () {
           network,
           segWit: 'NONE',
         })
-        /*
+        
         let coverFlow = 'mnemonicCoverPrivateKey'
         await mnemonicPrivateKey({ ...params, address, mnemonic, REPEAT_PASSWORD, coverFlow})
-        */
-        let coverFlow = 'privateKeyCoverMnemonic'
+        
+        coverFlow = 'privateKeyCoverMnemonic'
         await mnemonicPrivateKey({ ...params, address, mnemonic, REPEAT_PASSWORD, coverFlow})
       })
     }

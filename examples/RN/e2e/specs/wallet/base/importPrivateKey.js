@@ -52,13 +52,12 @@ export default async function (params) {
   await waitFor(id('verifySuccess')).toExist().withTimeout(2000)
 
   // private key verify failed, need xyz fix
-  /*
   await id('keystoreCommonExists').tap()
   await waitFor(id('isExists')).toExist().withTimeout(2000)
 
   await id('keystoreCommonAccounts').tap()
   await waitFor(id('accounts')).toExist().withTimeout(2000)
-  */
+
   await id('keystoreCommonDelete').tap()
   await waitFor(id('deleteSuccess')).toExist().withTimeout(2000)
 
@@ -77,7 +76,6 @@ export default async function (params) {
     // only e2e:debug 
   // await text('Dismiss All').tap()
 
-  /*
   await id('keystoreCommonExists').tap()
   await waitFor(id('isExists')).toNotExist().withTimeout(2000)
 
@@ -86,7 +84,7 @@ export default async function (params) {
   await text('OK').tap()
     // only e2e:debug 
   // await text('Dismiss All').tap()
-*/
+  
   await id('keystoreCommonDelete').tap()
   await expect(text('wallet_not_found')).toExist()
   await text('OK').tap()

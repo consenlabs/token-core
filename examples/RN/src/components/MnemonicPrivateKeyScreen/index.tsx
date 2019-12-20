@@ -205,19 +205,28 @@ class CMP extends React.Component<Props, State> {
 
   privateKeyImport = async () => {
     const { privateKey, password, chainType, network, segWit } = this.state
+    const chainPath = getChainPath(chainType, network)
     try {
       const params = {
         privateKey: privateKey.trim(),
         password,
-        chainType,
-        network,
-        segWit,
         overwrite: true,
       }
       this.setState({ isLoading: true })
       const res = await walletAPI.privateKeyStoreImport(params)
+      const deriveParams = {
+        chainType,
+        path: chainPath,
+        network,
+        segWit,
+      }
+      const accountsRes = await walletAPI.hdStoreDerive({
+        id: res.id,
+        password,
+        derivations: [deriveParams]
+      })
       // @ts-ignore
-      this.setState({ idFromPrivateKey: res.id, addressFromPrivateKey: res.accounts[0].address, isLoading: false })
+      this.setState({ idFromPrivateKey: res.id, addressFromPrivateKey: accountsRes.accounts[0].address, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
       Alert.alert('', err.message)

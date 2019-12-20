@@ -2,6 +2,7 @@ import React from 'react'
 import { StyleSheet, View, Text, TextInput, Button, Alert } from 'react-native'
 import walletAPI from '../../native'
 import Loading from '../Loading'
+import { getChainPath } from '../../constant/path'
 
 interface Props {
 }
@@ -12,9 +13,9 @@ interface State {
   password: string
   privateKey: string
   exportPrivateKey: any
-  address: string
+  address: string | null | undefined
   segWit: string
-  id: string
+  id: string | null | undefined
   isLoading: boolean
   verifySuccess: any
   isExists: any
@@ -175,7 +176,7 @@ class CPK extends React.Component<Props, State> {
     try {
       this.setState({ isLoading: true })
       // @ts-ignore
-      const res = await walletAPI.keystoreCommonExists({ type: 'PRIVATE_KEY', value: privateKey })
+      const res = await walletAPI.keystoreCommonExists({ type: '1', value: privateKey })
       this.setState({ isExists: res.isExists, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
@@ -212,19 +213,29 @@ class CPK extends React.Component<Props, State> {
 
   handleImport = async () => {
     const { privateKey, password, chainType, network, segWit } = this.state
+    const chainPath = getChainPath(chainType, network)
     try {
       const params = {
         privateKey: privateKey.trim(),
         password,
-        chainType,
-        network,
-        segWit,
         overwrite: true,
       }
       this.setState({ isLoading: true })
       const res = await walletAPI.privateKeyStoreImport(params)
+      const deriveParams = {
+        chainType,
+        path: chainPath,
+        network,
+        segWit,
+      }
+      const accountsRes = await walletAPI.hdStoreDerive({
+        id: res.id,
+        password,
+        derivations: [deriveParams]
+      })
       // @ts-ignore
-      this.setState({ id: res.id, address: res.accounts[0].address, isLoading: false })
+      const address = accountsRes.accounts[0].address
+      this.setState({ id: res.id, address, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
       Alert.alert('', err.message)

@@ -10,7 +10,7 @@ export default async function (params) {
     let invalidPrivateKey = ''
     let errorMessage = ''
     
-    errorMessage = (chainType === 'TRON') ? 'invalid_private_key' : 'base58ck data not even long enough for a checksum'
+    errorMessage = 'invalid_private_key'
     await inputInvalidPrivateKey(invalidPrivateKey, errorMessage)
 
     // invalid privateKey (error)
@@ -22,12 +22,12 @@ export default async function (params) {
     invalidPrivateKey = privateKey.substr(0, privateKey.length-1)
     errorMessage = (chainType === 'TRON') ? "hex can't decode: OddLength" : 'base58ck checksum'
     await inputInvalidPrivateKey(invalidPrivateKey, errorMessage)
-    
+
     // invalid privateKey length+1
     invalidPrivateKey = privateKey + 'i'
     errorMessage = (chainType === 'TRON') ? "hex can't decode: OddLength" : 'base58ck checksum'
     await inputInvalidPrivateKey(invalidPrivateKey, errorMessage)
-  
+
     await inputRightParams (chainType, privateKey, password, network, segWit)
     // invalid password
     let invalidPassword = ''
@@ -36,9 +36,9 @@ export default async function (params) {
 
     await inputRightParams (chainType, privateKey, password, network, segWit)
     // invalid ChainType 
-    let invalidChainType = ''
+    let invalidChainType = 'NERVOS'
     errorMessage = (chainType === 'TRON') ? 'unsupported_chain' : 'invalid_private_key'
-    invalidChainType = (chainType === 'BITCOINCASH') ? 'LITECOIN' : 'BITCOINCASH'
+    // invalidChainType = (chainType === 'BITCOINCASH') ? 'LITECOIN' : 'BITCOINCASH'
     await inputInvalidChainType (invalidChainType, errorMessage)
 
     if (chainType != 'TRON') {
