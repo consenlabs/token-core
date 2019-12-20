@@ -232,7 +232,7 @@ impl Keystore {
 
     pub fn account(&self, symbol: &str, address: &str) -> Option<&Account> {
         match self {
-            Keystore::PrivateKey(ks) => ks.account(address),
+            Keystore::PrivateKey(ks) => ks.account(symbol, address),
             Keystore::Hd(ks) => ks.account(symbol, address),
         }
     }
@@ -241,15 +241,6 @@ impl Keystore {
         match self {
             Keystore::PrivateKey(ks) => ks.store().active_accounts.as_slice(),
             Keystore::Hd(ks) => ks.store().active_accounts.as_slice(),
-        }
-    }
-
-    pub fn must_find_account(&self, symbol: &str, address: &str) -> Result<&Account> {
-        match self {
-            Keystore::PrivateKey(ks) => ks.account(address).ok_or(Error::AccountNotFound.into()),
-            Keystore::Hd(ks) => ks
-                .account(symbol, address)
-                .ok_or(Error::AccountNotFound.into()),
         }
     }
 
@@ -311,7 +302,7 @@ impl ChainSigner for Keystore {
             self.find_private_key(symbol, address)?
         };
 
-        private_key.sign_recoverable(data)
+        private_key.sign(data)
     }
 }
 
@@ -322,6 +313,7 @@ mod tests {
     use serde_json::Value;
     use std::str::FromStr;
 
+    use crate::keystore::metadata_default_source;
     use tcx_primitive::{Ss58Codec, ToHex};
 
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
@@ -372,6 +364,49 @@ mod tests {
     {"id":"89e6fc5d-ac9a-46ab-b53f-342a80f3d28b","version":11001,"keyHash":"4fc213ddcb6fa44a2e2f4c83d67502f88464e6ee","crypto":{"cipher":"aes-128-ctr","cipherparams":{"iv":"c0ecc72839f8a02cc37eb7b0dd0b93ba"},"ciphertext":"1239e5807e19f95d86567f81c162c69a5f4564ea17f487669a277334f4dcc7dc","kdf":"pbkdf2","kdfparams":{"c":1024,"prf":"hmac-sha256","dklen":32,"salt":"3c9df9eb95a014c77bbc8b9a06f4f14e0d08170dea71189c7cf377a3b2099404"},"mac":"909a6bfe1ad031901e80927b847a8fa8407fdcde56cfa374f7a732fb3b3a882d"},"activeAccounts":[{"address":"TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG","derivationPath":"","curve":"SECP256k1","coin":"TRON","network":"","segWit":"","extPubKey":""}],"imTokenMeta":{"name":"Unknown","passwordHint":"","timestamp":1576733295,"source":"PRIVATE"}}
     "#;
 
+    static OLD_KEYSTORE_JSON: &'static str = r#"
+    {
+  "crypto": {
+    "cipher": "aes-128-ctr",
+    "cipherparams": {
+      "iv": "437ef8c8553df9910ad117ecec5b8c05"
+    },
+    "ciphertext": "acabec2bd6fab27d867ebabe0ded9c64c85aebd294d29ecf537e563474ebb931522dbb977e0644830516550255edde02c507863cb083b55f2f0f759c2f8a885a81a6518237e7b65b7cf3e912fb36e42a13a7b2df3d401e5ff778a412a6d4c5516645770c4b12f2e30551542c699eef",
+    "kdf": "pbkdf2",
+    "kdfparams": {
+      "c": 65535,
+      "dklen": 32,
+      "prf": "hmac-sha256",
+      "salt": "33c8f2d27fe994a1e7d51108c7811cdaa2b821cc6760ed760954b4b67a1bcd8c"
+    },
+    "mac": "6b86a18f4ba9f3f428e256e72a3d832dcf0cd1cb820ec61e413a64d83b012059"
+  },
+  "id": "02a55ab6-554a-4e78-bc26-6a7acced7e5e",
+  "version": 44,
+  "address": "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN",
+  "encMnemonic": {
+    "encStr": "840fad94f4bf4128f629bc1dec731d156283cc4099e3c7659a3bf382031443fcdce6debaaef444393c446d2b4007064c010f6a442b3ad0ff0851c1bd638ba251afa92d3106457bd78c49",
+    "nonce": "4d691a7f0cb6396e96e8dc3e4f35dccd"
+  },
+  "info": {
+    "curve": "spec256k1",
+    "purpuse": "sign"
+  },
+  "mnemonicPath": "m/44'/1'/0'",
+  "xpub": "tpubDCpWeoTY6x4BR2PqoTFJnEdfYbjnC4G8VvKoDUPFjt2dvZJWkMRxLST1pbVW56P7zY3L5jq9MRSeff2xsLnvf9qBBN9AgvrhwfZgw5dJG6R",
+  "imTokenMeta": {
+    "backup": [],
+    "chainType": "BITCOIN",
+    "network": "TESTNET",
+    "name": "BTC",
+    "passwordHint": "",
+    "source": "RECOVERED_IDENTITY",
+    "walletType": "HD",
+    "timestamp": 1519611221,
+    "segWit": "NONE"
+  }
+}
+    "#;
     #[test]
     fn test_json() {
         let keystore: Keystore = Keystore::from_json(HD_KEYSTORE_JSON).unwrap();
@@ -397,6 +432,9 @@ mod tests {
             Value::from_str(&keystore.to_json()).unwrap(),
             Value::from_str(PK_KEYSTORE_JSON).unwrap()
         );
+
+        let ret = Keystore::from_json(OLD_KEYSTORE_JSON);
+        assert!(ret.is_err());
     }
 
     #[test]
@@ -442,7 +480,7 @@ mod tests {
     }
 
     #[test]
-    fn test_find_key() {
+    fn test_hd_find_key() {
         let mut keystore = Keystore::from_json(HD_KEYSTORE_JSON).unwrap();
         keystore.unlock_by_password(PASSWORD).unwrap();
         let pk =
@@ -479,6 +517,47 @@ mod tests {
             )
             .unwrap();
         assert_eq!(public_key.to_hex(), "031064f6a580000000251d72997d4cf931a7e6819f7da37725166100fc7dae9ca6afc3f8fd8a3d3a7f0303f2f84851514bf2f40a46b5bb9dbf4e5913fbacde1a96968cda08f9fd882caa");
+
+        let acc = keystore.account("BITCOINCASH", "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2");
+        assert!(acc.is_none());
+
+        let acc = keystore.account("BITCOINCASH", "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r");
+        assert!(acc.is_some());
+    }
+
+    #[test]
+    fn test_pk_find_key() {
+        let mut keystore = Keystore::from_json(PK_KEYSTORE_JSON).unwrap();
+        keystore.unlock_by_password("imtoken1").unwrap();
+        let pk =
+            keystore.find_private_key("BITCOINCASH", "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y21");
+        assert!(pk.is_err());
+
+        let pk = keystore
+            .find_private_key("TRON", "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG")
+            .unwrap();
+        assert_eq!(
+            hex::encode(pk.to_bytes()),
+            "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6"
+        );
+
+        let pk = keystore
+            .find_private_key_by_path("TRON", "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG", "")
+            .unwrap();
+        assert_eq!(
+            hex::encode(pk.to_bytes()),
+            "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6"
+        );
+
+        let acc = keystore.account("TRON", "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLsh");
+        assert!(acc.is_none());
+
+        let acc = keystore.account("TRON", "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG");
+        assert!(acc.is_some());
+
+        let ret =
+            keystore.find_deterministic_public_key("TRON", "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG");
+        assert!(ret.is_err())
     }
 
     #[test]
@@ -512,5 +591,10 @@ mod tests {
             Metadata::default(),
         );
         assert!(ret.is_err())
+    }
+
+    #[test]
+    fn test_default_source() {
+        assert_eq!(Source::Mnemonic, metadata_default_source());
     }
 }

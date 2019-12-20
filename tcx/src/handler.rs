@@ -1477,26 +1477,54 @@ mod tests {
             };
             let wallet = import_and_derive(derivation);
 
-            let input = TronMessageInput {
-                value: "645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76"
-                    .to_string(),
-                is_hex: true,
-                is_tron_header: true,
-            };
-            let tx = SignParam {
-                id: wallet.id.to_string(),
-                password: PASSWORD.to_string(),
-                chain_type: "TRON".to_string(),
-                address: wallet.accounts.first().unwrap().address.to_string(),
-                input: Some(::prost_types::Any {
-                    type_url: "imtoken".to_string(),
-                    value: encode_message(input).unwrap(),
-                }),
-            };
+            let input_expecteds = vec![
+                (TronMessageInput {
+                    value: "645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76"
+                        .to_string(),
+                    is_hex: true,
+                    is_tron_header: true,
+                }, "16417c6489da3a88ef980bf0a42551b9e76181d03e7334548ab3cb36e7622a484482722882a29e2fe4587b95c739a68624ebf9ada5f013a9340d883f03fcf9af1b"),
+                (TronMessageInput {
+                    value: "0x645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76"
+                        .to_string(),
+                    is_hex: true,
+                    is_tron_header: true,
+                }, "16417c6489da3a88ef980bf0a42551b9e76181d03e7334548ab3cb36e7622a484482722882a29e2fe4587b95c739a68624ebf9ada5f013a9340d883f03fcf9af1b"),
+                (TronMessageInput {
+                    value: "645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76"
+                        .to_string(),
+                    is_hex: true,
+                    is_tron_header: false,
+                }, "06ff3c5f98b8e8e257f47a66ce8e953c7a7d0f96eb6687da6a98b66a36c2a725759cab3df94d014bd17760328adf860649303c68c4fa6644d9f307e2f32cc3311c"),
+                (TronMessageInput {
+                    value: "abcdef"
+                        .to_string(),
+                    is_hex: false,
+                    is_tron_header: true,
+                }, "a87eb6ae7e97621b6ba2e2f70db31fe0c744c6adcfdc005044026506b70ac11a33f415f4478b6cf84af32b3b5d70a13a77e53287613449b345bb16fe012c04081b"),
+            ];
+            for (input, expected) in input_expecteds {
+                let tx = SignParam {
+                    id: wallet.id.to_string(),
+                    password: PASSWORD.to_string(),
+                    chain_type: "TRON".to_string(),
+                    address: wallet.accounts.first().unwrap().address.to_string(),
+                    input: Some(::prost_types::Any {
+                        type_url: "imtoken".to_string(),
+                        value: encode_message(input).unwrap(),
+                    }),
+                };
 
-            let sign_result = tron_sign_message(&encode_message(tx).unwrap()).unwrap();
-            let ret: TronMessageOutput = TronMessageOutput::decode(sign_result).unwrap();
-            assert_eq!("16417c6489da3a88ef980bf0a42551b9e76181d03e7334548ab3cb36e7622a484482722882a29e2fe4587b95c739a68624ebf9ada5f013a9340d883f03fcf9af1b", ret.signature);
+                let sign_result = tron_sign_message(&encode_message(tx).unwrap()).unwrap();
+                let ret: TronMessageOutput = TronMessageOutput::decode(sign_result).unwrap();
+                assert_eq!(expected, ret.signature);
+            }
+            //            let input = TronMessageInput {
+            //                value: "645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76"
+            //                    .to_string(),
+            //                is_hex: true,
+            //                is_tron_header: true,
+            //            };
         });
     }
 
