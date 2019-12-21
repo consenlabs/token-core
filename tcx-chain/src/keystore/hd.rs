@@ -158,8 +158,7 @@ impl HdKeystore {
     }
 
     pub fn from_mnemonic(mnemonic: &str, password: &str, meta: Metadata) -> Result<HdKeystore> {
-        let words: Vec<&str> = mnemonic.split_whitespace().collect();
-        let mnemonic: &str = &words.join(" ");
+        let mnemonic: &str = &mnemonic.split_whitespace().collect::<Vec<&str>>().join(" ");
 
         let key_hash = key_hash_from_mnemonic(mnemonic)?;
 
@@ -210,6 +209,7 @@ impl HdKeystore {
             ext_pub_key,
             seg_wit: coin_info.seg_wit.to_string(),
         };
+
         if let Some(_) = self
             .store
             .active_accounts
