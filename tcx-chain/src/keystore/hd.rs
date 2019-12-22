@@ -158,6 +158,8 @@ impl HdKeystore {
     }
 
     pub fn from_mnemonic(mnemonic: &str, password: &str, meta: Metadata) -> Result<HdKeystore> {
+        let mnemonic: &str = &mnemonic.split_whitespace().collect::<Vec<&str>>().join(" ");
+
         let key_hash = key_hash_from_mnemonic(mnemonic)?;
 
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
@@ -207,6 +209,7 @@ impl HdKeystore {
             ext_pub_key,
             seg_wit: coin_info.seg_wit.to_string(),
         };
+
         if let Some(_) = self
             .store
             .active_accounts
@@ -305,9 +308,15 @@ mod tests {
     static PASSWORD: &'static str = "Insecure Pa55w0rd";
     static MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
-
+    // A mnemonic word separated by a full-width or half-width space
+    static MNEMONIC_WITH_WHITESPACE: &'static str =
+        "inject　 kidney    empty   canal shadow   pact comfort wife crush horse wife sketch";
+    static INVALID_MNEMONIC1: &'static str =
+        "inject kidney empty canal shadow pact comfort wife crush horse wife inject";
+    static INVALID_MNEMONIC2: &'static str =
+        "invalid_word kidney empty canal shadow pact comfort wife crush horse wife sketch";
     #[test]
-    pub fn default_meta_test() {
+    pub fn default_meta() {
         let meta = Metadata::default();
         let expected = Metadata {
             name: String::from("Unknown"),
@@ -343,7 +352,49 @@ mod tests {
     }
 
     #[test]
-    pub fn from_mnemonic_test() {
+    pub fn from_invalid_mnemonic() {
+        let ks = HdKeystore::from_mnemonic(INVALID_MNEMONIC1, PASSWORD, Metadata::default());
+        assert!(ks.is_err());
+
+        let ks = HdKeystore::from_mnemonic(INVALID_MNEMONIC2, PASSWORD, Metadata::default());
+        assert!(ks.is_err());
+    }
+
+    #[test]
+    pub fn from_blank_space_mnemonic() {
+        let mut keystore =
+            HdKeystore::from_mnemonic(MNEMONIC_WITH_WHITESPACE, PASSWORD, Metadata::default())
+                .unwrap();
+        let coin_info = CoinInfo {
+            coin: "BITCOIN".to_string(),
+            derivation_path: "m/44'/0'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
+        };
+        let _ = keystore.unlock_by_password(PASSWORD).unwrap();
+
+        let acc = keystore.derive_coin::<MockAddress>(&coin_info).unwrap();
+
+        let expected = Account {
+            address: "mock_address".to_string(),
+            derivation_path: "m/44'/0'/0'/0/0".to_string(),
+            ext_pub_key: "03a25f12b68000000044efc688fe25a1a677765526ed6737b4bfcfb0122589caab7ca4b223ffa9bb37029d23439ecb195eb06a0d44a608960d18702fd97e19c53451f0548f568207af77".to_string(),
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
+            curve: CurveType::SECP256k1,
+            coin: "BITCOIN".to_string(),
+        };
+
+        assert_eq!(acc, expected);
+        assert_eq!(
+            keystore.account("BITCOIN", "mock_address").unwrap(),
+            &expected
+        );
+    }
+
+    #[test]
+    pub fn from_mnemonic() {
         let mut keystore =
             HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default()).unwrap();
         assert_eq!(keystore.store.version, 11000);
@@ -363,7 +414,7 @@ mod tests {
     }
 
     #[test]
-    pub fn derive_key_at_paths_test() {
+    pub fn derive_key_at_paths() {
         let mut keystore =
             HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default()).unwrap();
         let coin_info = CoinInfo {
@@ -393,29 +444,5 @@ mod tests {
             &expected
         );
         assert_eq!(keystore.store.active_accounts.len(), 1);
-
-        /*
-        let paths = vec![
-            "m/44'/0'/0'/0/0",
-            "m/44'/0'/0'/0/1",
-            "m/44'/0'/0'/1/0",
-            "m/44'/0'/0'/1/1",
-        ];
-
-        let _ = keystore.unlock_by_password(PASSWORD);
-
-        let private_keys = keystore.find_("BITCOIN", "mock_address", &paths).unwrap();
-        let pub_keys = private_keys
-            .iter()
-            .map(|epk| epk.private_key().public_key().to_bytes().to_hex())
-            .collect::<Vec<String>>();
-        let expected_pub_keys = vec![
-            "026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868",
-            "024fb7df3961e08f01025e434ea19708a4317d2fe59775cddd38df6e8a2d30697d",
-            "0352470ace48f25b01b9c341e3b0e033fc32a203fb7a81a0453f97d94eca819a35",
-            "022f4c38f7bbaa00fc886db62f975b34201c2bfed146e98973caf03268941801db",
-        ];
-        assert_eq!(pub_keys, expected_pub_keys);
-        */
     }
 }
