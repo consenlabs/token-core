@@ -22,13 +22,14 @@ impl Address for CkbAddress {
         Ok(bech32::encode(prefix, buf.to_base32())?)
     }
 
-    fn is_valid(address: &str, _coin: &CoinInfo) -> bool {
+    fn is_valid(address: &str, coin: &CoinInfo) -> bool {
         let ret = bech32::decode(address);
         if ret.is_err() {
             return false;
         }
 
-        address.starts_with("ckb") || address.starts_with("ckt")
+        address.starts_with("ckb") && coin.network == "MAINNET"
+            || address.starts_with("ckt") && coin.network == "TESTNET"
     }
 }
 
@@ -36,26 +37,67 @@ impl Address for CkbAddress {
 mod tests {
     use crate::address::CkbAddress;
     use tcx_chain::Address;
+    use tcx_constants::coin_info::coin_info_from_param;
     use tcx_constants::{CoinInfo, CurveType};
     use tcx_primitive::TypedPublicKey;
 
     #[test]
     fn pubkey_to_address() {
-        let coin_info = CoinInfo {
-            coin: "CKB".to_string(),
-            derivation_path: "".to_string(),
-            curve: CurveType::SECP256k1,
-            network: "TESTNET".to_string(),
-            seg_wit: "".to_string(),
-        };
+        let network_addresses = vec![
+            ("TESTNET", "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"),
+            ("MAINNET", "ckb1qyqrdsefa43s6m882pcj53m4gdnj4k440axqdt9rtd"),
+        ];
+        for (network, address) in network_addresses {
+            let coin_info = CoinInfo {
+                coin: "NERVOS".to_string(),
+                derivation_path: "".to_string(),
+                curve: CurveType::SECP256k1,
+                network: network.to_string(),
+                seg_wit: "".to_string(),
+            };
 
-        let pub_key = TypedPublicKey::from_slice(
-            CurveType::SECP256k1,
-            &hex::decode("024a501efd328e062c8675f2365970728c859c592beeefd6be8ead3d901330bc01")
-                .unwrap(),
-        )
-        .unwrap();
-        let address = CkbAddress::from_public_key(&pub_key, &coin_info).unwrap();
-        assert_eq!(address, "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83");
+            let pub_key = TypedPublicKey::from_slice(
+                CurveType::SECP256k1,
+                &hex::decode("024a501efd328e062c8675f2365970728c859c592beeefd6be8ead3d901330bc01")
+                    .unwrap(),
+            )
+            .unwrap();
+            let addr = CkbAddress::from_public_key(&pub_key, &coin_info).unwrap();
+            assert_eq!(addr, address);
+        }
+    }
+
+    #[test]
+    fn test_address_is_valid() {
+        let valid_addresses = vec![
+            ("TESTNET", "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"),
+            ("MAINNET", "ckb1qyqdmeuqrsrnm7e5vnrmruzmsp4m9wacf6vsxasryq"),
+            ("MAINNET", "ckb1qyqdmeuqrsrnm7e5vnrmruzmsp4m9wacf6vsxasryq"),
+        ];
+        for (network, address) in valid_addresses {
+            let coin_info = CoinInfo {
+                coin: "NERVOS".to_string(),
+                derivation_path: "".to_string(),
+                curve: CurveType::SECP256k1,
+                network: network.to_string(),
+                seg_wit: "".to_string(),
+            };
+            assert!(CkbAddress::is_valid(address, &coin_info));
+        }
+
+        let invalid_addresses = vec![
+            ("MAINNET", "ckb1qyqdmeuqrsrnm7e5vnrmruzmsp4m9wacf6vsxasryg"),
+            ("TESTNET", "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu85"),
+        ];
+        for (address, network) in invalid_addresses {
+            let coin_info = CoinInfo {
+                coin: "NERVOS".to_string(),
+                derivation_path: "".to_string(),
+                curve: CurveType::SECP256k1,
+                network: network.to_string(),
+                seg_wit: "".to_string(),
+            };
+            assert!(!CkbAddress::is_valid(address, &coin_info));
+        }
     }
 }
