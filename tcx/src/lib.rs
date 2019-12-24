@@ -165,8 +165,10 @@ mod tests {
     use std::panic;
     use std::path::Path;
 
+    use crate::api::{HdStoreImportParam, WalletResult};
     use crate::init_token_core_x;
     use tcx_chain::Keystore;
+    use tcx_constants::{TEST_MNEMONIC, TEST_PASSWORD};
 
     static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
 
@@ -184,7 +186,8 @@ mod tests {
         {
             "fileDir": "../test-data",
             "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
-            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
+            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799",
+            "isDebug": true
         }
         "#;
         unsafe {
@@ -203,7 +206,7 @@ mod tests {
             let fp = entry.path();
             let file_name = fp.file_name().unwrap();
             if file_name != ".gitignore"
-                && file_name.to_str().unwrap().starts_with("default_keystore")
+                && !file_name.to_str().unwrap().starts_with("default_keystore")
             {
                 let _ = remove_file(fp);
             }
@@ -216,7 +219,7 @@ mod tests {
     {
         setup();
         let result = panic::catch_unwind(|| test());
-        //        teardown();
+        teardown();
         assert!(result.is_ok())
     }
 
@@ -227,7 +230,8 @@ mod tests {
         {
             "fileDir": "../test-data",
             "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
-            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
+            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799",
+            "isDebug": true
         }
         "#;
             unsafe {
@@ -237,6 +241,33 @@ mod tests {
             let map = KEYSTORE_MAP.read();
             let ks: &Keystore = map.get(WALLET_ID).unwrap();
             assert_eq!(ks.id(), WALLET_ID);
+        });
+    }
+
+    #[test]
+    fn test_call_tcx_api() {
+        run_test(|| {
+            let import_param = HdStoreImportParam {
+                mnemonic: TEST_MNEMONIC.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                source: "TEST_MNEMONIC".to_string(),
+                name: "call_tcx_api".to_string(),
+                password_hint: "".to_string(),
+                overwrite: true,
+            };
+            let param = TcxAction {
+                method: "hd_store_import".to_string(),
+                param: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(import_param).unwrap(),
+                }),
+            };
+            let param_bytes = encode_message(param).unwrap();
+            let param_hex = hex::encode(param_bytes);
+            let ret_hex = unsafe { _to_str(call_tcx_api(_to_c_char(&param_hex))) };
+            let ret_bytes = hex::decode(ret_hex).unwrap();
+            let ret: WalletResult = WalletResult::decode(ret_bytes).unwrap();
+            assert!(ret.accounts.is_empty())
         });
     }
 }

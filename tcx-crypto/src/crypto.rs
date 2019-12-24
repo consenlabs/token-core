@@ -299,8 +299,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use failure::_core::str::FromStr;
+    use tcx_constants::TEST_PASSWORD;
 
-    const PASSWORD: &str = "Insecure Password";
     #[test]
     pub fn pbkdf2_params_default_test() {
         let param = Pbkdf2Params::default();
@@ -315,7 +316,7 @@ mod tests {
 
     #[test]
     pub fn new_crypto() {
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(PASSWORD, "TokenCoreX".as_bytes());
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(TEST_PASSWORD, "TokenCoreX".as_bytes());
         assert_ne!("", crypto.ciphertext);
         assert_ne!("", crypto.cipher);
         assert_ne!("", crypto.mac);
@@ -326,8 +327,8 @@ mod tests {
 
     #[test]
     pub fn decrypt_crypto() {
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(PASSWORD, "TokenCoreX".as_bytes());
-        let cipher_bytes = crypto.decrypt(PASSWORD).expect("cipher bytes");
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(TEST_PASSWORD, "TokenCoreX".as_bytes());
+        let cipher_bytes = crypto.decrypt(TEST_PASSWORD).expect("cipher bytes");
         assert_eq!("TokenCoreX", String::from_utf8(cipher_bytes).unwrap());
 
         let ret = crypto.decrypt("WrongPassword");
@@ -341,15 +342,15 @@ mod tests {
 
     #[test]
     pub fn enc_pair_test() {
-        let crypto: Crypto<Pbkdf2Params> = Crypto::new(PASSWORD, "TokenCoreX".as_bytes());
+        let crypto: Crypto<Pbkdf2Params> = Crypto::new(TEST_PASSWORD, "TokenCoreX".as_bytes());
         let enc_pair = crypto
-            .derive_enc_pair(PASSWORD, "TokenCoreX".as_bytes())
+            .derive_enc_pair(TEST_PASSWORD, "TokenCoreX".as_bytes())
             .unwrap();
 
         assert_ne!("", enc_pair.nonce);
         assert_ne!("", enc_pair.enc_str);
 
-        let decrypted_bytes = crypto.decrypt_enc_pair(PASSWORD, &enc_pair).unwrap();
+        let decrypted_bytes = crypto.decrypt_enc_pair(TEST_PASSWORD, &enc_pair).unwrap();
         let decrypted = String::from_utf8(decrypted_bytes).unwrap();
 
         assert_eq!("TokenCoreX", decrypted);
@@ -377,17 +378,41 @@ mod tests {
         assert_eq!(
             Error::KdfParamsInvalid,
             err.downcast::<crate::Error>().unwrap()
-        )
+        );
+
+        let mut params = Pbkdf2Params::default();
+        params.set_salt("0x1234");
+
+        assert!(params.validate().is_ok());
+
+        let err = SCryptParams::default().validate().err().unwrap();
+        assert_eq!(
+            Error::KdfParamsInvalid,
+            err.downcast::<crate::Error>().unwrap()
+        );
+
+        assert_eq!(*crate::KDF_ROUNDS.read() as u32, 262144);
+
+        let v = env::var("KDF_ROUNDS");
+        if v.is_ok() {
+            let env_kdf_rounds = u32::from_str(&v.unwrap()).unwrap();
+            env::remove_var("KDF_ROUNDS");
+            assert_eq!(default_kdf_rounds(), 262144);
+            env::set_var("KDF_ROUNDS", &env_kdf_rounds.to_string());
+        } else {
+            assert_eq!(default_kdf_rounds(), 262144);
+        }
     }
 
     #[test]
     pub fn generate_derived_key_pbkdf2_test() {
         let mut pbkdf2_param = Pbkdf2Params::default();
+        pbkdf2_param.c = 1024;
         pbkdf2_param.salt = "01020304010203040102030401020304".to_string();
         let mut derived_key = [0; CREDENTIAL_LEN];
-        pbkdf2_param.generate_derived_key(PASSWORD.as_bytes(), &mut derived_key);
+        pbkdf2_param.generate_derived_key(TEST_PASSWORD.as_bytes(), &mut derived_key);
         let dk_hex = derived_key.to_hex();
-        assert_eq!("8721625b5c25aea2fc2e024e615a3c94ac18f77e2c8e61829c19c9f8d2f543cebbe5d734ac91c3e862934dfee808211f234b194f905062646f4cd9fec47c950e", dk_hex);
+        assert_eq!("515c00df30d4eb0e5662030ccea231301ce44d685eb29aca04469f4d6b701898e75e51080a482dd46c04cf39308e7d228a0f70a45d7fa17cd4027d04c39f5e17", dk_hex);
     }
 
     #[test]
@@ -396,9 +421,9 @@ mod tests {
         param.n = 1024;
         param.salt = "01020304010203040102030401020304".to_string();
         let mut derived_key = [0; CREDENTIAL_LEN];
-        param.generate_derived_key(PASSWORD.as_bytes(), &mut derived_key);
+        param.generate_derived_key(TEST_PASSWORD.as_bytes(), &mut derived_key);
         let dk_hex = derived_key.to_hex();
-        assert_eq!("e019973000cf66d784d0b9d1a8825f79678ce91e1c2a797839244b15d66e5aeec78b8e9d1acc295638c89e4680fba7ec1416dc69e1149fc604ff6e945cc4dae0", dk_hex);
+        assert_eq!("190fba2c4dcd250b67652b6ea401a286ba4afff692aa9700ce56edd5326cb23b05c9af493f8d3dccb8191437f8cb5d2c3ba718af64aee8a7f318eedf2af5eb3f", dk_hex);
     }
 
     #[test]
@@ -452,5 +477,16 @@ mod tests {
             "4906577f075ad714f328e7b33829fdccfa8cd22eab2c0a8bc4f577824188ed16"
         );
         assert_eq!(crypto.ciphertext, "17ff4858e697455f4966c6072473f3501534bc20deb339b58aeb8db0bd9fe91777148d0a909f679fb6e3a7a64609034afeb72a");
+    }
+
+    #[test]
+    fn test_cache_derived_key() {
+        let cdk = CacheDerivedKey::new("12345678", &[1, 1, 1, 1]);
+        let ret = cdk.get_derived_key("1234");
+        assert!(ret.is_err());
+        assert_eq!(format!("{}", ret.err().unwrap()), "password_incorrect");
+
+        let ret = cdk.get_derived_key("12345678").unwrap();
+        assert_eq!(hex::encode(ret), "01010101");
     }
 }

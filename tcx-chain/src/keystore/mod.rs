@@ -309,16 +309,13 @@ impl ChainSigner for Keystore {
 #[cfg(test)]
 mod tests {
     use crate::keystore::Keystore::{Hd, PrivateKey};
-    use crate::{HdKeystore, Keystore, Metadata, PrivateKeystore, Source};
+    use crate::{ChainSigner, HdKeystore, Keystore, Metadata, PrivateKeystore, Source};
     use serde_json::Value;
     use std::str::FromStr;
 
     use crate::keystore::metadata_default_source;
+    use tcx_constants::{TEST_MNEMONIC, TEST_PASSWORD};
     use tcx_primitive::{Ss58Codec, ToHex};
-
-    static PASSWORD: &'static str = "Insecure Pa55w0rd";
-    const MNEMONIC: &str =
-        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 
     static HD_KEYSTORE_JSON: &'static str = r#"
         {
@@ -407,6 +404,7 @@ mod tests {
   }
 }
     "#;
+
     #[test]
     fn test_json() {
         let keystore: Keystore = Keystore::from_json(HD_KEYSTORE_JSON).unwrap();
@@ -438,6 +436,44 @@ mod tests {
     }
 
     #[test]
+    fn test_sign_hash() {
+        let msg = hex::decode("645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76")
+            .unwrap();
+
+        let mut keystore: Keystore = Keystore::from_json(HD_KEYSTORE_JSON).unwrap();
+        let ret = keystore.sign_hash(
+            &msg,
+            "BITCOINCASH",
+            "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+            Some("0/2"),
+        );
+        assert!(ret.is_err());
+        assert_eq!(format!("{}", ret.err().unwrap()), "keystore_locked");
+        keystore.unlock_by_password(TEST_PASSWORD);
+        let ret = keystore
+            .sign_hash(
+                &msg,
+                "BITCOINCASH",
+                "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                Some("0/2"),
+            )
+            .unwrap();
+        assert_eq!("3045022100a5c14ac7fd46f9f0c951b86d9586595270266ab09b49bf79fc27ebae7866256002206a7d7841fb740ee190c94dcd156228fc820f5ff5ba8c07748b220d07c51d247a", hex::encode(ret));
+
+        let mut keystore: Keystore = Keystore::from_json(PK_KEYSTORE_JSON).unwrap();
+        let ret = keystore.sign_hash(&msg, "TRON", "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG", None);
+        assert!(ret.is_err());
+        assert_eq!(format!("{}", ret.err().unwrap()), "keystore_locked");
+        keystore.unlock_by_password("imtoken1");
+        let msg = hex::decode("645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76")
+            .unwrap();
+        let ret = keystore
+            .sign_hash(&msg, "TRON", "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG", None)
+            .unwrap();
+        assert_eq!("30450221008d4920cb3a5a46a3f76845e823c9531f4a882eac4ffd61bfeaa29646999a83d302205c4c5537816911a8b0eb5f0e7ea09839c37e9e22bace8404d23d064c84d403d5", hex::encode(ret));
+    }
+
+    #[test]
     fn test_keystore_non_sensitive() {
         let mut keystore = Keystore::from_json(HD_KEYSTORE_JSON).unwrap();
         assert_eq!(keystore.id(), "7719d1e3-3f67-439f-a18e-d9ae413e00e1");
@@ -458,16 +494,16 @@ mod tests {
         let export_ret = keystore.export();
         assert!(export_ret.is_err());
         assert_eq!(format!("{}", export_ret.err().unwrap()), "keystore_locked");
-        let unlocked_ret = keystore.unlock_by_password("WRONG PASSWORD");
+        let unlocked_ret = keystore.unlock_by_password("WRONG TEST_PASSWORD");
         assert!(unlocked_ret.is_err());
         assert_eq!(
             format!("{}", unlocked_ret.err().unwrap()),
             "password_incorrect"
         );
 
-        assert!(keystore.verify_password(PASSWORD));
-        assert!(!keystore.verify_password("WRONG PASSWORD"));
-        keystore.unlock_by_password(PASSWORD).unwrap();
+        assert!(keystore.verify_password(TEST_PASSWORD));
+        assert!(!keystore.verify_password("WRONG TEST_PASSWORD"));
+        keystore.unlock_by_password(TEST_PASSWORD).unwrap();
         assert_eq!(
             "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
             keystore.export().unwrap()
@@ -482,7 +518,7 @@ mod tests {
     #[test]
     fn test_hd_find_key() {
         let mut keystore = Keystore::from_json(HD_KEYSTORE_JSON).unwrap();
-        keystore.unlock_by_password(PASSWORD).unwrap();
+        keystore.unlock_by_password(TEST_PASSWORD).unwrap();
         let pk =
             keystore.find_private_key("BITCOINCASH", "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y21");
         assert!(pk.is_err());
@@ -562,12 +598,13 @@ mod tests {
 
     #[test]
     fn test_create() {
-        let hd_store = HdKeystore::new(PASSWORD, Metadata::default());
+        let hd_store = HdKeystore::new(TEST_PASSWORD, Metadata::default());
         let keystore = Hd(hd_store);
         assert_eq!(0, keystore.accounts().len());
         assert!(keystore.determinable());
 
-        let hd_store = HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default()).unwrap();
+        let hd_store =
+            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default()).unwrap();
         let keystore = Hd(hd_store);
         assert_eq!(0, keystore.accounts().len());
         assert!(keystore.determinable());
@@ -578,7 +615,7 @@ mod tests {
 
         let pk_store = PrivateKeystore::from_private_key(
             "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
-            PASSWORD,
+            TEST_PASSWORD,
             Source::Private,
         );
         let keystore = PrivateKey(pk_store);
@@ -586,8 +623,8 @@ mod tests {
         assert!(!keystore.determinable());
 
         let ret = HdKeystore::from_mnemonic(
-            format!("{} hello", MNEMONIC).as_str(),
-            PASSWORD,
+            format!("{} hello", TEST_MNEMONIC).as_str(),
+            TEST_PASSWORD,
             Metadata::default(),
         );
         assert!(ret.is_err())

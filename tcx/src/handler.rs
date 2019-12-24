@@ -139,7 +139,7 @@ pub fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
     let wallet = WalletResult {
         id: keystore.id(),
         name: meta.name.to_owned(),
-        source: "MNEMONIC".to_owned(),
+        source: "TEST_MNEMONIC".to_owned(),
         accounts: vec![],
         created_at: meta.timestamp.clone(),
     };
@@ -187,7 +187,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let wallet = WalletResult {
         id: keystore.id(),
         name: meta.name.to_owned(),
-        source: "MNEMONIC".to_owned(),
+        source: "TEST_MNEMONIC".to_owned(),
         accounts: vec![],
         created_at: meta.timestamp.clone(),
     };
@@ -571,11 +571,8 @@ mod tests {
     use tcx_btc_fork::transaction::Utxo;
 
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
+    use tcx_constants::{TEST_MNEMONIC, TEST_PASSWORD};
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
-
-    static PASSWORD: &'static str = "Insecure Pa55w0rd";
-    static MNEMONIC: &'static str =
-        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 
     static OTHER_MNEMONIC: &'static str =
         "calm release clay imitate top extend close draw quiz refuse shuffle injury";
@@ -628,9 +625,9 @@ mod tests {
 
     fn import_default_wallet() -> WalletResult {
         let param = HdStoreImportParam {
-            mnemonic: MNEMONIC.to_string(),
-            password: PASSWORD.to_string(),
-            source: "MNEMONIC".to_string(),
+            mnemonic: TEST_MNEMONIC.to_string(),
+            password: TEST_PASSWORD.to_string(),
+            source: "TEST_MNEMONIC".to_string(),
             name: "test-wallet".to_string(),
             password_hint: "imtoken".to_string(),
             overwrite: true,
@@ -642,7 +639,7 @@ mod tests {
     fn import_default_pk_store() -> WalletResult {
         let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
             private_key: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
-            password: PASSWORD.to_string(),
+            password: TEST_PASSWORD.to_string(),
             overwrite: true,
         };
 
@@ -652,9 +649,9 @@ mod tests {
 
     fn import_and_derive(derivation: Derivation) -> (WalletResult) {
         let param = HdStoreImportParam {
-            mnemonic: MNEMONIC.to_string(),
-            password: PASSWORD.to_string(),
-            source: "MNEMONIC".to_string(),
+            mnemonic: TEST_MNEMONIC.to_string(),
+            password: TEST_PASSWORD.to_string(),
+            source: "TEST_MNEMONIC".to_string(),
             name: "test-wallet".to_string(),
             password_hint: "imtoken".to_string(),
             overwrite: true,
@@ -664,7 +661,7 @@ mod tests {
 
         let param = KeystoreCommonDeriveParam {
             id: wallet.id.to_string(),
-            password: PASSWORD.to_string(),
+            password: TEST_PASSWORD.to_string(),
             derivations: vec![derivation],
         };
 
@@ -704,7 +701,7 @@ mod tests {
     pub fn test_hd_store_create() {
         run_test(|| {
             let param = HdStoreCreateParam {
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 password_hint: "".to_string(),
                 name: "aaa".to_string(),
             };
@@ -731,7 +728,7 @@ mod tests {
             };
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 derivations: vec![derivation],
             };
 
@@ -757,8 +754,8 @@ mod tests {
             for mn in invalid_mnemonics {
                 let param = HdStoreImportParam {
                     mnemonic: mn.to_string(),
-                    password: PASSWORD.to_string(),
-                    source: "MNEMONIC".to_string(),
+                    password: TEST_PASSWORD.to_string(),
+                    source: "TEST_MNEMONIC".to_string(),
                     name: "test-wallet".to_string(),
                     password_hint: "imtoken".to_string(),
                     overwrite: true,
@@ -784,7 +781,7 @@ mod tests {
             };
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 derivations: vec![derivation],
             };
 
@@ -806,14 +803,14 @@ mod tests {
 
             let param = WalletKeyParam {
                 id: wallet.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
             };
             let ret = hd_store_export(&encode_message(param).unwrap()).unwrap();
             let result: KeystoreCommonExportResult =
                 KeystoreCommonExportResult::decode(&ret).unwrap();
 
             assert_eq!(result.r#type, KeyType::Mnemonic as i32);
-            assert_eq!(result.value, MNEMONIC);
+            assert_eq!(result.value, TEST_MNEMONIC);
         })
     }
 
@@ -822,8 +819,8 @@ mod tests {
         run_test(|| {
             let param = HdStoreImportParam {
                 mnemonic: OTHER_MNEMONIC.to_string(),
-                password: PASSWORD.to_string(),
-                source: "MNEMONIC".to_string(),
+                password: TEST_PASSWORD.to_string(),
+                source: "TEST_MNEMONIC".to_string(),
                 name: "test-wallet".to_string(),
                 password_hint: "imtoken".to_string(),
                 overwrite: true,
@@ -870,7 +867,7 @@ mod tests {
             ];
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 derivations,
             };
             let derived_accounts_bytes =
@@ -942,7 +939,7 @@ mod tests {
             for derivation in invalid_derivations {
                 let param = KeystoreCommonDeriveParam {
                     id: import_result.id.to_string(),
-                    password: PASSWORD.to_string(),
+                    password: TEST_PASSWORD.to_string(),
                     derivations: vec![derivation],
                 };
                 let ret = keystore_common_derive(&encode_message(param).unwrap());
@@ -999,7 +996,7 @@ mod tests {
             ];
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 derivations,
             };
             let derived_accounts_bytes =
@@ -1046,7 +1043,7 @@ mod tests {
             }];
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 derivations,
             };
             let derived_accounts_bytes =
@@ -1076,7 +1073,7 @@ mod tests {
             let import_result: WalletResult = import_default_pk_store();
             let param: PrivateKeyStoreExportParam = PrivateKeyStoreExportParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 chain_type: "BITCOINCASH".to_string(),
                 network: "MAINNET".to_string(),
             };
@@ -1091,7 +1088,7 @@ mod tests {
 
             let param: PrivateKeyStoreExportParam = PrivateKeyStoreExportParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 chain_type: "BITCOINCASH".to_string(),
                 network: "TESTNET".to_string(),
             };
@@ -1106,7 +1103,7 @@ mod tests {
 
             let param: PrivateKeyStoreExportParam = PrivateKeyStoreExportParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 chain_type: "TRON".to_string(),
                 network: "".to_string(),
             };
@@ -1129,7 +1126,7 @@ mod tests {
             for wallet in wallets {
                 let param: WalletKeyParam = WalletKeyParam {
                     id: wallet.id.to_string(),
-                    password: PASSWORD.to_string(),
+                    password: TEST_PASSWORD.to_string(),
                 };
 
                 let ret_bytes = keystore_common_verify(&encode_message(param).unwrap()).unwrap();
@@ -1138,7 +1135,7 @@ mod tests {
 
                 let param: WalletKeyParam = WalletKeyParam {
                     id: wallet.id.to_string(),
-                    password: "WRONG PASSWORD".to_string(),
+                    password: "WRONG TEST_PASSWORD".to_string(),
                 };
 
                 let ret = keystore_common_verify(&encode_message(param).unwrap());
@@ -1153,7 +1150,7 @@ mod tests {
         run_test(|| {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
                 private_key: "5JZc7wGRUr4J1RHDcM9ySWKLfQ2xjRUEo612qC4RLJ3G7jzJ4qx".to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 overwrite: true,
             };
 
@@ -1162,7 +1159,7 @@ mod tests {
 
             let param: WalletKeyParam = WalletKeyParam {
                 id: import_result.id.to_string(),
-                password: "WRONG PASSWORD".to_string(),
+                password: "WRONG TEST_PASSWORD".to_string(),
             };
 
             let ret = keystore_common_delete(&encode_message(param).unwrap());
@@ -1171,7 +1168,7 @@ mod tests {
 
             let param: WalletKeyParam = WalletKeyParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
             };
 
             let ret_bytes = keystore_common_delete(&encode_message(param).unwrap()).unwrap();
@@ -1197,7 +1194,7 @@ mod tests {
             let wallet = import_default_wallet();
             let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
                 r#type: KeyType::Mnemonic as i32,
-                value: format!("{}", MNEMONIC).to_string(),
+                value: format!("{}", TEST_MNEMONIC).to_string(),
             };
 
             let ret_bytes = keystore_common_exists(&encode_message(param).unwrap()).unwrap();
@@ -1254,7 +1251,7 @@ mod tests {
             }];
             let param = KeystoreCommonDeriveParam {
                 id: wallet.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 derivations,
             };
             let derived_accounts_bytes =
@@ -1337,7 +1334,7 @@ mod tests {
 
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 chain_type: "NERVOS".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1373,7 +1370,7 @@ mod tests {
             let input_value = encode_message(input).unwrap();
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: "WRONG PASSWORD".to_string(),
+                password: "WRONG TEST_PASSWORD".to_string(),
                 chain_type: "TRON".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1389,7 +1386,7 @@ mod tests {
 
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 chain_type: "TRON1".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1405,7 +1402,7 @@ mod tests {
 
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 chain_type: "TRON".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1437,7 +1434,7 @@ mod tests {
             };
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 derivations: vec![derivation],
             };
 
@@ -1448,7 +1445,7 @@ mod tests {
             let input = TronTxInput { raw_data };
             let tx = SignParam {
                 id: import_result.id.to_string(),
-                password: PASSWORD.to_string(),
+                password: TEST_PASSWORD.to_string(),
                 chain_type: "TRON".to_string(),
                 address: rsp.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1506,7 +1503,7 @@ mod tests {
             for (input, expected) in input_expecteds {
                 let tx = SignParam {
                     id: wallet.id.to_string(),
-                    password: PASSWORD.to_string(),
+                    password: TEST_PASSWORD.to_string(),
                     chain_type: "TRON".to_string(),
                     address: wallet.accounts.first().unwrap().address.to_string(),
                     input: Some(::prost_types::Any {
@@ -1545,7 +1542,7 @@ mod tests {
                 };
                 let param = KeystoreCommonDeriveParam {
                     id: import_result.id.to_string(),
-                    password: PASSWORD.to_string(),
+                    password: TEST_PASSWORD.to_string(),
                     derivations: vec![derivation],
                 };
 
@@ -1576,7 +1573,7 @@ mod tests {
                 let input_value = encode_message(tx_input).unwrap();
                 let tx = SignParam {
                     id: import_result.id.to_string(),
-                    password: PASSWORD.to_string(),
+                    password: TEST_PASSWORD.to_string(),
                     chain_type: chain_type.to_string(),
                     address: rsp.accounts.first().unwrap().address.to_string(),
                     input: Some(::prost_types::Any {

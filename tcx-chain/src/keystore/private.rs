@@ -143,11 +143,8 @@ impl PrivateKeystore {
 
     pub(crate) fn private_key(&self) -> Result<String> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
-
         let vec = self.private_key.as_ref().unwrap().to_vec();
         Ok(hex::encode(&vec))
-
-        //        TypedPrivateKey::from_slice(CurveType::SECP256k1, &priv_key)
     }
 
     fn decrypt_private_key(&self, password: &str) -> Result<Vec<u8>> {
@@ -158,13 +155,17 @@ impl PrivateKeystore {
 #[cfg(test)]
 mod tests {
     use crate::{PrivateKeystore, Source};
-    static PASSWORD: &'static str = "Insecure Pa55w0rd";
+    use tcx_constants::TEST_PASSWORD;
+
+    static PK_STORE: &'static str = r#"
+    {"id":"cb1ba2d7-7b89-4595-9753-d16b6e317c6b","version":11001,"keyHash":"4fc213ddcb6fa44a2e2f4c83d67502f88464e6ee","crypto":{"cipher":"aes-128-ctr","cipherparams":{"iv":"21cb134b52e3d76f6b0d287c884c27fb"},"ciphertext":"ce7df149b0a010165cc7bf2fdc8104f7dc0d131022aa221e5f4b909aa11ba7aa","kdf":"pbkdf2","kdfparams":{"c":1024,"prf":"hmac-sha256","dklen":32,"salt":"737cbf8e446e32fe4174cbc97efebe101d253013fcfe981b9220c99f22f4bb4e"},"mac":"a03fa095a9f36e0e12936e4d39ab3b942537ec1080fe77a30724f966f092a662"},"activeAccounts":[{"address":"TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG","derivationPath":"","curve":"SECP256k1","coin":"TRON","network":"","segWit":"","extPubKey":""}],"imTokenMeta":{"name":"Unknown","passwordHint":"","timestamp":1576654549,"source":"PRIVATE"}}
+    "#;
 
     #[test]
     pub fn from_private_key_test() {
         let keystore = PrivateKeystore::from_private_key(
             "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
-            PASSWORD,
+            TEST_PASSWORD,
             Source::Private,
         );
         assert_eq!(keystore.store.version, 11001);

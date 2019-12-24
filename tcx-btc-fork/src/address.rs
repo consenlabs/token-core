@@ -338,6 +338,8 @@ mod tests {
             .unwrap()
             .to_string();
         assert_eq!(addr, "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW");
+
+        let network = network_from_param("LITECOIN", "MAINNET", "SEGWIT").unwrap();
         let addr = BtcForkAddress::p2wpkh(&pub_key, &network)
             .unwrap()
             .to_string();
@@ -349,6 +351,7 @@ mod tests {
             .to_string();
         assert_eq!(addr, "3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG");
 
+        let network = network_from_param("BITCOIN", "MAINNET", "SEGWIT").unwrap();
         let addr = BtcForkAddress::p2wpkh(&pub_key, &network)
             .unwrap()
             .to_string();
@@ -359,13 +362,30 @@ mod tests {
     pub fn test_btc_fork_address_from_str() {
         let addr = BtcForkAddress::from_str("MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW").unwrap();
         assert_eq!(addr.network.coin, "LITECOIN");
+        assert_eq!(addr.network.seg_wit, "P2WPKH");
+        assert_eq!(addr.network.network, "MAINNET");
         let addr = BtcForkAddress::from_str("ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf").unwrap();
         assert_eq!(addr.network.coin, "LITECOIN");
+        assert_eq!(addr.network.seg_wit, "SEGWIT");
+        assert_eq!(addr.network.network, "MAINNET");
 
         let addr = BtcForkAddress::from_str("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG").unwrap();
         assert_eq!(addr.network.coin, "BITCOIN");
+        assert_eq!(addr.network.seg_wit, "P2WPKH");
+        assert_eq!(addr.network.network, "MAINNET");
         let addr = BtcForkAddress::from_str("bc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdntm7f4e").unwrap();
         assert_eq!(addr.network.coin, "BITCOIN");
+        assert_eq!(addr.network.seg_wit, "SEGWIT");
+        assert_eq!(addr.network.network, "MAINNET");
+        let addr = BtcForkAddress::from_str("12z6UzsA3tjpaeuvA2Zr9jwx19Azz74D6g").unwrap();
+        assert_eq!(addr.network.coin, "BITCOIN");
+        assert_eq!(addr.network.seg_wit, "NONE");
+        assert_eq!(addr.network.network, "MAINNET");
+
+        let addr = BtcForkAddress::from_str("2MwN441dq8qudMvtM5eLVwC3u4zfKuGSQAB").unwrap();
+        assert_eq!(addr.network.coin, "BITCOIN");
+        assert_eq!(addr.network.seg_wit, "P2WPKH");
+        assert_eq!(addr.network.network, "TESTNET");
     }
 
     #[test]

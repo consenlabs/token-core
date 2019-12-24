@@ -232,66 +232,6 @@ impl HdKeystore {
     }
 }
 
-/*
-fn merge_value(a: &mut Value, b: &Value) {
-    match (a, b) {
-        (&mut Value::Object(ref mut a), &Value::Object(ref b)) => {
-            for (k, v) in b {
-                merge_value(a.entry(k.clone()).or_insert(Value::Null), v);
-            }
-        }
-        (a, b) => {
-            *a = b.clone();
-        }
-    }
-}
-
-impl Display for HdKeystore {
-    fn fmt(&self, f: &mut Formatter<'_>) -> result::Result<(), fmt::Error> {
-        let mut pw = Map::new();
-        pw.insert("id".to_string(), json!(&self.id.to_string()));
-        pw.insert("name".to_string(), json!(&self.meta.name));
-        pw.insert("passwordHint".to_string(), json!(&self.meta.password_hint));
-        pw.insert("createdAt".to_string(), json!(&self.meta.timestamp));
-        pw.insert("source".to_string(), json!(&self.meta.source));
-
-        if !&self.active_accounts.is_empty() {
-            if self.active_accounts.len() > 1usize {
-                panic!("Only one account in token 2.5");
-            }
-            let acc = &self
-                .active_accounts
-                .first()
-                .expect("get first account from hdkeystore");
-            pw.insert("address".to_string(), json!(acc.address.to_string()));
-            let coin_split: Vec<&str> = acc.coin.split('-').collect();
-            coin_split.iter().enumerate().for_each(|(i, s)| {
-                if i == 0 {
-                    pw.insert("chainType".to_string(), json!(s));
-                } else if vec!["NONE", "P2WPKH"].contains(s) {
-                    pw.insert("segWit".to_string(), json!(s));
-                }
-            });
-            let mut obj = Value::Object(pw);
-            if let Some(extra) = acc.extra.as_object() {
-                merge_value(&mut obj, &Value::Object(extra.clone()))
-            }
-            write!(
-                f,
-                "{}",
-                serde_json::to_string(&obj).expect("present err when convert to json")
-            )
-        } else {
-            write!(
-                f,
-                "{}",
-                serde_json::to_string(&pw).expect("present err when convert to json")
-            )
-        }
-    }
-}
-*/
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -299,12 +239,8 @@ mod tests {
 
     use crate::Source;
     use std::string::ToString;
-    use tcx_constants::CurveType;
+    use tcx_constants::{CurveType, TEST_MNEMONIC, TEST_PASSWORD};
     use tcx_primitive::TypedPublicKey;
-
-    static PASSWORD: &'static str = "Insecure Pa55w0rd";
-    static MNEMONIC: &'static str =
-        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 
     #[test]
     pub fn default_meta_test() {
@@ -334,7 +270,7 @@ mod tests {
 
     #[test]
     pub fn new_keystore() {
-        let keystore = HdKeystore::new(PASSWORD, Metadata::default());
+        let keystore = HdKeystore::new(TEST_PASSWORD, Metadata::default());
         let store = keystore.store;
 
         assert_eq!(store.version, 11000);
@@ -345,18 +281,18 @@ mod tests {
     #[test]
     pub fn from_mnemonic_test() {
         let mut keystore =
-            HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default()).unwrap();
+            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default()).unwrap();
         assert_eq!(keystore.store.version, 11000);
         assert_ne!(keystore.store.id, "");
-        let decrypted_bytes = keystore.store.crypto.decrypt(PASSWORD).unwrap();
+        let decrypted_bytes = keystore.store.crypto.decrypt(TEST_PASSWORD).unwrap();
         let decrypted_mnemonic = String::from_utf8(decrypted_bytes).unwrap();
-        assert_eq!(decrypted_mnemonic, MNEMONIC);
+        assert_eq!(decrypted_mnemonic, TEST_MNEMONIC);
         assert_eq!(keystore.store.active_accounts.len(), 0);
 
-        keystore.unlock_by_password(PASSWORD).unwrap();
+        keystore.unlock_by_password(TEST_PASSWORD).unwrap();
 
         let mnemonic = keystore.mnemonic().unwrap();
-        assert_eq!(mnemonic, MNEMONIC);
+        assert_eq!(mnemonic, TEST_MNEMONIC);
 
         let wrong_password_err = keystore.unlock_by_password("WrongPassword").err().unwrap();
         assert_eq!(format!("{}", wrong_password_err), "password_incorrect");
@@ -365,7 +301,7 @@ mod tests {
     #[test]
     pub fn derive_key_at_paths_test() {
         let mut keystore =
-            HdKeystore::from_mnemonic(MNEMONIC, PASSWORD, Metadata::default()).unwrap();
+            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default()).unwrap();
         let coin_info = CoinInfo {
             coin: "BITCOIN".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
@@ -373,7 +309,7 @@ mod tests {
             network: "MAINNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let _ = keystore.unlock_by_password(PASSWORD).unwrap();
+        let _ = keystore.unlock_by_password(TEST_PASSWORD).unwrap();
 
         let acc = keystore.derive_coin::<MockAddress>(&coin_info).unwrap();
 
@@ -402,7 +338,7 @@ mod tests {
             "m/44'/0'/0'/1/1",
         ];
 
-        let _ = keystore.unlock_by_password(PASSWORD);
+        let _ = keystore.unlock_by_password(TEST_PASSWORD);
 
         let private_keys = keystore.find_("BITCOIN", "mock_address", &paths).unwrap();
         let pub_keys = private_keys
