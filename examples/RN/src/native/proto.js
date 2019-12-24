@@ -1517,26 +1517,26 @@ $root.api = (function() {
         return HdStoreImportParam;
     })();
 
-    api.HdStoreDeriveParam = (function() {
+    api.KeystoreCommonDeriveParam = (function() {
 
         /**
-         * Properties of a HdStoreDeriveParam.
+         * Properties of a KeystoreCommonDeriveParam.
          * @memberof api
-         * @interface IHdStoreDeriveParam
-         * @property {string|null} [id] HdStoreDeriveParam id
-         * @property {string|null} [password] HdStoreDeriveParam password
-         * @property {Array.<api.HdStoreDeriveParam.IDerivation>|null} [derivations] HdStoreDeriveParam derivations
+         * @interface IKeystoreCommonDeriveParam
+         * @property {string|null} [id] KeystoreCommonDeriveParam id
+         * @property {string|null} [password] KeystoreCommonDeriveParam password
+         * @property {Array.<api.KeystoreCommonDeriveParam.IDerivation>|null} [derivations] KeystoreCommonDeriveParam derivations
          */
 
         /**
-         * Constructs a new HdStoreDeriveParam.
+         * Constructs a new KeystoreCommonDeriveParam.
          * @memberof api
-         * @classdesc Represents a HdStoreDeriveParam.
-         * @implements IHdStoreDeriveParam
+         * @classdesc Represents a KeystoreCommonDeriveParam.
+         * @implements IKeystoreCommonDeriveParam
          * @constructor
-         * @param {api.IHdStoreDeriveParam=} [properties] Properties to set
+         * @param {api.IKeystoreCommonDeriveParam=} [properties] Properties to set
          */
-        function HdStoreDeriveParam(properties) {
+        function KeystoreCommonDeriveParam(properties) {
             this.derivations = [];
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -1545,51 +1545,51 @@ $root.api = (function() {
         }
 
         /**
-         * HdStoreDeriveParam id.
+         * KeystoreCommonDeriveParam id.
          * @member {string} id
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @instance
          */
-        HdStoreDeriveParam.prototype.id = "";
+        KeystoreCommonDeriveParam.prototype.id = "";
 
         /**
-         * HdStoreDeriveParam password.
+         * KeystoreCommonDeriveParam password.
          * @member {string} password
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @instance
          */
-        HdStoreDeriveParam.prototype.password = "";
+        KeystoreCommonDeriveParam.prototype.password = "";
 
         /**
-         * HdStoreDeriveParam derivations.
-         * @member {Array.<api.HdStoreDeriveParam.IDerivation>} derivations
-         * @memberof api.HdStoreDeriveParam
+         * KeystoreCommonDeriveParam derivations.
+         * @member {Array.<api.KeystoreCommonDeriveParam.IDerivation>} derivations
+         * @memberof api.KeystoreCommonDeriveParam
          * @instance
          */
-        HdStoreDeriveParam.prototype.derivations = $util.emptyArray;
+        KeystoreCommonDeriveParam.prototype.derivations = $util.emptyArray;
 
         /**
-         * Creates a new HdStoreDeriveParam instance using the specified properties.
+         * Creates a new KeystoreCommonDeriveParam instance using the specified properties.
          * @function create
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @static
-         * @param {api.IHdStoreDeriveParam=} [properties] Properties to set
-         * @returns {api.HdStoreDeriveParam} HdStoreDeriveParam instance
+         * @param {api.IKeystoreCommonDeriveParam=} [properties] Properties to set
+         * @returns {api.KeystoreCommonDeriveParam} KeystoreCommonDeriveParam instance
          */
-        HdStoreDeriveParam.create = function create(properties) {
-            return new HdStoreDeriveParam(properties);
+        KeystoreCommonDeriveParam.create = function create(properties) {
+            return new KeystoreCommonDeriveParam(properties);
         };
 
         /**
-         * Encodes the specified HdStoreDeriveParam message. Does not implicitly {@link api.HdStoreDeriveParam.verify|verify} messages.
+         * Encodes the specified KeystoreCommonDeriveParam message. Does not implicitly {@link api.KeystoreCommonDeriveParam.verify|verify} messages.
          * @function encode
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @static
-         * @param {api.IHdStoreDeriveParam} message HdStoreDeriveParam message or plain object to encode
+         * @param {api.IKeystoreCommonDeriveParam} message KeystoreCommonDeriveParam message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        HdStoreDeriveParam.encode = function encode(message, writer) {
+        KeystoreCommonDeriveParam.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
             if (message.id != null && message.hasOwnProperty("id"))
@@ -1598,38 +1598,38 @@ $root.api = (function() {
                 writer.uint32(/* id 2, wireType 2 =*/18).string(message.password);
             if (message.derivations != null && message.derivations.length)
                 for (var i = 0; i < message.derivations.length; ++i)
-                    $root.api.HdStoreDeriveParam.Derivation.encode(message.derivations[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                    $root.api.KeystoreCommonDeriveParam.Derivation.encode(message.derivations[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
             return writer;
         };
 
         /**
-         * Encodes the specified HdStoreDeriveParam message, length delimited. Does not implicitly {@link api.HdStoreDeriveParam.verify|verify} messages.
+         * Encodes the specified KeystoreCommonDeriveParam message, length delimited. Does not implicitly {@link api.KeystoreCommonDeriveParam.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @static
-         * @param {api.IHdStoreDeriveParam} message HdStoreDeriveParam message or plain object to encode
+         * @param {api.IKeystoreCommonDeriveParam} message KeystoreCommonDeriveParam message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        HdStoreDeriveParam.encodeDelimited = function encodeDelimited(message, writer) {
+        KeystoreCommonDeriveParam.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a HdStoreDeriveParam message from the specified reader or buffer.
+         * Decodes a KeystoreCommonDeriveParam message from the specified reader or buffer.
          * @function decode
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {api.HdStoreDeriveParam} HdStoreDeriveParam
+         * @returns {api.KeystoreCommonDeriveParam} KeystoreCommonDeriveParam
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        HdStoreDeriveParam.decode = function decode(reader, length) {
+        KeystoreCommonDeriveParam.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.HdStoreDeriveParam();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.KeystoreCommonDeriveParam();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -1642,7 +1642,7 @@ $root.api = (function() {
                 case 3:
                     if (!(message.derivations && message.derivations.length))
                         message.derivations = [];
-                    message.derivations.push($root.api.HdStoreDeriveParam.Derivation.decode(reader, reader.uint32()));
+                    message.derivations.push($root.api.KeystoreCommonDeriveParam.Derivation.decode(reader, reader.uint32()));
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -1653,30 +1653,30 @@ $root.api = (function() {
         };
 
         /**
-         * Decodes a HdStoreDeriveParam message from the specified reader or buffer, length delimited.
+         * Decodes a KeystoreCommonDeriveParam message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.HdStoreDeriveParam} HdStoreDeriveParam
+         * @returns {api.KeystoreCommonDeriveParam} KeystoreCommonDeriveParam
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        HdStoreDeriveParam.decodeDelimited = function decodeDelimited(reader) {
+        KeystoreCommonDeriveParam.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a HdStoreDeriveParam message.
+         * Verifies a KeystoreCommonDeriveParam message.
          * @function verify
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        HdStoreDeriveParam.verify = function verify(message) {
+        KeystoreCommonDeriveParam.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
             if (message.id != null && message.hasOwnProperty("id"))
@@ -1689,7 +1689,7 @@ $root.api = (function() {
                 if (!Array.isArray(message.derivations))
                     return "derivations: array expected";
                 for (var i = 0; i < message.derivations.length; ++i) {
-                    var error = $root.api.HdStoreDeriveParam.Derivation.verify(message.derivations[i]);
+                    var error = $root.api.KeystoreCommonDeriveParam.Derivation.verify(message.derivations[i]);
                     if (error)
                         return "derivations." + error;
                 }
@@ -1698,44 +1698,44 @@ $root.api = (function() {
         };
 
         /**
-         * Creates a HdStoreDeriveParam message from a plain object. Also converts values to their respective internal types.
+         * Creates a KeystoreCommonDeriveParam message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {api.HdStoreDeriveParam} HdStoreDeriveParam
+         * @returns {api.KeystoreCommonDeriveParam} KeystoreCommonDeriveParam
          */
-        HdStoreDeriveParam.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.HdStoreDeriveParam)
+        KeystoreCommonDeriveParam.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.KeystoreCommonDeriveParam)
                 return object;
-            var message = new $root.api.HdStoreDeriveParam();
+            var message = new $root.api.KeystoreCommonDeriveParam();
             if (object.id != null)
                 message.id = String(object.id);
             if (object.password != null)
                 message.password = String(object.password);
             if (object.derivations) {
                 if (!Array.isArray(object.derivations))
-                    throw TypeError(".api.HdStoreDeriveParam.derivations: array expected");
+                    throw TypeError(".api.KeystoreCommonDeriveParam.derivations: array expected");
                 message.derivations = [];
                 for (var i = 0; i < object.derivations.length; ++i) {
                     if (typeof object.derivations[i] !== "object")
-                        throw TypeError(".api.HdStoreDeriveParam.derivations: object expected");
-                    message.derivations[i] = $root.api.HdStoreDeriveParam.Derivation.fromObject(object.derivations[i]);
+                        throw TypeError(".api.KeystoreCommonDeriveParam.derivations: object expected");
+                    message.derivations[i] = $root.api.KeystoreCommonDeriveParam.Derivation.fromObject(object.derivations[i]);
                 }
             }
             return message;
         };
 
         /**
-         * Creates a plain object from a HdStoreDeriveParam message. Also converts values to other types if specified.
+         * Creates a plain object from a KeystoreCommonDeriveParam message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @static
-         * @param {api.HdStoreDeriveParam} message HdStoreDeriveParam
+         * @param {api.KeystoreCommonDeriveParam} message KeystoreCommonDeriveParam
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        HdStoreDeriveParam.toObject = function toObject(message, options) {
+        KeystoreCommonDeriveParam.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
@@ -1752,27 +1752,27 @@ $root.api = (function() {
             if (message.derivations && message.derivations.length) {
                 object.derivations = [];
                 for (var j = 0; j < message.derivations.length; ++j)
-                    object.derivations[j] = $root.api.HdStoreDeriveParam.Derivation.toObject(message.derivations[j], options);
+                    object.derivations[j] = $root.api.KeystoreCommonDeriveParam.Derivation.toObject(message.derivations[j], options);
             }
             return object;
         };
 
         /**
-         * Converts this HdStoreDeriveParam to JSON.
+         * Converts this KeystoreCommonDeriveParam to JSON.
          * @function toJSON
-         * @memberof api.HdStoreDeriveParam
+         * @memberof api.KeystoreCommonDeriveParam
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        HdStoreDeriveParam.prototype.toJSON = function toJSON() {
+        KeystoreCommonDeriveParam.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        HdStoreDeriveParam.Derivation = (function() {
+        KeystoreCommonDeriveParam.Derivation = (function() {
 
             /**
              * Properties of a Derivation.
-             * @memberof api.HdStoreDeriveParam
+             * @memberof api.KeystoreCommonDeriveParam
              * @interface IDerivation
              * @property {string|null} [chainType] Derivation chainType
              * @property {string|null} [path] Derivation path
@@ -1783,11 +1783,11 @@ $root.api = (function() {
 
             /**
              * Constructs a new Derivation.
-             * @memberof api.HdStoreDeriveParam
+             * @memberof api.KeystoreCommonDeriveParam
              * @classdesc Represents a Derivation.
              * @implements IDerivation
              * @constructor
-             * @param {api.HdStoreDeriveParam.IDerivation=} [properties] Properties to set
+             * @param {api.KeystoreCommonDeriveParam.IDerivation=} [properties] Properties to set
              */
             function Derivation(properties) {
                 if (properties)
@@ -1799,7 +1799,7 @@ $root.api = (function() {
             /**
              * Derivation chainType.
              * @member {string} chainType
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @instance
              */
             Derivation.prototype.chainType = "";
@@ -1807,7 +1807,7 @@ $root.api = (function() {
             /**
              * Derivation path.
              * @member {string} path
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @instance
              */
             Derivation.prototype.path = "";
@@ -1815,7 +1815,7 @@ $root.api = (function() {
             /**
              * Derivation network.
              * @member {string} network
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @instance
              */
             Derivation.prototype.network = "";
@@ -1823,7 +1823,7 @@ $root.api = (function() {
             /**
              * Derivation segWit.
              * @member {string} segWit
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @instance
              */
             Derivation.prototype.segWit = "";
@@ -1831,7 +1831,7 @@ $root.api = (function() {
             /**
              * Derivation chainId.
              * @member {string} chainId
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @instance
              */
             Derivation.prototype.chainId = "";
@@ -1839,21 +1839,21 @@ $root.api = (function() {
             /**
              * Creates a new Derivation instance using the specified properties.
              * @function create
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @static
-             * @param {api.HdStoreDeriveParam.IDerivation=} [properties] Properties to set
-             * @returns {api.HdStoreDeriveParam.Derivation} Derivation instance
+             * @param {api.KeystoreCommonDeriveParam.IDerivation=} [properties] Properties to set
+             * @returns {api.KeystoreCommonDeriveParam.Derivation} Derivation instance
              */
             Derivation.create = function create(properties) {
                 return new Derivation(properties);
             };
 
             /**
-             * Encodes the specified Derivation message. Does not implicitly {@link api.HdStoreDeriveParam.Derivation.verify|verify} messages.
+             * Encodes the specified Derivation message. Does not implicitly {@link api.KeystoreCommonDeriveParam.Derivation.verify|verify} messages.
              * @function encode
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @static
-             * @param {api.HdStoreDeriveParam.IDerivation} message Derivation message or plain object to encode
+             * @param {api.KeystoreCommonDeriveParam.IDerivation} message Derivation message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
@@ -1874,11 +1874,11 @@ $root.api = (function() {
             };
 
             /**
-             * Encodes the specified Derivation message, length delimited. Does not implicitly {@link api.HdStoreDeriveParam.Derivation.verify|verify} messages.
+             * Encodes the specified Derivation message, length delimited. Does not implicitly {@link api.KeystoreCommonDeriveParam.Derivation.verify|verify} messages.
              * @function encodeDelimited
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @static
-             * @param {api.HdStoreDeriveParam.IDerivation} message Derivation message or plain object to encode
+             * @param {api.KeystoreCommonDeriveParam.IDerivation} message Derivation message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
@@ -1889,18 +1889,18 @@ $root.api = (function() {
             /**
              * Decodes a Derivation message from the specified reader or buffer.
              * @function decode
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
              * @param {number} [length] Message length if known beforehand
-             * @returns {api.HdStoreDeriveParam.Derivation} Derivation
+             * @returns {api.KeystoreCommonDeriveParam.Derivation} Derivation
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
             Derivation.decode = function decode(reader, length) {
                 if (!(reader instanceof $Reader))
                     reader = $Reader.create(reader);
-                var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.HdStoreDeriveParam.Derivation();
+                var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.KeystoreCommonDeriveParam.Derivation();
                 while (reader.pos < end) {
                     var tag = reader.uint32();
                     switch (tag >>> 3) {
@@ -1930,10 +1930,10 @@ $root.api = (function() {
             /**
              * Decodes a Derivation message from the specified reader or buffer, length delimited.
              * @function decodeDelimited
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {api.HdStoreDeriveParam.Derivation} Derivation
+             * @returns {api.KeystoreCommonDeriveParam.Derivation} Derivation
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
@@ -1946,7 +1946,7 @@ $root.api = (function() {
             /**
              * Verifies a Derivation message.
              * @function verify
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @static
              * @param {Object.<string,*>} message Plain object to verify
              * @returns {string|null} `null` if valid, otherwise the reason why it is not
@@ -1975,15 +1975,15 @@ $root.api = (function() {
             /**
              * Creates a Derivation message from a plain object. Also converts values to their respective internal types.
              * @function fromObject
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @static
              * @param {Object.<string,*>} object Plain object
-             * @returns {api.HdStoreDeriveParam.Derivation} Derivation
+             * @returns {api.KeystoreCommonDeriveParam.Derivation} Derivation
              */
             Derivation.fromObject = function fromObject(object) {
-                if (object instanceof $root.api.HdStoreDeriveParam.Derivation)
+                if (object instanceof $root.api.KeystoreCommonDeriveParam.Derivation)
                     return object;
-                var message = new $root.api.HdStoreDeriveParam.Derivation();
+                var message = new $root.api.KeystoreCommonDeriveParam.Derivation();
                 if (object.chainType != null)
                     message.chainType = String(object.chainType);
                 if (object.path != null)
@@ -2000,9 +2000,9 @@ $root.api = (function() {
             /**
              * Creates a plain object from a Derivation message. Also converts values to other types if specified.
              * @function toObject
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @static
-             * @param {api.HdStoreDeriveParam.Derivation} message Derivation
+             * @param {api.KeystoreCommonDeriveParam.Derivation} message Derivation
              * @param {$protobuf.IConversionOptions} [options] Conversion options
              * @returns {Object.<string,*>} Plain object
              */
@@ -2033,7 +2033,7 @@ $root.api = (function() {
             /**
              * Converts this Derivation to JSON.
              * @function toJSON
-             * @memberof api.HdStoreDeriveParam.Derivation
+             * @memberof api.KeystoreCommonDeriveParam.Derivation
              * @instance
              * @returns {Object.<string,*>} JSON object
              */
@@ -2044,7 +2044,7 @@ $root.api = (function() {
             return Derivation;
         })();
 
-        return HdStoreDeriveParam;
+        return KeystoreCommonDeriveParam;
     })();
 
     api.AccountResponse = (function() {
@@ -2776,9 +2776,6 @@ $root.api = (function() {
          * @interface IPrivateKeyStoreImportParam
          * @property {string|null} [privateKey] PrivateKeyStoreImportParam privateKey
          * @property {string|null} [password] PrivateKeyStoreImportParam password
-         * @property {string|null} [chainType] PrivateKeyStoreImportParam chainType
-         * @property {string|null} [network] PrivateKeyStoreImportParam network
-         * @property {string|null} [segWit] PrivateKeyStoreImportParam segWit
          * @property {boolean|null} [overwrite] PrivateKeyStoreImportParam overwrite
          */
 
@@ -2812,30 +2809,6 @@ $root.api = (function() {
          * @instance
          */
         PrivateKeyStoreImportParam.prototype.password = "";
-
-        /**
-         * PrivateKeyStoreImportParam chainType.
-         * @member {string} chainType
-         * @memberof api.PrivateKeyStoreImportParam
-         * @instance
-         */
-        PrivateKeyStoreImportParam.prototype.chainType = "";
-
-        /**
-         * PrivateKeyStoreImportParam network.
-         * @member {string} network
-         * @memberof api.PrivateKeyStoreImportParam
-         * @instance
-         */
-        PrivateKeyStoreImportParam.prototype.network = "";
-
-        /**
-         * PrivateKeyStoreImportParam segWit.
-         * @member {string} segWit
-         * @memberof api.PrivateKeyStoreImportParam
-         * @instance
-         */
-        PrivateKeyStoreImportParam.prototype.segWit = "";
 
         /**
          * PrivateKeyStoreImportParam overwrite.
@@ -2873,14 +2846,8 @@ $root.api = (function() {
                 writer.uint32(/* id 1, wireType 2 =*/10).string(message.privateKey);
             if (message.password != null && message.hasOwnProperty("password"))
                 writer.uint32(/* id 2, wireType 2 =*/18).string(message.password);
-            if (message.chainType != null && message.hasOwnProperty("chainType"))
-                writer.uint32(/* id 3, wireType 2 =*/26).string(message.chainType);
-            if (message.network != null && message.hasOwnProperty("network"))
-                writer.uint32(/* id 4, wireType 2 =*/34).string(message.network);
-            if (message.segWit != null && message.hasOwnProperty("segWit"))
-                writer.uint32(/* id 5, wireType 2 =*/42).string(message.segWit);
             if (message.overwrite != null && message.hasOwnProperty("overwrite"))
-                writer.uint32(/* id 10, wireType 0 =*/80).bool(message.overwrite);
+                writer.uint32(/* id 3, wireType 0 =*/24).bool(message.overwrite);
             return writer;
         };
 
@@ -2922,15 +2889,6 @@ $root.api = (function() {
                     message.password = reader.string();
                     break;
                 case 3:
-                    message.chainType = reader.string();
-                    break;
-                case 4:
-                    message.network = reader.string();
-                    break;
-                case 5:
-                    message.segWit = reader.string();
-                    break;
-                case 10:
                     message.overwrite = reader.bool();
                     break;
                 default:
@@ -2974,15 +2932,6 @@ $root.api = (function() {
             if (message.password != null && message.hasOwnProperty("password"))
                 if (!$util.isString(message.password))
                     return "password: string expected";
-            if (message.chainType != null && message.hasOwnProperty("chainType"))
-                if (!$util.isString(message.chainType))
-                    return "chainType: string expected";
-            if (message.network != null && message.hasOwnProperty("network"))
-                if (!$util.isString(message.network))
-                    return "network: string expected";
-            if (message.segWit != null && message.hasOwnProperty("segWit"))
-                if (!$util.isString(message.segWit))
-                    return "segWit: string expected";
             if (message.overwrite != null && message.hasOwnProperty("overwrite"))
                 if (typeof message.overwrite !== "boolean")
                     return "overwrite: boolean expected";
@@ -3005,12 +2954,6 @@ $root.api = (function() {
                 message.privateKey = String(object.privateKey);
             if (object.password != null)
                 message.password = String(object.password);
-            if (object.chainType != null)
-                message.chainType = String(object.chainType);
-            if (object.network != null)
-                message.network = String(object.network);
-            if (object.segWit != null)
-                message.segWit = String(object.segWit);
             if (object.overwrite != null)
                 message.overwrite = Boolean(object.overwrite);
             return message;
@@ -3032,21 +2975,12 @@ $root.api = (function() {
             if (options.defaults) {
                 object.privateKey = "";
                 object.password = "";
-                object.chainType = "";
-                object.network = "";
-                object.segWit = "";
                 object.overwrite = false;
             }
             if (message.privateKey != null && message.hasOwnProperty("privateKey"))
                 object.privateKey = message.privateKey;
             if (message.password != null && message.hasOwnProperty("password"))
                 object.password = message.password;
-            if (message.chainType != null && message.hasOwnProperty("chainType"))
-                object.chainType = message.chainType;
-            if (message.network != null && message.hasOwnProperty("network"))
-                object.network = message.network;
-            if (message.segWit != null && message.hasOwnProperty("segWit"))
-                object.segWit = message.segWit;
             if (message.overwrite != null && message.hasOwnProperty("overwrite"))
                 object.overwrite = message.overwrite;
             return object;
@@ -7848,6 +7782,1717 @@ $root.transaction = (function() {
         };
 
         return BtcForkSignedTxOutput;
+    })();
+
+    transaction.OutPoint = (function() {
+
+        /**
+         * Properties of an OutPoint.
+         * @memberof transaction
+         * @interface IOutPoint
+         * @property {string|null} [txHash] OutPoint txHash
+         * @property {number|null} [index] OutPoint index
+         */
+
+        /**
+         * Constructs a new OutPoint.
+         * @memberof transaction
+         * @classdesc Represents an OutPoint.
+         * @implements IOutPoint
+         * @constructor
+         * @param {transaction.IOutPoint=} [properties] Properties to set
+         */
+        function OutPoint(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * OutPoint txHash.
+         * @member {string} txHash
+         * @memberof transaction.OutPoint
+         * @instance
+         */
+        OutPoint.prototype.txHash = "";
+
+        /**
+         * OutPoint index.
+         * @member {number} index
+         * @memberof transaction.OutPoint
+         * @instance
+         */
+        OutPoint.prototype.index = 0;
+
+        /**
+         * Creates a new OutPoint instance using the specified properties.
+         * @function create
+         * @memberof transaction.OutPoint
+         * @static
+         * @param {transaction.IOutPoint=} [properties] Properties to set
+         * @returns {transaction.OutPoint} OutPoint instance
+         */
+        OutPoint.create = function create(properties) {
+            return new OutPoint(properties);
+        };
+
+        /**
+         * Encodes the specified OutPoint message. Does not implicitly {@link transaction.OutPoint.verify|verify} messages.
+         * @function encode
+         * @memberof transaction.OutPoint
+         * @static
+         * @param {transaction.IOutPoint} message OutPoint message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        OutPoint.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.txHash != null && message.hasOwnProperty("txHash"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.txHash);
+            if (message.index != null && message.hasOwnProperty("index"))
+                writer.uint32(/* id 2, wireType 0 =*/16).int32(message.index);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified OutPoint message, length delimited. Does not implicitly {@link transaction.OutPoint.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof transaction.OutPoint
+         * @static
+         * @param {transaction.IOutPoint} message OutPoint message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        OutPoint.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes an OutPoint message from the specified reader or buffer.
+         * @function decode
+         * @memberof transaction.OutPoint
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {transaction.OutPoint} OutPoint
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        OutPoint.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.transaction.OutPoint();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.txHash = reader.string();
+                    break;
+                case 2:
+                    message.index = reader.int32();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes an OutPoint message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof transaction.OutPoint
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {transaction.OutPoint} OutPoint
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        OutPoint.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies an OutPoint message.
+         * @function verify
+         * @memberof transaction.OutPoint
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        OutPoint.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.txHash != null && message.hasOwnProperty("txHash"))
+                if (!$util.isString(message.txHash))
+                    return "txHash: string expected";
+            if (message.index != null && message.hasOwnProperty("index"))
+                if (!$util.isInteger(message.index))
+                    return "index: integer expected";
+            return null;
+        };
+
+        /**
+         * Creates an OutPoint message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof transaction.OutPoint
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {transaction.OutPoint} OutPoint
+         */
+        OutPoint.fromObject = function fromObject(object) {
+            if (object instanceof $root.transaction.OutPoint)
+                return object;
+            var message = new $root.transaction.OutPoint();
+            if (object.txHash != null)
+                message.txHash = String(object.txHash);
+            if (object.index != null)
+                message.index = object.index | 0;
+            return message;
+        };
+
+        /**
+         * Creates a plain object from an OutPoint message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof transaction.OutPoint
+         * @static
+         * @param {transaction.OutPoint} message OutPoint
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        OutPoint.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.txHash = "";
+                object.index = 0;
+            }
+            if (message.txHash != null && message.hasOwnProperty("txHash"))
+                object.txHash = message.txHash;
+            if (message.index != null && message.hasOwnProperty("index"))
+                object.index = message.index;
+            return object;
+        };
+
+        /**
+         * Converts this OutPoint to JSON.
+         * @function toJSON
+         * @memberof transaction.OutPoint
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        OutPoint.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return OutPoint;
+    })();
+
+    transaction.Witness = (function() {
+
+        /**
+         * Properties of a Witness.
+         * @memberof transaction
+         * @interface IWitness
+         * @property {string|null} [lock] Witness lock
+         * @property {string|null} [inputType] Witness inputType
+         * @property {string|null} [outputType] Witness outputType
+         */
+
+        /**
+         * Constructs a new Witness.
+         * @memberof transaction
+         * @classdesc Represents a Witness.
+         * @implements IWitness
+         * @constructor
+         * @param {transaction.IWitness=} [properties] Properties to set
+         */
+        function Witness(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * Witness lock.
+         * @member {string} lock
+         * @memberof transaction.Witness
+         * @instance
+         */
+        Witness.prototype.lock = "";
+
+        /**
+         * Witness inputType.
+         * @member {string} inputType
+         * @memberof transaction.Witness
+         * @instance
+         */
+        Witness.prototype.inputType = "";
+
+        /**
+         * Witness outputType.
+         * @member {string} outputType
+         * @memberof transaction.Witness
+         * @instance
+         */
+        Witness.prototype.outputType = "";
+
+        /**
+         * Creates a new Witness instance using the specified properties.
+         * @function create
+         * @memberof transaction.Witness
+         * @static
+         * @param {transaction.IWitness=} [properties] Properties to set
+         * @returns {transaction.Witness} Witness instance
+         */
+        Witness.create = function create(properties) {
+            return new Witness(properties);
+        };
+
+        /**
+         * Encodes the specified Witness message. Does not implicitly {@link transaction.Witness.verify|verify} messages.
+         * @function encode
+         * @memberof transaction.Witness
+         * @static
+         * @param {transaction.IWitness} message Witness message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Witness.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.lock != null && message.hasOwnProperty("lock"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.lock);
+            if (message.inputType != null && message.hasOwnProperty("inputType"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.inputType);
+            if (message.outputType != null && message.hasOwnProperty("outputType"))
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.outputType);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified Witness message, length delimited. Does not implicitly {@link transaction.Witness.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof transaction.Witness
+         * @static
+         * @param {transaction.IWitness} message Witness message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Witness.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a Witness message from the specified reader or buffer.
+         * @function decode
+         * @memberof transaction.Witness
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {transaction.Witness} Witness
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Witness.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.transaction.Witness();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.lock = reader.string();
+                    break;
+                case 2:
+                    message.inputType = reader.string();
+                    break;
+                case 3:
+                    message.outputType = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a Witness message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof transaction.Witness
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {transaction.Witness} Witness
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Witness.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a Witness message.
+         * @function verify
+         * @memberof transaction.Witness
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        Witness.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.lock != null && message.hasOwnProperty("lock"))
+                if (!$util.isString(message.lock))
+                    return "lock: string expected";
+            if (message.inputType != null && message.hasOwnProperty("inputType"))
+                if (!$util.isString(message.inputType))
+                    return "inputType: string expected";
+            if (message.outputType != null && message.hasOwnProperty("outputType"))
+                if (!$util.isString(message.outputType))
+                    return "outputType: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a Witness message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof transaction.Witness
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {transaction.Witness} Witness
+         */
+        Witness.fromObject = function fromObject(object) {
+            if (object instanceof $root.transaction.Witness)
+                return object;
+            var message = new $root.transaction.Witness();
+            if (object.lock != null)
+                message.lock = String(object.lock);
+            if (object.inputType != null)
+                message.inputType = String(object.inputType);
+            if (object.outputType != null)
+                message.outputType = String(object.outputType);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a Witness message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof transaction.Witness
+         * @static
+         * @param {transaction.Witness} message Witness
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        Witness.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.lock = "";
+                object.inputType = "";
+                object.outputType = "";
+            }
+            if (message.lock != null && message.hasOwnProperty("lock"))
+                object.lock = message.lock;
+            if (message.inputType != null && message.hasOwnProperty("inputType"))
+                object.inputType = message.inputType;
+            if (message.outputType != null && message.hasOwnProperty("outputType"))
+                object.outputType = message.outputType;
+            return object;
+        };
+
+        /**
+         * Converts this Witness to JSON.
+         * @function toJSON
+         * @memberof transaction.Witness
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        Witness.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return Witness;
+    })();
+
+    transaction.Script = (function() {
+
+        /**
+         * Properties of a Script.
+         * @memberof transaction
+         * @interface IScript
+         * @property {string|null} [args] Script args
+         * @property {string|null} [codeHash] Script codeHash
+         * @property {string|null} [hashType] Script hashType
+         */
+
+        /**
+         * Constructs a new Script.
+         * @memberof transaction
+         * @classdesc Represents a Script.
+         * @implements IScript
+         * @constructor
+         * @param {transaction.IScript=} [properties] Properties to set
+         */
+        function Script(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * Script args.
+         * @member {string} args
+         * @memberof transaction.Script
+         * @instance
+         */
+        Script.prototype.args = "";
+
+        /**
+         * Script codeHash.
+         * @member {string} codeHash
+         * @memberof transaction.Script
+         * @instance
+         */
+        Script.prototype.codeHash = "";
+
+        /**
+         * Script hashType.
+         * @member {string} hashType
+         * @memberof transaction.Script
+         * @instance
+         */
+        Script.prototype.hashType = "";
+
+        /**
+         * Creates a new Script instance using the specified properties.
+         * @function create
+         * @memberof transaction.Script
+         * @static
+         * @param {transaction.IScript=} [properties] Properties to set
+         * @returns {transaction.Script} Script instance
+         */
+        Script.create = function create(properties) {
+            return new Script(properties);
+        };
+
+        /**
+         * Encodes the specified Script message. Does not implicitly {@link transaction.Script.verify|verify} messages.
+         * @function encode
+         * @memberof transaction.Script
+         * @static
+         * @param {transaction.IScript} message Script message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Script.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.args != null && message.hasOwnProperty("args"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.args);
+            if (message.codeHash != null && message.hasOwnProperty("codeHash"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.codeHash);
+            if (message.hashType != null && message.hasOwnProperty("hashType"))
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.hashType);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified Script message, length delimited. Does not implicitly {@link transaction.Script.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof transaction.Script
+         * @static
+         * @param {transaction.IScript} message Script message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Script.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a Script message from the specified reader or buffer.
+         * @function decode
+         * @memberof transaction.Script
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {transaction.Script} Script
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Script.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.transaction.Script();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.args = reader.string();
+                    break;
+                case 2:
+                    message.codeHash = reader.string();
+                    break;
+                case 3:
+                    message.hashType = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a Script message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof transaction.Script
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {transaction.Script} Script
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Script.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a Script message.
+         * @function verify
+         * @memberof transaction.Script
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        Script.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.args != null && message.hasOwnProperty("args"))
+                if (!$util.isString(message.args))
+                    return "args: string expected";
+            if (message.codeHash != null && message.hasOwnProperty("codeHash"))
+                if (!$util.isString(message.codeHash))
+                    return "codeHash: string expected";
+            if (message.hashType != null && message.hasOwnProperty("hashType"))
+                if (!$util.isString(message.hashType))
+                    return "hashType: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a Script message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof transaction.Script
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {transaction.Script} Script
+         */
+        Script.fromObject = function fromObject(object) {
+            if (object instanceof $root.transaction.Script)
+                return object;
+            var message = new $root.transaction.Script();
+            if (object.args != null)
+                message.args = String(object.args);
+            if (object.codeHash != null)
+                message.codeHash = String(object.codeHash);
+            if (object.hashType != null)
+                message.hashType = String(object.hashType);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a Script message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof transaction.Script
+         * @static
+         * @param {transaction.Script} message Script
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        Script.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.args = "";
+                object.codeHash = "";
+                object.hashType = "";
+            }
+            if (message.args != null && message.hasOwnProperty("args"))
+                object.args = message.args;
+            if (message.codeHash != null && message.hasOwnProperty("codeHash"))
+                object.codeHash = message.codeHash;
+            if (message.hashType != null && message.hasOwnProperty("hashType"))
+                object.hashType = message.hashType;
+            return object;
+        };
+
+        /**
+         * Converts this Script to JSON.
+         * @function toJSON
+         * @memberof transaction.Script
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        Script.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return Script;
+    })();
+
+    transaction.CellInput = (function() {
+
+        /**
+         * Properties of a CellInput.
+         * @memberof transaction
+         * @interface ICellInput
+         * @property {transaction.IOutPoint|null} [previousOutput] CellInput previousOutput
+         * @property {string|null} [since] CellInput since
+         */
+
+        /**
+         * Constructs a new CellInput.
+         * @memberof transaction
+         * @classdesc Represents a CellInput.
+         * @implements ICellInput
+         * @constructor
+         * @param {transaction.ICellInput=} [properties] Properties to set
+         */
+        function CellInput(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * CellInput previousOutput.
+         * @member {transaction.IOutPoint|null|undefined} previousOutput
+         * @memberof transaction.CellInput
+         * @instance
+         */
+        CellInput.prototype.previousOutput = null;
+
+        /**
+         * CellInput since.
+         * @member {string} since
+         * @memberof transaction.CellInput
+         * @instance
+         */
+        CellInput.prototype.since = "";
+
+        /**
+         * Creates a new CellInput instance using the specified properties.
+         * @function create
+         * @memberof transaction.CellInput
+         * @static
+         * @param {transaction.ICellInput=} [properties] Properties to set
+         * @returns {transaction.CellInput} CellInput instance
+         */
+        CellInput.create = function create(properties) {
+            return new CellInput(properties);
+        };
+
+        /**
+         * Encodes the specified CellInput message. Does not implicitly {@link transaction.CellInput.verify|verify} messages.
+         * @function encode
+         * @memberof transaction.CellInput
+         * @static
+         * @param {transaction.ICellInput} message CellInput message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        CellInput.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.previousOutput != null && message.hasOwnProperty("previousOutput"))
+                $root.transaction.OutPoint.encode(message.previousOutput, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.since != null && message.hasOwnProperty("since"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.since);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified CellInput message, length delimited. Does not implicitly {@link transaction.CellInput.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof transaction.CellInput
+         * @static
+         * @param {transaction.ICellInput} message CellInput message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        CellInput.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a CellInput message from the specified reader or buffer.
+         * @function decode
+         * @memberof transaction.CellInput
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {transaction.CellInput} CellInput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        CellInput.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.transaction.CellInput();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.previousOutput = $root.transaction.OutPoint.decode(reader, reader.uint32());
+                    break;
+                case 2:
+                    message.since = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a CellInput message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof transaction.CellInput
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {transaction.CellInput} CellInput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        CellInput.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a CellInput message.
+         * @function verify
+         * @memberof transaction.CellInput
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        CellInput.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.previousOutput != null && message.hasOwnProperty("previousOutput")) {
+                var error = $root.transaction.OutPoint.verify(message.previousOutput);
+                if (error)
+                    return "previousOutput." + error;
+            }
+            if (message.since != null && message.hasOwnProperty("since"))
+                if (!$util.isString(message.since))
+                    return "since: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a CellInput message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof transaction.CellInput
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {transaction.CellInput} CellInput
+         */
+        CellInput.fromObject = function fromObject(object) {
+            if (object instanceof $root.transaction.CellInput)
+                return object;
+            var message = new $root.transaction.CellInput();
+            if (object.previousOutput != null) {
+                if (typeof object.previousOutput !== "object")
+                    throw TypeError(".transaction.CellInput.previousOutput: object expected");
+                message.previousOutput = $root.transaction.OutPoint.fromObject(object.previousOutput);
+            }
+            if (object.since != null)
+                message.since = String(object.since);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a CellInput message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof transaction.CellInput
+         * @static
+         * @param {transaction.CellInput} message CellInput
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        CellInput.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.previousOutput = null;
+                object.since = "";
+            }
+            if (message.previousOutput != null && message.hasOwnProperty("previousOutput"))
+                object.previousOutput = $root.transaction.OutPoint.toObject(message.previousOutput, options);
+            if (message.since != null && message.hasOwnProperty("since"))
+                object.since = message.since;
+            return object;
+        };
+
+        /**
+         * Converts this CellInput to JSON.
+         * @function toJSON
+         * @memberof transaction.CellInput
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        CellInput.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return CellInput;
+    })();
+
+    transaction.CachedCell = (function() {
+
+        /**
+         * Properties of a CachedCell.
+         * @memberof transaction
+         * @interface ICachedCell
+         * @property {number|Long|null} [capacity] CachedCell capacity
+         * @property {transaction.IScript|null} [lock] CachedCell lock
+         * @property {transaction.IOutPoint|null} [outPoint] CachedCell outPoint
+         * @property {string|null} [derivedPath] CachedCell derivedPath
+         */
+
+        /**
+         * Constructs a new CachedCell.
+         * @memberof transaction
+         * @classdesc Represents a CachedCell.
+         * @implements ICachedCell
+         * @constructor
+         * @param {transaction.ICachedCell=} [properties] Properties to set
+         */
+        function CachedCell(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * CachedCell capacity.
+         * @member {number|Long} capacity
+         * @memberof transaction.CachedCell
+         * @instance
+         */
+        CachedCell.prototype.capacity = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+        /**
+         * CachedCell lock.
+         * @member {transaction.IScript|null|undefined} lock
+         * @memberof transaction.CachedCell
+         * @instance
+         */
+        CachedCell.prototype.lock = null;
+
+        /**
+         * CachedCell outPoint.
+         * @member {transaction.IOutPoint|null|undefined} outPoint
+         * @memberof transaction.CachedCell
+         * @instance
+         */
+        CachedCell.prototype.outPoint = null;
+
+        /**
+         * CachedCell derivedPath.
+         * @member {string} derivedPath
+         * @memberof transaction.CachedCell
+         * @instance
+         */
+        CachedCell.prototype.derivedPath = "";
+
+        /**
+         * Creates a new CachedCell instance using the specified properties.
+         * @function create
+         * @memberof transaction.CachedCell
+         * @static
+         * @param {transaction.ICachedCell=} [properties] Properties to set
+         * @returns {transaction.CachedCell} CachedCell instance
+         */
+        CachedCell.create = function create(properties) {
+            return new CachedCell(properties);
+        };
+
+        /**
+         * Encodes the specified CachedCell message. Does not implicitly {@link transaction.CachedCell.verify|verify} messages.
+         * @function encode
+         * @memberof transaction.CachedCell
+         * @static
+         * @param {transaction.ICachedCell} message CachedCell message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        CachedCell.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.capacity != null && message.hasOwnProperty("capacity"))
+                writer.uint32(/* id 1, wireType 0 =*/8).int64(message.capacity);
+            if (message.lock != null && message.hasOwnProperty("lock"))
+                $root.transaction.Script.encode(message.lock, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+            if (message.outPoint != null && message.hasOwnProperty("outPoint"))
+                $root.transaction.OutPoint.encode(message.outPoint, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+            if (message.derivedPath != null && message.hasOwnProperty("derivedPath"))
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.derivedPath);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified CachedCell message, length delimited. Does not implicitly {@link transaction.CachedCell.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof transaction.CachedCell
+         * @static
+         * @param {transaction.ICachedCell} message CachedCell message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        CachedCell.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a CachedCell message from the specified reader or buffer.
+         * @function decode
+         * @memberof transaction.CachedCell
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {transaction.CachedCell} CachedCell
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        CachedCell.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.transaction.CachedCell();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.capacity = reader.int64();
+                    break;
+                case 2:
+                    message.lock = $root.transaction.Script.decode(reader, reader.uint32());
+                    break;
+                case 3:
+                    message.outPoint = $root.transaction.OutPoint.decode(reader, reader.uint32());
+                    break;
+                case 4:
+                    message.derivedPath = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a CachedCell message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof transaction.CachedCell
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {transaction.CachedCell} CachedCell
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        CachedCell.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a CachedCell message.
+         * @function verify
+         * @memberof transaction.CachedCell
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        CachedCell.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.capacity != null && message.hasOwnProperty("capacity"))
+                if (!$util.isInteger(message.capacity) && !(message.capacity && $util.isInteger(message.capacity.low) && $util.isInteger(message.capacity.high)))
+                    return "capacity: integer|Long expected";
+            if (message.lock != null && message.hasOwnProperty("lock")) {
+                var error = $root.transaction.Script.verify(message.lock);
+                if (error)
+                    return "lock." + error;
+            }
+            if (message.outPoint != null && message.hasOwnProperty("outPoint")) {
+                var error = $root.transaction.OutPoint.verify(message.outPoint);
+                if (error)
+                    return "outPoint." + error;
+            }
+            if (message.derivedPath != null && message.hasOwnProperty("derivedPath"))
+                if (!$util.isString(message.derivedPath))
+                    return "derivedPath: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a CachedCell message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof transaction.CachedCell
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {transaction.CachedCell} CachedCell
+         */
+        CachedCell.fromObject = function fromObject(object) {
+            if (object instanceof $root.transaction.CachedCell)
+                return object;
+            var message = new $root.transaction.CachedCell();
+            if (object.capacity != null)
+                if ($util.Long)
+                    (message.capacity = $util.Long.fromValue(object.capacity)).unsigned = false;
+                else if (typeof object.capacity === "string")
+                    message.capacity = parseInt(object.capacity, 10);
+                else if (typeof object.capacity === "number")
+                    message.capacity = object.capacity;
+                else if (typeof object.capacity === "object")
+                    message.capacity = new $util.LongBits(object.capacity.low >>> 0, object.capacity.high >>> 0).toNumber();
+            if (object.lock != null) {
+                if (typeof object.lock !== "object")
+                    throw TypeError(".transaction.CachedCell.lock: object expected");
+                message.lock = $root.transaction.Script.fromObject(object.lock);
+            }
+            if (object.outPoint != null) {
+                if (typeof object.outPoint !== "object")
+                    throw TypeError(".transaction.CachedCell.outPoint: object expected");
+                message.outPoint = $root.transaction.OutPoint.fromObject(object.outPoint);
+            }
+            if (object.derivedPath != null)
+                message.derivedPath = String(object.derivedPath);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a CachedCell message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof transaction.CachedCell
+         * @static
+         * @param {transaction.CachedCell} message CachedCell
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        CachedCell.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                if ($util.Long) {
+                    var long = new $util.Long(0, 0, false);
+                    object.capacity = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+                } else
+                    object.capacity = options.longs === String ? "0" : 0;
+                object.lock = null;
+                object.outPoint = null;
+                object.derivedPath = "";
+            }
+            if (message.capacity != null && message.hasOwnProperty("capacity"))
+                if (typeof message.capacity === "number")
+                    object.capacity = options.longs === String ? String(message.capacity) : message.capacity;
+                else
+                    object.capacity = options.longs === String ? $util.Long.prototype.toString.call(message.capacity) : options.longs === Number ? new $util.LongBits(message.capacity.low >>> 0, message.capacity.high >>> 0).toNumber() : message.capacity;
+            if (message.lock != null && message.hasOwnProperty("lock"))
+                object.lock = $root.transaction.Script.toObject(message.lock, options);
+            if (message.outPoint != null && message.hasOwnProperty("outPoint"))
+                object.outPoint = $root.transaction.OutPoint.toObject(message.outPoint, options);
+            if (message.derivedPath != null && message.hasOwnProperty("derivedPath"))
+                object.derivedPath = message.derivedPath;
+            return object;
+        };
+
+        /**
+         * Converts this CachedCell to JSON.
+         * @function toJSON
+         * @memberof transaction.CachedCell
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        CachedCell.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return CachedCell;
+    })();
+
+    transaction.CkbTxInput = (function() {
+
+        /**
+         * Properties of a CkbTxInput.
+         * @memberof transaction
+         * @interface ICkbTxInput
+         * @property {Array.<transaction.ICellInput>|null} [inputs] CkbTxInput inputs
+         * @property {Array.<transaction.IWitness>|null} [witnesses] CkbTxInput witnesses
+         * @property {Array.<transaction.ICachedCell>|null} [cachedCells] CkbTxInput cachedCells
+         * @property {string|null} [txHash] CkbTxInput txHash
+         */
+
+        /**
+         * Constructs a new CkbTxInput.
+         * @memberof transaction
+         * @classdesc Represents a CkbTxInput.
+         * @implements ICkbTxInput
+         * @constructor
+         * @param {transaction.ICkbTxInput=} [properties] Properties to set
+         */
+        function CkbTxInput(properties) {
+            this.inputs = [];
+            this.witnesses = [];
+            this.cachedCells = [];
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * CkbTxInput inputs.
+         * @member {Array.<transaction.ICellInput>} inputs
+         * @memberof transaction.CkbTxInput
+         * @instance
+         */
+        CkbTxInput.prototype.inputs = $util.emptyArray;
+
+        /**
+         * CkbTxInput witnesses.
+         * @member {Array.<transaction.IWitness>} witnesses
+         * @memberof transaction.CkbTxInput
+         * @instance
+         */
+        CkbTxInput.prototype.witnesses = $util.emptyArray;
+
+        /**
+         * CkbTxInput cachedCells.
+         * @member {Array.<transaction.ICachedCell>} cachedCells
+         * @memberof transaction.CkbTxInput
+         * @instance
+         */
+        CkbTxInput.prototype.cachedCells = $util.emptyArray;
+
+        /**
+         * CkbTxInput txHash.
+         * @member {string} txHash
+         * @memberof transaction.CkbTxInput
+         * @instance
+         */
+        CkbTxInput.prototype.txHash = "";
+
+        /**
+         * Creates a new CkbTxInput instance using the specified properties.
+         * @function create
+         * @memberof transaction.CkbTxInput
+         * @static
+         * @param {transaction.ICkbTxInput=} [properties] Properties to set
+         * @returns {transaction.CkbTxInput} CkbTxInput instance
+         */
+        CkbTxInput.create = function create(properties) {
+            return new CkbTxInput(properties);
+        };
+
+        /**
+         * Encodes the specified CkbTxInput message. Does not implicitly {@link transaction.CkbTxInput.verify|verify} messages.
+         * @function encode
+         * @memberof transaction.CkbTxInput
+         * @static
+         * @param {transaction.ICkbTxInput} message CkbTxInput message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        CkbTxInput.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.inputs != null && message.inputs.length)
+                for (var i = 0; i < message.inputs.length; ++i)
+                    $root.transaction.CellInput.encode(message.inputs[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.witnesses != null && message.witnesses.length)
+                for (var i = 0; i < message.witnesses.length; ++i)
+                    $root.transaction.Witness.encode(message.witnesses[i], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+            if (message.cachedCells != null && message.cachedCells.length)
+                for (var i = 0; i < message.cachedCells.length; ++i)
+                    $root.transaction.CachedCell.encode(message.cachedCells[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+            if (message.txHash != null && message.hasOwnProperty("txHash"))
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.txHash);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified CkbTxInput message, length delimited. Does not implicitly {@link transaction.CkbTxInput.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof transaction.CkbTxInput
+         * @static
+         * @param {transaction.ICkbTxInput} message CkbTxInput message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        CkbTxInput.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a CkbTxInput message from the specified reader or buffer.
+         * @function decode
+         * @memberof transaction.CkbTxInput
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {transaction.CkbTxInput} CkbTxInput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        CkbTxInput.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.transaction.CkbTxInput();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    if (!(message.inputs && message.inputs.length))
+                        message.inputs = [];
+                    message.inputs.push($root.transaction.CellInput.decode(reader, reader.uint32()));
+                    break;
+                case 2:
+                    if (!(message.witnesses && message.witnesses.length))
+                        message.witnesses = [];
+                    message.witnesses.push($root.transaction.Witness.decode(reader, reader.uint32()));
+                    break;
+                case 3:
+                    if (!(message.cachedCells && message.cachedCells.length))
+                        message.cachedCells = [];
+                    message.cachedCells.push($root.transaction.CachedCell.decode(reader, reader.uint32()));
+                    break;
+                case 4:
+                    message.txHash = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a CkbTxInput message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof transaction.CkbTxInput
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {transaction.CkbTxInput} CkbTxInput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        CkbTxInput.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a CkbTxInput message.
+         * @function verify
+         * @memberof transaction.CkbTxInput
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        CkbTxInput.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.inputs != null && message.hasOwnProperty("inputs")) {
+                if (!Array.isArray(message.inputs))
+                    return "inputs: array expected";
+                for (var i = 0; i < message.inputs.length; ++i) {
+                    var error = $root.transaction.CellInput.verify(message.inputs[i]);
+                    if (error)
+                        return "inputs." + error;
+                }
+            }
+            if (message.witnesses != null && message.hasOwnProperty("witnesses")) {
+                if (!Array.isArray(message.witnesses))
+                    return "witnesses: array expected";
+                for (var i = 0; i < message.witnesses.length; ++i) {
+                    var error = $root.transaction.Witness.verify(message.witnesses[i]);
+                    if (error)
+                        return "witnesses." + error;
+                }
+            }
+            if (message.cachedCells != null && message.hasOwnProperty("cachedCells")) {
+                if (!Array.isArray(message.cachedCells))
+                    return "cachedCells: array expected";
+                for (var i = 0; i < message.cachedCells.length; ++i) {
+                    var error = $root.transaction.CachedCell.verify(message.cachedCells[i]);
+                    if (error)
+                        return "cachedCells." + error;
+                }
+            }
+            if (message.txHash != null && message.hasOwnProperty("txHash"))
+                if (!$util.isString(message.txHash))
+                    return "txHash: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a CkbTxInput message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof transaction.CkbTxInput
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {transaction.CkbTxInput} CkbTxInput
+         */
+        CkbTxInput.fromObject = function fromObject(object) {
+            if (object instanceof $root.transaction.CkbTxInput)
+                return object;
+            var message = new $root.transaction.CkbTxInput();
+            if (object.inputs) {
+                if (!Array.isArray(object.inputs))
+                    throw TypeError(".transaction.CkbTxInput.inputs: array expected");
+                message.inputs = [];
+                for (var i = 0; i < object.inputs.length; ++i) {
+                    if (typeof object.inputs[i] !== "object")
+                        throw TypeError(".transaction.CkbTxInput.inputs: object expected");
+                    message.inputs[i] = $root.transaction.CellInput.fromObject(object.inputs[i]);
+                }
+            }
+            if (object.witnesses) {
+                if (!Array.isArray(object.witnesses))
+                    throw TypeError(".transaction.CkbTxInput.witnesses: array expected");
+                message.witnesses = [];
+                for (var i = 0; i < object.witnesses.length; ++i) {
+                    if (typeof object.witnesses[i] !== "object")
+                        throw TypeError(".transaction.CkbTxInput.witnesses: object expected");
+                    message.witnesses[i] = $root.transaction.Witness.fromObject(object.witnesses[i]);
+                }
+            }
+            if (object.cachedCells) {
+                if (!Array.isArray(object.cachedCells))
+                    throw TypeError(".transaction.CkbTxInput.cachedCells: array expected");
+                message.cachedCells = [];
+                for (var i = 0; i < object.cachedCells.length; ++i) {
+                    if (typeof object.cachedCells[i] !== "object")
+                        throw TypeError(".transaction.CkbTxInput.cachedCells: object expected");
+                    message.cachedCells[i] = $root.transaction.CachedCell.fromObject(object.cachedCells[i]);
+                }
+            }
+            if (object.txHash != null)
+                message.txHash = String(object.txHash);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a CkbTxInput message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof transaction.CkbTxInput
+         * @static
+         * @param {transaction.CkbTxInput} message CkbTxInput
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        CkbTxInput.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.arrays || options.defaults) {
+                object.inputs = [];
+                object.witnesses = [];
+                object.cachedCells = [];
+            }
+            if (options.defaults)
+                object.txHash = "";
+            if (message.inputs && message.inputs.length) {
+                object.inputs = [];
+                for (var j = 0; j < message.inputs.length; ++j)
+                    object.inputs[j] = $root.transaction.CellInput.toObject(message.inputs[j], options);
+            }
+            if (message.witnesses && message.witnesses.length) {
+                object.witnesses = [];
+                for (var j = 0; j < message.witnesses.length; ++j)
+                    object.witnesses[j] = $root.transaction.Witness.toObject(message.witnesses[j], options);
+            }
+            if (message.cachedCells && message.cachedCells.length) {
+                object.cachedCells = [];
+                for (var j = 0; j < message.cachedCells.length; ++j)
+                    object.cachedCells[j] = $root.transaction.CachedCell.toObject(message.cachedCells[j], options);
+            }
+            if (message.txHash != null && message.hasOwnProperty("txHash"))
+                object.txHash = message.txHash;
+            return object;
+        };
+
+        /**
+         * Converts this CkbTxInput to JSON.
+         * @function toJSON
+         * @memberof transaction.CkbTxInput
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        CkbTxInput.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return CkbTxInput;
+    })();
+
+    transaction.CkbTxOutput = (function() {
+
+        /**
+         * Properties of a CkbTxOutput.
+         * @memberof transaction
+         * @interface ICkbTxOutput
+         * @property {string|null} [txHash] CkbTxOutput txHash
+         * @property {Array.<string>|null} [witnesses] CkbTxOutput witnesses
+         */
+
+        /**
+         * Constructs a new CkbTxOutput.
+         * @memberof transaction
+         * @classdesc Represents a CkbTxOutput.
+         * @implements ICkbTxOutput
+         * @constructor
+         * @param {transaction.ICkbTxOutput=} [properties] Properties to set
+         */
+        function CkbTxOutput(properties) {
+            this.witnesses = [];
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * CkbTxOutput txHash.
+         * @member {string} txHash
+         * @memberof transaction.CkbTxOutput
+         * @instance
+         */
+        CkbTxOutput.prototype.txHash = "";
+
+        /**
+         * CkbTxOutput witnesses.
+         * @member {Array.<string>} witnesses
+         * @memberof transaction.CkbTxOutput
+         * @instance
+         */
+        CkbTxOutput.prototype.witnesses = $util.emptyArray;
+
+        /**
+         * Creates a new CkbTxOutput instance using the specified properties.
+         * @function create
+         * @memberof transaction.CkbTxOutput
+         * @static
+         * @param {transaction.ICkbTxOutput=} [properties] Properties to set
+         * @returns {transaction.CkbTxOutput} CkbTxOutput instance
+         */
+        CkbTxOutput.create = function create(properties) {
+            return new CkbTxOutput(properties);
+        };
+
+        /**
+         * Encodes the specified CkbTxOutput message. Does not implicitly {@link transaction.CkbTxOutput.verify|verify} messages.
+         * @function encode
+         * @memberof transaction.CkbTxOutput
+         * @static
+         * @param {transaction.ICkbTxOutput} message CkbTxOutput message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        CkbTxOutput.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.txHash != null && message.hasOwnProperty("txHash"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.txHash);
+            if (message.witnesses != null && message.witnesses.length)
+                for (var i = 0; i < message.witnesses.length; ++i)
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.witnesses[i]);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified CkbTxOutput message, length delimited. Does not implicitly {@link transaction.CkbTxOutput.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof transaction.CkbTxOutput
+         * @static
+         * @param {transaction.ICkbTxOutput} message CkbTxOutput message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        CkbTxOutput.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a CkbTxOutput message from the specified reader or buffer.
+         * @function decode
+         * @memberof transaction.CkbTxOutput
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {transaction.CkbTxOutput} CkbTxOutput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        CkbTxOutput.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.transaction.CkbTxOutput();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.txHash = reader.string();
+                    break;
+                case 2:
+                    if (!(message.witnesses && message.witnesses.length))
+                        message.witnesses = [];
+                    message.witnesses.push(reader.string());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a CkbTxOutput message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof transaction.CkbTxOutput
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {transaction.CkbTxOutput} CkbTxOutput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        CkbTxOutput.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a CkbTxOutput message.
+         * @function verify
+         * @memberof transaction.CkbTxOutput
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        CkbTxOutput.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.txHash != null && message.hasOwnProperty("txHash"))
+                if (!$util.isString(message.txHash))
+                    return "txHash: string expected";
+            if (message.witnesses != null && message.hasOwnProperty("witnesses")) {
+                if (!Array.isArray(message.witnesses))
+                    return "witnesses: array expected";
+                for (var i = 0; i < message.witnesses.length; ++i)
+                    if (!$util.isString(message.witnesses[i]))
+                        return "witnesses: string[] expected";
+            }
+            return null;
+        };
+
+        /**
+         * Creates a CkbTxOutput message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof transaction.CkbTxOutput
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {transaction.CkbTxOutput} CkbTxOutput
+         */
+        CkbTxOutput.fromObject = function fromObject(object) {
+            if (object instanceof $root.transaction.CkbTxOutput)
+                return object;
+            var message = new $root.transaction.CkbTxOutput();
+            if (object.txHash != null)
+                message.txHash = String(object.txHash);
+            if (object.witnesses) {
+                if (!Array.isArray(object.witnesses))
+                    throw TypeError(".transaction.CkbTxOutput.witnesses: array expected");
+                message.witnesses = [];
+                for (var i = 0; i < object.witnesses.length; ++i)
+                    message.witnesses[i] = String(object.witnesses[i]);
+            }
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a CkbTxOutput message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof transaction.CkbTxOutput
+         * @static
+         * @param {transaction.CkbTxOutput} message CkbTxOutput
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        CkbTxOutput.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.arrays || options.defaults)
+                object.witnesses = [];
+            if (options.defaults)
+                object.txHash = "";
+            if (message.txHash != null && message.hasOwnProperty("txHash"))
+                object.txHash = message.txHash;
+            if (message.witnesses && message.witnesses.length) {
+                object.witnesses = [];
+                for (var j = 0; j < message.witnesses.length; ++j)
+                    object.witnesses[j] = message.witnesses[j];
+            }
+            return object;
+        };
+
+        /**
+         * Converts this CkbTxOutput to JSON.
+         * @function toJSON
+         * @memberof transaction.CkbTxOutput
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        CkbTxOutput.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return CkbTxOutput;
     })();
 
     transaction.TronTxInput = (function() {

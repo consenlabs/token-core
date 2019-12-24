@@ -8,6 +8,14 @@ export const formatHdStoreParams = ({ mnemonic, password, chainType, network, se
         network: '',
         segWit: '',
       }
+    case 'NERVOS':
+      return {
+        chainType,
+        mnemonic,
+        password,
+        network,
+        segWit: '',
+      }
     default:
       return {
         chainType,
@@ -27,6 +35,14 @@ export const formatPrivateKeyStoreParams = ({ privateKey, password, chainType, n
         privateKey,
         password,
         network: '',
+        segWit: '',
+      }
+    case 'TRON':
+      return {
+        chainType,
+        privateKey,
+        password,
+        network,
         segWit: '',
       }
     default:

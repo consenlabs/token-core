@@ -1,7 +1,7 @@
 /**
  * create flow test
  *
- * create -> export -> import
+ * create -> export -> repeat import
  */
 
 import create from './base/create'

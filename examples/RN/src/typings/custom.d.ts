@@ -4,8 +4,8 @@ declare module '*.json' {
 }
 type fn = (...args: any[]) => any
 
-type __chainType = 'ETHEREUM' | 'BITCOIN' | 'LITECOIN' | 'EOS' | 'COSMOS' | 'TRON' | 'BITCOINCASH'
-type __chainName = 'ETH' | 'BTC' | 'LITECOIN' | 'EOS' | 'COSMOS' | 'TRON' | 'BCH'
+type __chainType = 'ETHEREUM' | 'BITCOIN' | 'LITECOIN' | 'EOS' | 'COSMOS' | 'TRON' | 'BITCOINCASH' | 'NERVOS'
+type __chainName = 'ETH' | 'BTC' | 'LITECOIN' | 'EOS' | 'COSMOS' | 'TRON' | 'BCH' | 'CKB'
 type __walletSource = 'PRIVATE' | 'WIF' | 'MNEMONIC' | 'KEYSTORE'
 type __networkType = 'TESTNET' | 'MAINNET'
 type __externalAddress = {
