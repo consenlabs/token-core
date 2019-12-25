@@ -168,6 +168,10 @@ impl TransactionSigner<CkbTxInput, CkbTxOutput> for Keystore {
             input_cells.push(find_cache_cell(x.previous_output.as_ref().unwrap())?);
         }
 
+        if tx.witnesses.len() < input_cells.len() || input_cells.len() == 0 {
+            return Err(Error::InvalidInputCells.into());
+        }
+
         let mut signer = CkbTxSigner {
             ks: self,
             symbol,
@@ -350,7 +354,6 @@ mod tests {
 
     #[test]
     fn invalid_sign_transaction() {
-        *tcx_crypto::KDF_ROUNDS.write() = 1024;
         let tx_hash = "0x4a4bcfef1b7448e27edf533df2f1de9f56be05eba645fb83f42d55816797ad2a";
 
         let witnesses: Vec<Witness> = vec![
@@ -441,14 +444,6 @@ mod tests {
             },
         ];
 
-        //        let tx_input = CkbTxInput {
-        //            inputs,
-        //            witnesses,
-        //            tx_hash: tx_hash.clone().to_owned(),
-        //            cached_cells,
-        //            ..CkbTxInput::default()
-        //        };
-
         let mut ks = Keystore::from_private_key(
             "dcec27d0d975b0378471183a03f7071dea8532aaf968be796719ecd20af6988f",
             "Password",
@@ -476,13 +471,16 @@ mod tests {
                 },
                 "required_witness",
             ),
-            //            (CkbTxInput {
-            //                inputs: vec![],
-            //                witnesses: witnesses.clone(),
-            //                tx_hash: tx_hash.clone().to_owned(),
-            //                cached_cells: cached_cells.clone(),
-            //                ..CkbTxInput::default()
-            //            }, ""),
+            (
+                CkbTxInput {
+                    inputs: vec![],
+                    witnesses: witnesses.clone(),
+                    tx_hash: tx_hash.clone().to_owned(),
+                    cached_cells: cached_cells.clone(),
+                    ..CkbTxInput::default()
+                },
+                "invalid_input_cells",
+            ),
             (
                 CkbTxInput {
                     inputs: inputs.clone(),
