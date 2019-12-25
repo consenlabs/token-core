@@ -102,16 +102,32 @@ mod tests {
 
     use bitcoin::util::misc::hex_bytes;
 
-    use tcx_chain::Metadata;
+    use tcx_chain::{Account, Metadata};
     use tcx_chain::{HdKeystore, Keystore, KeystoreGuard};
-    use tcx_constants::CoinInfo;
     use tcx_constants::CurveType;
+    use tcx_constants::{CoinInfo, TEST_PASSWORD};
     use tcx_primitive::{PrivateKey, Secp256k1PrivateKey};
 
-    static PASSWORD: &'static str = "Insecure Pa55w0rd";
-    static MNEMONIC: &'static str =
+    static TEST_MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 
+    fn import_tron_keystore() -> (Keystore, Account) {
+        let meta = Metadata::default();
+        let mut keystore =
+            Keystore::Hd(HdKeystore::from_mnemonic(&TEST_MNEMONIC, &TEST_PASSWORD, meta).unwrap());
+
+        let coin_info = CoinInfo {
+            coin: "TRON".to_string(),
+            derivation_path: "m/44'/145'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "".to_string(),
+            seg_wit: "".to_string(),
+        };
+        keystore.unlock_by_password(TEST_PASSWORD);
+
+        let account = keystore.derive_coin::<Address>(&coin_info).unwrap().clone();
+        (keystore, account)
+    }
     #[test]
     fn sign_transaction() -> core::result::Result<(), failure::Error> {
         /*
@@ -148,7 +164,7 @@ mod tests {
 
         let meta = Metadata::default();
         let mut keystore =
-            Keystore::Hd(HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta).unwrap());
+            Keystore::Hd(HdKeystore::from_mnemonic(&TEST_MNEMONIC, &TEST_PASSWORD, meta).unwrap());
 
         let coin_info = CoinInfo {
             coin: "TRON".to_string(),
@@ -157,7 +173,7 @@ mod tests {
             network: "".to_string(),
             seg_wit: "".to_string(),
         };
-        let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
+        let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, TEST_PASSWORD).unwrap();
 
         let ks = guard.keystore_mut();
 

@@ -300,7 +300,7 @@ mod tests {
     use super::{
         DeterministicType, PrivateKey, PublicKey, TypedDeterministicPrivateKey, TypedPrivateKey,
     };
-    use crate::{Derive, DerivePath};
+    use crate::{Derive, DerivePath, TypedPublicKey};
     use bip39::{Language, Mnemonic, Seed};
     use std::str::FromStr;
     use tcx_constants::CurveType;
@@ -318,13 +318,23 @@ mod tests {
         hex::decode("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc").unwrap()
     }
 
+    const PUB_KEY_HEX: &'static str =
+        "02b95c249d84f417e3e395a127425428b540671cc15881eb828c17b722a53fc599";
+
     #[test]
     fn typed_private_key() {
+        let ret = TypedPrivateKey::from_slice(CurveType::ED25519, &default_private_key());
+        assert!(ret.is_err());
+
         let sk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &default_private_key()).unwrap();
 
         assert_eq!(sk.to_bytes(), default_private_key());
         assert_eq!(sk.as_secp256k1().unwrap().to_bytes(), default_private_key());
         assert_eq!(sk.curve_type(), CurveType::SECP256k1);
+        assert_eq!(hex::encode(sk.public_key().to_bytes()), PUB_KEY_HEX);
+
+        let sign_ret = sk.sign(&default_private_key()).unwrap();
+        assert_eq!(hex::encode(sign_ret), "304402206614e4bfa3ba1f6c975286a0a683871d6f0525a0860631afa5bea4da78ca012a02207a663d4980abed218683f66a63bbb766975fd525b8442a0424f6347c3d4f9261");
     }
 
     #[test]
@@ -343,6 +353,16 @@ mod tests {
 
         assert_eq!(dpk.to_string(), "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
 
+        assert_eq!(dpk.curve_type(), CurveType::SECP256k1);
+        assert_eq!(
+            hex::encode(dpk.public_key().to_bytes()),
+            "029d23439ecb195eb06a0d44a608960d18702fd97e19c53451f0548f568207af77"
+        );
+        let child_dpk = dpk
+            .derive(DerivePath::from_str("0/0").unwrap().into_iter())
+            .unwrap();
+        assert_eq!(child_dpk.to_string(), "xpub6FuzpGNBc46EfvmcvECyqXjrzGcKErQgpQcpvhw1tiC5yXvi1jUkzudMpdg5AaguiFstdVR5ASDbSceBswKRy6cAhpTgozmgxMUayPDrLLX");
+
         let dsk = root
             .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
             .unwrap();
@@ -351,18 +371,19 @@ mod tests {
     }
 
     #[test]
-    fn typed_public_key() {
-        let sk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &default_private_key()).unwrap();
+    fn test_typed_public_key() {
+        let pub_key = hex::decode(PUB_KEY_HEX).unwrap();
+        let ret = TypedPublicKey::from_slice(CurveType::ED25519, &pub_key);
+        assert!(ret.is_err());
 
-        let pk = sk.public_key();
+        let pk = TypedPublicKey::from_slice(CurveType::SECP256k1, &pub_key).unwrap();
 
-        assert_eq!(
-            hex::encode(pk.to_bytes()),
-            "02b95c249d84f417e3e395a127425428b540671cc15881eb828c17b722a53fc599"
-        );
+        assert_eq!(pk.curve_type(), CurveType::SECP256k1);
+
+        assert_eq!(hex::encode(pk.to_bytes()), PUB_KEY_HEX);
         assert_eq!(
             hex::encode(pk.as_secp256k1().unwrap().to_bytes()),
-            "02b95c249d84f417e3e395a127425428b540671cc15881eb828c17b722a53fc599"
+            PUB_KEY_HEX
         );
         assert_eq!(pk.curve_type(), CurveType::SECP256k1);
     }

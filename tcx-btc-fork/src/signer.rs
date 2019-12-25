@@ -456,6 +456,64 @@ mod tests {
     }
 
     #[test]
+    fn test_sign_ltc_multi_utxo() {
+        let keystore_json = r#"
+        {"id":"ae45d424-31d8-49f7-a601-1272b40c566d","version":11000,"keyHash":"512115eca3ae86646aeb06861d551e403b543509","crypto":{"cipher":"aes-128-ctr","cipherparams":{"iv":"588233984e9576f058bd7bae018eaa38"},"ciphertext":"8a5451c57fed478c7d45f5391659a6fb5fc85a347f1f7aaead450ad4ef4fe434d042d57aa990d850165293609aa746c715c805b236c3d54d86e7dea7d938ce55fcb2684e0eb7e0e6cc7d","kdf":"pbkdf2","kdfparams":{"c":1024,"prf":"hmac-sha256","dklen":32,"salt":"ee656af962155e4e6e763b0883ed0d8cc37c2fa21a7ef01b1d3b18f352f74c69"},"mac":"a661aa444869aac9ea33f066676c6bfb49d079ab986d0ee755f8a1747b2b7f17"},"activeAccounts":[{"address":"mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN","derivationPath":"m/44'/1'/0'/0/0","curve":"SECP256k1","coin":"LITECOIN","network":"TESTNET","segWit":"NONE","extPubKey":"036c2b38ad8000000023332f38a77023d3c1a450499c8aeb3db2e666aa2cc6fff7db6797c5d2aef8fc036663443d71127b332c68cd6bffb6c2b5eb4dc6861404ed055dc36a25b8c18020"}],"imTokenMeta":{"name":"LTC-Wallet-1","passwordHint":"","timestamp":1576561805,"source":"MNEMONIC"}}
+        "#;
+        let unspents = vec![
+            Utxo {
+                tx_hash: "57c935201d6abf4b32151f9d96bfb51b058824a601011c3432e751b0a6d4a101"
+                    .to_string(),
+                vout: 0,
+                amount: 1000000,
+                address: "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN".to_string(),
+                script_pub_key: "76a914383fb81cb0a3fc724b5e08cf8bbd404336d711f688ac".to_string(),
+                derived_path: "0/0".to_string(),
+                sequence: 0,
+            },
+            Utxo {
+                tx_hash: "57c935201d6abf4b32151f9d96bfb51b058824a601011c3432e751b0a6d4a100"
+                    .to_string(),
+                vout: 0,
+                amount: 1000000,
+                address: "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN".to_string(),
+                script_pub_key: "76a914383fb81cb0a3fc724b5e08cf8bbd404336d711f688ac".to_string(),
+                derived_path: "0/0".to_string(),
+                sequence: 0,
+            },
+        ];
+        let tx_input = BtcForkTxInput {
+            to: "mmuf77YiGckWgfvd32viaj7EKfrUN1FdAz".to_string(),
+            amount: 1100000,
+            unspents,
+            fee: 5902,
+            change_address_index: 1u32,
+            change_address: "".to_string(),
+            network: "TESTNET".to_string(),
+            seg_wit: "NONE".to_string(),
+        };
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let tran =
+            BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
+                tx_input,
+                coin_info,
+                _marker_s: PhantomData,
+                _marker_t: PhantomData,
+            };
+
+        let mut keystore = Keystore::from_json(keystore_json).unwrap();
+        let _ = keystore.unlock_by_password("imtoken1");
+        let expected = keystore
+            .sign_transaction("LITECOIN", "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN", &tran)
+            .unwrap();
+        assert_eq!(
+            expected.tx_hash,
+            "1d95b4e3cac9b81fb9459799cb6c7ffc38b5b78ee38fdcfdb972dc17f77db761"
+        );
+        assert_eq!(expected.signature, "010000000201a1d4a6b051e732341c0101a62488051bb5bf969d1f15324bbf6a1d2035c957000000006a47304402202b007c693e784805eaae1e68a35d8d4a15331a29aa19a27fecd5a530cd6bba95022000dfa238c90a5a48c66817e0a0a69e275d159e566c1eb661b6c362b249f8aa510121033d710ab45bb54ac99618ad23b3c1da661631aa25f23bfe9d22b41876f1d46e4effffffff00a1d4a6b051e732341c0101a62488051bb5bf969d1f15324bbf6a1d2035c957000000006a4730440220320b151cab9701c0e031310e4c7e6ff4712b291b79bee2a7f20bd2acd40a5a93022030fc72cf9f2f66aa5d88d97ef0e3c537dfa11f9d1ef6cac7bd68e45d3cb410700121033d710ab45bb54ac99618ad23b3c1da661631aa25f23bfe9d22b41876f1d46e4effffffff02e0c81000000000001976a914461bf9360ec1bc9fe438df19ef36c7c2bb26ef8288ac92a40d00000000001976a9145ec105a23edc97d73a8de1e49d498684c40aa84988ac00000000");
+    }
+
+    #[test]
     fn test_wrong_derived_path() {
         let keystore_json = r#"
         {"id":"ae45d424-31d8-49f7-a601-1272b40c566d","version":11000,"keyHash":"512115eca3ae86646aeb06861d551e403b543509","crypto":{"cipher":"aes-128-ctr","cipherparams":{"iv":"588233984e9576f058bd7bae018eaa38"},"ciphertext":"8a5451c57fed478c7d45f5391659a6fb5fc85a347f1f7aaead450ad4ef4fe434d042d57aa990d850165293609aa746c715c805b236c3d54d86e7dea7d938ce55fcb2684e0eb7e0e6cc7d","kdf":"pbkdf2","kdfparams":{"c":1024,"prf":"hmac-sha256","dklen":32,"salt":"ee656af962155e4e6e763b0883ed0d8cc37c2fa21a7ef01b1d3b18f352f74c69"},"mac":"a661aa444869aac9ea33f066676c6bfb49d079ab986d0ee755f8a1747b2b7f17"},"activeAccounts":[{"address":"mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN","derivationPath":"m/44'/1'/0'/0/0","curve":"SECP256k1","coin":"LITECOIN","network":"TESTNET","segWit":"NONE","extPubKey":"036c2b38ad8000000023332f38a77023d3c1a450499c8aeb3db2e666aa2cc6fff7db6797c5d2aef8fc036663443d71127b332c68cd6bffb6c2b5eb4dc6861404ed055dc36a25b8c18020"}],"imTokenMeta":{"name":"LTC-Wallet-1","passwordHint":"","timestamp":1576561805,"source":"MNEMONIC"}}

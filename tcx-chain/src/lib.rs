@@ -1,6 +1,6 @@
 //! TokenCore Chain
 //! This is an abstract package to define basic chain data structures.
-
+#[cfg_attr(tarpaulin, skip)]
 #[macro_use]
 mod macros {
     #[macro_export]

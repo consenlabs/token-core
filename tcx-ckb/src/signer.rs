@@ -168,6 +168,10 @@ impl TransactionSigner<CkbTxInput, CkbTxOutput> for Keystore {
             input_cells.push(find_cache_cell(x.previous_output.as_ref().unwrap())?);
         }
 
+        if tx.witnesses.len() < input_cells.len() || input_cells.len() == 0 {
+            return Err(Error::InvalidInputCells.into());
+        }
+
         let mut signer = CkbTxSigner {
             ks: self,
             symbol,
@@ -315,5 +319,163 @@ mod tests {
             .sign_transaction("NERVOS", &account.address, &tx_input)
             .unwrap();
         assert_eq!(tx_output.witnesses[0], "0x55000000100000005500000055000000410000009b87828a6274850b4c8724a286b882aae3ace127c124e4f6687070c09e2533c80b33ace45005a4912f4d092e31f017a8dc9f2f97ef66fb5e2b5e9314ade9b60e00");
+    }
+
+    #[test]
+    fn invalid_sign_transaction() {
+        let tx_hash = "0x4a4bcfef1b7448e27edf533df2f1de9f56be05eba645fb83f42d55816797ad2a";
+
+        let witnesses: Vec<Witness> = vec![
+            Witness::default(),
+            Witness::default(),
+            Witness::default(),
+            Witness::default(),
+        ];
+
+        let cached_cells = vec![
+            CachedCell {
+                out_point: Some({
+                    OutPoint {
+                        tx_hash:
+                            "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                                .to_owned(),
+                        index: 0,
+                    }
+                }),
+                lock: Some(Script {
+                    args: "0xedb5c73f2a4ad8df23467c9f3446f5851b5e33da".to_owned(),
+                    code_hash: "0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df2"
+                        .to_owned(),
+                    hash_type: "type".to_string(),
+                }),
+                ..CachedCell::default()
+            },
+            CachedCell {
+                out_point: Some({
+                    OutPoint {
+                        tx_hash:
+                            "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                                .to_owned(),
+                        index: 1,
+                    }
+                }),
+                lock: Some(Script {
+                    args: "0xe2fa82e70b062c8644b80ad7ecf6e015e5f352f6".to_owned(),
+                    code_hash: "0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df2"
+                        .to_owned(),
+                    hash_type: "type".to_owned(),
+                }),
+                ..CachedCell::default()
+            },
+            CachedCell {
+                out_point: Some({
+                    OutPoint {
+                        tx_hash:
+                            "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                                .to_owned(),
+                        index: 2,
+                    }
+                }),
+                lock: Some(Script {
+                    args: "0xedb5c73f2a4ad8df23467c9f3446f5851b5e33da".to_owned(),
+                    code_hash: "1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df2"
+                        .to_owned(),
+                    hash_type: "type".to_owned(),
+                }),
+                ..CachedCell::default()
+            },
+        ];
+
+        let inputs = vec![
+            CellInput {
+                previous_output: Some(OutPoint {
+                    tx_hash: "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                        .to_owned(),
+                    index: 0,
+                }),
+                since: "".to_owned(),
+            },
+            CellInput {
+                previous_output: Some(OutPoint {
+                    tx_hash: "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                        .to_owned(),
+                    index: 1,
+                }),
+                since: "".to_string(),
+            },
+            CellInput {
+                previous_output: Some(OutPoint {
+                    tx_hash: "0xe3c3c5b5bd600803286c14acf09f47947735b25e5f5b5b546548c9ceca202cf9"
+                        .to_owned(),
+                    index: 2,
+                }),
+                since: "".to_string(),
+            },
+        ];
+
+        let mut ks = Keystore::from_private_key(
+            "dcec27d0d975b0378471183a03f7071dea8532aaf968be796719ecd20af6988f",
+            "Password",
+        );
+        ks.unlock_by_password("Password").unwrap();
+
+        let coin_info = CoinInfo {
+            coin: "NERVOS".to_string(),
+            derivation_path: "".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "TESTNET".to_string(),
+            seg_wit: "".to_string(),
+        };
+
+        let account = ks.derive_coin::<CkbAddress>(&coin_info).unwrap().clone();
+
+        let invalid_input = vec![
+            (
+                CkbTxInput {
+                    inputs: inputs.clone(),
+                    witnesses: vec![],
+                    tx_hash: tx_hash.clone().to_owned(),
+                    cached_cells: cached_cells.clone(),
+                    ..CkbTxInput::default()
+                },
+                "required_witness",
+            ),
+            (
+                CkbTxInput {
+                    inputs: vec![],
+                    witnesses: witnesses.clone(),
+                    tx_hash: tx_hash.clone().to_owned(),
+                    cached_cells: cached_cells.clone(),
+                    ..CkbTxInput::default()
+                },
+                "invalid_input_cells",
+            ),
+            (
+                CkbTxInput {
+                    inputs: inputs.clone(),
+                    witnesses: witnesses.clone(),
+                    tx_hash: "".to_owned(),
+                    cached_cells: cached_cells.clone(),
+                    ..CkbTxInput::default()
+                },
+                "invalid_tx_hash",
+            ),
+            (
+                CkbTxInput {
+                    inputs: inputs.clone(),
+                    witnesses: witnesses.clone(),
+                    tx_hash: tx_hash.clone().to_owned(),
+                    cached_cells: vec![],
+                    ..CkbTxInput::default()
+                },
+                "cell_input_not_cached",
+            ),
+        ];
+        for (input, err) in invalid_input {
+            let ret = ks.sign_transaction("NERVOS", &account.address, &input);
+
+            assert!(ret.is_err());
+            assert_eq!(format!("{}", ret.err().unwrap()), err);
+        }
     }
 }

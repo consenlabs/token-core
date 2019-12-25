@@ -5,6 +5,7 @@ authors = ["Neal Xu <imxuneal@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+tcx-constants = {path="../tcx-constants"}
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 rand = "0.6"

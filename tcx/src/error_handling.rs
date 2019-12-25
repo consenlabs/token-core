@@ -9,6 +9,7 @@ thread_local! {
     pub static LAST_BACKTRACE: RefCell<Option<(Option<String>, Backtrace)>> = RefCell::new(None);
 }
 
+#[cfg_attr(tarpaulin, skip)]
 #[allow(irrefutable_let_patterns)]
 fn notify_err(err: Error) {
     if let _backtrace = err.backtrace() {
@@ -23,6 +24,7 @@ fn notify_err(err: Error) {
 
 /// catch any error and format to string
 /// ref: <https://doc.rust-lang.org/edition-guide/rust-2018/error-handling-and-panics/controlling-panics-with-std-panic.html>
+#[cfg_attr(tarpaulin, skip)]
 pub unsafe fn landingpad<F: FnOnce() -> Result<T> + panic::UnwindSafe, T>(f: F) -> T {
     match panic::catch_unwind(f) {
         Ok(rv) => rv.map_err(notify_err).unwrap_or_else(|_| mem::zeroed()),

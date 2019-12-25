@@ -30,6 +30,8 @@ pub enum Error {
     DecryptXPubError,
     #[fail(display = "unsupported_chain")]
     UnsupportedChain,
+    #[fail(display = "missing_network")]
+    MissingNetwork,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

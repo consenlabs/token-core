@@ -42,7 +42,7 @@ pub struct BtcForkAddress {
 impl Address for BtcForkAddress {
     fn from_public_key(public_key: &TypedPublicKey, coin: &CoinInfo) -> Result<String> {
         let network = network_from_coin(&coin);
-        tcx_ensure!(network.is_some(), Error::UnsupportedChain);
+        tcx_ensure!(network.is_some(), Error::MissingNetwork);
         let network = network.expect("network");
 
         let addr = if coin.seg_wit.as_str() == "P2WPKH" {
@@ -338,6 +338,8 @@ mod tests {
             .unwrap()
             .to_string();
         assert_eq!(addr, "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW");
+
+        let network = network_from_param("LITECOIN", "MAINNET", "SEGWIT").unwrap();
         let addr = BtcForkAddress::p2wpkh(&pub_key, &network)
             .unwrap()
             .to_string();
@@ -349,6 +351,7 @@ mod tests {
             .to_string();
         assert_eq!(addr, "3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG");
 
+        let network = network_from_param("BITCOIN", "MAINNET", "SEGWIT").unwrap();
         let addr = BtcForkAddress::p2wpkh(&pub_key, &network)
             .unwrap()
             .to_string();
@@ -359,16 +362,30 @@ mod tests {
     pub fn test_btc_fork_address_from_str() {
         let addr = BtcForkAddress::from_str("MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW").unwrap();
         assert_eq!(addr.network.coin, "LITECOIN");
+        assert_eq!(addr.network.seg_wit, "P2WPKH");
+        assert_eq!(addr.network.network, "MAINNET");
         let addr = BtcForkAddress::from_str("ltc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdn08yddf").unwrap();
         assert_eq!(addr.network.coin, "LITECOIN");
+        assert_eq!(addr.network.seg_wit, "SEGWIT");
+        assert_eq!(addr.network.network, "MAINNET");
 
-        /* all of bitcoin's test can't work, so ignored it
-         *
         let addr = BtcForkAddress::from_str("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG").unwrap();
         assert_eq!(addr.network.coin, "BITCOIN");
+        assert_eq!(addr.network.seg_wit, "P2WPKH");
+        assert_eq!(addr.network.network, "MAINNET");
         let addr = BtcForkAddress::from_str("bc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdntm7f4e").unwrap();
         assert_eq!(addr.network.coin, "BITCOIN");
-        */
+        assert_eq!(addr.network.seg_wit, "SEGWIT");
+        assert_eq!(addr.network.network, "MAINNET");
+        let addr = BtcForkAddress::from_str("12z6UzsA3tjpaeuvA2Zr9jwx19Azz74D6g").unwrap();
+        assert_eq!(addr.network.coin, "BITCOIN");
+        assert_eq!(addr.network.seg_wit, "NONE");
+        assert_eq!(addr.network.network, "MAINNET");
+
+        let addr = BtcForkAddress::from_str("2MwN441dq8qudMvtM5eLVwC3u4zfKuGSQAB").unwrap();
+        assert_eq!(addr.network.coin, "BITCOIN");
+        assert_eq!(addr.network.seg_wit, "P2WPKH");
+        assert_eq!(addr.network.network, "TESTNET");
     }
 
     #[test]
@@ -397,7 +414,6 @@ mod tests {
             liked_address.to_string()
         );
 
-        /* ignore bitcoin tests
         let addr = BtcForkAddress::from_str("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG").unwrap();
         let pub_key =
             hex::decode("02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba")
@@ -409,7 +425,6 @@ mod tests {
             "3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG",
             liked_address.to_string()
         );
-        */
 
         let addr = BtcForkAddress::from_str("bc1qum864wd9nwsc0u9ytkctz6wzrw6g7zdntm7f4e").unwrap();
         let pub_key =
@@ -472,11 +487,9 @@ mod tests {
         let script = hex::encode(addr.script_pubkey().as_bytes());
         assert_eq!("76a914ca4d8acded69ce4f05d0925946d261f86c675fd888ac", script);
 
-        /* ignore bitcoin tests
         let addr = BtcForkAddress::from_str("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG").unwrap();
         let script = hex::encode(addr.script_pubkey().as_bytes());
         assert_eq!("a914bc64b2d79807cd3d72101c3298b89117d32097fb87", script);
-        */
     }
 
     #[test]
@@ -509,23 +522,21 @@ mod tests {
         let script = hex::encode(script.as_bytes());
         assert_eq!("76a914e6cfaab9a59ba187f0a45db0b169c21bb48f09b388ac", script);
 
-        /* ignore bitcoin test
         let script =
             BtcForkAddress::address_script_like("3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG", &pub_key)
                 .unwrap();
 
         let script = hex::encode(script.as_bytes());
         assert_eq!("a914bc64b2d79807cd3d72101c3298b89117d32097fb87", script);
-        */
     }
 
     #[test]
     pub fn address_valid_test() {
-        /*
+        let coin = coin_info_from_param("BITCOIN", "MAINNET", "P2WPKH").unwrap();
         assert!(BtcForkAddress::is_valid(
-            "3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG"
+            "3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG",
+            &coin
         ));
-        */
         let coin = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
         assert!(BtcForkAddress::is_valid(
             "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP",
