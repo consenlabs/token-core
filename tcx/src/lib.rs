@@ -15,7 +15,7 @@ use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
     encode_message, hd_store_create, hd_store_export, hd_store_import, keystore_common_accounts,
     keystore_common_delete, keystore_common_derive, keystore_common_exists, keystore_common_verify,
-    private_key_store_export, private_key_store_import, sign_tx, tron_sign_message, Buffer,
+    private_key_store_export, private_key_store_import, sign_tx, tron_sign_message,
 };
 mod filemanager;
 use crate::filemanager::WALLET_FILE_DIR;
@@ -158,7 +158,7 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::filemanager::{KEYSTORE_MAP, WALLET_FILE_DIR};
+    use crate::filemanager::KEYSTORE_MAP;
     use std::ffi::{CStr, CString};
     use std::fs::remove_file;
     use std::os::raw::c_char;
@@ -167,7 +167,7 @@ mod tests {
 
     use crate::api::keystore_common_derive_param::Derivation;
     use crate::api::{
-        AccountResponse, AccountsResponse, HdStoreCreateParam, InitTokenCoreXParam, KeyType,
+        AccountsResponse, HdStoreCreateParam, InitTokenCoreXParam, KeyType,
         KeystoreCommonAccountsParam, KeystoreCommonDeriveParam, KeystoreCommonExistsParam,
         KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
         PrivateKeyStoreImportParam, Response, SignParam, WalletKeyParam,

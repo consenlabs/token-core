@@ -37,7 +37,7 @@ impl Address for CkbAddress {
 mod tests {
     use crate::address::CkbAddress;
     use tcx_chain::Address;
-    use tcx_constants::coin_info::coin_info_from_param;
+
     use tcx_constants::{CoinInfo, CurveType};
     use tcx_primitive::TypedPublicKey;
 

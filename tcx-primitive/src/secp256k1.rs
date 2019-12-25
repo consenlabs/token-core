@@ -172,7 +172,7 @@ mod tests {
 
     use super::{verify_private_key, Secp256k1PrivateKey, Ss58Codec};
 
-    use crate::{PrivateKey, PublicKey};
+    use crate::PrivateKey;
 
     use bitcoin_hashes::hex::ToHex;
     use bitcoin_hashes::Hash;
