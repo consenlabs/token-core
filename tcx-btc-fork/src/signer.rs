@@ -553,7 +553,7 @@ mod tests {
             tx_hash: "57c935201d6abf4b32151f9d96bfb51b058824a601011c3432e751b0a6d4a101".to_string(),
             vout: 0,
             amount: 1000000,
-            address: "invalid_address".to_string(),
+            address: "address_invalid".to_string(),
             script_pub_key: "76a914383fb81cb0a3fc724b5e08cf8bbd404336d711f688ac".to_string(),
             derived_path: "0/0".to_string(),
             sequence: 0,
@@ -686,7 +686,7 @@ mod tests {
             }];
             let coin_info = coin_info_from_param(chain_type, "TESTNET", "NONE").unwrap();
             let tx_input = BtcForkTxInput {
-                to: "invalid_address".to_string(),
+                to: "address_invalid".to_string(),
                 amount: 500000,
                 unspents,
                 fee: 100000,

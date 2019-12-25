@@ -165,7 +165,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     }
 
     if founded_id.is_some() && !param.overwrite {
-        return Err(format_err!("{}", "wallet_exists"));
+        return Err(format_err!("{}", "address_already_exist"));
     }
 
     let mut meta = Metadata::default();
@@ -299,7 +299,7 @@ pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
     }
 
     if founded_id.is_some() && !param.overwrite {
-        return Err(format_err!("{}", "wallet_exists"));
+        return Err(format_err!("{}", "address_already_exist"));
     }
 
     let pk_bytes = key_data_from_any_format_pk(&param.private_key)?;
@@ -488,19 +488,19 @@ pub fn sign_btc_fork_transaction(param: &SignParam, keystore: &mut Keystore) -> 
 
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
         if !BchAddress::is_valid(&input.to, &coin) {
-            return Err(format_err!("invalid_to_address"));
+            return Err(format_err!("address_invalid"));
         }
         let tran = BchTransaction::new(input, coin);
         keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
     } else if input.seg_wit.as_str() != "NONE" {
         if !BtcForkAddress::is_valid(&input.to, &coin) {
-            return Err(format_err!("invalid_to_address"));
+            return Err(format_err!("address_invalid"));
         }
         let tran = BtcForkSegWitTransaction::new(input, coin);
         keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
     } else {
         if !BtcForkAddress::is_valid(&input.to, &coin) {
-            return Err(format_err!("invalid_to_address"));
+            return Err(format_err!("address_invalid"));
         }
         let tran = BtcForkTransaction::new(input, coin);
         keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
@@ -1508,7 +1508,7 @@ mod tests {
             //            remove_created_wallet(&import_result.id);
         })
     }
-    pub fn test_sign_btc_fork_invalid_address() {
+    pub fn test_sign_btc_fork_address_invalid() {
         run_test(|| {
             let chain_types = vec!["BITCOINCASH", "LITECOIN"];
             let param = HdStoreImportParam {
@@ -1551,7 +1551,7 @@ mod tests {
                     sequence: 0,
                 }];
                 let tx_input = BtcForkTxInput {
-                    to: "invalid_address".to_string(),
+                    to: "address_invalid".to_string(),
                     amount: 500000,
                     unspents,
                     fee: 100000,
