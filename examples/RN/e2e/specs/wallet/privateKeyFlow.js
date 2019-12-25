@@ -1,14 +1,15 @@
 /**
  * privateKey flow test
  *
- * import -> export
+ * import -> export -> repeat import -> verify keystore -> delete
  */
 
 import importPrivateKey from './base/importPrivateKey'
+import roubustImportPrivateKey from './base/robustImportPrivateKey'
 
 import {
   PASSWORD,
-  CHAINTYPES,
+  REPEAT_PASSWORD,
   BITCOINCASH_MAINNET_MNEMONIC_12_PRIVATEKEY,
   LITECOIN_MAINNET_MNEMONIC_12_PRIVATEKEY,
   TRON_MAINNET_MNEMONIC_12_PRIVATEKEY,
@@ -18,6 +19,8 @@ import {
 } from '../../constant'
 
 import { formatPrivateKeyStoreParams } from '../../chain'
+
+export const CHAINTYPES = ['BITCOINCASH', 'LITECOIN', 'TRON']
 
 export const PRIVATEKEYS = {
   BITCOINCASH_MAINNET_MNEMONIC_12_PRIVATEKEY,
@@ -30,8 +33,9 @@ export const ADDRESSES = {
   TRON_MAINNET_MNEMONIC_12_ADDRESS
 }
 
-export default function () {
+export default function (repeatImport, runRobust) {
   describe('⏳ privateKey flow', () => {
+    
     for (const chainIndex in CHAINTYPES) {
       let chainType = CHAINTYPES[chainIndex]
       let privateKey = PRIVATEKEYS[`${chainType}_MAINNET_MNEMONIC_12_PRIVATEKEY`]
@@ -45,8 +49,29 @@ export default function () {
           network,
           segWit: 'NONE',
         })
-        await importPrivateKey({ ...params, address })
+        await importPrivateKey({ ...params, address, repeatImport, REPEAT_PASSWORD })
       })
+    }
+
+    
+
+    if (runRobust) {
+      for (const chainIndex in CHAINTYPES) {
+        let chainType = CHAINTYPES[chainIndex]
+        let privateKey = PRIVATEKEYS[`${chainType}_MAINNET_MNEMONIC_12_PRIVATEKEY`]
+        let address = ADDRESSES[chainType + '_MAINNET_MNEMONIC_12_ADDRESS']
+        let network = 'MAINNET'
+        it(`should import ${chainType} wallet, network is ${network}, privateKey is ${privateKey} and the expected address is ${address}`, async () => {
+          const params = formatPrivateKeyStoreParams({
+            privateKey,
+            chainType,
+            password: PASSWORD,
+            network,
+            segWit: 'NONE',
+          })
+          await roubustImportPrivateKey({ ...params, address, repeatImport, runRobust, REPEAT_PASSWORD })
+        })
+      }
     }
   })
 }
