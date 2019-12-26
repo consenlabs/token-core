@@ -129,6 +129,8 @@ mod tests {
     use crate::derive::get_account_path;
     use crate::generate_mnemonic;
     use crate::DeriveJunction;
+    use bitcoin::util::bip32::ChildNumber;
+    use std::convert::TryInto;
     use std::str::FromStr;
 
     #[test]
@@ -193,5 +195,49 @@ mod tests {
         let invalid_path = get_account_path("m/44/a");
         let err = invalid_path.expect_err("should throw invalid path");
         assert_eq!("invalid child number format", format!("{}", err));
+    }
+
+    #[test]
+    fn derive_path_parse_test() {
+        let dp = DerivePath::from_str("m/0'/0'/0'/0'/0'").unwrap();
+        assert_eq!(dp.as_ref().first().unwrap(), &DeriveJunction::Hard(0));
+
+        let valid_paths = vec![
+            "m/0'/0'/0'/0'/0'",
+            "m/0'/0'/0'/0/0",
+            "m/0'/0'/0'/0'",
+            "m/0'/0'/0'",
+            "m/0'/0'/0'/1'",
+        ];
+        for path in valid_paths {
+            let ret = DerivePath::from_str(path);
+            assert!(ret.is_ok());
+        }
+
+        let invalid_paths = vec!["/0'", "m/-1", "a/0", "m//0"];
+        for invalid_path in invalid_paths {
+            let ret = DerivePath::from_str(invalid_path);
+            assert!(ret.is_err());
+        }
+    }
+
+    #[test]
+    fn derive_junction_test() {
+        let dj = DeriveJunction::Hard(1);
+        assert!(dj.is_hard());
+        assert!(!dj.is_soft());
+
+        let dj = DeriveJunction::Soft(1);
+        assert!(!dj.is_hard());
+        assert!(dj.is_soft());
+
+        let invalid_djs = vec![
+            DeriveJunction::Soft(2147483648),
+            DeriveJunction::Hard(2147483648),
+        ];
+        for invalid_dj in invalid_djs {
+            let ret: Result<ChildNumber, failure::Error> = invalid_dj.try_into();
+            assert!(ret.is_err());
+        }
     }
 }

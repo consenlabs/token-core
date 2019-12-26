@@ -12,6 +12,7 @@ use bitcoin::secp256k1::Message;
 use std::io;
 use tcx_constants::{network_from_coin, CoinInfo};
 
+#[cfg_attr(tarpaulin, skip)]
 fn transform_secp256k1_error(err: secp256k1::Error) -> KeyError {
     match err {
         secp256k1::Error::IncorrectSignature => KeyError::InvalidSignature,
@@ -171,7 +172,7 @@ mod tests {
 
     use super::{verify_private_key, Secp256k1PrivateKey, Ss58Codec};
 
-    use crate::{PrivateKey, PublicKey};
+    use crate::PrivateKey;
 
     use bitcoin_hashes::hex::ToHex;
     use bitcoin_hashes::Hash;
@@ -183,12 +184,27 @@ mod tests {
         let private_key =
             Secp256k1PrivateKey::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
                 .unwrap();
-        let _expected_pub_key_bytes = hex::decode("00").unwrap();
-        let pub_key = private_key.public_key().to_bytes().to_hex();
+        let pub_key = private_key.public_key();
+        let compressed_pub_key = pub_key.to_compressed().to_hex();
         assert_eq!(
             "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba",
-            pub_key
+            compressed_pub_key
         );
+
+        let uncompressed_pub_key = pub_key.to_uncompressed().to_hex();
+        assert_eq!(
+            "04506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76",
+            uncompressed_pub_key
+        );
+
+        assert_eq!(
+            format!("{}", pub_key),
+            "02506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aaba"
+        );
+
+        let ret =
+            Secp256k1PrivateKey::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZ");
+        assert!(ret.is_err());
     }
 
     #[test]

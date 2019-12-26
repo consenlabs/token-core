@@ -13,3 +13,7 @@ type Result<T> = std::result::Result<T, failure::Error>;
 
 #[macro_use]
 extern crate lazy_static;
+
+pub const TEST_MNEMONIC: &'static str =
+    "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
+pub const TEST_PASSWORD: &'static str = "Insecure Pa55w0rd";

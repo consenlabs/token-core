@@ -59,7 +59,7 @@ pub mod cbc {
 #[cfg(test)]
 mod tests {
 
-    use crate::aes::cbc::encrypt_pkcs7;
+    use crate::aes::cbc::{decrypt_pkcs7, encrypt_pkcs7};
     use crate::aes::ctr::{decrypt_nopadding, encrypt_nopadding};
     use bitcoin_hashes::hex::ToHex;
 
@@ -113,6 +113,9 @@ mod tests {
         let ret_hex = ret.to_hex();
 
         assert_eq!("13d567987d7eced9c2154551bc37bc5f", ret_hex);
+
+        let decrypted = decrypt_pkcs7(&ret, &key, &iv).unwrap();
+        assert_eq!("TokenCoreX", String::from_utf8(decrypted).unwrap());
 
         let wrong_len_key = hex::decode("010203040102030401020304").unwrap();
         let ret = encrypt_pkcs7(&data, &wrong_len_key, &iv);

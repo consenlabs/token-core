@@ -21,8 +21,4 @@ impl<'a> KeystoreGuard<'a> {
     pub fn keystore_mut(&mut self) -> &mut Keystore {
         self.keystore
     }
-
-    pub fn keystore(&self) -> &Keystore {
-        self.keystore
-    }
 }
