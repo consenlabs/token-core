@@ -245,8 +245,8 @@ impl Ss58Codec for Bip32DeterministicPrivateKey {
 mod tests {
     use crate::ToHex;
     use crate::{
-        ecc::DeterministicPublicKey, Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey,
-        Derive, DerivePath, DeterministicPrivateKey, PrivateKey, Ss58Codec,
+        Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DerivePath,
+        DeterministicPrivateKey, PrivateKey, Ss58Codec,
     };
     use bip39::{Language, Mnemonic, Seed};
     use std::str::FromStr;

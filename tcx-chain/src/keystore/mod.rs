@@ -13,7 +13,7 @@ pub use self::{
     guard::KeystoreGuard, hd::key_hash_from_mnemonic, hd::HdKeystore,
     private::key_hash_from_private_key, private::PrivateKeystore,
 };
-use crate::keystore::Source::Mnemonic;
+
 use crate::signer::ChainSigner;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{TypedDeterministicPublicKey, TypedPrivateKey, TypedPublicKey};
@@ -479,7 +479,7 @@ mod tests {
         );
         assert!(ret.is_err());
         assert_eq!(format!("{}", ret.err().unwrap()), "keystore_locked");
-        keystore.unlock_by_password(TEST_PASSWORD);
+        let _ = keystore.unlock_by_password(TEST_PASSWORD);
         let ret = keystore
             .sign_hash(
                 &msg,

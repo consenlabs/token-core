@@ -125,7 +125,7 @@ fn init_token_core_x_internal(v: &Value) -> Result<()> {
     *WALLET_FILE_DIR.write() = file_dir.to_string();
     *XPUB_COMMON_KEY_128.write() = xpub_common_key.to_string();
     *XPUB_COMMON_IV.write() = xpub_common_iv.to_string();
-    handler::scan_keystores();
+    let _ = handler::scan_keystores();
     Ok(())
 }
 
@@ -176,15 +176,10 @@ mod tests {
     };
     use crate::api::{HdStoreImportParam, WalletResult};
     use crate::handler::hd_store_import;
-    use crate::handler::{
-        encode_message, hd_store_create, hd_store_export, keystore_common_accounts,
-        keystore_common_delete, keystore_common_derive, keystore_common_exists,
-        keystore_common_verify, private_key_store_export, private_key_store_import, scan_keystores,
-        sign_tx, tron_sign_message,
-    };
+    use crate::handler::{encode_message, private_key_store_import};
     use crate::init_token_core_x;
     use prost::Message;
-    use tcx_chain::{Keystore, KeystoreGuard};
+    use tcx_chain::Keystore;
     use tcx_constants::{TEST_MNEMONIC, TEST_PASSWORD};
 
     use std::fs;
@@ -386,7 +381,7 @@ mod tests {
             id: "".to_string(),
             password: "".to_string(),
         };
-        call_api("scan_keystores", empty);
+        let _ = call_api("scan_keystores", empty);
         {
             let map = KEYSTORE_MAP.write();
 
@@ -1340,7 +1335,7 @@ mod tests {
                 id: wallet.id.to_string(),
                 password: TEST_PASSWORD.to_string(),
             };
-            let ret = call_api("unlock_then_crash", param);
+            let _ret = call_api("unlock_then_crash", param);
             let err = unsafe { _to_str(get_last_err_message()) };
             let err_bytes = hex::decode(err).unwrap();
             let rsp: Response = Response::decode(err_bytes).unwrap();
