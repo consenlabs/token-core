@@ -165,7 +165,7 @@ pub(crate) fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     }
 
     if founded_id.is_some() && !param.overwrite {
-        return Err(format_err!("{}", "wallet_exists"));
+        return Err(format_err!("{}", "address_already_exist"));
     }
 
     let mut meta = Metadata::default();
@@ -299,7 +299,7 @@ pub(crate) fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
     }
 
     if founded_id.is_some() && !param.overwrite {
-        return Err(format_err!("{}", "wallet_exists"));
+        return Err(format_err!("{}", "address_already_exist"));
     }
 
     let pk_bytes = key_data_from_any_format_pk(&param.private_key)?;
@@ -491,19 +491,19 @@ pub(crate) fn sign_btc_fork_transaction(
 
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
         if !BchAddress::is_valid(&input.to, &coin) {
-            return Err(format_err!("invalid_to_address"));
+            return Err(format_err!("address_invalid"));
         }
         let tran = BchTransaction::new(input, coin);
         keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
     } else if input.seg_wit.as_str() != "NONE" {
         if !BtcForkAddress::is_valid(&input.to, &coin) {
-            return Err(format_err!("invalid_to_address"));
+            return Err(format_err!("address_invalid"));
         }
         let tran = BtcForkSegWitTransaction::new(input, coin);
         keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
     } else {
         if !BtcForkAddress::is_valid(&input.to, &coin) {
-            return Err(format_err!("invalid_to_address"));
+            return Err(format_err!("address_invalid"));
         }
         let tran = BtcForkTransaction::new(input, coin);
         keystore.sign_transaction(&param.chain_type, &param.address, &tran)?

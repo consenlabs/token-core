@@ -13,6 +13,7 @@ pub use self::{
     guard::KeystoreGuard, hd::key_hash_from_mnemonic, hd::HdKeystore,
     private::key_hash_from_private_key, private::PrivateKeystore,
 };
+use crate::keystore::Source::Mnemonic;
 use crate::signer::ChainSigner;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{TypedDeterministicPublicKey, TypedPrivateKey, TypedPublicKey};
@@ -32,8 +33,14 @@ pub(crate) struct Store {
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum Error {
-    #[fail(display = "invalid_mnemonic")]
-    InvalidMnemonic,
+    #[fail(display = "mnemonic_invalid")]
+    MnemonicInvalid,
+    #[fail(display = "mnemonic_word_invalid")]
+    MnemonicWordInvalid,
+    #[fail(display = "mnemonic_length_invalid")]
+    MnemonicLengthInvalid,
+    #[fail(display = "mnemonic_checksum_invalid")]
+    MnemonicChecksumInvalid,
     #[fail(display = "account_not_found")]
     AccountNotFound,
     #[fail(display = "can_not_derive_key")]
@@ -42,6 +49,16 @@ pub enum Error {
     KeystoreLocked,
     #[fail(display = "invalid_version")]
     InvalidVersion,
+}
+
+fn transform_mnemonic_error(err: failure::Error) -> Error {
+    let err = err.downcast::<bip39::ErrorKind>().unwrap();
+    match err {
+        bip39::ErrorKind::InvalidChecksum => Error::MnemonicChecksumInvalid,
+        bip39::ErrorKind::InvalidWord => Error::MnemonicWordInvalid,
+        bip39::ErrorKind::InvalidWordLength(_) => Error::MnemonicLengthInvalid,
+        _ => Error::MnemonicInvalid,
+    }
 }
 
 /// Account that presents one blockchain wallet on a keystore

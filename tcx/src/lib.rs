@@ -1273,7 +1273,7 @@ mod tests {
 
                 let ret = call_api("sign_tx", tx);
                 assert!(ret.is_err());
-                assert_eq!(format!("{}", ret.err().unwrap()), "invalid_to_address");
+                assert_eq!(format!("{}", ret.err().unwrap()), "address_invalid");
             }
 
             remove_created_wallet(&import_result.id);
