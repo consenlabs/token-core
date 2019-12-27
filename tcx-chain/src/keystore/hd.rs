@@ -74,6 +74,10 @@ impl HdKeystore {
         self.cache = None;
     }
 
+    pub(crate) fn is_locked(&self) -> bool {
+        self.cache.is_none()
+    }
+
     pub(crate) fn mnemonic(&self) -> Result<String> {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 

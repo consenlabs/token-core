@@ -111,7 +111,7 @@ mod tests {
     static TEST_MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 
-    fn import_tron_keystore() -> (Keystore, Account) {
+    fn test_import_tron_keystore() -> (Keystore, Account) {
         let meta = Metadata::default();
         let mut keystore =
             Keystore::Hd(HdKeystore::from_mnemonic(&TEST_MNEMONIC, &TEST_PASSWORD, meta).unwrap());

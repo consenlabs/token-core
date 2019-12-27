@@ -198,7 +198,7 @@ mod tests {
     use tcx_constants::{CoinInfo, CurveType};
 
     #[test]
-    fn sign_transaction() {
+    fn test_sign_transaction() {
         let tx_hash = "0x719933ec055272734ab709a80492edb44c083e6b675e5c37e5bb3f720fe88e5e";
 
         let witnesses = vec![Witness::default(), Witness::default(), Witness::default()];
@@ -306,6 +306,7 @@ mod tests {
             Metadata::default(),
         )
         .unwrap();
+
         ks.unlock_by_password("Password").unwrap();
 
         let account = ks.derive_coin::<CkbAddress>(&coin_info).unwrap().clone();

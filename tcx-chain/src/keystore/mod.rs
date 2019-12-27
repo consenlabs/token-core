@@ -169,6 +169,13 @@ impl Keystore {
         }
     }
 
+    pub fn is_locked(&self) -> bool {
+        match self {
+            Keystore::PrivateKey(ks) => ks.is_locked(),
+            Keystore::Hd(ks) => ks.is_locked(),
+        }
+    }
+
     pub fn determinable(&self) -> bool {
         match self {
             Keystore::PrivateKey(_) => false,
@@ -500,7 +507,7 @@ mod tests {
         let export_ret = keystore.export();
         assert!(export_ret.is_err());
         assert_eq!(format!("{}", export_ret.err().unwrap()), "keystore_locked");
-        let unlocked_ret = keystore.unlock_by_password("WRONG TEST_PASSWORD");
+        let unlocked_ret = keystore.unlock_by_password("WRONG PASSWORD");
         assert!(unlocked_ret.is_err());
         assert_eq!(
             format!("{}", unlocked_ret.err().unwrap()),
@@ -508,7 +515,7 @@ mod tests {
         );
 
         assert!(keystore.verify_password(TEST_PASSWORD));
-        assert!(!keystore.verify_password("WRONG TEST_PASSWORD"));
+        assert!(!keystore.verify_password("WRONG PASSWORD"));
         keystore.unlock_by_password(TEST_PASSWORD).unwrap();
         assert_eq!(
             "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
