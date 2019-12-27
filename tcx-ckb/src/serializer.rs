@@ -6,7 +6,7 @@ use byteorder::{ByteOrder, LittleEndian};
 pub struct Serializer();
 
 impl Serializer {
-    fn calculate_offsets(element_lengths: &Vec<u32>) -> (u32, Vec<u32>) {
+    fn calculate_offsets(element_lengths: &[u32]) -> (u32, Vec<u32>) {
         const FULL_LENGTH_SIZE: u32 = 4; // 4 bytes
         const OFFSET_SIZE: u32 = 4; // 4 bytes
 
@@ -36,11 +36,11 @@ impl Serializer {
         buf.to_vec()
     }
 
-    pub fn serialize_struct(values: &Vec<Vec<u8>>) -> Vec<u8> {
+    pub fn serialize_struct(values: &[&[u8]]) -> Vec<u8> {
         let mut ret: Vec<u8> = vec![];
 
         for item in values.iter() {
-            ret.extend(item);
+            ret.extend(*item);
         }
 
         ret
@@ -56,13 +56,13 @@ impl Serializer {
     ///
     /// call calculate_offsets method for get offsets of items
     ///
-    pub fn serialize_dynamic_vec(values: &Vec<Vec<u8>>) -> Vec<u8> {
+    pub fn serialize_dynamic_vec(values: &[&[u8]]) -> Vec<u8> {
         let mut body: Vec<u8> = vec![];
         let mut element_lengths: Vec<u32> = vec![];
 
         for item in values.iter() {
             element_lengths.push(item.len() as u32);
-            body.extend(item);
+            body.extend(*item);
         }
 
         let mut ret: Vec<u8> = vec![];
@@ -80,7 +80,7 @@ impl Serializer {
         ret
     }
 
-    pub fn serialize_fixed_vec(values: &Vec<Vec<u8>>) -> Vec<u8> {
+    pub fn serialize_fixed_vec(values: &[&[u8]]) -> Vec<u8> {
         let mut ret: Vec<u8> = vec![];
         let mut body: Vec<u8> = vec![];
 
@@ -89,7 +89,7 @@ impl Serializer {
         for item in values.iter() {
             total_size = total_size + item.len() as u32;
 
-            body.extend(item);
+            body.extend(*item);
         }
 
         ret.extend(Serializer::serialize_u32(total_size));
@@ -105,31 +105,37 @@ mod tests {
 
     #[test]
     fn serialize_struct() {
-        let bytes = Serializer::serialize_struct(&vec![vec![0x11, 0x13], vec![0x20, 0x17, 0x9]]);
+        let bytes = Serializer::serialize_struct(&vec![
+            vec![0x11u8, 0x13u8].as_slice(),
+            vec![0x20u8, 0x17u8, 0x9u8].as_slice(),
+        ]);
         assert_eq!(hex::encode(bytes), "1113201709");
     }
 
     #[test]
     fn serialize_fixed_vec() {
-        let bytes =
-            Serializer::serialize_fixed_vec(&vec![hex::decode("1234567890abcdef").unwrap()]);
+        let bytes = Serializer::serialize_fixed_vec(&vec![hex::decode("1234567890abcdef")
+            .unwrap()
+            .as_slice()]);
         assert_eq!(hex::encode(bytes), "080000001234567890abcdef");
     }
 
     #[test]
-    fn serialize_dynmaic_vec() {
+    fn serialize_dynamic_vec() {
         let bytes = Serializer::serialize_dynamic_vec(&vec![]);
         assert_eq!(hex::encode(bytes), "04000000");
 
-        let bytes = Serializer::serialize_dynamic_vec(&vec![hex::decode("020000001234").unwrap()]);
+        let bytes = Serializer::serialize_dynamic_vec(&vec![hex::decode("020000001234")
+            .unwrap()
+            .as_slice()]);
         assert_eq!(hex::encode(bytes), "0e00000008000000020000001234");
 
         let bytes = Serializer::serialize_dynamic_vec(&vec![
-            hex::decode("020000001234").unwrap(),
-            hex::decode("00000000").unwrap(),
-            hex::decode("020000000567").unwrap(),
-            hex::decode("0100000089").unwrap(),
-            hex::decode("03000000abcdef").unwrap(),
+            hex::decode("020000001234").unwrap().as_slice(),
+            hex::decode("00000000").unwrap().as_slice(),
+            hex::decode("020000000567").unwrap().as_slice(),
+            hex::decode("0100000089").unwrap().as_slice(),
+            hex::decode("03000000abcdef").unwrap().as_slice(),
         ]);
         assert_eq!(hex::encode(bytes), "34000000180000001e00000022000000280000002d00000002000000123400000000020000000567010000008903000000abcdef");
     }
