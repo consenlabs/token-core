@@ -111,6 +111,7 @@ mod tests {
     static TEST_MNEMONIC: &'static str =
         "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 
+    #[test]
     fn test_import_tron_keystore() -> (Keystore, Account) {
         let meta = Metadata::default();
         let mut keystore =
@@ -123,7 +124,7 @@ mod tests {
             network: "".to_string(),
             seg_wit: "".to_string(),
         };
-        keystore.unlock_by_password(TEST_PASSWORD);
+        let _ = keystore.unlock_by_password(TEST_PASSWORD);
 
         let account = keystore.derive_coin::<Address>(&coin_info).unwrap().clone();
         (keystore, account)

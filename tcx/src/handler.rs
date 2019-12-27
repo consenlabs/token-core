@@ -251,7 +251,7 @@ pub(crate) fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
 
     let export_result = KeystoreCommonExportResult {
         id: guard.keystore().id(),
@@ -547,6 +547,6 @@ pub(crate) fn unlock_then_crash(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+    let _guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
     panic!("test_unlock_then_crash");
 }
