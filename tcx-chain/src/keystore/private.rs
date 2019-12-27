@@ -49,6 +49,10 @@ impl PrivateKeystore {
         self.private_key = None;
     }
 
+    pub(crate) fn is_locked(&self) -> bool {
+        self.private_key.is_none()
+    }
+
     pub(crate) fn find_private_key(&self, address: &str) -> Result<TypedPrivateKey> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 

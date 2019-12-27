@@ -7,7 +7,7 @@ use super::Address;
 use super::Result;
 use super::{Error, Metadata};
 
-use crate::keystore::Store;
+use crate::keystore::{transform_mnemonic_error, Store};
 
 use std::collections::HashMap;
 
@@ -32,7 +32,8 @@ pub struct HdKeystore {
 }
 
 pub fn key_hash_from_mnemonic(mnemonic: &str) -> Result<String> {
-    let mn = Mnemonic::from_phrase(mnemonic, Language::English)?;
+    let mn =
+        Mnemonic::from_phrase(mnemonic, Language::English).map_err(transform_mnemonic_error)?;
     let seed = Seed::new(&mn, "");
 
     let bytes = dsha256(seed.as_bytes())[..20].to_vec();
@@ -59,7 +60,7 @@ impl HdKeystore {
         let mnemonic_str = String::from_utf8(mnemonic_bytes)?;
 
         let mnemonic = Mnemonic::from_phrase(&mnemonic_str, Language::English)
-            .map_err(|_| Error::InvalidMnemonic)?;
+            .map_err(transform_mnemonic_error)?;
 
         self.cache = Some(Cache {
             mnemonic: mnemonic_str,
@@ -72,6 +73,10 @@ impl HdKeystore {
 
     pub(crate) fn lock(&mut self) {
         self.cache = None;
+    }
+
+    pub(crate) fn is_locked(&self) -> bool {
+        self.cache.is_none()
     }
 
     pub(crate) fn mnemonic(&self) -> Result<String> {
@@ -252,6 +257,8 @@ mod tests {
         "inject kidney empty canal shadow pact comfort wife crush horse wife inject";
     static INVALID_MNEMONIC2: &'static str =
         "invalid_word kidney empty canal shadow pact comfort wife crush horse wife sketch";
+    static INVALID_MNEMONIC_LEN: &'static str =
+        "inject kidney empty canal shadow pact comfort wife crush horse wife";
     #[test]
     pub fn default_meta() {
         let meta = Metadata::default();
@@ -290,11 +297,16 @@ mod tests {
 
     #[test]
     pub fn from_invalid_mnemonic() {
-        let ks = HdKeystore::from_mnemonic(INVALID_MNEMONIC1, TEST_PASSWORD, Metadata::default());
-        assert!(ks.is_err());
-
-        let ks = HdKeystore::from_mnemonic(INVALID_MNEMONIC2, TEST_PASSWORD, Metadata::default());
-        assert!(ks.is_err());
+        let invalid_mnemonic = vec![
+            (INVALID_MNEMONIC1, "mnemonic_checksum_invalid"),
+            (INVALID_MNEMONIC2, "mnemonic_word_invalid"),
+            (INVALID_MNEMONIC_LEN, "mnemonic_length_invalid"),
+        ];
+        for (mn, err) in invalid_mnemonic {
+            let ks = HdKeystore::from_mnemonic(mn, TEST_PASSWORD, Metadata::default());
+            assert!(ks.is_err());
+            assert_eq!(err, format!("{}", ks.err().unwrap()));
+        }
     }
 
     #[test]

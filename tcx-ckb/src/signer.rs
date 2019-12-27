@@ -23,8 +23,8 @@ impl<'a> CkbTxSigner<'a> {
     pub fn sign_witnesses(
         &mut self,
         tx_hash: &[u8],
-        witnesses: &Vec<Witness>,
-        input_cells: &Vec<&CachedCell>,
+        witnesses: &[Witness],
+        input_cells: &[&CachedCell],
     ) -> Result<Vec<String>> {
         // tx_hash must be 256 bit length
         if tx_hash.len() != 32 {
@@ -62,7 +62,7 @@ impl<'a> CkbTxSigner<'a> {
     pub fn sign_witness_group(
         &mut self,
         tx_hash: &[u8],
-        witness_group: &Vec<&Witness>,
+        witness_group: &[&Witness],
         path: &str,
     ) -> Result<Witness> {
         if witness_group.len() == 0 {
@@ -111,7 +111,7 @@ impl<'a> CkbTxSigner<'a> {
 
     fn group_script(
         &mut self,
-        input_cells: &Vec<&CachedCell>,
+        input_cells: &[&CachedCell],
     ) -> Result<HashMap<Vec<u8>, Vec<usize>>> {
         let mut map: HashMap<Vec<u8>, Vec<usize>> = HashMap::new();
 
@@ -198,7 +198,7 @@ mod tests {
     use tcx_constants::{CoinInfo, CurveType};
 
     #[test]
-    fn sign_transaction() {
+    fn test_sign_transaction() {
         let tx_hash = "0x719933ec055272734ab709a80492edb44c083e6b675e5c37e5bb3f720fe88e5e";
 
         let witnesses = vec![Witness::default(), Witness::default(), Witness::default()];
@@ -306,6 +306,7 @@ mod tests {
             Metadata::default(),
         )
         .unwrap();
+
         ks.unlock_by_password("Password").unwrap();
 
         let account = ks.derive_coin::<CkbAddress>(&coin_info).unwrap().clone();

@@ -12,7 +12,7 @@ use tcx_btc_fork::{
     BtcForkAddress, BtcForkSegWitTransaction, BtcForkSignedTxOutput, BtcForkTransaction,
     BtcForkTxInput, WifDisplay,
 };
-use tcx_chain::{key_hash_from_mnemonic, key_hash_from_private_key, Keystore};
+use tcx_chain::{key_hash_from_mnemonic, key_hash_from_private_key, Keystore, KeystoreGuard};
 use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
 use tcx_ckb::{CkbAddress, CkbTxInput};
 use tcx_crypto::{KDF_ROUNDS, XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
@@ -38,12 +38,6 @@ use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
-
-#[repr(C)]
-pub struct Buffer {
-    pub data: *mut u8,
-    pub len: i64,
-}
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
     if *IS_DEBUG.read() {
@@ -147,7 +141,7 @@ pub(crate) fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
     let wallet = WalletResult {
         id: keystore.id(),
         name: meta.name.to_owned(),
-        source: "TEST_MNEMONIC".to_owned(),
+        source: "MNEMONIC".to_owned(),
         accounts: vec![],
         created_at: meta.timestamp.clone(),
     };
@@ -173,7 +167,7 @@ pub(crate) fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     }
 
     if founded_id.is_some() && !param.overwrite {
-        return Err(format_err!("{}", "wallet_exists"));
+        return Err(format_err!("{}", "address_already_exist"));
     }
 
     let mut meta = Metadata::default();
@@ -195,7 +189,7 @@ pub(crate) fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let wallet = WalletResult {
         id: keystore.id(),
         name: meta.name.to_owned(),
-        source: "TEST_MNEMONIC".to_owned(),
+        source: "MNEMONIC".to_owned(),
         accounts: vec![],
         created_at: meta.timestamp.clone(),
     };
@@ -230,12 +224,12 @@ pub(crate) fn keystore_common_derive(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    keystore.unlock_by_password(&param.password)?;
+    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
 
     let mut account_responses: Vec<AccountResponse> = vec![];
 
     for derivation in param.derivations {
-        let account = derive_account(keystore, &derivation)?;
+        let account = derive_account(guard.keystore_mut(), &derivation)?;
         let enc_xpub = if account.ext_pub_key.is_empty() {
             Ok("".to_string())
         } else {
@@ -253,7 +247,7 @@ pub(crate) fn keystore_common_derive(data: &[u8]) -> Result<Vec<u8>> {
     let accounts_rsp = AccountsResponse {
         accounts: account_responses,
     };
-    flush_keystore(keystore)?;
+    flush_keystore(guard.keystore())?;
     encode_message(accounts_rsp)
 }
 
@@ -265,12 +259,12 @@ pub(crate) fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    keystore.unlock_by_password(&param.password)?;
+    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
 
     let export_result = KeystoreCommonExportResult {
-        id: keystore.id(),
+        id: guard.keystore().id(),
         r#type: KeyType::Mnemonic as i32,
-        value: keystore.export()?,
+        value: guard.keystore().export()?,
     };
 
     encode_message(export_result)
@@ -307,7 +301,7 @@ pub(crate) fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
     }
 
     if founded_id.is_some() && !param.overwrite {
-        return Err(format_err!("{}", "wallet_exists"));
+        return Err(format_err!("{}", "address_already_exist"));
     }
 
     let pk_bytes = key_data_from_any_format_pk(&param.private_key)?;
@@ -316,8 +310,6 @@ pub(crate) fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
         PrivateKeystore::from_private_key(&private_key, &param.password, Source::Private);
 
     let mut keystore = Keystore::PrivateKey(pk_store);
-
-    keystore.unlock_by_password(&param.password)?;
 
     if let Some(exist_kid) = founded_id {
         keystore.set_id(&exist_kid)
@@ -347,9 +339,9 @@ pub(crate) fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    keystore.unlock_by_password(&param.password);
+    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
 
-    let pk_hex = keystore.export()?;
+    let pk_hex = guard.keystore().export()?;
 
     // private_key prefix is only about chain type and network
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
@@ -362,7 +354,7 @@ pub(crate) fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
     }?;
 
     let export_result = KeystoreCommonExportResult {
-        id: keystore.id(),
+        id: guard.keystore().id(),
         r#type: KeyType::PrivateKey as i32,
         value,
     };
@@ -479,11 +471,11 @@ pub(crate) fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    keystore.unlock_by_password(&param.password)?;
+    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
     match param.chain_type.as_str() {
-        "BITCOINCASH" | "LITECOIN" => sign_btc_fork_transaction(&param, keystore),
-        "TRON" => sign_tron_tx(&param, keystore),
-        "NERVOS" => sign_nervos_ckb(&param, keystore),
+        "BITCOINCASH" | "LITECOIN" => sign_btc_fork_transaction(&param, guard.keystore_mut()),
+        "TRON" => sign_tron_tx(&param, guard.keystore_mut()),
+        "NERVOS" => sign_nervos_ckb(&param, guard.keystore_mut()),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -499,19 +491,19 @@ pub(crate) fn sign_btc_fork_transaction(
 
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
         if !BchAddress::is_valid(&input.to, &coin) {
-            return Err(format_err!("invalid_to_address"));
+            return Err(format_err!("address_invalid"));
         }
         let tran = BchTransaction::new(input, coin);
         keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
     } else if input.seg_wit.as_str() != "NONE" {
         if !BtcForkAddress::is_valid(&input.to, &coin) {
-            return Err(format_err!("invalid_to_address"));
+            return Err(format_err!("address_invalid"));
         }
         let tran = BtcForkSegWitTransaction::new(input, coin);
         keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
     } else {
         if !BtcForkAddress::is_valid(&input.to, &coin) {
-            return Err(format_err!("invalid_to_address"));
+            return Err(format_err!("address_invalid"));
         }
         let tran = BtcForkTransaction::new(input, coin);
         keystore.sign_transaction(&param.chain_type, &param.address, &tran)?
@@ -545,11 +537,24 @@ pub(crate) fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    //    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
-    keystore.unlock_by_password(&param.password)?;
+    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
     let input: TronMessageInput =
         TronMessageInput::decode(param.input.expect("TronMessageInput").value.clone())
             .expect("TronMessageInput");
-    let signed_tx = keystore.sign_message(&param.chain_type, &param.address, &input)?;
+    let signed_tx = guard
+        .keystore_mut()
+        .sign_message(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
+}
+
+pub(crate) fn unlock_then_crash(data: &[u8]) -> Result<Vec<u8>> {
+    let param: WalletKeyParam = WalletKeyParam::decode(data).unwrap();
+    let mut map = KEYSTORE_MAP.write();
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+    panic!("test_unlock_then_crash");
 }
