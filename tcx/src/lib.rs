@@ -16,6 +16,7 @@ use crate::handler::{
     encode_message, hd_store_create, hd_store_export, hd_store_import, keystore_common_accounts,
     keystore_common_delete, keystore_common_derive, keystore_common_exists, keystore_common_verify,
     private_key_store_export, private_key_store_import, sign_tx, tron_sign_message,
+    unlock_then_crash,
 };
 mod filemanager;
 use crate::filemanager::WALLET_FILE_DIR;
@@ -92,7 +93,8 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
 
         "tron_sign_msg" => landingpad(|| tron_sign_message(&action.param.unwrap().value)),
-
+        // !!! WARNING !!! used for test only
+        "unlock_then_crash" => landingpad(|| unlock_then_crash(&action.param.unwrap().value)),
         _ => landingpad(|| Err(format_err!("unsupported_method"))),
     };
 
@@ -182,7 +184,7 @@ mod tests {
     };
     use crate::init_token_core_x;
     use prost::Message;
-    use tcx_chain::Keystore;
+    use tcx_chain::{Keystore, KeystoreGuard};
     use tcx_constants::{TEST_MNEMONIC, TEST_PASSWORD};
 
     use std::fs;
@@ -256,7 +258,7 @@ mod tests {
         let param = HdStoreImportParam {
             mnemonic: TEST_MNEMONIC.to_string(),
             password: TEST_PASSWORD.to_string(),
-            source: "TEST_MNEMONIC".to_string(),
+            source: "MNEMONIC".to_string(),
             name: "test-wallet".to_string(),
             password_hint: "imtoken".to_string(),
             overwrite: true,
@@ -280,7 +282,7 @@ mod tests {
         let param = HdStoreImportParam {
             mnemonic: TEST_MNEMONIC.to_string(),
             password: TEST_PASSWORD.to_string(),
-            source: "TEST_MNEMONIC".to_string(),
+            source: "MNEMONIC".to_string(),
             name: "test-wallet".to_string(),
             password_hint: "imtoken".to_string(),
             overwrite: true,
@@ -349,7 +351,7 @@ mod tests {
             let import_param = HdStoreImportParam {
                 mnemonic: TEST_MNEMONIC.to_string(),
                 password: TEST_PASSWORD.to_string(),
-                source: "TEST_MNEMONIC".to_string(),
+                source: "MNEMONIC".to_string(),
                 name: "call_tcx_api".to_string(),
                 password_hint: "".to_string(),
                 overwrite: true,
@@ -406,6 +408,7 @@ mod tests {
 
             assert!(import_result.accounts.is_empty());
             assert_eq!(import_result.name, "aaa");
+            assert_eq!(import_result.source, "MNEMONIC");
             remove_created_wallet(&import_result.id);
         })
     }
@@ -414,7 +417,7 @@ mod tests {
     pub fn test_hd_store_import() {
         run_test(|| {
             let import_result: WalletResult = import_default_wallet();
-
+            assert_eq!(import_result.source, "MNEMONIC");
             let derivation = Derivation {
                 chain_type: "BITCOINCASH".to_string(),
                 path: "m/44'/145'/0'/0/0".to_string(),
@@ -451,7 +454,7 @@ mod tests {
                 let param = HdStoreImportParam {
                     mnemonic: mn.to_string(),
                     password: TEST_PASSWORD.to_string(),
-                    source: "TEST_MNEMONIC".to_string(),
+                    source: "MNEMONIC".to_string(),
                     name: "test-wallet".to_string(),
                     password_hint: "imtoken".to_string(),
                     overwrite: true,
@@ -488,6 +491,7 @@ mod tests {
                 result.accounts.first().unwrap().address,
                 "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN"
             );
+
             remove_created_wallet(&import_result.id);
         })
     }
@@ -516,7 +520,7 @@ mod tests {
             let param = HdStoreImportParam {
                 mnemonic: OTHER_MNEMONIC.to_string(),
                 password: TEST_PASSWORD.to_string(),
-                source: "TEST_MNEMONIC".to_string(),
+                source: "MNEMONIC".to_string(),
                 name: "test-wallet".to_string(),
                 password_hint: "imtoken".to_string(),
                 overwrite: true,
@@ -828,7 +832,7 @@ mod tests {
 
                 let param: WalletKeyParam = WalletKeyParam {
                     id: wallet.id.to_string(),
-                    password: "WRONG TEST_PASSWORD".to_string(),
+                    password: "WRONG PASSWORD".to_string(),
                 };
 
                 let ret = call_api("keystore_common_verify", param);
@@ -1062,7 +1066,7 @@ mod tests {
             let input_value = encode_message(input).unwrap();
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: "WRONG TEST_PASSWORD".to_string(),
+                password: "WRONG PASSWORD".to_string(),
                 chain_type: "TRON".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1278,6 +1282,74 @@ mod tests {
 
             remove_created_wallet(&import_result.id);
         })
+    }
+
+    #[test]
+    pub fn test_lock_after_sign() {
+        run_test(|| {
+            let derivation = Derivation {
+                chain_type: "TRON".to_string(),
+                path: "m/44'/195'/0'/0/0".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            };
+
+            let wallet = import_and_derive(derivation);
+
+            let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
+            let input = TronTxInput { raw_data };
+            let input_value = encode_message(input).unwrap();
+
+            let tx = SignParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "TRON".to_string(),
+                address: wallet.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: input_value,
+                }),
+            };
+            {
+                let map = KEYSTORE_MAP.read();
+                let keystore: &Keystore = map.get(&wallet.id).unwrap();
+                assert!(keystore.is_locked());
+            }
+
+            let ret = call_api("sign_tx", tx).unwrap();
+            let output: TronTxOutput = TronTxOutput::decode(&ret).unwrap();
+            let expected_sign = "bbf5ce0549490613a26c3ac4fc8574e748eabda05662b2e49cea818216b9da18691e78cd6379000e9c8a35c13dfbf620f269be90a078b58799b56dc20da3bdf200";
+            assert_eq!(expected_sign, output.signatures[0]);
+
+            {
+                let map = KEYSTORE_MAP.read();
+                let keystore: &Keystore = map.get(&wallet.id).unwrap();
+                assert!(keystore.is_locked());
+            }
+
+            remove_created_wallet(&wallet.id);
+        })
+    }
+
+    #[test]
+    fn test_panic_keystore_locked() {
+        run_test(|| {
+            let wallet = import_default_wallet();
+            let param = WalletKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+            };
+            let ret = call_api("unlock_then_crash", param);
+            let err = unsafe { _to_str(get_last_err_message()) };
+            let err_bytes = hex::decode(err).unwrap();
+            let rsp: Response = Response::decode(err_bytes).unwrap();
+            assert!(!rsp.is_success);
+            assert_eq!(rsp.error, "test_unlock_then_crash");
+            let map = KEYSTORE_MAP.read();
+            let keystore: &Keystore = map.get(&wallet.id).unwrap();
+            assert!(keystore.is_locked())
+        });
     }
 
     fn remove_created_wallet(wid: &str) {
