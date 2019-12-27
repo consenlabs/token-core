@@ -212,11 +212,12 @@ mod tests {
             fs::create_dir_all(p).expect("shoud create filedir");
         }
 
-        *tcx_crypto::KDF_ROUNDS.write() = 1024;
+        //        *tcx_crypto::KDF_ROUNDS.write() = 1024;
         let param = InitTokenCoreXParam {
             file_dir: "/tmp/imtoken/wallets".to_string(),
             xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
             xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
+            is_debug: true,
         };
 
         handler::init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");

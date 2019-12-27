@@ -21,6 +21,7 @@ fn main() {
         file_dir: "/tmp/imtoken/wallets".to_string(),
         xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
         xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
+        is_debug: true,
     };
 
     // let hex_str = hex::encode(encode_message(param))

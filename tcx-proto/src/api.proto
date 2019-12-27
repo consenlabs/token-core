@@ -28,6 +28,7 @@ message InitTokenCoreXParam {
     string fileDir = 1;
     string xpubCommonKey = 2;
     string xpubCommonIv = 3;
+    bool isDebug = 4;
 }
 
 /// Hd Store

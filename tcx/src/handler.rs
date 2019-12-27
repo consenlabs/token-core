@@ -15,7 +15,7 @@ use tcx_btc_fork::{
 use tcx_chain::{key_hash_from_mnemonic, key_hash_from_private_key, Keystore};
 use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
 use tcx_ckb::{CkbAddress, CkbTxInput};
-use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
+use tcx_crypto::{KDF_ROUNDS, XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::TrxAddress;
 
 use crate::api::keystore_common_derive_param::Derivation;
@@ -76,10 +76,18 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
         file_dir,
         xpub_common_key,
         xpub_common_iv,
+        is_debug,
     } = InitTokenCoreXParam::decode(data).unwrap();
     *WALLET_FILE_DIR.write() = file_dir.to_string();
     *XPUB_COMMON_KEY_128.write() = xpub_common_key.to_string();
     *XPUB_COMMON_IV.write() = xpub_common_iv.to_string();
+
+    if is_debug {
+        *IS_DEBUG.write() = is_debug;
+        if is_debug {
+            *KDF_ROUNDS.write() = 1024;
+        }
+    }
 
     scan_keystores()?;
 
