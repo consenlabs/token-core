@@ -15,17 +15,17 @@ export default async function (params) {
 
     // invalid privateKey (error)
     invalidPrivateKey = privateKey.substr(0, privateKey.length-7) + 'imToken'
-    errorMessage = (chainType === 'TRON') ? "hex can't decode: InvalidHexCharacter { c: 'i', index: 57 }" : 'base58ck checksum'
+    errorMessage = (chainType === 'TRON') ? "invalid base58 character 0x30" : 'base58ck checksum'
     await inputInvalidPrivateKey(invalidPrivateKey, errorMessage)
 
     // invalid privateKey length-1
     invalidPrivateKey = privateKey.substr(0, privateKey.length-1)
-    errorMessage = (chainType === 'TRON') ? "hex can't decode: OddLength" : 'base58ck checksum'
+    errorMessage = (chainType === 'TRON') ? "invalid base58 character 0x30" : 'base58ck checksum'
     await inputInvalidPrivateKey(invalidPrivateKey, errorMessage)
 
     // invalid privateKey length+1
     invalidPrivateKey = privateKey + 'i'
-    errorMessage = (chainType === 'TRON') ? "hex can't decode: OddLength" : 'base58ck checksum'
+    errorMessage = (chainType === 'TRON') ? "invalid base58 character 0x30" : 'base58ck checksum'
     await inputInvalidPrivateKey(invalidPrivateKey, errorMessage)
 
     await inputRightParams (chainType, privateKey, password, network, segWit)
@@ -36,22 +36,14 @@ export default async function (params) {
 
     await inputRightParams (chainType, privateKey, password, network, segWit)
     // invalid ChainType 
-    let invalidChainType = 'NERVOS'
-    errorMessage = (chainType === 'TRON') ? 'unsupported_chain' : 'invalid_private_key'
+    let invalidChainType = 'BITCOIN'
+    // errorMessage = (chainType === 'TRON') ? 'unsupported_chain' : 'invalid_private_key'
+    errorMessage = 'unsupported_chain'
     // invalidChainType = (chainType === 'BITCOINCASH') ? 'LITECOIN' : 'BITCOINCASH'
     await inputInvalidChainType (invalidChainType, errorMessage)
 
     if (chainType != 'TRON') {
         await inputRightParams (chainType, privateKey, password, network, segWit)
-        // invalid network (TESTNET)
-        let invalidNetwork = 'TESTNET'
-        errorMessage = 'invalid_private_key'
-        await inputInvalidNetwork(invalidNetwork, errorMessage)
-
-        // invalid network (empty)
-        invalidNetwork = ''
-        errorMessage = 'unsupported_chain'
-        await inputInvalidNetwork(invalidNetwork, errorMessage)
 
         // invalid Segwit (GENERAL)
         let invalidSegwit = 'GENERAL'
