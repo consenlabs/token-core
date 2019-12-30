@@ -6,7 +6,7 @@ import tronSignMessageFlow from './specs/wallet/tronSignMessageFlow'
 import mnemonicPrivateKeyFlow from './specs/wallet/mnemonicPrivateKeyFlow'
 
 const repeatImport = false
-const runRobust = false
+const runRobust = true
 
 createFlow()
 mnemonicFlow(repeatImport, runRobust)

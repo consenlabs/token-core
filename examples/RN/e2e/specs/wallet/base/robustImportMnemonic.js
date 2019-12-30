@@ -8,27 +8,27 @@ export default async function (params) {
 
     // invalid mnemonic (empty)
     let invalidMnemonic = ''
-    let errorMessage = 'invalid word in phrase'
+    let errorMessage = 'mnemonic_word_invalid'
     await inputInvalidMnemonic(invalidMnemonic, errorMessage)
 
     // invalid mnemonic (word misspelling)
     invalidMnemonic = 'inject kidney empty canal shadow pact comfort wife crush horse wife sketchs'
-    errorMessage = 'invalid word in phrase'
+    errorMessage = 'mnemonic_word_invalid'
     await inputInvalidMnemonic(invalidMnemonic, errorMessage)
     
     // invalid mnemonic (11 words)
     invalidMnemonic = 'inject kidney empty canal shadow pact comfort wife crush horse wife'
-    errorMessage = 'invalid number of words in phrase: 11'
+    errorMessage = 'mnemonic_length_invalid'
     await inputInvalidMnemonic(invalidMnemonic, errorMessage)
 
     // invalid mnemonic 
     invalidMnemonic = 'inject kidney empty canal shadow pact comfort wife crush horse wife sketch wife'
-    errorMessage = 'invalid number of words in phrase: 13'
+    errorMessage = 'mnemonic_length_invalid'
     await inputInvalidMnemonic(invalidMnemonic, errorMessage)
 
     // invalid mnemonic 
     invalidMnemonic = 'inject kidney empty canal shadow pact comfort wife crush horse wife wife'
-    errorMessage = 'invalid checksum'
+    errorMessage = 'mnemonic_checksum_invalid'
     await inputInvalidMnemonic(invalidMnemonic, errorMessage)
 
     await inputRightParams(chainType, mnemonic, password, network, segWit)
@@ -53,7 +53,7 @@ export default async function (params) {
         // invalid network (empty)
         let invalidNetwork = ''
         errorMessage = 'unsupported_chain'
-        await inputInvalidNetwork(invalidNetwork, errorMessage)
+        // await inputInvalidNetwork(invalidNetwork, errorMessage)
 
         // invalid network (KOVAN)
         invalidNetwork = 'KOVAN'
