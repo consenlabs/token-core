@@ -36,6 +36,7 @@ use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
+use tcx_crypto::KDF_ROUNDS;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
@@ -70,11 +71,18 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
         file_dir,
         xpub_common_key,
         xpub_common_iv,
+        is_debug,
     } = InitTokenCoreXParam::decode(data).unwrap();
     *WALLET_FILE_DIR.write() = file_dir.to_string();
     *XPUB_COMMON_KEY_128.write() = xpub_common_key.to_string();
     *XPUB_COMMON_IV.write() = xpub_common_iv.to_string();
 
+    if is_debug {
+        *IS_DEBUG.write() = is_debug;
+        if is_debug {
+            *KDF_ROUNDS.write() = 1024;
+        }
+    }
     scan_keystores()?;
 
     Ok(())

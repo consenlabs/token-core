@@ -31,6 +31,8 @@ pub struct InitTokenCoreXParam {
     pub xpub_common_key: std::string::String,
     #[prost(string, tag = "3")]
     pub xpub_common_iv: std::string::String,
+    #[prost(bool, tag = "4")]
+    pub is_debug: bool,
 }
 /// Hd Store
 

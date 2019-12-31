@@ -452,6 +452,31 @@ mod tests {
     }
 
     #[test]
+    pub fn decode_v3_from_keystore() {
+        let data = r#"
+    {
+        "cipher": "aes-128-ctr",
+        "cipherparams": {
+            "iv": "1bef836800f0b26ee638805422a13a0b"
+        },
+        "ciphertext": "979cafedea9e92fe3fdc8430e861c55ec786800ce5ca7cf888dec3f41839270dd09be10cf58f436e8106f9956b596e4bcb555d9fd26e99905b1c47a78fadc0f761a61d5d24394452f7f253",
+        "kdf": "pbkdf2",
+        "kdfparams": {
+            "c": 262144,
+            "prf": "hmac-sha256",
+            "dklen": 32,
+            "salt": "2294723137787ef2684541b4d2a3c17fd14c322eeee198197c23c9419d88ea93"
+        },
+        "mac": "718de654defd56d8d24edd449399ed47a2a1f956f044d2479f5f1c8b0ed2f9fe"
+    }"#;
+
+        let crypto: Crypto<Pbkdf2Params> = serde_json::from_str(data).unwrap();
+        let result = crypto.decrypt(&"h7b390001").unwrap();
+        let wif = String::from_utf8(result).unwrap();
+        assert_eq!("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB", wif)
+    }
+
+    #[test]
     pub fn deserialize_from_json() {
         let data = r#"
     {
