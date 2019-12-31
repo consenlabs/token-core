@@ -3,15 +3,12 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
 use prost::Message;
-use serde_json::Value;
-
-use tcx_crypto::{KDF_ROUNDS, XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 
 pub mod api;
 use crate::api::{Response, TcxAction};
 pub mod error_handling;
 pub mod handler;
-use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
+use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
     encode_message, hd_store_create, hd_store_export, hd_store_import, keystore_common_accounts,
     keystore_common_delete, keystore_common_derive, keystore_common_exists, keystore_common_verify,
@@ -19,7 +16,7 @@ use crate::handler::{
     unlock_then_crash,
 };
 mod filemanager;
-use crate::filemanager::WALLET_FILE_DIR;
+
 use parking_lot::RwLock;
 
 extern crate serde_json;
