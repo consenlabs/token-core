@@ -29,6 +29,20 @@ export async function readTextValue(testID) {
   }
 }
 
+
+export async function getTextValue(testText) {
+  try {
+    await expect(text(testText)).toExist()
+  } catch (e) {
+    const start = `AX.label='${testText}`
+    const end = "; AX.frame"
+    const errorMessage = e.message.toString()
+    const [, restMessage] = errorMessage.split(start)
+    const [textValue] = restMessage.split(end)
+    return textValue
+  }
+}
+
 export async function toHaveText(testID, expectText) {
   await expect(id(testID)).toHaveText(expectText)
 }

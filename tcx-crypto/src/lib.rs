@@ -5,7 +5,7 @@ pub mod numberic_util;
 
 use core::result;
 pub use crypto::{Crypto, EncPair, Pbkdf2Params};
-use std::sync::RwLock;
+use parking_lot::RwLock;
 
 #[macro_use]
 extern crate failure;

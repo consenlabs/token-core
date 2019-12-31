@@ -64,7 +64,7 @@ message HdStoreImportParam {
 // FUNCTION: hd_store_derive(HdStoreDeriveParam): AccountsResponse
 //
 // derive new accounts from a hd keystore
-message HdStoreDeriveParam {
+message KeystoreCommonDeriveParam {
     string id = 1;
     string password = 2;
     message Derivation {
@@ -111,11 +111,7 @@ enum KeyType {
 message PrivateKeyStoreImportParam {
     string privateKey = 1;
     string password = 2;
-    string chainType = 3;
-    string network = 4;
-    string segWit = 5;
-
-    bool overwrite = 10;
+    bool overwrite = 3;
 }
 
 // FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult

@@ -11,22 +11,27 @@ interface State {
   mnemonic: any
   password: string
   segWit: string
-  id: string | null | undefined
-  address: string | null | undefined
+  idFromMnemonic: string | null | undefined
+  addressFromMnemonic: string | null | undefined
   chainType: __chainType
   network: __networkType
   isLoading: boolean
   verifySuccess: any
   isExists: any
   accounts: any
-  deleteSuccess: any
+  privateKeyDeleteSuccess: any
+  mnemonicDeleteSuccess: any
   exportMnemonic: any
+  privateKey: string
+  exportPrivateKey: any
+  addressFromPrivateKey: string
+  idFromPrivateKey: string | null | undefined
 }
 
 class CMP extends React.Component<Props, State> {
   static navigationOptions = ({ navigation }: any) => {
     return {
-      title: 'Mnemonic',
+      title: 'Mnemonic & PrivateKey',
       headerLeft: () => (
         <Button
           testID="goBack"
@@ -43,28 +48,34 @@ class CMP extends React.Component<Props, State> {
     this.state = {
       mnemonic: '',
       password: '',
-      id: '',
-      address: '',
+      idFromMnemonic: '',
+      addressFromMnemonic: '',
       chainType: '' as __chainType,
       network: '' as __networkType,
       segWit: '',
       isLoading: false,
       verifySuccess: false,
       isExists: false,
-      deleteSuccess: false,
+      privateKeyDeleteSuccess: false,
+      mnemonicDeleteSuccess: false,
       accounts: '',
       exportMnemonic: '',
+      privateKey: '',
+      exportPrivateKey: '',
+      addressFromPrivateKey: '',
+      idFromPrivateKey: ''
     }
   }
 
   render() {
-    const { mnemonic, password, chainType, network, segWit, address, isLoading, exportMnemonic } = this.state
+    const { mnemonic, password, chainType, network, segWit, addressFromMnemonic, isLoading, privateKey, addressFromPrivateKey } = this.state
     const inputs = {
       mnemonic,
       password,
       chainType,
       network,
       segWit,
+      privateKey,
     }
     return (
       <View style={styles.container}>
@@ -87,19 +98,19 @@ class CMP extends React.Component<Props, State> {
             })
           }
           <Button
-            testID="import"
-            title="import"
-            onPress={this.handleImport}
+            testID="importMnemonic"
+            title="importMnemonic"
+            onPress={this.mnemonicImport}
           />
-          {!!address && <Text testID="import-address">{address}</Text>}
+          {!!addressFromMnemonic && <Text testID="importMnemonic-address">{addressFromMnemonic}</Text>}
         </View>
         <View>
           <Button
-            testID="export"
-            title="export"
-            onPress={this.handleExport}
-          />
-          {!!exportMnemonic && <Text testID="expected-mnemonic">{exportMnemonic}</Text>}
+              testID="importPrivateKey"
+              title="importPrivateKey"
+              onPress={this.privateKeyImport}
+            />
+            {!!addressFromPrivateKey && <Text testID="importPrivateKey-address">{addressFromPrivateKey}</Text>}
         </View>
         {this.renderKeystore()}
       </View>
@@ -107,108 +118,58 @@ class CMP extends React.Component<Props, State> {
   }
 
   renderKeystore() {
-    const { verifySuccess, isExists, accounts, deleteSuccess } = this.state
+    const { privateKeyDeleteSuccess, mnemonicDeleteSuccess } = this.state
     return (
       <View>
         <View>
           <Button
-            testID="keystoreCommonVerify"
-            title="keystoreCommonVerify"
-            onPress={this.keystoreCommonVerify}
+            testID="mnemonicDelete"
+            title="mnemonicDelete"
+            onPress={this.mnemonicDelete}
           />
-          {!!verifySuccess && <Text testID="verifySuccess">{`verifySuccess`}</Text>}
+          {!!mnemonicDeleteSuccess && <Text testID="mnemonicDeleteSuccess">{`mnemonicDeleteSuccess`}</Text>}
         </View>
 
         <View>
           <Button
-            testID="keystoreCommonExists"
-            title="keystoreCommonExists"
-            onPress={this.keystoreCommonExists}
+            testID="privateKeyDelete"
+            title="privateKeyDelete"
+            onPress={this.privateKeyDelete}
           />
-          {!!isExists && <Text testID="isExists">{`isExists`}</Text>}
+          {!!privateKeyDeleteSuccess && <Text testID="privateKeyDeleteSuccess">{`privateKeyDeleteSuccess`}</Text>}
         </View>
 
-        <View>
-          <Button
-            testID="keystoreCommonAccounts"
-            title="keystoreCommonAccounts"
-            onPress={this.keystoreCommonAccounts}
-          />
-          {!!accounts && <Text testID="accounts">{accounts}</Text>}
-        </View>
-
-        <View>
-          <Button
-            testID="keystoreCommonDelete"
-            title="keystoreCommonDelete"
-            onPress={this.keystoreCommonDelete}
-          />
-          {!!deleteSuccess && <Text testID="deleteSuccess">{`deleteSuccess`}</Text>}
-        </View>
-        <View>
-          <Button
-            testID="clearOutput"
-            title="clearOutput"
-            onPress={this.clearOutput}
-          />
-        </View>
       </View>
     )
   }
 
-  keystoreCommonVerify = async () => {
-    const { id, password } = this.state
+  mnemonicDelete = async () => {
+    const { idFromMnemonic, password } = this.state
     try {
       this.setState({ isLoading: true })
-      const res = await walletAPI.keystoreCommonVerify({ id, password })
-      this.setState({ verifySuccess: res.isSuccess, isLoading: false })
-    } catch (err) {
-      this.setState({ isLoading: false })
-      Alert.alert('', err.message)
-    }
-  }
-
-  keystoreCommonExists = async () => {
-    const { mnemonic } = this.state
-    try {
-      this.setState({ isLoading: true })
+      const res = await walletAPI.keystoreCommonDelete({ id: idFromMnemonic, password })
       // @ts-ignore
-      const res = await walletAPI.keystoreCommonExists({ type: 'MNEMONIC', value: mnemonic })
-      this.setState({ isExists: res.isExists, isLoading: false })
+      this.setState({ mnemonicDeleteSuccess: res.isSuccess, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
       Alert.alert('', err.message)
     }
   }
 
-  keystoreCommonAccounts = async () => {
-    const { id } = this.state
+  privateKeyDelete = async () => {
+    const { idFromPrivateKey, password } = this.state
     try {
       this.setState({ isLoading: true })
-      const res = await walletAPI.keystoreCommonAccounts({ id })
-      const accounts = res.accounts
+      const res = await walletAPI.keystoreCommonDelete({ id: idFromPrivateKey, password })
       // @ts-ignore
-      this.setState({ accounts: accounts[0].address, isLoading: false })
+      this.setState({ privateKeyDeleteSuccess: res.isSuccess, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
       Alert.alert('', err.message)
     }
   }
 
-  keystoreCommonDelete = async () => {
-    const { id, password } = this.state
-    try {
-      this.setState({ isLoading: true })
-      const res = await walletAPI.keystoreCommonDelete({ id, password })
-      // @ts-ignore
-      this.setState({ deleteSuccess: res.isSuccess, isLoading: false })
-    } catch (err) {
-      this.setState({ isLoading: false })
-      Alert.alert('', err.message)
-    }
-  }
-
-  handleImport = async () => {
+  mnemonicImport = async () => {
     const { mnemonic, password, chainType, network, segWit } = this.state
     const chainPath = getChainPath(chainType, network)
     try {
@@ -234,35 +195,42 @@ class CMP extends React.Component<Props, State> {
         derivations: [deriveParams]
       })
       // @ts-ignore
-      const address = accountsRes.accounts[0].address
-      this.setState({ id: res.id, address, isLoading: false })
+      const addressFromMnemonic = accountsRes.accounts[0].address
+      this.setState({ idFromMnemonic: res.id, addressFromMnemonic, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
       Alert.alert('', err.message)
     }
   }
 
-  handleExport = async () => {
-    const { id, password } = this.state
+  privateKeyImport = async () => {
+    const { privateKey, password, chainType, network, segWit } = this.state
+    const chainPath = getChainPath(chainType, network)
     try {
+      const params = {
+        privateKey: privateKey.trim(),
+        password,
+        overwrite: true,
+      }
       this.setState({ isLoading: true })
-      const res = await walletAPI.hdStoreExport({ id, password })
-      this.setState({ exportMnemonic: res.value, isLoading: false })
+      const res = await walletAPI.privateKeyStoreImport(params)
+      const deriveParams = {
+        chainType,
+        path: chainPath,
+        network,
+        segWit,
+      }
+      const accountsRes = await walletAPI.hdStoreDerive({
+        id: res.id,
+        password,
+        derivations: [deriveParams]
+      })
+      // @ts-ignore
+      this.setState({ idFromPrivateKey: res.id, addressFromPrivateKey: accountsRes.accounts[0].address, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
       Alert.alert('', err.message)
     }
-  }
-
-  clearOutput = async () => {
-    this.setState({ 
-      address: '',
-      exportMnemonic: '',
-      verifySuccess: '',
-      isExists: '',
-      accounts: '',
-      deleteSuccess: ''
-    })
   }
 }
 

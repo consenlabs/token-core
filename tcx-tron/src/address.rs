@@ -19,7 +19,7 @@ impl TraitAddress for Address {
         Ok(base58::check_encode_slice(&hex))
     }
 
-    fn is_valid(address: &str) -> bool {
+    fn is_valid(address: &str, _coin: &CoinInfo) -> bool {
         let decode_ret = base58::from_check(address);
         if let Ok(data) = decode_ret {
             data.len() == 21 && data[0] == 0x41
@@ -33,6 +33,7 @@ impl TraitAddress for Address {
 mod tests {
     use super::Address;
     use tcx_chain::Address as TraitAddress;
+    use tcx_constants::coin_info::coin_info_from_param;
     use tcx_constants::{CoinInfo, CurveType};
     use tcx_primitive::TypedPublicKey;
 
@@ -59,11 +60,22 @@ mod tests {
 
     #[test]
     fn tron_address_validation() {
-        assert!(Address::is_valid("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq"));
-        assert!(!Address::is_valid("THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acot"));
-        assert!(!Address::is_valid(
-            "qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8"
+        let coin_info = coin_info_from_param("TRON", "", "").unwrap();
+        assert!(Address::is_valid(
+            "THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq",
+            &coin_info
         ));
-        assert!(!Address::is_valid("mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN"));
+        assert!(!Address::is_valid(
+            "THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acot",
+            &coin_info
+        ));
+        assert!(!Address::is_valid(
+            "qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8",
+            &coin_info
+        ));
+        assert!(!Address::is_valid(
+            "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN",
+            &coin_info
+        ));
     }
 }

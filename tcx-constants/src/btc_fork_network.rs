@@ -1,5 +1,5 @@
 use crate::CoinInfo;
-use std::sync::RwLock;
+use parking_lot::RwLock;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BtcForkNetwork {
@@ -26,7 +26,7 @@ lazy_static! {
             coin: "LITECOIN",
             network: "MAINNET",
             seg_wit: "NONE",
-            hrp: "ltc",
+            hrp: "",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
             private_prefix: 0xb0,
@@ -37,7 +37,7 @@ lazy_static! {
             coin: "LITECOIN",
             network: "MAINNET",
             seg_wit: "P2WPKH",
-            hrp: "ltc",
+            hrp: "",
             p2pkh_prefix: 0x30,
             p2sh_prefix: 0x32,
             private_prefix: 0xb0,
@@ -59,7 +59,7 @@ lazy_static! {
             coin: "LITECOIN",
             network: "TESTNET",
             seg_wit: "NONE",
-            hrp: "ltc",
+            hrp: "",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
             private_prefix: 0xef,
@@ -72,7 +72,7 @@ lazy_static! {
             coin: "LITECOIN",
             network: "TESTNET",
             seg_wit: "P2WPKH",
-            hrp: "ltc",
+            hrp: "",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0x3a,
             private_prefix: 0xef,
@@ -83,7 +83,7 @@ lazy_static! {
             coin: "BITCOIN",
             network: "MAINNET",
             seg_wit: "NONE",
-            hrp: "bc",
+            hrp: "",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
             private_prefix: 0x80,
@@ -94,7 +94,7 @@ lazy_static! {
             coin: "BITCOIN",
             network: "MAINNET",
             seg_wit: "P2WPKH",
-            hrp: "bc",
+            hrp: "",
             p2pkh_prefix: 0x0,
             p2sh_prefix: 0x05,
             private_prefix: 0x80,
@@ -116,7 +116,18 @@ lazy_static! {
             coin: "BITCOIN",
             network: "TESTNET",
             seg_wit: "NONE",
-            hrp: "bc",
+            hrp: "",
+            p2pkh_prefix: 0x6f,
+            p2sh_prefix: 0xc4,
+            private_prefix: 0xef,
+            xpub_prefix: [0x04, 0x35, 0x87, 0xCF],
+            xprv_prefix: [0x04, 0x35, 0x83, 0x94],
+        });
+        networks.push(BtcForkNetwork {
+            coin: "BITCOIN",
+            network: "TESTNET",
+            seg_wit: "P2WPKH",
+            hrp: "",
             p2pkh_prefix: 0x6f,
             p2sh_prefix: 0xc4,
             private_prefix: 0xef,
@@ -176,7 +187,7 @@ pub fn network_from_param(
     network: &str,
     seg_wit: &str,
 ) -> Option<BtcForkNetwork> {
-    let networks = BTC_FORK_NETWORKS.read().unwrap();
+    let networks = BTC_FORK_NETWORKS.read();
     //    let coin_uppercase = coin.to_uppercase();
     let mut ret: Vec<BtcForkNetwork> = networks
         .iter()
@@ -189,7 +200,7 @@ pub fn network_from_param(
 }
 
 pub fn network_form_hrp(hrp: &str) -> Option<BtcForkNetwork> {
-    let networks = BTC_FORK_NETWORKS.read().unwrap();
+    let networks = BTC_FORK_NETWORKS.read();
     let mut ret: Vec<BtcForkNetwork> = networks
         .iter()
         .filter(|x| x.hrp.eq(hrp))
@@ -199,7 +210,7 @@ pub fn network_form_hrp(hrp: &str) -> Option<BtcForkNetwork> {
 }
 
 pub fn coin_from_xpub_prefix(prefix: &[u8]) -> Option<String> {
-    let networks = BTC_FORK_NETWORKS.read().unwrap();
+    let networks = BTC_FORK_NETWORKS.read();
     networks
         .iter()
         .find(|x| x.xpub_prefix.eq(prefix))
@@ -207,7 +218,7 @@ pub fn coin_from_xpub_prefix(prefix: &[u8]) -> Option<String> {
 }
 
 pub fn pub_version_from_prv_version(prefix: &[u8]) -> Option<[u8; 4]> {
-    let networks = HD_VERSIONS.read().unwrap();
+    let networks = HD_VERSIONS.read();
     networks.iter().find(|x| x.prv_version.eq(prefix)).map(|x| {
         let mut version = [0; 4];
         version.copy_from_slice(&x.pub_version);

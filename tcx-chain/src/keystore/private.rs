@@ -49,6 +49,10 @@ impl PrivateKeystore {
         self.private_key = None;
     }
 
+    pub(crate) fn is_locked(&self) -> bool {
+        self.private_key.is_none()
+    }
+
     pub(crate) fn find_private_key(&self, address: &str) -> Result<TypedPrivateKey> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
@@ -64,24 +68,31 @@ impl PrivateKeystore {
         TypedPrivateKey::from_slice(account.curve, private_key)
     }
 
-    pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<&Account> {
+    pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<Account> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
         let sk = self.private_key.as_ref().unwrap();
 
         let account = Self::private_key_to_account::<A>(coin_info, sk)?;
-
-        self.store.active_accounts.push(account);
-
-        Ok(self.store.active_accounts.last().unwrap())
+        if let Some(_) = self
+            .store
+            .active_accounts
+            .iter()
+            .find(|x| x.address == account.address && x.coin == account.coin)
+        {
+            return Ok(account);
+        } else {
+            self.store.active_accounts.push(account.clone());
+            Ok(account)
+        }
     }
 
     /// Find an account by coin symbol
-    pub(crate) fn account(&self, symbol: &str) -> Option<&Account> {
+    pub(crate) fn account(&self, symbol: &str, address: &str) -> Option<&Account> {
         self.store
             .active_accounts
             .iter()
-            .find(|acc| acc.coin == symbol)
+            .find(|acc| acc.coin == symbol && acc.address == address)
     }
 
     pub(crate) fn verify_password(&self, password: &str) -> bool {
@@ -136,11 +147,8 @@ impl PrivateKeystore {
 
     pub(crate) fn private_key(&self) -> Result<String> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
-
         let vec = self.private_key.as_ref().unwrap().to_vec();
         Ok(hex::encode(&vec))
-
-        //        TypedPrivateKey::from_slice(CurveType::SECP256k1, &priv_key)
     }
 
     fn decrypt_private_key(&self, password: &str) -> Result<Vec<u8>> {
@@ -151,13 +159,13 @@ impl PrivateKeystore {
 #[cfg(test)]
 mod tests {
     use crate::{PrivateKeystore, Source};
-    static PASSWORD: &'static str = "Insecure Pa55w0rd";
+    use tcx_constants::TEST_PASSWORD;
 
     #[test]
     pub fn from_private_key_test() {
         let keystore = PrivateKeystore::from_private_key(
             "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
-            PASSWORD,
+            TEST_PASSWORD,
             Source::Private,
         );
         assert_eq!(keystore.store.version, 11001);

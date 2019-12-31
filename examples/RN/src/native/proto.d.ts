@@ -632,109 +632,109 @@ export namespace api {
         public toJSON(): { [k: string]: any };
     }
 
-    /** Properties of a HdStoreDeriveParam. */
-    interface IHdStoreDeriveParam {
+    /** Properties of a KeystoreCommonDeriveParam. */
+    interface IKeystoreCommonDeriveParam {
 
-        /** HdStoreDeriveParam id */
+        /** KeystoreCommonDeriveParam id */
         id?: (string|null);
 
-        /** HdStoreDeriveParam password */
+        /** KeystoreCommonDeriveParam password */
         password?: (string|null);
 
-        /** HdStoreDeriveParam derivations */
-        derivations?: (api.HdStoreDeriveParam.IDerivation[]|null);
+        /** KeystoreCommonDeriveParam derivations */
+        derivations?: (api.KeystoreCommonDeriveParam.IDerivation[]|null);
     }
 
-    /** Represents a HdStoreDeriveParam. */
-    class HdStoreDeriveParam implements IHdStoreDeriveParam {
+    /** Represents a KeystoreCommonDeriveParam. */
+    class KeystoreCommonDeriveParam implements IKeystoreCommonDeriveParam {
 
         /**
-         * Constructs a new HdStoreDeriveParam.
+         * Constructs a new KeystoreCommonDeriveParam.
          * @param [properties] Properties to set
          */
-        constructor(properties?: api.IHdStoreDeriveParam);
+        constructor(properties?: api.IKeystoreCommonDeriveParam);
 
-        /** HdStoreDeriveParam id. */
+        /** KeystoreCommonDeriveParam id. */
         public id: string;
 
-        /** HdStoreDeriveParam password. */
+        /** KeystoreCommonDeriveParam password. */
         public password: string;
 
-        /** HdStoreDeriveParam derivations. */
-        public derivations: api.HdStoreDeriveParam.IDerivation[];
+        /** KeystoreCommonDeriveParam derivations. */
+        public derivations: api.KeystoreCommonDeriveParam.IDerivation[];
 
         /**
-         * Creates a new HdStoreDeriveParam instance using the specified properties.
+         * Creates a new KeystoreCommonDeriveParam instance using the specified properties.
          * @param [properties] Properties to set
-         * @returns HdStoreDeriveParam instance
+         * @returns KeystoreCommonDeriveParam instance
          */
-        public static create(properties?: api.IHdStoreDeriveParam): api.HdStoreDeriveParam;
+        public static create(properties?: api.IKeystoreCommonDeriveParam): api.KeystoreCommonDeriveParam;
 
         /**
-         * Encodes the specified HdStoreDeriveParam message. Does not implicitly {@link api.HdStoreDeriveParam.verify|verify} messages.
-         * @param message HdStoreDeriveParam message or plain object to encode
+         * Encodes the specified KeystoreCommonDeriveParam message. Does not implicitly {@link api.KeystoreCommonDeriveParam.verify|verify} messages.
+         * @param message KeystoreCommonDeriveParam message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: api.IHdStoreDeriveParam, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: api.IKeystoreCommonDeriveParam, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Encodes the specified HdStoreDeriveParam message, length delimited. Does not implicitly {@link api.HdStoreDeriveParam.verify|verify} messages.
-         * @param message HdStoreDeriveParam message or plain object to encode
+         * Encodes the specified KeystoreCommonDeriveParam message, length delimited. Does not implicitly {@link api.KeystoreCommonDeriveParam.verify|verify} messages.
+         * @param message KeystoreCommonDeriveParam message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encodeDelimited(message: api.IHdStoreDeriveParam, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encodeDelimited(message: api.IKeystoreCommonDeriveParam, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Decodes a HdStoreDeriveParam message from the specified reader or buffer.
+         * Decodes a KeystoreCommonDeriveParam message from the specified reader or buffer.
          * @param reader Reader or buffer to decode from
          * @param [length] Message length if known beforehand
-         * @returns HdStoreDeriveParam
+         * @returns KeystoreCommonDeriveParam
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.HdStoreDeriveParam;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.KeystoreCommonDeriveParam;
 
         /**
-         * Decodes a HdStoreDeriveParam message from the specified reader or buffer, length delimited.
+         * Decodes a KeystoreCommonDeriveParam message from the specified reader or buffer, length delimited.
          * @param reader Reader or buffer to decode from
-         * @returns HdStoreDeriveParam
+         * @returns KeystoreCommonDeriveParam
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.HdStoreDeriveParam;
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.KeystoreCommonDeriveParam;
 
         /**
-         * Verifies a HdStoreDeriveParam message.
+         * Verifies a KeystoreCommonDeriveParam message.
          * @param message Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
         public static verify(message: { [k: string]: any }): (string|null);
 
         /**
-         * Creates a HdStoreDeriveParam message from a plain object. Also converts values to their respective internal types.
+         * Creates a KeystoreCommonDeriveParam message from a plain object. Also converts values to their respective internal types.
          * @param object Plain object
-         * @returns HdStoreDeriveParam
+         * @returns KeystoreCommonDeriveParam
          */
-        public static fromObject(object: { [k: string]: any }): api.HdStoreDeriveParam;
+        public static fromObject(object: { [k: string]: any }): api.KeystoreCommonDeriveParam;
 
         /**
-         * Creates a plain object from a HdStoreDeriveParam message. Also converts values to other types if specified.
-         * @param message HdStoreDeriveParam
+         * Creates a plain object from a KeystoreCommonDeriveParam message. Also converts values to other types if specified.
+         * @param message KeystoreCommonDeriveParam
          * @param [options] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: api.HdStoreDeriveParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(message: api.KeystoreCommonDeriveParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
-         * Converts this HdStoreDeriveParam to JSON.
+         * Converts this KeystoreCommonDeriveParam to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
     }
 
-    namespace HdStoreDeriveParam {
+    namespace KeystoreCommonDeriveParam {
 
         /** Properties of a Derivation. */
         interface IDerivation {
@@ -762,7 +762,7 @@ export namespace api {
              * Constructs a new Derivation.
              * @param [properties] Properties to set
              */
-            constructor(properties?: api.HdStoreDeriveParam.IDerivation);
+            constructor(properties?: api.KeystoreCommonDeriveParam.IDerivation);
 
             /** Derivation chainType. */
             public chainType: string;
@@ -784,23 +784,23 @@ export namespace api {
              * @param [properties] Properties to set
              * @returns Derivation instance
              */
-            public static create(properties?: api.HdStoreDeriveParam.IDerivation): api.HdStoreDeriveParam.Derivation;
+            public static create(properties?: api.KeystoreCommonDeriveParam.IDerivation): api.KeystoreCommonDeriveParam.Derivation;
 
             /**
-             * Encodes the specified Derivation message. Does not implicitly {@link api.HdStoreDeriveParam.Derivation.verify|verify} messages.
+             * Encodes the specified Derivation message. Does not implicitly {@link api.KeystoreCommonDeriveParam.Derivation.verify|verify} messages.
              * @param message Derivation message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: api.HdStoreDeriveParam.IDerivation, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: api.KeystoreCommonDeriveParam.IDerivation, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified Derivation message, length delimited. Does not implicitly {@link api.HdStoreDeriveParam.Derivation.verify|verify} messages.
+             * Encodes the specified Derivation message, length delimited. Does not implicitly {@link api.KeystoreCommonDeriveParam.Derivation.verify|verify} messages.
              * @param message Derivation message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: api.HdStoreDeriveParam.IDerivation, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: api.KeystoreCommonDeriveParam.IDerivation, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
              * Decodes a Derivation message from the specified reader or buffer.
@@ -810,7 +810,7 @@ export namespace api {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.HdStoreDeriveParam.Derivation;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.KeystoreCommonDeriveParam.Derivation;
 
             /**
              * Decodes a Derivation message from the specified reader or buffer, length delimited.
@@ -819,7 +819,7 @@ export namespace api {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.HdStoreDeriveParam.Derivation;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.KeystoreCommonDeriveParam.Derivation;
 
             /**
              * Verifies a Derivation message.
@@ -833,7 +833,7 @@ export namespace api {
              * @param object Plain object
              * @returns Derivation
              */
-            public static fromObject(object: { [k: string]: any }): api.HdStoreDeriveParam.Derivation;
+            public static fromObject(object: { [k: string]: any }): api.KeystoreCommonDeriveParam.Derivation;
 
             /**
              * Creates a plain object from a Derivation message. Also converts values to other types if specified.
@@ -841,7 +841,7 @@ export namespace api {
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: api.HdStoreDeriveParam.Derivation, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: api.KeystoreCommonDeriveParam.Derivation, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
              * Converts this Derivation to JSON.
@@ -1166,15 +1166,6 @@ export namespace api {
         /** PrivateKeyStoreImportParam password */
         password?: (string|null);
 
-        /** PrivateKeyStoreImportParam chainType */
-        chainType?: (string|null);
-
-        /** PrivateKeyStoreImportParam network */
-        network?: (string|null);
-
-        /** PrivateKeyStoreImportParam segWit */
-        segWit?: (string|null);
-
         /** PrivateKeyStoreImportParam overwrite */
         overwrite?: (boolean|null);
     }
@@ -1193,15 +1184,6 @@ export namespace api {
 
         /** PrivateKeyStoreImportParam password. */
         public password: string;
-
-        /** PrivateKeyStoreImportParam chainType. */
-        public chainType: string;
-
-        /** PrivateKeyStoreImportParam network. */
-        public network: string;
-
-        /** PrivateKeyStoreImportParam segWit. */
-        public segWit: string;
 
         /** PrivateKeyStoreImportParam overwrite. */
         public overwrite: boolean;
@@ -3327,6 +3309,714 @@ export namespace transaction {
 
         /**
          * Converts this BtcForkSignedTxOutput to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of an OutPoint. */
+    interface IOutPoint {
+
+        /** OutPoint txHash */
+        txHash?: (string|null);
+
+        /** OutPoint index */
+        index?: (number|null);
+    }
+
+    /** Represents an OutPoint. */
+    class OutPoint implements IOutPoint {
+
+        /**
+         * Constructs a new OutPoint.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: transaction.IOutPoint);
+
+        /** OutPoint txHash. */
+        public txHash: string;
+
+        /** OutPoint index. */
+        public index: number;
+
+        /**
+         * Creates a new OutPoint instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns OutPoint instance
+         */
+        public static create(properties?: transaction.IOutPoint): transaction.OutPoint;
+
+        /**
+         * Encodes the specified OutPoint message. Does not implicitly {@link transaction.OutPoint.verify|verify} messages.
+         * @param message OutPoint message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: transaction.IOutPoint, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified OutPoint message, length delimited. Does not implicitly {@link transaction.OutPoint.verify|verify} messages.
+         * @param message OutPoint message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: transaction.IOutPoint, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an OutPoint message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns OutPoint
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): transaction.OutPoint;
+
+        /**
+         * Decodes an OutPoint message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns OutPoint
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): transaction.OutPoint;
+
+        /**
+         * Verifies an OutPoint message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an OutPoint message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns OutPoint
+         */
+        public static fromObject(object: { [k: string]: any }): transaction.OutPoint;
+
+        /**
+         * Creates a plain object from an OutPoint message. Also converts values to other types if specified.
+         * @param message OutPoint
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: transaction.OutPoint, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this OutPoint to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a Witness. */
+    interface IWitness {
+
+        /** Witness lock */
+        lock?: (string|null);
+
+        /** Witness inputType */
+        inputType?: (string|null);
+
+        /** Witness outputType */
+        outputType?: (string|null);
+    }
+
+    /** Represents a Witness. */
+    class Witness implements IWitness {
+
+        /**
+         * Constructs a new Witness.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: transaction.IWitness);
+
+        /** Witness lock. */
+        public lock: string;
+
+        /** Witness inputType. */
+        public inputType: string;
+
+        /** Witness outputType. */
+        public outputType: string;
+
+        /**
+         * Creates a new Witness instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns Witness instance
+         */
+        public static create(properties?: transaction.IWitness): transaction.Witness;
+
+        /**
+         * Encodes the specified Witness message. Does not implicitly {@link transaction.Witness.verify|verify} messages.
+         * @param message Witness message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: transaction.IWitness, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified Witness message, length delimited. Does not implicitly {@link transaction.Witness.verify|verify} messages.
+         * @param message Witness message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: transaction.IWitness, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a Witness message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns Witness
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): transaction.Witness;
+
+        /**
+         * Decodes a Witness message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns Witness
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): transaction.Witness;
+
+        /**
+         * Verifies a Witness message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a Witness message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns Witness
+         */
+        public static fromObject(object: { [k: string]: any }): transaction.Witness;
+
+        /**
+         * Creates a plain object from a Witness message. Also converts values to other types if specified.
+         * @param message Witness
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: transaction.Witness, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this Witness to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a Script. */
+    interface IScript {
+
+        /** Script args */
+        args?: (string|null);
+
+        /** Script codeHash */
+        codeHash?: (string|null);
+
+        /** Script hashType */
+        hashType?: (string|null);
+    }
+
+    /** Represents a Script. */
+    class Script implements IScript {
+
+        /**
+         * Constructs a new Script.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: transaction.IScript);
+
+        /** Script args. */
+        public args: string;
+
+        /** Script codeHash. */
+        public codeHash: string;
+
+        /** Script hashType. */
+        public hashType: string;
+
+        /**
+         * Creates a new Script instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns Script instance
+         */
+        public static create(properties?: transaction.IScript): transaction.Script;
+
+        /**
+         * Encodes the specified Script message. Does not implicitly {@link transaction.Script.verify|verify} messages.
+         * @param message Script message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: transaction.IScript, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified Script message, length delimited. Does not implicitly {@link transaction.Script.verify|verify} messages.
+         * @param message Script message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: transaction.IScript, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a Script message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns Script
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): transaction.Script;
+
+        /**
+         * Decodes a Script message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns Script
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): transaction.Script;
+
+        /**
+         * Verifies a Script message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a Script message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns Script
+         */
+        public static fromObject(object: { [k: string]: any }): transaction.Script;
+
+        /**
+         * Creates a plain object from a Script message. Also converts values to other types if specified.
+         * @param message Script
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: transaction.Script, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this Script to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a CellInput. */
+    interface ICellInput {
+
+        /** CellInput previousOutput */
+        previousOutput?: (transaction.IOutPoint|null);
+
+        /** CellInput since */
+        since?: (string|null);
+    }
+
+    /** Represents a CellInput. */
+    class CellInput implements ICellInput {
+
+        /**
+         * Constructs a new CellInput.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: transaction.ICellInput);
+
+        /** CellInput previousOutput. */
+        public previousOutput?: (transaction.IOutPoint|null);
+
+        /** CellInput since. */
+        public since: string;
+
+        /**
+         * Creates a new CellInput instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns CellInput instance
+         */
+        public static create(properties?: transaction.ICellInput): transaction.CellInput;
+
+        /**
+         * Encodes the specified CellInput message. Does not implicitly {@link transaction.CellInput.verify|verify} messages.
+         * @param message CellInput message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: transaction.ICellInput, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified CellInput message, length delimited. Does not implicitly {@link transaction.CellInput.verify|verify} messages.
+         * @param message CellInput message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: transaction.ICellInput, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a CellInput message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns CellInput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): transaction.CellInput;
+
+        /**
+         * Decodes a CellInput message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns CellInput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): transaction.CellInput;
+
+        /**
+         * Verifies a CellInput message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a CellInput message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns CellInput
+         */
+        public static fromObject(object: { [k: string]: any }): transaction.CellInput;
+
+        /**
+         * Creates a plain object from a CellInput message. Also converts values to other types if specified.
+         * @param message CellInput
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: transaction.CellInput, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this CellInput to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a CachedCell. */
+    interface ICachedCell {
+
+        /** CachedCell capacity */
+        capacity?: (number|Long|null);
+
+        /** CachedCell lock */
+        lock?: (transaction.IScript|null);
+
+        /** CachedCell outPoint */
+        outPoint?: (transaction.IOutPoint|null);
+
+        /** CachedCell derivedPath */
+        derivedPath?: (string|null);
+    }
+
+    /** Represents a CachedCell. */
+    class CachedCell implements ICachedCell {
+
+        /**
+         * Constructs a new CachedCell.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: transaction.ICachedCell);
+
+        /** CachedCell capacity. */
+        public capacity: (number|Long);
+
+        /** CachedCell lock. */
+        public lock?: (transaction.IScript|null);
+
+        /** CachedCell outPoint. */
+        public outPoint?: (transaction.IOutPoint|null);
+
+        /** CachedCell derivedPath. */
+        public derivedPath: string;
+
+        /**
+         * Creates a new CachedCell instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns CachedCell instance
+         */
+        public static create(properties?: transaction.ICachedCell): transaction.CachedCell;
+
+        /**
+         * Encodes the specified CachedCell message. Does not implicitly {@link transaction.CachedCell.verify|verify} messages.
+         * @param message CachedCell message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: transaction.ICachedCell, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified CachedCell message, length delimited. Does not implicitly {@link transaction.CachedCell.verify|verify} messages.
+         * @param message CachedCell message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: transaction.ICachedCell, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a CachedCell message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns CachedCell
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): transaction.CachedCell;
+
+        /**
+         * Decodes a CachedCell message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns CachedCell
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): transaction.CachedCell;
+
+        /**
+         * Verifies a CachedCell message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a CachedCell message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns CachedCell
+         */
+        public static fromObject(object: { [k: string]: any }): transaction.CachedCell;
+
+        /**
+         * Creates a plain object from a CachedCell message. Also converts values to other types if specified.
+         * @param message CachedCell
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: transaction.CachedCell, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this CachedCell to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a CkbTxInput. */
+    interface ICkbTxInput {
+
+        /** CkbTxInput inputs */
+        inputs?: (transaction.ICellInput[]|null);
+
+        /** CkbTxInput witnesses */
+        witnesses?: (transaction.IWitness[]|null);
+
+        /** CkbTxInput cachedCells */
+        cachedCells?: (transaction.ICachedCell[]|null);
+
+        /** CkbTxInput txHash */
+        txHash?: (string|null);
+    }
+
+    /** Represents a CkbTxInput. */
+    class CkbTxInput implements ICkbTxInput {
+
+        /**
+         * Constructs a new CkbTxInput.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: transaction.ICkbTxInput);
+
+        /** CkbTxInput inputs. */
+        public inputs: transaction.ICellInput[];
+
+        /** CkbTxInput witnesses. */
+        public witnesses: transaction.IWitness[];
+
+        /** CkbTxInput cachedCells. */
+        public cachedCells: transaction.ICachedCell[];
+
+        /** CkbTxInput txHash. */
+        public txHash: string;
+
+        /**
+         * Creates a new CkbTxInput instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns CkbTxInput instance
+         */
+        public static create(properties?: transaction.ICkbTxInput): transaction.CkbTxInput;
+
+        /**
+         * Encodes the specified CkbTxInput message. Does not implicitly {@link transaction.CkbTxInput.verify|verify} messages.
+         * @param message CkbTxInput message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: transaction.ICkbTxInput, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified CkbTxInput message, length delimited. Does not implicitly {@link transaction.CkbTxInput.verify|verify} messages.
+         * @param message CkbTxInput message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: transaction.ICkbTxInput, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a CkbTxInput message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns CkbTxInput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): transaction.CkbTxInput;
+
+        /**
+         * Decodes a CkbTxInput message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns CkbTxInput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): transaction.CkbTxInput;
+
+        /**
+         * Verifies a CkbTxInput message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a CkbTxInput message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns CkbTxInput
+         */
+        public static fromObject(object: { [k: string]: any }): transaction.CkbTxInput;
+
+        /**
+         * Creates a plain object from a CkbTxInput message. Also converts values to other types if specified.
+         * @param message CkbTxInput
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: transaction.CkbTxInput, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this CkbTxInput to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a CkbTxOutput. */
+    interface ICkbTxOutput {
+
+        /** CkbTxOutput txHash */
+        txHash?: (string|null);
+
+        /** CkbTxOutput witnesses */
+        witnesses?: (string[]|null);
+    }
+
+    /** Represents a CkbTxOutput. */
+    class CkbTxOutput implements ICkbTxOutput {
+
+        /**
+         * Constructs a new CkbTxOutput.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: transaction.ICkbTxOutput);
+
+        /** CkbTxOutput txHash. */
+        public txHash: string;
+
+        /** CkbTxOutput witnesses. */
+        public witnesses: string[];
+
+        /**
+         * Creates a new CkbTxOutput instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns CkbTxOutput instance
+         */
+        public static create(properties?: transaction.ICkbTxOutput): transaction.CkbTxOutput;
+
+        /**
+         * Encodes the specified CkbTxOutput message. Does not implicitly {@link transaction.CkbTxOutput.verify|verify} messages.
+         * @param message CkbTxOutput message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: transaction.ICkbTxOutput, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified CkbTxOutput message, length delimited. Does not implicitly {@link transaction.CkbTxOutput.verify|verify} messages.
+         * @param message CkbTxOutput message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: transaction.ICkbTxOutput, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a CkbTxOutput message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns CkbTxOutput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): transaction.CkbTxOutput;
+
+        /**
+         * Decodes a CkbTxOutput message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns CkbTxOutput
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): transaction.CkbTxOutput;
+
+        /**
+         * Verifies a CkbTxOutput message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a CkbTxOutput message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns CkbTxOutput
+         */
+        public static fromObject(object: { [k: string]: any }): transaction.CkbTxOutput;
+
+        /**
+         * Creates a plain object from a CkbTxOutput message. Also converts values to other types if specified.
+         * @param message CkbTxOutput
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: transaction.CkbTxOutput, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this CkbTxOutput to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };

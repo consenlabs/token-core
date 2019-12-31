@@ -18,9 +18,9 @@ const getParamsAndResponseType = (method: any, params: any) => {
         protoRoot.api.HdStoreCreateParam,
         protoRoot.api.WalletResult,
       ]
-    case 'hd_store_derive':
+    case 'keystore_common_derive':
       return [
-        protoRoot.api.HdStoreDeriveParam,
+        protoRoot.api.KeystoreCommonDeriveParam,
         protoRoot.api.AccountsResponse,
       ]
     case 'hd_store_import':
@@ -150,9 +150,9 @@ export default {
     return tcxApi('hd_store_import', params)
   },
 
-  async hdStoreDerive(params: api.IHdStoreDeriveParam): Promise<api.IAccountsResponse> {
+  async hdStoreDerive(params: api.IKeystoreCommonDeriveParam): Promise<api.IAccountsResponse> {
     // @ts-ignore
-    return tcxApi('hd_store_derive', params)
+    return tcxApi('keystore_common_derive', params)
   },
 
   async hdStoreExport(params: api.IWalletKeyParam): Promise<api.IKeystoreCommonExportResult> {

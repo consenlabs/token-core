@@ -23,6 +23,9 @@ pub enum Error {
     #[fail(display = "required_witness")]
     RequiredWitness,
 
+    #[fail(display = "invalid_input_cells")]
+    InvalidInputCells,
+
     #[fail(display = "required_output_data")]
     RequiredOutputsData,
 

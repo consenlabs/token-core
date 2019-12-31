@@ -29,22 +29,18 @@ mod tests {
 
     use tcx_chain::KeystoreGuard;
     use tcx_chain::{HdKeystore, Keystore, Metadata};
-    use tcx_constants::CoinInfo;
     use tcx_constants::CurveType;
+    use tcx_constants::{CoinInfo, TEST_MNEMONIC, TEST_PASSWORD};
 
-    const PASSWORD: &str = "Insecure Password";
     const BIP_PATH: &str = "m/44'/145'/0'";
-    const MNEMONIC: &str =
-        "inject kidney empty canal shadow pact comfort wife crush horse wife sketch";
 
     #[test]
     fn bch_create() {
         let mut meta = Metadata::default();
         meta.name = "CreateTest".to_string();
 
-        let mut keystore = Keystore::Hd(HdKeystore::new("Insecure Password", meta));
+        let mut keystore = Keystore::Hd(HdKeystore::new(TEST_PASSWORD, meta));
 
-        //        let coin = BchCoin::<Secp256k1Curve, BchAddress>::append_account(&mut keystore, PASSWORD, BIP_PATH);
         let bch_coin = CoinInfo {
             coin: "BITCOINCASH".to_string(),
             derivation_path: BIP_PATH.to_string(),
@@ -52,7 +48,7 @@ mod tests {
             network: "MAINNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
+        let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, TEST_PASSWORD).unwrap();
 
         let _ = guard
             .keystore_mut()
@@ -78,7 +74,8 @@ mod tests {
         let mut meta = Metadata::default();
         meta.name = "RecoverTest".to_string();
 
-        let mut keystore = Keystore::Hd(HdKeystore::from_mnemonic(&MNEMONIC, &PASSWORD, meta));
+        let mut keystore =
+            Keystore::Hd(HdKeystore::from_mnemonic(&TEST_MNEMONIC, &TEST_PASSWORD, meta).unwrap());
 
         let bch_coin = CoinInfo {
             coin: "BITCOINCASH".to_string(),
@@ -88,7 +85,7 @@ mod tests {
             seg_wit: "NONE".to_string(),
         };
 
-        let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, PASSWORD).unwrap();
+        let mut guard = KeystoreGuard::unlock_by_password(&mut keystore, TEST_PASSWORD).unwrap();
 
         let _ = guard
             .keystore_mut()

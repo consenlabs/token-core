@@ -1,4 +1,4 @@
-import { id, toHaveText, readTextValue } from '../../../utils.js'
+import { id, toHaveText, readTextValue, label } from '../../../utils.js'
 
 export default async function (params) {
   const { chainType, password, address, network, segWit } = params

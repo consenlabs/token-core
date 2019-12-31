@@ -11,6 +11,7 @@ examples/iOSExample/TokenCoreX/**
 examples/RN/ios/TokenCoreX/**
 tools/android-token-v2-build.sh
 tools/ios-token-v2-build.sh
+tools/ios-token-v2-simulator-build.sh
 *.rlib
 *.dll
 .gdb_history
@@ -33,3 +34,4 @@ tcx/cheader/tcx.h
 
 lcov.info
 ccov/
+tarpaulin-report.html
