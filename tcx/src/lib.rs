@@ -157,8 +157,6 @@ mod tests {
     static OTHER_MNEMONIC: &'static str =
         "calm release clay imitate top extend close draw quiz refuse shuffle injury";
 
-    static WALLET_ID: &'static str = "7719d1e3-3f67-439f-a18e-d9ae413e00e1";
-
     fn _to_c_char(str: &str) -> *const c_char {
         CString::new(str).unwrap().into_raw()
     }
