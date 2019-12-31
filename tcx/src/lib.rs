@@ -38,12 +38,6 @@ pub unsafe extern "C" fn free_const_string(s: *const c_char) {
     CStr::from_ptr(s);
 }
 
-//fn parse_arguments(json_str: *const c_char) -> Value {
-//    let json_c_str = unsafe { CStr::from_ptr(json_str) };
-//    let json_str = json_c_str.to_str().expect("parse_arguments to_str");
-//    serde_json::from_str(json_str).expect("parse_arguments serde_json")
-//}
-
 /// dispatch protobuf rpc call
 #[no_mangle]
 pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
@@ -98,33 +92,6 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
     let ret_str = hex::encode(reply);
     CString::new(ret_str).unwrap().into_raw()
 }
-//
-//#[no_mangle]
-//pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
-//    let v = parse_arguments(json_str);
-//    // !!! warning !!! just set_panic_hook when debug
-//    // set_panic_hook();
-//    landingpad(|| init_token_core_x_internal(&v));
-//}
-//
-//fn init_token_core_x_internal(v: &Value) -> Result<()> {
-//    let file_dir = v["fileDir"].as_str().expect("fileDir");
-//    let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
-//    let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
-//
-//    if let Some(is_debug) = v["isDebug"].as_bool() {
-//        *IS_DEBUG.write() = is_debug;
-//        if is_debug {
-//            *KDF_ROUNDS.write() = 1024;
-//        }
-//    }
-//
-//    *WALLET_FILE_DIR.write() = file_dir.to_string();
-//    *XPUB_COMMON_KEY_128.write() = xpub_common_key.to_string();
-//    *XPUB_COMMON_IV.write() = xpub_common_iv.to_string();
-//    let _ = handler::scan_keystores();
-//    Ok(())
-//}
 
 #[no_mangle]
 pub unsafe extern "C" fn clear_err() {
@@ -158,6 +125,7 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 mod tests {
     use super::*;
     use crate::filemanager::KEYSTORE_MAP;
+    use error_handling::Result;
     use std::ffi::{CStr, CString};
     use std::fs::remove_file;
     use std::os::raw::c_char;
@@ -270,7 +238,7 @@ mod tests {
         WalletResult::decode(ret).unwrap()
     }
 
-    fn import_and_derive(derivation: Derivation) -> (WalletResult) {
+    fn import_and_derive(derivation: Derivation) -> WalletResult {
         let param = HdStoreImportParam {
             mnemonic: TEST_MNEMONIC.to_string(),
             password: TEST_PASSWORD.to_string(),
