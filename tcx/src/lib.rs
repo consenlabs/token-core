@@ -41,11 +41,11 @@ pub unsafe extern "C" fn free_const_string(s: *const c_char) {
     CStr::from_ptr(s);
 }
 
-fn parse_arguments(json_str: *const c_char) -> Value {
-    let json_c_str = unsafe { CStr::from_ptr(json_str) };
-    let json_str = json_c_str.to_str().expect("parse_arguments to_str");
-    serde_json::from_str(json_str).expect("parse_arguments serde_json")
-}
+//fn parse_arguments(json_str: *const c_char) -> Value {
+//    let json_c_str = unsafe { CStr::from_ptr(json_str) };
+//    let json_str = json_c_str.to_str().expect("parse_arguments to_str");
+//    serde_json::from_str(json_str).expect("parse_arguments serde_json")
+//}
 
 /// dispatch protobuf rpc call
 #[no_mangle]
@@ -101,33 +101,33 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
     let ret_str = hex::encode(reply);
     CString::new(ret_str).unwrap().into_raw()
 }
-
-#[no_mangle]
-pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
-    let v = parse_arguments(json_str);
-    // !!! warning !!! just set_panic_hook when debug
-    // set_panic_hook();
-    landingpad(|| init_token_core_x_internal(&v));
-}
-
-fn init_token_core_x_internal(v: &Value) -> Result<()> {
-    let file_dir = v["fileDir"].as_str().expect("fileDir");
-    let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
-    let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
-
-    if let Some(is_debug) = v["isDebug"].as_bool() {
-        *IS_DEBUG.write() = is_debug;
-        if is_debug {
-            *KDF_ROUNDS.write() = 1024;
-        }
-    }
-
-    *WALLET_FILE_DIR.write() = file_dir.to_string();
-    *XPUB_COMMON_KEY_128.write() = xpub_common_key.to_string();
-    *XPUB_COMMON_IV.write() = xpub_common_iv.to_string();
-    let _ = handler::scan_keystores();
-    Ok(())
-}
+//
+//#[no_mangle]
+//pub unsafe extern "C" fn init_token_core_x(json_str: *const c_char) {
+//    let v = parse_arguments(json_str);
+//    // !!! warning !!! just set_panic_hook when debug
+//    // set_panic_hook();
+//    landingpad(|| init_token_core_x_internal(&v));
+//}
+//
+//fn init_token_core_x_internal(v: &Value) -> Result<()> {
+//    let file_dir = v["fileDir"].as_str().expect("fileDir");
+//    let xpub_common_key = v["xpubCommonKey128"].as_str().expect("XPubCommonKey128");
+//    let xpub_common_iv = v["xpubCommonIv"].as_str().expect("xpubCommonIv");
+//
+//    if let Some(is_debug) = v["isDebug"].as_bool() {
+//        *IS_DEBUG.write() = is_debug;
+//        if is_debug {
+//            *KDF_ROUNDS.write() = 1024;
+//        }
+//    }
+//
+//    *WALLET_FILE_DIR.write() = file_dir.to_string();
+//    *XPUB_COMMON_KEY_128.write() = xpub_common_key.to_string();
+//    *XPUB_COMMON_IV.write() = xpub_common_iv.to_string();
+//    let _ = handler::scan_keystores();
+//    Ok(())
+//}
 
 #[no_mangle]
 pub unsafe extern "C" fn clear_err() {
@@ -177,7 +177,7 @@ mod tests {
     use crate::api::{HdStoreImportParam, WalletResult};
     use crate::handler::hd_store_import;
     use crate::handler::{encode_message, private_key_store_import};
-    use crate::init_token_core_x;
+    //    use crate::init_token_core_x;
     use prost::Message;
     use tcx_chain::Keystore;
     use tcx_constants::{TEST_MNEMONIC, TEST_PASSWORD};
@@ -209,11 +209,11 @@ mod tests {
             fs::create_dir_all(p).expect("shoud create filedir");
         }
 
-        *tcx_crypto::KDF_ROUNDS.write() = 1024;
         let param = InitTokenCoreXParam {
             file_dir: "/tmp/imtoken/wallets".to_string(),
             xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
             xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
+            is_debug: true,
         };
 
         handler::init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");
@@ -322,25 +322,6 @@ mod tests {
     }
 
     #[test]
-    fn init_token_core_x_test() {
-        let init_params = r#"
-        {
-            "fileDir": "../test-data",
-            "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
-            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799",
-            "isDebug": true
-        }
-        "#;
-        unsafe {
-            init_token_core_x(_to_c_char(init_params));
-        }
-
-        let map = KEYSTORE_MAP.read();
-        let ks: &Keystore = map.get(WALLET_ID).unwrap();
-        assert_eq!(ks.id(), WALLET_ID);
-    }
-
-    #[test]
     fn test_call_tcx_api() {
         run_test(|| {
             let import_param = HdStoreImportParam {
@@ -359,17 +340,15 @@ mod tests {
 
     #[test]
     pub fn test_scan_keystores() {
-        let init_params = r#"
-        {
-            "fileDir": "../test-data",
-            "xpubCommonKey128": "B888D25EC8C12BD5043777B1AC49F872",
-            "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799",
-            "isDebug": true
-        }
-        "#;
-        unsafe {
-            init_token_core_x(_to_c_char(init_params));
-        }
+        let param = InitTokenCoreXParam {
+            file_dir: "../test-data".to_string(),
+            xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
+            xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
+            is_debug: true,
+        };
+
+        handler::init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");
+
         let keystore_count;
         {
             let mut map = KEYSTORE_MAP.write();
