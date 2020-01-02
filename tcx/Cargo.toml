@@ -6,8 +6,8 @@ edition = "2018"
 
 [dependencies]
 tcx-proto = { path = "../tcx-proto" }
-tcx-crypto = { path = "../tcx-crypto" }
-tcx-chain = { path = "../tcx-chain" }
+tcx-crypto = { path = "../tcx-crypto", features = ["cache_dk"] }
+tcx-chain = { path = "../tcx-chain", features = ["cache_dk"] }
 tcx-btc-fork = {path = "../tcx-btc-fork"}
 tcx-bch = {path = "../tcx-bch"}
 tcx-tron = {path = "../tcx-tron"}

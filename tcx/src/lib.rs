@@ -10,10 +10,10 @@ pub mod error_handling;
 pub mod handler;
 use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
-    encode_message, hd_store_create, hd_store_export, hd_store_import, keystore_common_accounts,
-    keystore_common_delete, keystore_common_derive, keystore_common_exists, keystore_common_verify,
-    private_key_store_export, private_key_store_import, sign_tx, tron_sign_message,
-    unlock_then_crash,
+    encode_message, get_derived_key, hd_store_create, hd_store_export, hd_store_import,
+    keystore_common_accounts, keystore_common_delete, keystore_common_derive,
+    keystore_common_exists, keystore_common_verify, private_key_store_export,
+    private_key_store_import, sign_tx, tron_sign_message, unlock_then_crash,
 };
 mod filemanager;
 
@@ -84,6 +84,8 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
 
         "tron_sign_msg" => landingpad(|| tron_sign_message(&action.param.unwrap().value)),
+        // !!! WARNING !!! used for `cache_dk` feature
+        "get_derived_key" => landingpad(|| get_derived_key(&action.param.unwrap().value)),
         // !!! WARNING !!! used for test only
         "unlock_then_crash" => landingpad(|| unlock_then_crash(&action.param.unwrap().value)),
         _ => landingpad(|| Err(format_err!("unsupported_method"))),
@@ -134,7 +136,7 @@ mod tests {
 
     use crate::api::keystore_common_derive_param::Derivation;
     use crate::api::{
-        AccountsResponse, HdStoreCreateParam, InitTokenCoreXParam, KeyType,
+        AccountsResponse, DerivedKeyResult, HdStoreCreateParam, InitTokenCoreXParam, KeyType,
         KeystoreCommonAccountsParam, KeystoreCommonDeriveParam, KeystoreCommonExistsParam,
         KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
         PrivateKeyStoreImportParam, Response, SignParam, WalletKeyParam,
@@ -1267,6 +1269,63 @@ mod tests {
 
             remove_created_wallet(&wallet.id);
         })
+    }
+
+    #[test]
+    fn test_get_derived_key() {
+        let param = InitTokenCoreXParam {
+            file_dir: "./test-data".to_string(),
+            xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
+            xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
+            is_debug: true,
+        };
+
+        handler::init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");
+
+        let param = WalletKeyParam {
+            id: "cb1ba2d7-7b89-4595-9753-d16b6e317c6b".to_string(),
+            password: "WRONG PASSWORD".to_string(),
+        };
+
+        let ret = call_api("get_derived_key", param);
+        assert!(ret.is_err());
+        assert_eq!(format!("{}", ret.err().unwrap()), "password_incorrect");
+
+        let param = WalletKeyParam {
+            id: "cb1ba2d7-7b89-4595-9753-d16b6e317c6b".to_string(),
+            password: TEST_PASSWORD.to_string(),
+        };
+
+        let ret = call_api("get_derived_key", param).unwrap();
+        let dk_ret: DerivedKeyResult = DerivedKeyResult::decode(ret).unwrap();
+        assert_eq!(dk_ret.derived_key, "19a38ab626aaf8806e223833b29da7aa1d0623e282164d1dd73b0b5e0a88fb4b88937efadd9ca9d4ee931d7b2b33594d75ac4f4d651602819998237b27860fa");
+    }
+
+    #[test]
+    fn test_export_used_dk() {
+        let param = InitTokenCoreXParam {
+            file_dir: "../test-data".to_string(),
+            xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
+            xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
+            is_debug: true,
+        };
+
+        handler::init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");
+
+        let param = PrivateKeyStoreExportParam {
+            id: "cb1ba2d7-7b89-4595-9753-d16b6e317c6b".to_string(),
+            password: "119a38ab626aaf8806e223833b29da7aa1d0623e282164d1dd73b0b5e0a88fb4b88937efadd9ca9d4ee931d7b2b33594d75ac4f4d651602819998237b27860fa".to_string(),
+            chain_type: "TRON".to_string(),
+            network: "".to_string()
+        };
+
+        let ret = call_api("private_key_store_export", param).unwrap();
+        let export_ret: KeystoreCommonExportResult =
+            KeystoreCommonExportResult::decode(ret).unwrap();
+        assert_eq!(
+            "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+            export_ret.value
+        );
     }
 
     #[test]

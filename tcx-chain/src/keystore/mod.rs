@@ -186,6 +186,14 @@ impl Keystore {
         }
     }
 
+    #[cfg(feature = "cache_dk")]
+    pub fn get_derived_key(&self, password: &str) -> Result<String> {
+        self.store()
+            .crypto
+            .generate_derived_key(password)
+            .map(|arr| hex::encode(arr))
+    }
+
     pub fn is_locked(&self) -> bool {
         match self {
             Keystore::PrivateKey(ks) => ks.is_locked(),

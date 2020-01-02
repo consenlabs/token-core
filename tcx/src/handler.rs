@@ -20,8 +20,8 @@ use tcx_tron::TrxAddress;
 
 use crate::api::keystore_common_derive_param::Derivation;
 use crate::api::{
-    AccountResponse, AccountsResponse, HdStoreCreateParam, HdStoreImportParam, KeyType,
-    KeystoreCommonAccountsParam, KeystoreCommonDeriveParam, KeystoreCommonExistsParam,
+    AccountResponse, AccountsResponse, DerivedKeyResult, HdStoreCreateParam, HdStoreImportParam,
+    KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam, KeystoreCommonExistsParam,
     KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
     PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
 };
@@ -545,6 +545,24 @@ pub(crate) fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
         .keystore_mut()
         .sign_message(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
+}
+
+pub(crate) fn get_derived_key(data: &[u8]) -> Result<Vec<u8>> {
+    let param: WalletKeyParam = WalletKeyParam::decode(data).unwrap();
+    let mut map = KEYSTORE_MAP.write();
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    //    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+    let dk = keystore.get_derived_key(&param.password)?;
+    println!("dk: {}", dk);
+    let ret = DerivedKeyResult {
+        id: param.id.to_owned(),
+        derived_key: dk,
+    };
+    encode_message(ret)
 }
 
 pub(crate) fn unlock_then_crash(data: &[u8]) -> Result<Vec<u8>> {

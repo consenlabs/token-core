@@ -264,8 +264,15 @@ where
     }
 
     fn decrypt_data(&self, password: &str, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
-        let derived_key = self.generate_derived_key(password)?;
+        if cfg!(feature = "cache_dk") {
+            let derived_key = hex::decode(password)?;
+            if self.verify_derived_key(&derived_key) {
+                let key = &derived_key[0..16];
+                return super::aes::ctr::decrypt_nopadding(encrypted, key, &iv);
+            }
+        }
 
+        let derived_key = self.generate_derived_key(password)?;
         if !self.verify_derived_key(&derived_key) {
             return Err(Error::PasswordIncorrect.into());
         }
@@ -273,6 +280,18 @@ where
         let key = &derived_key[0..16];
         super::aes::ctr::decrypt_nopadding(encrypted, key, &iv)
     }
+
+    //    #[cfg(not(feature = "cache_dk"))]
+    //    fn decrypt_data(&self, password: &str, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
+    //
+    //        let derived_key = self.generate_derived_key(password)?;
+    //        if !self.verify_derived_key(&derived_key) {
+    //            return Err(Error::PasswordIncorrect.into());
+    //        }
+    //
+    //        let key = &derived_key[0..16];
+    //        super::aes::ctr::decrypt_nopadding(encrypted, key, &iv)
+    //    }
 
     pub fn verify_derived_key(&self, dk: &[u8]) -> bool {
         let cipher_bytes = Vec::from_hex(&self.ciphertext).expect("vec::from_hex");
