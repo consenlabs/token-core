@@ -13,10 +13,10 @@ pub mod error_handling;
 pub mod handler;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
-    encode_message, hd_store_create, hd_store_export, hd_store_import, keystore_common_accounts,
-    keystore_common_delete, keystore_common_derive, keystore_common_exists, keystore_common_verify,
-    private_key_store_export, private_key_store_import, sign_tx, tron_sign_message,
-    unlock_then_crash,
+    encode_message, export_mnemonic, export_private_key, hd_store_create, hd_store_export,
+    hd_store_import, keystore_common_accounts, keystore_common_delete, keystore_common_derive,
+    keystore_common_exists, keystore_common_verify, private_key_store_export,
+    private_key_store_import, sign_tx, tron_sign_message, unlock_then_crash,
 };
 mod filemanager;
 use crate::filemanager::WALLET_FILE_DIR;
@@ -67,6 +67,7 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "hd_store_create" => landingpad(|| hd_store_create(&action.param.unwrap().value)),
         "hd_store_import" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
         "hd_store_export" => landingpad(|| hd_store_export(&action.param.unwrap().value)),
+        "export_mnemonic" => landingpad(|| export_mnemonic(&action.param.unwrap().value)),
         "keystore_common_derive" => {
             landingpad(|| keystore_common_derive(&action.param.unwrap().value))
         }
@@ -77,6 +78,7 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "private_key_store_export" => {
             landingpad(|| private_key_store_export(&action.param.unwrap().value))
         }
+        "export_private_key" => landingpad(|| export_private_key(&action.param.unwrap().value)),
         "keystore_common_verify" => {
             landingpad(|| keystore_common_verify(&action.param.unwrap().value))
         }
@@ -169,7 +171,7 @@ mod tests {
 
     use crate::api::keystore_common_derive_param::Derivation;
     use crate::api::{
-        AccountsResponse, HdStoreCreateParam, InitTokenCoreXParam, KeyType,
+        AccountsResponse, ExportPrivateKeyParam, HdStoreCreateParam, InitTokenCoreXParam, KeyType,
         KeystoreCommonAccountsParam, KeystoreCommonDeriveParam, KeystoreCommonExistsParam,
         KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
         PrivateKeyStoreImportParam, Response, SignParam, WalletKeyParam,
@@ -510,6 +512,38 @@ mod tests {
     }
 
     #[test]
+    pub fn test_export_mnemonic() {
+        run_test(|| {
+            let wallet = import_default_wallet();
+
+            let param = WalletKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+            };
+            let ret = call_api("export_mnemonic", param).unwrap();
+            let result: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(&ret).unwrap();
+
+            assert_eq!(result.r#type, KeyType::Mnemonic as i32);
+            assert_eq!(result.value, TEST_MNEMONIC);
+
+            let wallet = import_default_pk_store();
+
+            let param = WalletKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+            };
+            unsafe { clear_err() };
+            let ret = call_api("export_mnemonic", param);
+            assert!(ret.is_err());
+            assert_eq!(
+                format!("{}", ret.err().unwrap()),
+                "private_keystore_cannot_export_mnemonic"
+            );
+        })
+    }
+
+    #[test]
     pub fn test_keystore_common_store_derive() {
         run_test(|| {
             let param = HdStoreImportParam {
@@ -800,6 +834,61 @@ mod tests {
                 network: "".to_string(),
             };
             let ret_bytes = call_api("private_key_store_export", param).unwrap();
+            let export_result: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+            assert_eq!(
+                "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+                export_result.value
+            );
+            assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+            remove_created_wallet(&import_result.id);
+        })
+    }
+
+    #[test]
+    pub fn test_export_private_key() {
+        run_test(|| {
+            let import_result: WalletResult = import_default_pk_store();
+            let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "BITCOINCASH".to_string(),
+                network: "MAINNET".to_string(),
+                address: "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r".to_string(),
+            };
+            let ret_bytes = call_api("export_private_key", param).unwrap();
+            let export_result: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+            assert_eq!(
+                "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
+                export_result.value
+            );
+            assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+
+            let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "BITCOINCASH".to_string(),
+                network: "TESTNET".to_string(),
+                address: "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r".to_string(),
+            };
+            let ret_bytes = call_api("export_private_key", param).unwrap();
+            let export_result: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+            assert_eq!(
+                "cT4fTJyLd5RmSZFHnkGmVCzXDKuJLbyTt7cy77ghTTCagzNdPH1j",
+                export_result.value
+            );
+            assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+
+            let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "TRON".to_string(),
+                network: "".to_string(),
+                address: "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG".to_string(),
+            };
+            let ret_bytes = call_api("export_private_key", param).unwrap();
             let export_result: KeystoreCommonExportResult =
                 KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
             assert_eq!(

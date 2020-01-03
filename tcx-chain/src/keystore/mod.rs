@@ -207,6 +207,21 @@ impl Keystore {
         }
     }
 
+    pub fn export_private_key(&self, coin: &str, address: &str) -> Result<String> {
+        match self {
+            Keystore::PrivateKey(pk_store) => {
+                let _ = pk_store
+                    .account(coin, address)
+                    .ok_or(Error::AccountNotFound);
+                pk_store.private_key()
+            }
+            Keystore::Hd(hd_store) => {
+                let typed_pk = hd_store.find_private_key(coin, address)?;
+                Ok(hex::encode(typed_pk.to_bytes()))
+            }
+        }
+    }
+
     pub fn lock(&mut self) {
         match self {
             Keystore::PrivateKey(ks) => ks.lock(),

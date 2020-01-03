@@ -88,6 +88,14 @@ message AccountsResponse {
     repeated AccountResponse accounts = 1;
 }
 
+message KeystoreCommonExportParam {
+    string id = 1;
+    string password = 2;
+    KeyType type = 3;
+    string value = 4;
+}
+
+
 // FUNCTION: hd_store_export(KeystoreCommonExportResult): KeystoreCommonExistsResult
 //
 // export the mnemonic from a hd keystore
@@ -122,6 +130,14 @@ message PrivateKeyStoreExportParam {
     string password = 2;
     string chainType = 3;
     string network = 4;
+}
+
+message ExportPrivateKeyParam {
+    string id = 1;
+    string password = 2;
+    string chainType = 3;
+    string network = 4;
+    string address = 5;
 }
 
 /// Keystore Common
