@@ -51,7 +51,7 @@ and they aren't affected by some simple issues. If the checks fail, pre-commit w
 * [Crypto keys abstraction design](docs/KEYS.zh.md)
 * [Architecture design](docs/TECH.zh.md)
 * [How to add more blockchain support](docs/INTEGRATION.md)
-* [Security](Security.md) including the bug bounty program
+* [Security](SECURITY.md) including the bug bounty program
 * [FAQ](docs/FAQ.md)
 
 ## License
