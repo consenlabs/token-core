@@ -3,7 +3,7 @@
 ## Introduction
 TokenCore is a cross-platform library that implements crypto wallet functions for blockchains, exporting c interfaces in Protobuf protocol. This library is totally written in Rust, and now provides friendly interfaces for the mobile platform including ReactNative, iOS, and Android.
 
-imToken embed TokenCore library as the low-level cryptograph wallet layer and built the build user interface on this library.
+imToken embed TokenCore library as the low-level cryptograph wallet layer and built the user interface on this library.
 
 If you are new to the imToken wallet, please visit [our product help center](https://support.token.im/hc/en-us) before submitting reports.
 
