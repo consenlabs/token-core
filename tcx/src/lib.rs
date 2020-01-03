@@ -12,6 +12,7 @@ use crate::api::{Response, TcxAction};
 pub mod error_handling;
 pub mod handler;
 use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
+#[allow(deprecated)]
 use crate::handler::{
     encode_message, export_mnemonic, export_private_key, hd_store_create, hd_store_export,
     hd_store_import, keystore_common_accounts, keystore_common_delete, keystore_common_derive,
@@ -48,6 +49,8 @@ fn parse_arguments(json_str: *const c_char) -> Value {
 }
 
 /// dispatch protobuf rpc call
+///
+#[allow(deprecated)]
 #[no_mangle]
 pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
     let hex_c_str = CStr::from_ptr(hex_str);

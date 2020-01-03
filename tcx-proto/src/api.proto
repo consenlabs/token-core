@@ -122,6 +122,7 @@ message PrivateKeyStoreImportParam {
     bool overwrite = 3;
 }
 
+// Deprecated use ExportPrivateKeyParam instead
 // FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult
 //
 // export the private key from a private key keystore
@@ -132,6 +133,9 @@ message PrivateKeyStoreExportParam {
     string network = 4;
 }
 
+// FUNCTION: export_private_key(ExportPrivateKeyParam): KeystoreCommonExportResult
+//
+// export the private key from a private key keystore or a hd keystore
 message ExportPrivateKeyParam {
     string id = 1;
     string password = 2;

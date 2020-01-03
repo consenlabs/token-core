@@ -22,9 +22,8 @@ use crate::api::keystore_common_derive_param::Derivation;
 use crate::api::{
     AccountResponse, AccountsResponse, ExportPrivateKeyParam, HdStoreCreateParam,
     HdStoreImportParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
-    KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportParam,
-    KeystoreCommonExportResult, PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response,
-    WalletKeyParam, WalletResult,
+    KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
+    PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
@@ -196,6 +195,7 @@ pub(crate) fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     since = "2.5.1",
     note = "Please use the export_mnemonic function instead"
 )]
+#[allow(deprecated)]
 pub(crate) fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let param: WalletKeyParam = WalletKeyParam::decode(data).expect("hd_store_export");
     let mut map = KEYSTORE_MAP.write();
