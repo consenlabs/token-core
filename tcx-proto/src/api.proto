@@ -141,7 +141,8 @@ message ExportPrivateKeyParam {
     string password = 2;
     string chainType = 3;
     string network = 4;
-    string address = 5;
+    string mainAddress = 5;
+    string path = 6;
 }
 
 /// Keystore Common

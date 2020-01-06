@@ -278,17 +278,25 @@ mod tests {
         WalletResult::decode(ret).unwrap()
     }
 
-    fn import_and_derive(derivation: Derivation) -> (WalletResult) {
-        let param = HdStoreImportParam {
-            mnemonic: TEST_MNEMONIC.to_string(),
+    fn import_and_derive(derivation: Derivation) -> WalletResult {
+        let mut wallet = import_default_wallet();
+
+        let param = KeystoreCommonDeriveParam {
+            id: wallet.id.to_string(),
             password: TEST_PASSWORD.to_string(),
-            source: "MNEMONIC".to_string(),
-            name: "test-wallet".to_string(),
-            password_hint: "imtoken".to_string(),
-            overwrite: true,
+            derivations: vec![derivation],
         };
-        let ret = call_api("hd_store_import", param).unwrap();
-        let mut wallet: WalletResult = WalletResult::decode(&ret).unwrap();
+
+        let ret = call_api("keystore_common_derive", param).unwrap();
+        let accounts: AccountsResponse = AccountsResponse::decode(ret).unwrap();
+
+        wallet.accounts = accounts.accounts.clone();
+
+        wallet
+    }
+
+    fn import_pk_and_derive(derivation: Derivation) -> WalletResult {
+        let mut wallet = import_default_pk_store();
 
         let param = KeystoreCommonDeriveParam {
             id: wallet.id.to_string(),
@@ -851,54 +859,150 @@ mod tests {
     #[test]
     pub fn test_export_private_key() {
         run_test(|| {
-            let import_result: WalletResult = import_default_pk_store();
-            let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
-                id: import_result.id.to_string(),
-                password: TEST_PASSWORD.to_string(),
-                chain_type: "BITCOINCASH".to_string(),
-                network: "MAINNET".to_string(),
-                address: "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r".to_string(),
-            };
-            let ret_bytes = call_api("export_private_key", param).unwrap();
-            let export_result: KeystoreCommonExportResult =
-                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
-            assert_eq!(
+            let derivations = vec![
+                Derivation {
+                    chain_type: "BITCOINCASH".to_string(),
+                    path: "".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "BITCOINCASH".to_string(),
+                    path: "".to_string(),
+                    network: "TESTNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "TRON".to_string(),
+                    path: "".to_string(),
+                    network: "".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                },
+            ];
+            let pks = vec![
                 "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
-                export_result.value
-            );
-            assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
-
-            let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
-                id: import_result.id.to_string(),
-                password: TEST_PASSWORD.to_string(),
-                chain_type: "BITCOINCASH".to_string(),
-                network: "TESTNET".to_string(),
-                address: "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r".to_string(),
-            };
-            let ret_bytes = call_api("export_private_key", param).unwrap();
-            let export_result: KeystoreCommonExportResult =
-                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
-            assert_eq!(
                 "cT4fTJyLd5RmSZFHnkGmVCzXDKuJLbyTt7cy77ghTTCagzNdPH1j",
-                export_result.value
-            );
-            assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+                "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+            ];
+
+            for idx in 0..3 {
+                let import_result: WalletResult = import_pk_and_derive(derivations[idx].clone());
+                let acc = import_result.accounts.first().unwrap().clone();
+                let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
+                    id: import_result.id.to_string(),
+                    password: TEST_PASSWORD.to_string(),
+                    chain_type: acc.chain_type.to_string(),
+                    network: derivations[idx].network.to_string(),
+                    main_address: acc.address.clone(),
+                    path: "".to_string(),
+                };
+                let ret_bytes = call_api("export_private_key", param).unwrap();
+                let export_result: KeystoreCommonExportResult =
+                    KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+
+                // test export as mainnet
+                assert_eq!(pks[idx], export_result.value);
+                assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+                remove_created_wallet(&import_result.id);
+            }
+
+            let wallet = import_default_pk_store();
+            let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "LITECOIN".to_string(),
+                network: "MAINNET".to_string(),
+                main_address: "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP".to_string(),
+                path: "".to_string(),
+            };
+            let ret = call_api("export_private_key", param);
+            assert!(ret.is_err());
+            assert_eq!(format!("{}", ret.err().unwrap()), "account_not_found");
+        })
+    }
+
+    #[test]
+    pub fn test_export_private_key_from_hd_store() {
+        run_test(|| {
+            let derivations = vec![
+                Derivation {
+                    chain_type: "BITCOINCASH".to_string(),
+                    path: "m/44'/145'/0'/0/0".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "BITCOINCASH".to_string(),
+                    path: "m/44'/145'/0'/0/0".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "BITCOINCASH".to_string(),
+                    path: "m/44'/1'/0'/0/0".to_string(),
+                    network: "TESTNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "TRON".to_string(),
+                    path: "m/44'/195'/0'/0/0".to_string(),
+                    network: "".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                },
+            ];
+
+            let pks = vec![
+                "L4sbT9qTd5GDKFaM9MfyZXeY8RPZWkeKUPb9ZC4StYDnwVH1qrRL",
+                "KyD2UZX7jrY9qmsV3iP5mqTf77h6Xr6FFnoYUtXkDoWzZ9DX7rA4",
+                "cUA1rKq1QMav6UCgXENKgVn7wsBhBiu5RzD7FxRtpHo1BNryyDdu",
+                "345f4e2c420d795c890dbda57ced6a764e67791d77014c0c38d2cef23ae01474",
+            ];
+            let export_paths = vec![
+                "m/44'/145'/0'/0/0",
+                "m/44'/145'/0'/0/1",
+                "m/44'/1'/0'/0/1",
+                "m/44'/195'/0'/0/1",
+            ];
+            for idx in 0..derivations.len() {
+                let import_result: WalletResult = import_and_derive(derivations[idx].clone());
+                let acc = import_result.accounts.first().unwrap().clone();
+                let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
+                    id: import_result.id.to_string(),
+                    password: TEST_PASSWORD.to_string(),
+                    chain_type: acc.chain_type.to_string(),
+                    network: derivations[idx].network.to_string(),
+                    main_address: acc.address.to_string(),
+                    path: export_paths[idx].to_string(),
+                };
+                let ret_bytes = call_api("export_private_key", param).unwrap();
+                let export_result: KeystoreCommonExportResult =
+                    KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+
+                assert_eq!(pks[idx], export_result.value);
+                assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+                remove_created_wallet(&import_result.id);
+            }
+
+            let import_result: WalletResult = import_default_wallet();
 
             let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
                 id: import_result.id.to_string(),
                 password: TEST_PASSWORD.to_string(),
-                chain_type: "TRON".to_string(),
-                network: "".to_string(),
-                address: "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG".to_string(),
+                chain_type: "LITECOIN".to_string(),
+                network: "MAINNET".to_string(),
+                main_address: "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP".to_string(),
+                path: "m/44'/2'/0'/0/0".to_string(),
             };
-            let ret_bytes = call_api("export_private_key", param).unwrap();
-            let export_result: KeystoreCommonExportResult =
-                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
-            assert_eq!(
-                "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
-                export_result.value
-            );
-            assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+            let ret = call_api("export_private_key", param);
+            assert!(ret.is_err());
+            assert_eq!(format!("{}", ret.err().unwrap()), "account_not_found");
             remove_created_wallet(&import_result.id);
         })
     }

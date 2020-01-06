@@ -157,6 +157,7 @@ pub struct PrivateKeyStoreImportParam {
     #[prost(bool, tag = "3")]
     pub overwrite: bool,
 }
+/// Deprecated use ExportPrivateKeyParam instead
 /// FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult
 ///
 /// export the private key from a private key keystore
@@ -171,6 +172,9 @@ pub struct PrivateKeyStoreExportParam {
     #[prost(string, tag = "4")]
     pub network: std::string::String,
 }
+/// FUNCTION: export_private_key(ExportPrivateKeyParam): KeystoreCommonExportResult
+///
+/// export the private key from a private key keystore or a hd keystore
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExportPrivateKeyParam {
     #[prost(string, tag = "1")]
@@ -182,7 +186,9 @@ pub struct ExportPrivateKeyParam {
     #[prost(string, tag = "4")]
     pub network: std::string::String,
     #[prost(string, tag = "5")]
-    pub address: std::string::String,
+    pub main_address: std::string::String,
+    #[prost(string, tag = "6")]
+    pub path: std::string::String,
 }
 /// Keystore Common
 

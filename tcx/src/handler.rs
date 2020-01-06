@@ -397,11 +397,18 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
 
-    let pk_hex = guard
-        .keystore()
-        .export_private_key(&param.chain_type, &param.address)?;
+    let path = if param.path.is_empty() {
+        None
+    } else {
+        Some(param.path.as_str())
+    };
+
+    let pk_hex =
+        guard
+            .keystore_mut()
+            .export_private_key(&param.chain_type, &param.main_address, path)?;
 
     // private_key prefix is only about chain type and network
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
