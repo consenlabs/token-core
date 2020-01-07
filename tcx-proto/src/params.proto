@@ -139,10 +139,13 @@ message KeystoreCommonAccountsParam{
 // put it in the `input` field
 message SignParam {
     string id = 1;
-    string password = 2;
-    string chainType = 3;
-    string address = 4;
-    google.protobuf.Any input = 5;
+    oneof key {
+        string password = 2;
+        string derivedKey = 3;
+    }
+    string chainType = 4;
+    string address = 5;
+    google.protobuf.Any input = 6;
 }
 
 /// Other

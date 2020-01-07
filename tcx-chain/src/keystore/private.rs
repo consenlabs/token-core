@@ -1,7 +1,7 @@
 use super::Account;
 use super::{Address, Metadata, Source};
 use tcx_constants::CoinInfo;
-use tcx_crypto::{Crypto, Pbkdf2Params};
+use tcx_crypto::{Crypto, Key, Pbkdf2Params};
 
 use super::Error;
 use super::Result;
@@ -40,7 +40,13 @@ impl PrivateKeystore {
     }
 
     pub(crate) fn unlock_by_password(&mut self, password: &str) -> Result<()> {
-        self.private_key = Some(self.decrypt_private_key(password)?);
+        self.private_key = Some(self.decrypt_private_key(Key::Password(password.to_owned()))?);
+
+        Ok(())
+    }
+
+    pub(crate) fn unlock_by_derived_key(&mut self, derived_key: &str) -> Result<()> {
+        self.private_key = Some(self.decrypt_private_key(Key::DerivedKey(derived_key.to_owned()))?);
 
         Ok(())
     }
@@ -151,8 +157,8 @@ impl PrivateKeystore {
         Ok(hex::encode(&vec))
     }
 
-    fn decrypt_private_key(&self, password: &str) -> Result<Vec<u8>> {
-        self.store.crypto.decrypt(password)
+    fn decrypt_private_key(&self, key: Key) -> Result<Vec<u8>> {
+        self.store.crypto.decrypt(key)
     }
 }
 

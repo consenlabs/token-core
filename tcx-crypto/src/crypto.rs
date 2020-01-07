@@ -19,6 +19,11 @@ fn default_kdf_rounds() -> u32 {
     }
 }
 
+pub enum Key {
+    Password(String),
+    DerivedKey(String),
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EncPair {
@@ -215,10 +220,10 @@ where
         }
     }
 
-    pub fn decrypt(&self, password: &str) -> Result<Vec<u8>> {
+    pub fn decrypt(&self, key: Key) -> Result<Vec<u8>> {
         let encrypted: Vec<u8> = FromHex::from_hex(&self.ciphertext).expect("ciphertext");
         let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).expect("iv");
-        self.decrypt_data(password, &encrypted, &iv)
+        self.decrypt_data(key, &encrypted, &iv)
     }
 
     fn encrypt(&self, password: &str, origin: &[u8]) -> Vec<u8> {
@@ -240,10 +245,10 @@ where
         })
     }
 
-    pub fn decrypt_enc_pair(&self, password: &str, enc_pair: &EncPair) -> Result<Vec<u8>> {
+    pub fn decrypt_enc_pair(&self, key: Key, enc_pair: &EncPair) -> Result<Vec<u8>> {
         let encrypted: Vec<u8> = FromHex::from_hex(&enc_pair.enc_str).unwrap();
         let iv: Vec<u8> = FromHex::from_hex(&enc_pair.nonce).unwrap();
-        self.decrypt_data(password, &encrypted, &iv)
+        self.decrypt_data(key, &encrypted, &iv)
     }
 
     pub fn verify_password(&self, password: &str) -> bool {
@@ -263,16 +268,17 @@ where
         super::aes::ctr::encrypt_nopadding(origin, key, &iv)
     }
 
-    fn decrypt_data(&self, password: &str, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
-        if cfg!(feature = "cache_dk") {
-            let derived_key = hex::decode(password)?;
-            if self.verify_derived_key(&derived_key) {
-                let key = &derived_key[0..16];
-                return super::aes::ctr::decrypt_nopadding(encrypted, key, &iv);
+    fn decrypt_data(&self, password: Key, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
+        let derived_key = match password {
+            Key::Password(password) => self.generate_derived_key(&password)?,
+            Key::DerivedKey(dk) => {
+                if !(cfg!(feature = "cache_dk")) {
+                    return Err(Error::CachedDkFeatureNotSupport.into());
+                }
+                hex::decode(dk)?
             }
-        }
+        };
 
-        let derived_key = self.generate_derived_key(password)?;
         if !self.verify_derived_key(&derived_key) {
             return Err(Error::PasswordIncorrect.into());
         }
@@ -280,18 +286,6 @@ where
         let key = &derived_key[0..16];
         super::aes::ctr::decrypt_nopadding(encrypted, key, &iv)
     }
-
-    //    #[cfg(not(feature = "cache_dk"))]
-    //    fn decrypt_data(&self, password: &str, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
-    //
-    //        let derived_key = self.generate_derived_key(password)?;
-    //        if !self.verify_derived_key(&derived_key) {
-    //            return Err(Error::PasswordIncorrect.into());
-    //        }
-    //
-    //        let key = &derived_key[0..16];
-    //        super::aes::ctr::decrypt_nopadding(encrypted, key, &iv)
-    //    }
 
     pub fn verify_derived_key(&self, dk: &[u8]) -> bool {
         let cipher_bytes = Vec::from_hex(&self.ciphertext).expect("vec::from_hex");
@@ -347,10 +341,12 @@ mod tests {
     #[test]
     pub fn decrypt_crypto() {
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(TEST_PASSWORD, "TokenCoreX".as_bytes());
-        let cipher_bytes = crypto.decrypt(TEST_PASSWORD).expect("cipher bytes");
+        let cipher_bytes = crypto
+            .decrypt(Key::Password(TEST_PASSWORD.to_owned()))
+            .expect("cipher bytes");
         assert_eq!("TokenCoreX", String::from_utf8(cipher_bytes).unwrap());
 
-        let ret = crypto.decrypt("WrongPassword");
+        let ret = crypto.decrypt(Key::Password("WrongPassword".to_owned()));
         assert!(ret.is_err());
         let err = ret.err().unwrap();
         assert_eq!(
@@ -369,12 +365,14 @@ mod tests {
         assert_ne!("", enc_pair.nonce);
         assert_ne!("", enc_pair.enc_str);
 
-        let decrypted_bytes = crypto.decrypt_enc_pair(TEST_PASSWORD, &enc_pair).unwrap();
+        let decrypted_bytes = crypto
+            .decrypt_enc_pair(Key::Password(TEST_PASSWORD.to_owned()), &enc_pair)
+            .unwrap();
         let decrypted = String::from_utf8(decrypted_bytes).unwrap();
 
         assert_eq!("TokenCoreX", decrypted);
 
-        let ret = crypto.decrypt_enc_pair("WrongPassword", &enc_pair);
+        let ret = crypto.decrypt_enc_pair(Key::Password("WrongPassword".to_owned()), &enc_pair);
         assert!(ret.is_err());
         let err = ret.err().unwrap();
         assert_eq!(
@@ -465,7 +463,9 @@ mod tests {
   }"#;
 
         let crypto: Crypto<SCryptParams> = serde_json::from_str(data).unwrap();
-        let result = crypto.decrypt(&"Insecure Pa55w0rd").unwrap();
+        let result = crypto
+            .decrypt(Key::Password("Insecure Pa55w0rd".to_owned()))
+            .unwrap();
         let wif = String::from_utf8(result).unwrap();
         assert_eq!("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB", wif)
     }

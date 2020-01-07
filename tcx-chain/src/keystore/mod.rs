@@ -15,7 +15,7 @@ pub use self::{
 };
 
 use crate::signer::ChainSigner;
-use tcx_crypto::{Crypto, Pbkdf2Params};
+use tcx_crypto::{Crypto, Key, Pbkdf2Params};
 use tcx_primitive::{TypedDeterministicPublicKey, TypedPrivateKey, TypedPublicKey};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -183,6 +183,13 @@ impl Keystore {
         match self {
             Keystore::PrivateKey(ks) => ks.unlock_by_password(password),
             Keystore::Hd(ks) => ks.unlock_by_password(password),
+        }
+    }
+
+    pub fn unlock_by_derived_key(&mut self, derived_key: &str) -> Result<()> {
+        match self {
+            Keystore::PrivateKey(ks) => ks.unlock_by_derived_key(derived_key),
+            Keystore::Hd(ks) => ks.unlock_by_derived_key(derived_key),
         }
     }
 

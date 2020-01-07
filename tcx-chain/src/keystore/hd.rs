@@ -14,7 +14,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use tcx_constants::CoinInfo;
 use tcx_crypto::hash::dsha256;
-use tcx_crypto::{Crypto, Pbkdf2Params};
+use tcx_crypto::{Crypto, Key, Pbkdf2Params};
 use tcx_primitive::{
     generate_mnemonic, get_account_path, Derive, DerivePath, DeterministicType, ToHex,
     TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
@@ -56,7 +56,22 @@ impl HdKeystore {
     }
 
     pub(crate) fn unlock_by_password(&mut self, password: &str) -> Result<()> {
-        let mnemonic_bytes = self.store.crypto.decrypt(password)?;
+        let mnemonic_bytes = self
+            .store
+            .crypto
+            .decrypt(Key::Password(password.to_owned()))?;
+        self.cache_mnemonic(mnemonic_bytes)
+    }
+
+    pub(crate) fn unlock_by_derived_key(&mut self, derived_key: &str) -> Result<()> {
+        let mnemonic_bytes = self
+            .store
+            .crypto
+            .decrypt(Key::DerivedKey(derived_key.to_owned()))?;
+        self.cache_mnemonic(mnemonic_bytes)
+    }
+
+    fn cache_mnemonic(&mut self, mnemonic_bytes: Vec<u8>) -> Result<()> {
         let mnemonic_str = String::from_utf8(mnemonic_bytes)?;
 
         let mnemonic = Mnemonic::from_phrase(&mnemonic_str, Language::English)
@@ -348,7 +363,11 @@ mod tests {
             HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default()).unwrap();
         assert_eq!(keystore.store.version, 11000);
         assert_ne!(keystore.store.id, "");
-        let decrypted_bytes = keystore.store.crypto.decrypt(TEST_PASSWORD).unwrap();
+        let decrypted_bytes = keystore
+            .store
+            .crypto
+            .decrypt(Key::Password(TEST_PASSWORD.to_owned()))
+            .unwrap();
         let decrypted_mnemonic = String::from_utf8(decrypted_bytes).unwrap();
         assert_eq!(decrypted_mnemonic, TEST_MNEMONIC);
         assert_eq!(keystore.store.active_accounts.len(), 0);

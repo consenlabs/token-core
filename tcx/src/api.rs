@@ -213,14 +213,23 @@ pub struct KeystoreCommonAccountsParam {
 pub struct SignParam {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag = "2")]
-    pub password: std::string::String,
-    #[prost(string, tag = "3")]
-    pub chain_type: std::string::String,
     #[prost(string, tag = "4")]
+    pub chain_type: std::string::String,
+    #[prost(string, tag = "5")]
     pub address: std::string::String,
-    #[prost(message, optional, tag = "5")]
+    #[prost(message, optional, tag = "6")]
     pub input: ::std::option::Option<::prost_types::Any>,
+    #[prost(oneof = "sign_param::Key", tags = "2, 3")]
+    pub key: ::std::option::Option<sign_param::Key>,
+}
+pub mod sign_param {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Key {
+        #[prost(string, tag = "2")]
+        Password(std::string::String),
+        #[prost(string, tag = "3")]
+        DerivedKey(std::string::String),
+    }
 }
 /// Other
 // TODO: annotate following message usage

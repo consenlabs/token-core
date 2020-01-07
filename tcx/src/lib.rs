@@ -5,9 +5,12 @@ use std::os::raw::c_char;
 use prost::Message;
 
 pub mod api;
+
 use crate::api::{Response, TcxAction};
+
 pub mod error_handling;
 pub mod handler;
+
 use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
 use crate::handler::{
     encode_message, get_derived_key, hd_store_create, hd_store_export, hd_store_import,
@@ -15,6 +18,7 @@ use crate::handler::{
     keystore_common_exists, keystore_common_verify, private_key_store_export,
     private_key_store_import, sign_tx, tron_sign_message, unlock_then_crash,
 };
+
 mod filemanager;
 
 use parking_lot::RwLock;
@@ -153,6 +157,7 @@ mod tests {
     use tcx_btc_fork::transaction::BtcForkTxInput;
     use tcx_btc_fork::transaction::Utxo;
 
+    use crate::api::sign_param::Key;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 
@@ -969,7 +974,7 @@ mod tests {
 
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: TEST_PASSWORD.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
                 chain_type: "NERVOS".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -981,7 +986,7 @@ mod tests {
             let ret = call_api("sign_tx", tx).unwrap();
             let output: CkbTxOutput = CkbTxOutput::decode(&ret).unwrap();
             assert_eq!("0x5500000010000000550000005500000041000000776e010ac7e7166afa50fe54cfecf0a7106a2f11e8110e071ccab67cb30ed5495aa5c5f5ca2967a2fe4a60d5ad8c811382e51d8f916ba2911552bef6dedeca8a00", output.witnesses[0]);
-            assert_eq!("0x5500000010000000550000005500000041000000914591d8abd5233740207337b0588fec58cad63143ddf204970526022b6db26d68311e9af49e1625e3a90e8a66eb1694632558d561d1e5d02cc7c7254e2d546100",output.witnesses[1]);
+            assert_eq!("0x5500000010000000550000005500000041000000914591d8abd5233740207337b0588fec58cad63143ddf204970526022b6db26d68311e9af49e1625e3a90e8a66eb1694632558d561d1e5d02cc7c7254e2d546100", output.witnesses[1]);
 
             remove_created_wallet(&wallet.id);
         })
@@ -1005,7 +1010,7 @@ mod tests {
             let input_value = encode_message(input).unwrap();
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: "WRONG PASSWORD".to_string(),
+                key: Some(Key::Password("WRONG PASSWORD".to_string())),
                 chain_type: "TRON".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1020,7 +1025,7 @@ mod tests {
 
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: TEST_PASSWORD.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
                 chain_type: "TRON1".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1035,7 +1040,7 @@ mod tests {
 
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: TEST_PASSWORD.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
                 chain_type: "TRON".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1077,7 +1082,7 @@ mod tests {
             let input = TronTxInput { raw_data };
             let tx = SignParam {
                 id: import_result.id.to_string(),
-                password: TEST_PASSWORD.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
                 chain_type: "TRON".to_string(),
                 address: rsp.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1095,6 +1100,70 @@ mod tests {
     }
 
     #[test]
+    pub fn test_sign_by_dk_in_pk_store() {
+        run_test(|| {
+            let import_result = import_default_pk_store();
+
+            let derivation = Derivation {
+                chain_type: "TRON".to_string(),
+                path: "".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            };
+            let param = KeystoreCommonDeriveParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+
+            let ret = call_api("keystore_common_derive", param).unwrap();
+            let rsp: AccountsResponse = AccountsResponse::decode(ret).unwrap();
+
+            let param = WalletKeyParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+            };
+            let ret_bytes = get_derived_key(&encode_message(param).unwrap()).unwrap();
+            let ret: DerivedKeyResult = DerivedKeyResult::decode(ret_bytes).unwrap();
+            let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
+            let input = TronTxInput { raw_data };
+            let tx = SignParam {
+                id: import_result.id.to_string(),
+                key: Some(Key::DerivedKey(ret.derived_key)),
+                chain_type: "TRON".to_string(),
+                address: rsp.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(input.clone()).unwrap(),
+                }),
+            };
+
+            let ret = call_api("sign_tx", tx).unwrap();
+            let output: TronTxOutput = TronTxOutput::decode(&ret).unwrap();
+            let expected_sign = "7758c92df76d50774a67fdca6c90b922fc84be68c69164d4c7f500327bfa4b9655709b6b1f88e07e3bda266d7ca4b48c934557917692f63a31e301d79d7107d001";
+            assert_eq!(expected_sign, output.signatures[0]);
+
+            let tx = SignParam {
+                id: import_result.id.to_string(),
+                key: Some(Key::DerivedKey("7758c92df76d50774a67fdca6c90b922fc84be68c69164d4c7f500327bfa4b9655709b6b1f88e07e3bda266d7ca4b48c934557917692f63a31e301d79d7107d001".to_string())),
+                chain_type: "TRON".to_string(),
+                address: rsp.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(input.clone()).unwrap(),
+                }),
+            };
+
+            let ret = call_api("sign_tx", tx);
+            assert!(ret.is_err());
+            assert_eq!("password_incorrect", format!("{}", ret.err().unwrap()));
+
+            remove_created_wallet(&import_result.id);
+        })
+    }
+
+    #[test]
     fn test_sign_message() {
         run_test(|| {
             let derivation = Derivation {
@@ -1106,7 +1175,7 @@ mod tests {
             };
             let wallet = import_and_derive(derivation);
 
-            let input_expecteds = vec![
+            let input_expects = vec![
                 (TronMessageInput {
                     value: "645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76"
                         .to_string(),
@@ -1132,10 +1201,10 @@ mod tests {
                     is_tron_header: true,
                 }, "a87eb6ae7e97621b6ba2e2f70db31fe0c744c6adcfdc005044026506b70ac11a33f415f4478b6cf84af32b3b5d70a13a77e53287613449b345bb16fe012c04081b"),
             ];
-            for (input, expected) in input_expecteds {
+            for (input, expected) in input_expects {
                 let tx = SignParam {
                     id: wallet.id.to_string(),
-                    password: TEST_PASSWORD.to_string(),
+                    key: Some(Key::Password(TEST_PASSWORD.to_string())),
                     chain_type: "TRON".to_string(),
                     address: wallet.accounts.first().unwrap().address.to_string(),
                     input: Some(::prost_types::Any {
@@ -1154,6 +1223,67 @@ mod tests {
             //                is_hex: true,
             //                is_tron_header: true,
             //            };
+        });
+    }
+
+    #[test]
+    fn test_sign_by_dk_hd_store() {
+        run_test(|| {
+            let derivation = Derivation {
+                chain_type: "TRON".to_string(),
+                path: "m/44'/195'/0'/0/0".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            };
+            let wallet = import_and_derive(derivation);
+
+            let input = TronMessageInput {
+                value: "645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76"
+                    .to_string(),
+                is_hex: true,
+                is_tron_header: true,
+            };
+
+            let dk_param = WalletKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+            };
+
+            let ret_bytes = get_derived_key(&encode_message(dk_param).unwrap()).unwrap();
+            let ret: DerivedKeyResult = DerivedKeyResult::decode(ret_bytes).unwrap();
+
+            let tx = SignParam {
+                id: wallet.id.to_string(),
+                key: Some(Key::DerivedKey(ret.derived_key)),
+                chain_type: "TRON".to_string(),
+                address: wallet.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(input.clone()).unwrap(),
+                }),
+            };
+
+            let sign_result = call_api("tron_sign_msg", tx).unwrap();
+            let ret: TronMessageOutput = TronMessageOutput::decode(sign_result).unwrap();
+            assert_eq!("16417c6489da3a88ef980bf0a42551b9e76181d03e7334548ab3cb36e7622a484482722882a29e2fe4587b95c739a68624ebf9ada5f013a9340d883f03fcf9af1b", ret.signature);
+
+            let tx = SignParam {
+                id: wallet.id.to_string(),
+                key: Some(Key::DerivedKey("7758c92df76d50774a67fdca6c90b922fc84be68c69164d4c7f500327bfa4b9655709b6b1f88e07e3bda266d7ca4b48c934557917692f63a31e301d79d7107d001".to_string())),
+                chain_type: "TRON".to_string(),
+                address: wallet.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(input).unwrap(),
+                }),
+            };
+
+            let ret = call_api("tron_sign_msg", tx);
+            assert!(ret.is_err());
+            assert_eq!("password_incorrect", format!("{}", ret.err().unwrap()));
+
+            remove_created_wallet(&wallet.id);
         });
     }
 
@@ -1205,7 +1335,7 @@ mod tests {
                 let input_value = encode_message(tx_input).unwrap();
                 let tx = SignParam {
                     id: import_result.id.to_string(),
-                    password: TEST_PASSWORD.to_string(),
+                    key: Some(Key::Password(TEST_PASSWORD.to_string())),
                     chain_type: chain_type.to_string(),
                     address: rsp.accounts.first().unwrap().address.to_string(),
                     input: Some(::prost_types::Any {
@@ -1242,7 +1372,7 @@ mod tests {
 
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: TEST_PASSWORD.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
                 chain_type: "TRON".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
@@ -1274,7 +1404,7 @@ mod tests {
     #[test]
     fn test_get_derived_key() {
         let param = InitTokenCoreXParam {
-            file_dir: "./test-data".to_string(),
+            file_dir: "../test-data".to_string(),
             xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
             xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
             is_debug: true,
@@ -1298,35 +1428,35 @@ mod tests {
 
         let ret = call_api("get_derived_key", param).unwrap();
         let dk_ret: DerivedKeyResult = DerivedKeyResult::decode(ret).unwrap();
-        assert_eq!(dk_ret.derived_key, "19a38ab626aaf8806e223833b29da7aa1d0623e282164d1dd73b0b5e0a88fb4b88937efadd9ca9d4ee931d7b2b33594d75ac4f4d651602819998237b27860fa");
+        assert_eq!(dk_ret.derived_key, "119a38ab626aaf8806e223833b29da7aa1d0623e282164d1dd73b0b5e0a88fb4b88937efadd9ca9d4ee931d7b2b33594d75ac4f4d651602819998237b27860fa");
     }
-
-    #[test]
-    fn test_export_used_dk() {
-        let param = InitTokenCoreXParam {
-            file_dir: "../test-data".to_string(),
-            xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
-            xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
-            is_debug: true,
-        };
-
-        handler::init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");
-
-        let param = PrivateKeyStoreExportParam {
-            id: "cb1ba2d7-7b89-4595-9753-d16b6e317c6b".to_string(),
-            password: "119a38ab626aaf8806e223833b29da7aa1d0623e282164d1dd73b0b5e0a88fb4b88937efadd9ca9d4ee931d7b2b33594d75ac4f4d651602819998237b27860fa".to_string(),
-            chain_type: "TRON".to_string(),
-            network: "".to_string()
-        };
-
-        let ret = call_api("private_key_store_export", param).unwrap();
-        let export_ret: KeystoreCommonExportResult =
-            KeystoreCommonExportResult::decode(ret).unwrap();
-        assert_eq!(
-            "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
-            export_ret.value
-        );
-    }
+    //
+    //    #[test]
+    //    fn test_export_used_dk() {
+    //        let param = InitTokenCoreXParam {
+    //            file_dir: "../test-data".to_string(),
+    //            xpub_common_key: "B888D25EC8C12BD5043777B1AC49F872".to_string(),
+    //            xpub_common_iv: "9C0C30889CBCC5E01AB5B2BB88715799".to_string(),
+    //            is_debug: true,
+    //        };
+    //
+    //        handler::init_token_core_x(&encode_message(param).unwrap()).expect("should init tcx");
+    //
+    //        let param = PrivateKeyStoreExportParam {
+    //            id: "cb1ba2d7-7b89-4595-9753-d16b6e317c6b".to_string(),
+    //            password: "119a38ab626aaf8806e223833b29da7aa1d0623e282164d1dd73b0b5e0a88fb4b88937efadd9ca9d4ee931d7b2b33594d75ac4f4d651602819998237b27860fa".to_string(),
+    //            chain_type: "TRON".to_string(),
+    //            network: "".to_string()
+    //        };
+    //
+    //        let ret = call_api("private_key_store_export", param).unwrap();
+    //        let export_ret: KeystoreCommonExportResult =
+    //            KeystoreCommonExportResult::decode(ret).unwrap();
+    //        assert_eq!(
+    //            "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+    //            export_ret.value
+    //        );
+    //    }
 
     #[test]
     fn test_panic_keystore_locked() {

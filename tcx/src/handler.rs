@@ -19,6 +19,7 @@ use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::TrxAddress;
 
 use crate::api::keystore_common_derive_param::Derivation;
+use crate::api::sign_param::Key;
 use crate::api::{
     AccountResponse, AccountsResponse, DerivedKeyResult, HdStoreCreateParam, HdStoreImportParam,
     KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam, KeystoreCommonExistsParam,
@@ -471,7 +472,13 @@ pub(crate) fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+    let mut guard = match param.key.clone().unwrap() {
+        Key::Password(password) => KeystoreGuard::unlock_by_password(keystore, &password)?,
+        Key::DerivedKey(derived_key) => {
+            KeystoreGuard::unlock_by_derived_key(keystore, &derived_key)?
+        }
+    };
+
     match param.chain_type.as_str() {
         "BITCOINCASH" | "LITECOIN" => sign_btc_fork_transaction(&param, guard.keystore_mut()),
         "TRON" => sign_tron_tx(&param, guard.keystore_mut()),
@@ -537,7 +544,13 @@ pub(crate) fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+    let mut guard = match param.key.unwrap() {
+        Key::Password(password) => KeystoreGuard::unlock_by_password(keystore, &password)?,
+        Key::DerivedKey(derived_key) => {
+            KeystoreGuard::unlock_by_derived_key(keystore, &derived_key)?
+        }
+    };
+
     let input: TronMessageInput =
         TronMessageInput::decode(param.input.expect("TronMessageInput").value.clone())
             .expect("TronMessageInput");
