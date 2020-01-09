@@ -1157,7 +1157,7 @@ mod tests {
 
             let ret = call_api("sign_tx", tx);
             assert!(ret.is_err());
-            assert_eq!("password_incorrect", format!("{}", ret.err().unwrap()));
+            assert_eq!("derived_key_not_matched", format!("{}", ret.err().unwrap()));
 
             remove_created_wallet(&import_result.id);
         })
@@ -1281,7 +1281,7 @@ mod tests {
 
             let ret = call_api("tron_sign_msg", tx);
             assert!(ret.is_err());
-            assert_eq!("password_incorrect", format!("{}", ret.err().unwrap()));
+            assert_eq!("derived_key_not_matched", format!("{}", ret.err().unwrap()));
 
             remove_created_wallet(&wallet.id);
         });

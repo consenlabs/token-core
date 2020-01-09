@@ -20,6 +20,8 @@ pub enum Error {
     KdfParamsInvalid,
     #[fail(display = "password_incorrect")]
     PasswordIncorrect,
+    #[fail(display = "derived_key_not_matched")]
+    DerivedKeyNotMatched,
     #[fail(display = "invalid_key_iv_length")]
     InvalidKeyIvLength,
     #[fail(display = "invalid_ciphertext")]

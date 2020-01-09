@@ -268,20 +268,29 @@ where
         super::aes::ctr::encrypt_nopadding(origin, key, &iv)
     }
 
-    fn decrypt_data(&self, password: Key, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
-        let derived_key = match password {
-            Key::Password(password) => self.generate_derived_key(&password)?,
+    fn decrypt_data(&self, key: Key, encrypted: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
+        let derived_key: Vec<u8> = match key {
+            Key::Password(password) => {
+                let dk = self.generate_derived_key(&password)?;
+                if !self.verify_derived_key(&dk) {
+                    return Err(Error::PasswordIncorrect.into());
+                } else {
+                    dk
+                }
+            }
             Key::DerivedKey(dk) => {
                 if !(cfg!(feature = "cache_dk")) {
                     return Err(Error::CachedDkFeatureNotSupport.into());
+                } else {
+                    let dk = hex::decode(dk)?;
+                    if !self.verify_derived_key(&dk) {
+                        return Err(Error::DerivedKeyNotMatched.into());
+                    } else {
+                        dk
+                    }
                 }
-                hex::decode(dk)?
             }
         };
-
-        if !self.verify_derived_key(&derived_key) {
-            return Err(Error::PasswordIncorrect.into());
-        }
 
         let key = &derived_key[0..16];
         super::aes::ctr::decrypt_nopadding(encrypted, key, &iv)

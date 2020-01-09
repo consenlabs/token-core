@@ -315,6 +315,8 @@ pub struct DerivedKeyResult {
     #[prost(string, tag = "2")]
     pub derived_key: std::string::String,
 }
+/// Only used in Android or iOS
+
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CacheDerivedKeyResult {
     #[prost(string, tag = "1")]
