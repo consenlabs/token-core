@@ -99,14 +99,6 @@ message PrivateKeyStoreExportParam {
 
 /// Keystore Common
 
-// FUNCTION: keystore_common_verify(WalletKeyParam) -> Response
-//
-// verify the password of the keystore
-message WalletKeyParam {
-    string id = 1;
-    string password = 2;
-}
-
 // FUNCTION: keystore_common_delete(WalletKeyParam) -> Response
 //
 // delete the keystore

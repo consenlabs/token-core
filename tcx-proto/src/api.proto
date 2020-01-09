@@ -30,3 +30,11 @@ message InitTokenCoreXParam {
     string xpubCommonIv = 3;
     bool isDebug = 4;
 }
+
+// FUNCTION: keystore_common_verify(WalletKeyParam) -> Response
+//
+// verify the password of the keystore
+message WalletKeyParam {
+    string id = 1;
+    string password = 2;
+}
