@@ -568,9 +568,8 @@ pub(crate) fn get_derived_key(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    //    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
     let dk = keystore.get_derived_key(&param.password)?;
-    println!("dk: {}", dk);
+
     let ret = DerivedKeyResult {
         id: param.id.to_owned(),
         derived_key: dk,
