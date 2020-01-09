@@ -11,6 +11,8 @@ message DerivedKeyResult {
     string derivedKey = 2;
 }
 
+/// Only used in Android or iOS
+
 message CacheDerivedKeyResult {
     string id = 1;
     bool enableDerivedKey = 2;
