@@ -15,7 +15,7 @@ pub use self::{
 };
 
 use crate::signer::ChainSigner;
-use tcx_crypto::{Crypto, Key, Pbkdf2Params};
+use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{TypedDeterministicPublicKey, TypedPrivateKey, TypedPublicKey};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

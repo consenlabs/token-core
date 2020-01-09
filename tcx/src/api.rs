@@ -34,6 +34,16 @@ pub struct InitTokenCoreXParam {
     #[prost(bool, tag = "4")]
     pub is_debug: bool,
 }
+/// FUNCTION: keystore_common_verify(WalletKeyParam) -> Response
+///
+/// verify the password of the keystore
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WalletKeyParam {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(string, tag = "2")]
+    pub password: std::string::String,
+}
 /// Hd Store
 
 /// FUNCTION: hd_store_create(HdStoreCreateParam): WalletResult
@@ -164,16 +174,6 @@ pub struct PrivateKeyStoreExportParam {
 }
 /// Keystore Common
 
-/// FUNCTION: keystore_common_verify(WalletKeyParam) -> Response
-///
-/// verify the password of the keystore
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct WalletKeyParam {
-    #[prost(string, tag = "1")]
-    pub id: std::string::String,
-    #[prost(string, tag = "2")]
-    pub password: std::string::String,
-}
 // FUNCTION: keystore_common_delete(WalletKeyParam) -> Response
 //
 // delete the keystore
@@ -302,15 +302,6 @@ pub enum KeyType {
     PrivateKey = 1,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CacheDerivedKeyParam {
-    #[prost(string, tag = "1")]
-    pub id: std::string::String,
-    #[prost(string, tag = "2")]
-    pub derived_key: std::string::String,
-    #[prost(string, tag = "3")]
-    pub temp_password: std::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VerifyDerivedKeyParam {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
@@ -323,4 +314,23 @@ pub struct DerivedKeyResult {
     pub id: std::string::String,
     #[prost(string, tag = "2")]
     pub derived_key: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CacheDerivedKeyResult {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(bool, tag = "2")]
+    pub enable_derived_key: bool,
+    #[prost(string, tag = "3")]
+    pub mode: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WalletId {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BiometricModeResult {
+    #[prost(string, tag = "1")]
+    pub mode: std::string::String,
 }

@@ -1,6 +1,5 @@
 use super::Keystore;
 use super::Result;
-use tcx_crypto::Key;
 
 pub struct KeystoreGuard<'a> {
     keystore: &'a mut Keystore,
