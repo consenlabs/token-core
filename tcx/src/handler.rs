@@ -5,7 +5,7 @@ use std::path::Path;
 use bytes::BytesMut;
 use prost::Message;
 use serde_json::Value;
-use tcx_primitive::{private_key_without_version, FromHex, TypedPrivateKey};
+use tcx_primitive::{get_account_path, private_key_without_version, FromHex, TypedPrivateKey};
 
 use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
@@ -399,16 +399,28 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
 
     let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
 
-    let path = if param.path.is_empty() {
-        None
-    } else {
-        Some(param.path.as_str())
-    };
-
-    let pk_hex =
+    let pk_hex = if param.path.is_empty() {
         guard
             .keystore_mut()
-            .export_private_key(&param.chain_type, &param.main_address, path)?;
+            .export_private_key(&param.chain_type, &param.main_address, None)?
+    } else {
+        // get the relative path
+        let mut relative_path: &str = param.path.as_str();
+        if param.path.starts_with("m") {
+            let acc_path = get_account_path(relative_path)?;
+            relative_path = &relative_path[acc_path.len()..];
+        }
+
+        if relative_path.starts_with("/") {
+            relative_path = &relative_path[1..];
+        }
+
+        guard.keystore_mut().export_private_key(
+            &param.chain_type,
+            &param.main_address,
+            Some(relative_path),
+        )?
+    };
 
     // private_key prefix is only about chain type and network
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;

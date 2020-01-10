@@ -959,10 +959,10 @@ mod tests {
             ];
 
             let pks = vec![
-                "L4sbT9qTd5GDKFaM9MfyZXeY8RPZWkeKUPb9ZC4StYDnwVH1qrRL",
-                "KyD2UZX7jrY9qmsV3iP5mqTf77h6Xr6FFnoYUtXkDoWzZ9DX7rA4",
-                "cUA1rKq1QMav6UCgXENKgVn7wsBhBiu5RzD7FxRtpHo1BNryyDdu",
-                "345f4e2c420d795c890dbda57ced6a764e67791d77014c0c38d2cef23ae01474",
+                "L39VXyorp19JfsEJfbD7Tfr4pBEX93RJuVXW7E13C51ZYAhUWbYa",
+                "KyLGdagds7tY1vupT5Kf8C1Cc5wkzzWRK51e4vsh1svCSvYk4Abo",
+                "cN4b1V3cicEexrYXiEhaWEdURyhZiVX6PzAZNFSzZaWfSNZG2cJX",
+                "685634d212eabe016a1cb09d9f1ea1ea757ebe590b9a097d7b1c9379ad280171",
             ];
             let export_paths = vec![
                 "m/44'/145'/0'/0/0",
@@ -1004,6 +1004,41 @@ mod tests {
             assert!(ret.is_err());
             assert_eq!(format!("{}", ret.err().unwrap()), "account_not_found");
             remove_created_wallet(&import_result.id);
+        })
+    }
+
+    #[test]
+    pub fn test_import_to_pk_which_from_hd() {
+        run_test(|| {
+            let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+                private_key: "L39VXyorp19JfsEJfbD7Tfr4pBEX93RJuVXW7E13C51ZYAhUWbYa".to_string(),
+                password: TEST_PASSWORD.to_string(),
+                overwrite: true,
+            };
+
+            let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+            let wallet: WalletResult = WalletResult::decode(ret).unwrap();
+
+            let derivation = Derivation {
+                chain_type: "BITCOINCASH".to_string(),
+                path: "".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                chain_id: "".to_string(),
+            };
+
+            let derive_param = KeystoreCommonDeriveParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+            let ret_bytes = keystore_common_derive(&encode_message(derive_param).unwrap()).unwrap();
+            let ret: AccountsResponse = AccountsResponse::decode(ret_bytes).unwrap();
+            assert_eq!(
+                "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                ret.accounts.first().unwrap().address
+            );
+            remove_created_wallet(&wallet.id);
         })
     }
 
