@@ -207,6 +207,31 @@ impl Keystore {
         }
     }
 
+    pub fn export_private_key(
+        &mut self,
+        coin: &str,
+        main_address: &str,
+        path: Option<&str>,
+    ) -> Result<String> {
+        match self {
+            Keystore::PrivateKey(pk_store) => {
+                let _ = pk_store
+                    .account(coin, main_address)
+                    .ok_or(Error::AccountNotFound)?;
+                pk_store.private_key()
+            }
+            Keystore::Hd(hd_store) => {
+                let typed_pk = if let Some(path) = path {
+                    hd_store.find_private_key_by_path(coin, main_address, path)?
+                } else {
+                    hd_store.find_private_key(coin, main_address)?
+                };
+
+                Ok(hex::encode(typed_pk.to_bytes()))
+            }
+        }
+    }
+
     pub fn lock(&mut self) {
         match self {
             Keystore::PrivateKey(ks) => ks.lock(),
@@ -494,7 +519,7 @@ mod tests {
         let ret = keystore.sign_hash(&msg, "TRON", "TXo4VDm8Qc5YBSjPhu8pMaxzTApSvLshWG", None);
         assert!(ret.is_err());
         assert_eq!(format!("{}", ret.err().unwrap()), "keystore_locked");
-        keystore.unlock_by_password("imtoken1");
+        let _ = keystore.unlock_by_password("imtoken1");
         let msg = hex::decode("645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76")
             .unwrap();
         let ret = keystore

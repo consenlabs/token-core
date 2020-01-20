@@ -10,6 +10,7 @@ examples/android/app/src/main/jniLibs/**
 examples/iOSExample/TokenCoreX/**
 examples/RN/ios/TokenCoreX/**
 tools/android-token-v2-build.sh
+tools/android-token-v2-simulator-build.sh
 tools/ios-token-v2-build.sh
 tools/ios-token-v2-simulator-build.sh
 *.rlib
