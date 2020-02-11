@@ -5,6 +5,7 @@ pub enum CurveType {
     SECP256k1,          /* "secp256k1" */
     ED25519,            /* "ed25519" */
     ED25519Blake2bNano, /* "ed25519-blake2b-nano" */
-    Curve25519,         /* "curve25519" */
+    SR25519,
+    Curve25519, /* "curve25519" */
     NIST256p1,
 }

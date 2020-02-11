@@ -7,6 +7,8 @@ mod derive;
 mod ecc;
 mod rand;
 mod secp256k1;
+mod sr25519;
+mod subkey;
 
 use core::result;
 

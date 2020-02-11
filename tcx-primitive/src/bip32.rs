@@ -11,13 +11,15 @@ use bitcoin::util::key::PublicKey;
 use bitcoin::util::base58;
 use bitcoin::util::base58::Error::InvalidLength;
 use bitcoin::util::bip32::{
-    ChainCode, ChildNumber, Error as Bip32Error, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
+    ChainCode, ChildNumber, DerivationPath, Error as Bip32Error, ExtendedPrivKey, ExtendedPubKey,
+    Fingerprint,
 };
 use bitcoin::Network;
 use byteorder::BigEndian;
 use byteorder::ByteOrder;
 
 use std::convert::TryInto;
+use std::str::FromStr;
 
 pub struct Bip32DeterministicPrivateKey(ExtendedPrivKey);
 
@@ -58,6 +60,13 @@ impl Derive for Bip32DeterministicPrivateKey {
 
         Ok(Bip32DeterministicPrivateKey(extended_key))
     }
+
+    fn derive_from_path(&self, path: &str) -> Result<Self> {
+        let extended_key = self.0.clone();
+        let dp = DerivationPath::from_str(path)?;
+        let child_key = extended_key.derive_priv(&SECP256K1_ENGINE, &dp)?;
+        Ok(Bip32DeterministicPrivateKey(child_key))
+    }
 }
 
 impl Derive for Bip32DeterministicPublicKey {
@@ -73,6 +82,13 @@ impl Derive for Bip32DeterministicPublicKey {
         }
 
         Ok(Bip32DeterministicPublicKey(extended_key))
+    }
+
+    fn derive_from_path(&self, path: &str) -> Result<Self> {
+        let extended_key = self.0.clone();
+        let dp = DerivationPath::from_str(path)?;
+        let child_key = extended_key.derive_pub(&SECP256K1_ENGINE, &dp)?;
+        Ok(Bip32DeterministicPublicKey(child_key))
     }
 }
 

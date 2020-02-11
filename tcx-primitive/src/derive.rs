@@ -27,33 +27,37 @@ pub enum DeriveJunction {
 
 pub trait Derive: Sized {
     fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self>;
+
+    fn derive_from_path(&self, path: &str) -> Result<Self> {
+        unimplemented!()
+    }
 }
 
 // TODO add parity string derivation path
-#[allow(dead_code)]
-impl DeriveJunction {
-    pub fn soft(index: u32) -> Self {
-        DeriveJunction::Soft(index)
-    }
-
-    pub fn hard(index: u32) -> Self {
-        DeriveJunction::Hard(index)
-    }
-
-    pub fn is_soft(&self) -> bool {
-        match *self {
-            DeriveJunction::Soft(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_hard(&self) -> bool {
-        match *self {
-            DeriveJunction::Hard(_) => true,
-            _ => false,
-        }
-    }
-}
+//#[allow(dead_code)]
+//impl DeriveJunction {
+//    pub fn soft(index: u32) -> Self {
+//        DeriveJunction::Soft(index)
+//    }
+//
+//    pub fn hard(index: u32) -> Self {
+//        DeriveJunction::Hard(index)
+//    }
+//
+//    pub fn is_soft(&self) -> bool {
+//        match *self {
+//            DeriveJunction::Soft(_) => true,
+//            _ => false,
+//        }
+//    }
+//
+//    pub fn is_hard(&self) -> bool {
+//        match *self {
+//            DeriveJunction::Hard(_) => true,
+//            _ => false,
+//        }
+//    }
+//}
 
 impl FromStr for DeriveJunction {
     type Err = failure::Error;
@@ -61,13 +65,13 @@ impl FromStr for DeriveJunction {
     fn from_str(inp: &str) -> Result<Self> {
         Ok(
             if inp.chars().last().map_or(false, |l| l == '\'' || l == 'h') {
-                DeriveJunction::hard(
+                DeriveJunction::Hard(
                     inp[0..inp.len() - 1]
                         .parse()
                         .map_err(|_| KeyError::InvalidChildNumberFormat)?,
                 )
             } else {
-                DeriveJunction::soft(
+                DeriveJunction::Soft(
                     inp.parse()
                         .map_err(|_| KeyError::InvalidChildNumberFormat)?,
                 )
