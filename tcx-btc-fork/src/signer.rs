@@ -109,7 +109,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
         let epk = Bip32DeterministicPublicKey::from_hex(xpub)?;
 
-        let index_ext_pub_key = epk.derive(DerivePath::from_str(child_path)?.into_iter())?;
+        let index_ext_pub_key = epk.derive_from_path(child_path)?;
 
         Ok(index_ext_pub_key.public_key().0)
     }
@@ -596,10 +596,7 @@ mod tests {
         let ret =
             keystore.sign_transaction("LITECOIN", "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN", &tran);
         assert!(ret.is_err());
-        assert_eq!(
-            format!("{}", ret.err().unwrap()),
-            "invalid_child_number_format"
-        );
+        assert_eq!(format!("{}", ret.err().unwrap()), "invalid_child_number");
     }
 
     #[test]

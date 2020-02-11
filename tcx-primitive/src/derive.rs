@@ -34,30 +34,30 @@ pub trait Derive: Sized {
 }
 
 // TODO add parity string derivation path
-//#[allow(dead_code)]
-//impl DeriveJunction {
-//    pub fn soft(index: u32) -> Self {
-//        DeriveJunction::Soft(index)
-//    }
-//
-//    pub fn hard(index: u32) -> Self {
-//        DeriveJunction::Hard(index)
-//    }
-//
-//    pub fn is_soft(&self) -> bool {
-//        match *self {
-//            DeriveJunction::Soft(_) => true,
-//            _ => false,
-//        }
-//    }
-//
-//    pub fn is_hard(&self) -> bool {
-//        match *self {
-//            DeriveJunction::Hard(_) => true,
-//            _ => false,
-//        }
-//    }
-//}
+#[allow(dead_code)]
+impl DeriveJunction {
+    pub fn soft(index: u32) -> Self {
+        DeriveJunction::Soft(index)
+    }
+
+    pub fn hard(index: u32) -> Self {
+        DeriveJunction::Hard(index)
+    }
+
+    pub fn is_soft(&self) -> bool {
+        match *self {
+            DeriveJunction::Soft(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_hard(&self) -> bool {
+        match *self {
+            DeriveJunction::Hard(_) => true,
+            _ => false,
+        }
+    }
+}
 
 impl FromStr for DeriveJunction {
     type Err = failure::Error;

@@ -459,7 +459,7 @@ mod tests {
         let bitcoin_xprv_str = "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ";
         let anpub = Bip32DeterministicPrivateKey::from_ss58check(bitcoin_xprv_str)
             .unwrap()
-            .derive(DerivePath::from_str("m/44'/2'/0'").unwrap().into_iter())
+            .derive_from_path("m/44'/2'/0'")
             .unwrap()
             .deterministic_public_key();
         let coin_info = CoinInfo {

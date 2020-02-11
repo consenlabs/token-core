@@ -20,6 +20,7 @@ use byteorder::ByteOrder;
 
 use std::convert::TryInto;
 use std::str::FromStr;
+//use bitcoin::util::bip32::DerivationPath;
 
 pub struct Bip32DeterministicPrivateKey(ExtendedPrivKey);
 
@@ -63,8 +64,17 @@ impl Derive for Bip32DeterministicPrivateKey {
 
     fn derive_from_path(&self, path: &str) -> Result<Self> {
         let extended_key = self.0.clone();
-        let dp = DerivationPath::from_str(path)?;
-        let child_key = extended_key.derive_priv(&SECP256K1_ENGINE, &dp)?;
+
+        let mut parts = path.split('/').peekable();
+        if *parts.peek().unwrap() == "m" {
+            parts.next();
+        }
+        // todo: unwrap()
+        let ret: std::result::Result<Vec<ChildNumber>, bitcoin::util::bip32::Error> =
+            parts.map(str::parse).collect();
+        let children_nums = ret.map_err(transform_bip32_error)?;
+
+        let child_key = extended_key.derive_priv(&SECP256K1_ENGINE, &children_nums)?;
         Ok(Bip32DeterministicPrivateKey(child_key))
     }
 }
@@ -86,8 +96,17 @@ impl Derive for Bip32DeterministicPublicKey {
 
     fn derive_from_path(&self, path: &str) -> Result<Self> {
         let extended_key = self.0.clone();
-        let dp = DerivationPath::from_str(path)?;
-        let child_key = extended_key.derive_pub(&SECP256K1_ENGINE, &dp)?;
+
+        let mut parts = path.split('/').peekable();
+        if *parts.peek().unwrap() == "m" {
+            parts.next();
+        }
+        // todo: unwrap()
+        let ret: std::result::Result<Vec<ChildNumber>, bitcoin::util::bip32::Error> =
+            parts.map(str::parse).collect();
+        let children_nums = ret.map_err(transform_bip32_error)?;
+
+        let child_key = extended_key.derive_pub(&SECP256K1_ENGINE, &children_nums)?;
         Ok(Bip32DeterministicPublicKey(child_key))
     }
 }
@@ -290,7 +309,7 @@ mod tests {
             .iter()
             .map(|path| {
                 hex::encode(
-                    esk.derive(DerivePath::from_str(path).unwrap().into_iter())
+                    esk.derive_from_path(path)
                         .unwrap()
                         .private_key()
                         .public_key()
@@ -313,15 +332,13 @@ mod tests {
         let root = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes()).unwrap();
 
         let dpk = root
-            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
+            .derive_from_path("m/44'/0'/0'")
             .unwrap()
             .deterministic_public_key();
 
         assert_eq!(dpk.to_string(), "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
 
-        let dsk = root
-            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
-            .unwrap();
+        let dsk = root.derive_from_path("m/44'/0'/0'").unwrap();
 
         assert_eq!(dsk.to_string(), "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
     }

@@ -241,6 +241,17 @@ impl Derive for TypedDeterministicPublicKey {
             }
         }
     }
+
+    fn derive_from_path(&self, path: &str) -> Result<Self> {
+        match self {
+            TypedDeterministicPublicKey::Bip32Sepc256k1(epk) => Ok(
+                TypedDeterministicPublicKey::Bip32Sepc256k1(epk.derive_from_path(path)?),
+            ),
+            TypedDeterministicPublicKey::SubSr25519(epk) => Ok(
+                TypedDeterministicPublicKey::SubSr25519(epk.derive_from_path(path)?),
+            ),
+        }
+    }
 }
 
 pub enum TypedDeterministicPrivateKey {
@@ -339,6 +350,17 @@ impl Derive for TypedDeterministicPrivateKey {
             }
         }
     }
+
+    fn derive_from_path(&self, path: &str) -> Result<Self> {
+        match self {
+            TypedDeterministicPrivateKey::Bip32Sepc256k1(dsk) => Ok(
+                TypedDeterministicPrivateKey::Bip32Sepc256k1(dsk.derive_from_path(path)?),
+            ),
+            TypedDeterministicPrivateKey::SubSr25519(dsk) => Ok(
+                TypedDeterministicPrivateKey::SubSr25519(dsk.derive_from_path(path)?),
+            ),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -393,7 +415,7 @@ mod tests {
         .unwrap();
 
         let dpk = root
-            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
+            .derive_from_path("m/44'/0'/0'")
             .unwrap()
             .deterministic_public_key();
 
@@ -404,14 +426,10 @@ mod tests {
             hex::encode(dpk.public_key().to_bytes()),
             "029d23439ecb195eb06a0d44a608960d18702fd97e19c53451f0548f568207af77"
         );
-        let child_dpk = dpk
-            .derive(DerivePath::from_str("0/0").unwrap().into_iter())
-            .unwrap();
+        let child_dpk = dpk.derive_from_path("0/0").unwrap();
         assert_eq!(child_dpk.to_string(), "xpub6FuzpGNBc46EfvmcvECyqXjrzGcKErQgpQcpvhw1tiC5yXvi1jUkzudMpdg5AaguiFstdVR5ASDbSceBswKRy6cAhpTgozmgxMUayPDrLLX");
 
-        let dsk = root
-            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
-            .unwrap();
+        let dsk = root.derive_from_path("m/44'/0'/0'").unwrap();
 
         assert_eq!(dsk.to_string(), "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
     }

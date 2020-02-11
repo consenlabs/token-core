@@ -99,7 +99,7 @@ impl HdKeystore {
         )?;
 
         Ok(root
-            .derive(DerivePath::from_str(&account.derivation_path)?.into_iter())?
+            .derive_from_path(&account.derivation_path)?
             .private_key())
     }
 
@@ -138,9 +138,7 @@ impl HdKeystore {
                 &cache.seed,
             )?;
 
-            let k = esk.derive(
-                DerivePath::from_str(&get_account_path(&account.derivation_path)?)?.into_iter(),
-            )?;
+            let k = esk.derive_from_path(&get_account_path(&account.derivation_path)?)?;
 
             self.cache
                 .as_mut()
@@ -151,9 +149,7 @@ impl HdKeystore {
 
         let esk = &self.cache.as_ref().unwrap().keys[main_address];
 
-        Ok(esk
-            .derive(DerivePath::from_str(relative_path)?.into_iter())?
-            .private_key())
+        Ok(esk.derive_from_path(relative_path)?.private_key())
     }
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
@@ -192,16 +188,14 @@ impl HdKeystore {
         )?;
 
         let private_key = root
-            .derive(DerivePath::from_str(&coin_info.derivation_path)?.into_iter())?
+            .derive_from_path(&coin_info.derivation_path)?
             .private_key();
         let public_key = private_key.public_key();
 
         let address = A::from_public_key(&public_key, coin_info)?;
 
         let ext_pub_key = root
-            .derive(
-                DerivePath::from_str(&get_account_path(&coin_info.derivation_path)?)?.into_iter(),
-            )?
+            .derive_from_path(&get_account_path(&coin_info.derivation_path)?)?
             .deterministic_public_key()
             .to_hex();
 
