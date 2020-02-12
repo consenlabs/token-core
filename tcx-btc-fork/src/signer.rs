@@ -108,7 +108,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
     pub fn derive_pub_key_at_path(xpub: &str, child_path: &str) -> Result<bitcoin::PublicKey> {
         let epk = Bip32DeterministicPublicKey::from_hex(xpub)?;
 
-        let index_ext_pub_key = epk.derive_from_path(child_path)?;
+        let index_ext_pub_key = epk.derive(child_path)?;
 
         Ok(index_ext_pub_key.public_key().0)
     }

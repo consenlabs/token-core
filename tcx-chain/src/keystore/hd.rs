@@ -93,9 +93,7 @@ impl HdKeystore {
 
         let root = TypedDeterministicPrivateKey::from_mnemonic(account.curve, &cache.mnemonic)?;
 
-        Ok(root
-            .derive_from_path(&account.derivation_path)?
-            .private_key())
+        Ok(root.derive(&account.derivation_path)?.private_key())
     }
 
     pub(crate) fn find_deterministic_public_key(
@@ -125,7 +123,7 @@ impl HdKeystore {
 
             let esk = TypedDeterministicPrivateKey::from_mnemonic(account.curve, &cache.mnemonic)?;
 
-            let k = esk.derive_from_path(&get_account_path(&account.derivation_path)?)?;
+            let k = esk.derive(&get_account_path(&account.derivation_path)?)?;
 
             self.cache
                 .as_mut()
@@ -136,7 +134,7 @@ impl HdKeystore {
 
         let esk = &self.cache.as_ref().unwrap().keys[main_address];
 
-        Ok(esk.derive_from_path(relative_path)?.private_key())
+        Ok(esk.derive(relative_path)?.private_key())
     }
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
@@ -170,15 +168,13 @@ impl HdKeystore {
 
         let root = TypedDeterministicPrivateKey::from_mnemonic(coin_info.curve, &cache.mnemonic)?;
 
-        let private_key = root
-            .derive_from_path(&coin_info.derivation_path)?
-            .private_key();
+        let private_key = root.derive(&coin_info.derivation_path)?.private_key();
         let public_key = private_key.public_key();
 
         let address = A::from_public_key(&public_key, coin_info)?;
 
         let ext_pub_key = root
-            .derive_from_path(&get_account_path(&coin_info.derivation_path)?)?
+            .derive(&get_account_path(&coin_info.derivation_path)?)?
             .deterministic_public_key()
             .to_hex();
 

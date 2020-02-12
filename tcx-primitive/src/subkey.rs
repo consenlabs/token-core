@@ -20,25 +20,7 @@ use std::convert::TryInto;
 //}
 
 impl Derive for Sr25519PrivateKey {
-    fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self> {
-        unimplemented!()
-    }
-    //    fn derive<T: Iterator<Item = DeriveJunction>>(&self, path: T) -> Result<Self> {
-    //        // todo: unwrap
-    //        let path = path.map(|x| {
-    //            // todo: merge DeriveJunction
-    //            match x {
-    //                DeriveJunction::Soft(_) =>
-    //                    sp_core::crypto::DeriveJunction::Hard([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-    //                DeriveJunction::Hard(_) =>
-    //                    sp_core::crypto::DeriveJunction::Hard([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-    //            }
-    //        }).collect::<Vec<sp_core::crypto::DeriveJunction>>();
-    //        let path: std::iter::Iterator<Item = sp_core::DeriveJunction> = path.iter();
-    //        Ok(Sr25519PrivateKey(self.0.derive(&path, None).unwrap().0))
-    //    }
-
-    fn derive_from_path(&self, path: &str) -> Result<Self> {
+    fn derive(&self, path: &str) -> Result<Self> {
         let re_junction =
             Regex::new(r"/(/?[^/]+)").expect("constructed from known-good static value; qed");
         let path = re_junction
@@ -50,11 +32,7 @@ impl Derive for Sr25519PrivateKey {
 }
 
 impl Derive for Sr25519PublicKey {
-    fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self> {
-        unimplemented!()
-    }
-
-    fn derive_from_path(&self, path: &str) -> Result<Self> {
+    fn derive(&self, path: &str) -> Result<Self> {
         let re_junction =
             Regex::new(r"/(/?[^/]+)").expect("constructed from known-good static value; qed");
         let path = re_junction
@@ -124,24 +102,6 @@ impl ToHex for Sr25519PublicKey {
 
 impl FromHex for Sr25519PublicKey {
     fn from_hex(hex: &str) -> Result<Self> {
-        //        let data = hex::decode(hex)?;
-        //
-        //        if data.len() != 74 {
-        //            return Err(KeyError::InvalidBase58.into());
-        //        }
-        //        let cn_int: u32 = BigEndian::read_u32(&data[5..9]);
-        //        let child_number: ChildNumber = ChildNumber::from(cn_int);
-        //
-        //        let epk = ExtendedPubKey {
-        //            network: Network::Bitcoin,
-        //            depth: data[0],
-        //            parent_fingerprint: Fingerprint::from(&data[1..5]),
-        //            child_number,
-        //            chain_code: ChainCode::from(&data[9..41]),
-        //            public_key: PublicKey::from_slice(&data[41..74])
-        //                .map_err(|e| base58::Error::Other(e.to_string()))?,
-        //        };
-        //        Ok(Bip32DeterministicPublicKey(epk))
         let bytes = hex::decode(hex)?;
         let pk = Sr25519PublicKey::from_slice(bytes.as_slice())?;
         Ok(pk)
