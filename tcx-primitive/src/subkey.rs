@@ -231,3 +231,35 @@ impl FromHex for Sr25519PublicKey {
 //        base58::check_encode_slice(&ret[..])
 //    }
 //}
+
+#[cfg(test)]
+mod tests {
+
+    use super::{Sr25519PrivateKey, Ss58Codec};
+
+    use crate::PrivateKey;
+
+    use bitcoin_hashes::hex::ToHex;
+    use bitcoin_hashes::Hash;
+
+    use schnorrkel::{ExpansionMode, MiniSecretKey};
+    use sp_core::sr25519::Pair;
+    use tcx_constants::coin_info::coin_info_from_param;
+
+    #[test]
+    fn construct_test() {
+        //       let entropy = "54101bfe06f6fc404289b973d6e4e7cf";
+        let seed_hex = "9dd32e5182f147ffe08fee7c1b449647b5e17a89d35622c9d603c41b6a3937c717f8cf9db7d5293de58d14680ec3e7b897398026352b84e224017f5b82acc6fa";
+        let seed = hex::decode(seed_hex).unwrap();
+        let mini_key =
+            MiniSecretKey::from_bytes(&seed[..32]).expect("Length is always correct; qed");
+
+        //
+        let kp = mini_key.expand_to_keypair(ExpansionMode::Ed25519);
+        let pair = Sr25519PrivateKey(Pair::from(kp));
+        let sub_seed = mini_key.to_bytes();
+
+        //       let pair = Pair::from_entropy(&hex::decode("54101bfe06f6fc404289b973d6e4e7cf").unwrap(), None);
+        assert_eq!(hex::encode(sub_seed), "");
+    }
+}

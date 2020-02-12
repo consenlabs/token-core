@@ -357,6 +357,24 @@ mod tests {
     }
 
     #[test]
+    pub fn generate_seed() {
+        let mnemonic = Mnemonic::from_phrase(
+            "favorite liar zebra assume hurt cage any damp inherit rescue delay panic",
+            Language::English,
+        )
+        .unwrap();
+
+        //        let entropy = mnemonic.entropy();
+
+        let seed = bip39::Seed::new(&mnemonic, &"").as_bytes().to_vec();
+
+        assert_eq!(
+            "235c69907d33b85f27bd78e73ff5d0c67bd4894515cc30c77f4391859bc1a3f2",
+            hex::encode(seed)
+        );
+    }
+
+    #[test]
     pub fn derive_key_at_paths() {
         let mut keystore =
             HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default()).unwrap();
