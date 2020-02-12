@@ -8,8 +8,8 @@ use std::io;
 use crate::ecc::TypedDeterministicPrivateKey::{Bip32Sepc256k1, SubSr25519};
 use crate::sr25519::{Sr25519PrivateKey, Sr25519PublicKey};
 use serde::{Deserialize, Serialize};
+use sp_core::Pair;
 use tcx_constants::CurveType;
-//use parity_scale_codec::Encode;
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum KeyError {
@@ -45,18 +45,8 @@ pub enum KeyError {
     InvalidCurveType,
 }
 
-///// An identifier for a type of cryptographic key.
-//#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
-//#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-//pub enum DeterministicType {
-//    BIP32,
-//    SUBSTRATE,
-//}
-
 pub trait PublicKey: Sized {
     fn from_slice(data: &[u8]) -> Result<Self>;
-
-    fn write_into<W: io::Write>(&self, writer: W);
 
     fn to_bytes(&self) -> Vec<u8>;
 }
@@ -104,41 +94,6 @@ pub enum TypedPrivateKey {
 }
 
 impl TypedPrivateKey {
-    pub fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
-        match self {
-            TypedPrivateKey::Secp256k1(sk) => sk.sign(data),
-            TypedPrivateKey::Sr25519(sk) => sk.sign(data),
-        }
-    }
-
-    pub fn as_secp256k1(&self) -> Result<&Secp256k1PrivateKey> {
-        match self {
-            TypedPrivateKey::Secp256k1(sk) => Ok(sk),
-            _ => Err(format_err!("not_support")),
-        }
-    }
-
-    pub fn to_bytes(&self) -> Vec<u8> {
-        match self {
-            TypedPrivateKey::Secp256k1(sk) => sk.to_bytes(),
-            TypedPrivateKey::Sr25519(sk) => sk.to_bytes(),
-        }
-    }
-
-    pub fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>> {
-        match self {
-            TypedPrivateKey::Secp256k1(sk) => sk.sign_recoverable(data),
-            TypedPrivateKey::Sr25519(sk) => sk.sign_recoverable(data),
-        }
-    }
-
-    pub fn public_key(&self) -> TypedPublicKey {
-        match self {
-            TypedPrivateKey::Secp256k1(sk) => TypedPublicKey::Secp256k1(sk.public_key()),
-            TypedPrivateKey::Sr25519(sk) => TypedPublicKey::Sr25519(sk.public_key()),
-        }
-    }
-
     pub fn curve_type(&self) -> CurveType {
         match self {
             TypedPrivateKey::Secp256k1(_) => CurveType::SECP256k1,
@@ -157,6 +112,41 @@ impl TypedPrivateKey {
             _ => Err(KeyError::InvalidCurveType.into()),
         }
     }
+
+    pub fn as_secp256k1(&self) -> Result<&Secp256k1PrivateKey> {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => Ok(sk),
+            _ => Err(KeyError::InvalidCurveType.into()),
+        }
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => sk.to_bytes(),
+            TypedPrivateKey::Sr25519(sk) => sk.to_bytes(),
+        }
+    }
+
+    pub fn public_key(&self) -> TypedPublicKey {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => TypedPublicKey::Secp256k1(sk.public_key()),
+            TypedPrivateKey::Sr25519(sk) => TypedPublicKey::Sr25519(sk.public_key()),
+        }
+    }
+
+    pub fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => sk.sign(data),
+            TypedPrivateKey::Sr25519(sk) => sk.sign(data),
+        }
+    }
+
+    pub fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>> {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => sk.sign_recoverable(data),
+            TypedPrivateKey::Sr25519(sk) => sk.sign_recoverable(data),
+        }
+    }
 }
 
 pub enum TypedPublicKey {
@@ -165,20 +155,6 @@ pub enum TypedPublicKey {
 }
 
 impl TypedPublicKey {
-    pub fn to_bytes(&self) -> Vec<u8> {
-        match self {
-            TypedPublicKey::Secp256k1(pk) => pk.to_bytes(),
-            TypedPublicKey::Sr25519(pk) => pk.to_bytes(),
-        }
-    }
-
-    pub fn as_secp256k1(&self) -> Result<&Secp256k1PublicKey> {
-        match self {
-            TypedPublicKey::Secp256k1(pk) => Ok(pk),
-            _ => Err(format_err!("not support")),
-        }
-    }
-
     pub fn curve_type(&self) -> CurveType {
         match self {
             TypedPublicKey::Secp256k1(_) => CurveType::SECP256k1,
@@ -196,6 +172,20 @@ impl TypedPublicKey {
             }
 
             _ => Err(KeyError::InvalidCurveType.into()),
+        }
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        match self {
+            TypedPublicKey::Secp256k1(pk) => pk.to_bytes(),
+            TypedPublicKey::Sr25519(pk) => pk.to_bytes(),
+        }
+    }
+
+    pub fn as_secp256k1(&self) -> Result<&Secp256k1PublicKey> {
+        match self {
+            TypedPublicKey::Secp256k1(pk) => Ok(pk),
+            _ => Err(format_err!("not support")),
         }
     }
 }
@@ -260,19 +250,6 @@ impl TypedDeterministicPrivateKey {
         }
     }
 
-    //    pub fn from_seed(
-    //        curve_type: CurveType,
-    //        seed: &[u8],
-    //    ) -> Result<TypedDeterministicPrivateKey> {
-    //        match curve_type {
-    //            CurveType::SECP256k1 => Ok(Bip32Sepc256k1(
-    //                Bip32DeterministicPrivateKey::from_seed(seed)?,
-    //            )),
-    //            CurveType::SubSr25519 => Ok(SubSr25519(Sr25519PrivateKey::from_seed(seed)?)),
-    //            _ => Err(format_err!("unsupported_curve_type"))
-    //        }
-    //    }
-
     pub fn from_mnemonic(
         curve_type: CurveType,
         mnemonic: &str,
@@ -282,7 +259,7 @@ impl TypedDeterministicPrivateKey {
                 Bip32DeterministicPrivateKey::from_mnemonic(mnemonic)?,
             )),
             CurveType::SubSr25519 => Ok(SubSr25519(Sr25519PrivateKey::from_mnemonic(mnemonic)?)),
-            _ => Err(format_err!("unsupported_curve_type")),
+            _ => Err(KeyError::InvalidCurveType.into()),
         }
     }
 
@@ -313,8 +290,7 @@ impl ToString for TypedDeterministicPrivateKey {
     fn to_string(&self) -> String {
         match self {
             TypedDeterministicPrivateKey::Bip32Sepc256k1(sk) => sk.to_string(),
-            // todo: does sr need export?
-            TypedDeterministicPrivateKey::SubSr25519(sk) => "".to_owned(),
+            TypedDeterministicPrivateKey::SubSr25519(sk) => hex::encode(sk.0.to_raw_vec()),
         }
     }
 }
@@ -328,7 +304,7 @@ impl TypedDeterministicPublicKey {
             CurveType::SubSr25519 => Ok(TypedDeterministicPublicKey::SubSr25519(
                 Sr25519PublicKey::from_hex(hex)?,
             )),
-            _ => Err(format_err!("unsupported_curve_type")),
+            _ => Err(KeyError::InvalidCurveType.into()),
         }
     }
 }
