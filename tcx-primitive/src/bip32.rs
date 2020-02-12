@@ -18,6 +18,7 @@ use bitcoin::Network;
 use byteorder::BigEndian;
 use byteorder::ByteOrder;
 
+use bip39::{Language, Mnemonic, MnemonicType};
 use std::convert::TryInto;
 use std::str::FromStr;
 //use bitcoin::util::bip32::DerivationPath;
@@ -43,6 +44,14 @@ impl Bip32DeterministicPrivateKey {
     pub fn from_seed(seed: &[u8]) -> Result<Self> {
         let epk =
             ExtendedPrivKey::new_master(Network::Bitcoin, seed).map_err(transform_bip32_error)?;
+        Ok(Bip32DeterministicPrivateKey(epk))
+    }
+
+    pub fn from_mnemonic(mnemonic: &str) -> Result<Self> {
+        let mn = Mnemonic::from_phrase(mnemonic, Language::English)?;
+        let seed = bip39::Seed::new(&mn, "");
+        let epk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_ref())
+            .map_err(transform_bip32_error)?;
         Ok(Bip32DeterministicPrivateKey(epk))
     }
 }
@@ -118,6 +127,14 @@ impl DeterministicPrivateKey for Bip32DeterministicPrivateKey {
     fn from_seed(seed: &[u8]) -> Result<Self> {
         let esk =
             ExtendedPrivKey::new_master(Network::Bitcoin, seed).map_err(transform_bip32_error)?;
+        Ok(Bip32DeterministicPrivateKey(esk))
+    }
+
+    fn from_mnemonic(mnemonic: &str) -> Result<Self> {
+        let mn = Mnemonic::from_phrase(mnemonic, Language::English)?;
+        let seed = bip39::Seed::new(&mn, "");
+        let esk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())
+            .map_err(transform_bip32_error)?;
         Ok(Bip32DeterministicPrivateKey(esk))
     }
 

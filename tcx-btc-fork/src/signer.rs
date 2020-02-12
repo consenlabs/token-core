@@ -10,11 +10,6 @@ use bitcoin::consensus::serialize;
 use std::str::FromStr;
 
 use crate::address::BtcForkAddress;
-use tcx_primitive::{
-    Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPublicKey, FromHex, PrivateKey,
-    PublicKey, TypedDeterministicPublicKey,
-};
-
 use crate::transaction::{BtcForkSignedTxOutput, BtcForkTxInput, Utxo};
 use bitcoin::util::bip143::SighashComponents;
 use bitcoin_hashes::hash160;
@@ -23,6 +18,10 @@ use bitcoin_hashes::hex::ToHex as HashToHex;
 use std::marker::PhantomData;
 use tcx_chain::Address;
 use tcx_constants::CoinInfo;
+use tcx_primitive::{
+    Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPublicKey, FromHex, PrivateKey,
+    PublicKey, TypedDeterministicPublicKey,
+};
 
 const DUST: u64 = 546;
 const SIGHASH_ALL: u8 = 0x01;

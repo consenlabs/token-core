@@ -2,7 +2,18 @@ use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPubl
 use crate::Result;
 use sp_core::sr25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};
+use sp_keyring::ed25519::Keyring;
 use std::io;
+//
+//fn transform_mnemonic_error(err: sp_core::crypto::SecretStringError) -> failure::Error {
+//
+//    match err {
+//        SecretStringError:: => Error::MnemonicChecksumInvalid,
+//        bip39::ErrorKind::InvalidWord => Error::MnemonicWordInvalid,
+//        bip39::ErrorKind::InvalidWordLength(_) => Error::MnemonicLengthInvalid,
+//        _ => Error::MnemonicInvalid,
+//    }
+//}
 
 #[derive(Clone)]
 pub struct Sr25519PublicKey(pub Public);
@@ -38,18 +49,18 @@ impl From<Pair> for Sr25519PrivateKey {
 //    }
 //}
 
+impl Sr25519PrivateKey {
+    pub fn from_mnemonic(mnemonic: &str) -> Result<Self> {
+        let pair = Pair::from_phrase(mnemonic, None).map_err(|_| format_err!("mnemonic_error"))?;
+        Ok(Sr25519PrivateKey(pair.0))
+    }
+}
 impl TraitPrivateKey for Sr25519PrivateKey {
     type PublicKey = Sr25519PublicKey;
 
     fn from_slice(data: &[u8]) -> Result<Self> {
         unimplemented!()
     }
-
-    //    fn from_slice(data: &[u8]) -> Result<Self> {
-    //        Sr25519Keyring::Alice
-    //        let pair = Pair::from_seed_slice(data)?;
-    //        Ok(Sr25519PrivateKey(pair))
-    //    }
 
     fn public_key(&self) -> Self::PublicKey {
         // todo:

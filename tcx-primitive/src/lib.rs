@@ -17,7 +17,7 @@ pub type Result<T> = result::Result<T, failure::Error>;
 pub use crate::bip32::{Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey};
 pub use crate::derive::{get_account_path, Derive, DeriveJunction, DerivePath};
 pub use crate::ecc::{
-    DeterministicPrivateKey, DeterministicPublicKey, DeterministicType, PrivateKey, PublicKey,
+    DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey,
     TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
     TypedPrivateKeyDisplay, TypedPublicKey,
 };

@@ -45,13 +45,13 @@ pub enum KeyError {
     InvalidCurveType,
 }
 
-/// An identifier for a type of cryptographic key.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum DeterministicType {
-    BIP32,
-    SUBSTRATE,
-}
+///// An identifier for a type of cryptographic key.
+//#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+//#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+//pub enum DeterministicType {
+//    BIP32,
+//    SUBSTRATE,
+//}
 
 pub trait PublicKey: Sized {
     fn from_slice(data: &[u8]) -> Result<Self>;
@@ -86,6 +86,8 @@ pub trait DeterministicPrivateKey: Derive {
     type PrivateKey: PrivateKey;
 
     fn from_seed(seed: &[u8]) -> Result<Self>;
+
+    fn from_mnemonic(mnemonic: &str) -> Result<Self>;
 
     fn private_key(&self) -> Self::PrivateKey;
 
@@ -140,7 +142,7 @@ impl TypedPrivateKey {
     pub fn curve_type(&self) -> CurveType {
         match self {
             TypedPrivateKey::Secp256k1(_) => CurveType::SECP256k1,
-            TypedPrivateKey::Sr25519(_) => CurveType::SR25519,
+            TypedPrivateKey::Sr25519(_) => CurveType::SubSr25519,
         }
     }
 
@@ -149,7 +151,7 @@ impl TypedPrivateKey {
             CurveType::SECP256k1 => Ok(TypedPrivateKey::Secp256k1(
                 Secp256k1PrivateKey::from_slice(data)?,
             )),
-            CurveType::SR25519 => Ok(TypedPrivateKey::Sr25519(Sr25519PrivateKey::from_slice(
+            CurveType::SubSr25519 => Ok(TypedPrivateKey::Sr25519(Sr25519PrivateKey::from_slice(
                 data,
             )?)),
             _ => Err(KeyError::InvalidCurveType.into()),
@@ -180,7 +182,7 @@ impl TypedPublicKey {
     pub fn curve_type(&self) -> CurveType {
         match self {
             TypedPublicKey::Secp256k1(_) => CurveType::SECP256k1,
-            TypedPublicKey::Sr25519(_) => CurveType::SR25519,
+            TypedPublicKey::Sr25519(_) => CurveType::SubSr25519,
         }
     }
 
@@ -189,7 +191,9 @@ impl TypedPublicKey {
             CurveType::SECP256k1 => Ok(TypedPublicKey::Secp256k1(Secp256k1PublicKey::from_slice(
                 data,
             )?)),
-            CurveType::SR25519 => Ok(TypedPublicKey::Sr25519(Sr25519PublicKey::from_slice(data)?)),
+            CurveType::SubSr25519 => {
+                Ok(TypedPublicKey::Sr25519(Sr25519PublicKey::from_slice(data)?))
+            }
 
             _ => Err(KeyError::InvalidCurveType.into()),
         }
@@ -205,7 +209,7 @@ impl TypedDeterministicPublicKey {
     pub fn curve_type(&self) -> CurveType {
         match self {
             TypedDeterministicPublicKey::Bip32Sepc256k1(_) => CurveType::SECP256k1,
-            TypedDeterministicPublicKey::SubSr25519(_) => CurveType::SR25519,
+            TypedDeterministicPublicKey::SubSr25519(_) => CurveType::SubSr25519,
         }
     }
 
@@ -263,20 +267,33 @@ impl TypedDeterministicPrivateKey {
     pub fn curve_type(&self) -> CurveType {
         match self {
             TypedDeterministicPrivateKey::Bip32Sepc256k1(_) => CurveType::SECP256k1,
-            TypedDeterministicPrivateKey::SubSr25519(_) => CurveType::SR25519,
+            TypedDeterministicPrivateKey::SubSr25519(_) => CurveType::SubSr25519,
         }
     }
 
-    pub fn from_seed(
-        deterministic_type: DeterministicType,
+    //    pub fn from_seed(
+    //        curve_type: CurveType,
+    //        seed: &[u8],
+    //    ) -> Result<TypedDeterministicPrivateKey> {
+    //        match curve_type {
+    //            CurveType::SECP256k1 => Ok(Bip32Sepc256k1(
+    //                Bip32DeterministicPrivateKey::from_seed(seed)?,
+    //            )),
+    //            CurveType::SubSr25519 => Ok(SubSr25519(Sr25519PrivateKey::from_seed(seed)?)),
+    //            _ => Err(format_err!("unsupported_curve_type"))
+    //        }
+    //    }
+
+    pub fn from_mnemonic(
         curve_type: CurveType,
-        seed: &[u8],
+        mnemonic: &str,
     ) -> Result<TypedDeterministicPrivateKey> {
-        match deterministic_type {
-            DeterministicType::BIP32 => Ok(Bip32Sepc256k1(
-                Bip32DeterministicPrivateKey::from_seed(seed)?,
+        match curve_type {
+            CurveType::SECP256k1 => Ok(Bip32Sepc256k1(
+                Bip32DeterministicPrivateKey::from_mnemonic(mnemonic)?,
             )),
-            DeterministicType::SUBSTRATE => Ok(SubSr25519(Sr25519PrivateKey::from_seed(seed)?)),
+            CurveType::SubSr25519 => Ok(SubSr25519(Sr25519PrivateKey::from_mnemonic(mnemonic)?)),
+            _ => Err(format_err!("unsupported_curve_type")),
         }
     }
 
@@ -314,18 +331,15 @@ impl ToString for TypedDeterministicPrivateKey {
 }
 
 impl TypedDeterministicPublicKey {
-    pub fn from_hex(
-        _deterministic_type: DeterministicType,
-        curve_type: CurveType,
-        hex: &str,
-    ) -> Result<TypedDeterministicPublicKey> {
-        match _deterministic_type {
-            DeterministicType::BIP32 => Ok(TypedDeterministicPublicKey::Bip32Sepc256k1(
+    pub fn from_hex(curve_type: CurveType, hex: &str) -> Result<TypedDeterministicPublicKey> {
+        match curve_type {
+            CurveType::SECP256k1 => Ok(TypedDeterministicPublicKey::Bip32Sepc256k1(
                 Bip32DeterministicPublicKey::from_hex(hex)?,
             )),
-            DeterministicType::SUBSTRATE => Ok(TypedDeterministicPublicKey::SubSr25519(
+            CurveType::SubSr25519 => Ok(TypedDeterministicPublicKey::SubSr25519(
                 Sr25519PublicKey::from_hex(hex)?,
             )),
+            _ => Err(format_err!("unsupported_curve_type")),
         }
     }
 }
@@ -365,13 +379,11 @@ impl Derive for TypedDeterministicPrivateKey {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        DeterministicType, PrivateKey, PublicKey, TypedDeterministicPrivateKey, TypedPrivateKey,
-    };
+    use super::{PrivateKey, PublicKey, TypedDeterministicPrivateKey, TypedPrivateKey};
     use crate::{Derive, DerivePath, TypedPublicKey};
     use bip39::{Language, Mnemonic, Seed};
     use std::str::FromStr;
-    use tcx_constants::CurveType;
+    use tcx_constants::{CurveType, TEST_MNEMONIC};
 
     fn default_seed() -> Seed {
         let mn = Mnemonic::from_phrase(
@@ -407,12 +419,9 @@ mod tests {
 
     #[test]
     fn typed_deterministic_private_key() {
-        let root = TypedDeterministicPrivateKey::from_seed(
-            DeterministicType::BIP32,
-            CurveType::SECP256k1,
-            &default_seed().as_bytes(),
-        )
-        .unwrap();
+        let root =
+            TypedDeterministicPrivateKey::from_mnemonic(CurveType::SECP256k1, &TEST_MNEMONIC)
+                .unwrap();
 
         let dpk = root
             .derive_from_path("m/44'/0'/0'")
