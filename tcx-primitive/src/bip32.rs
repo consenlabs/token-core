@@ -63,7 +63,7 @@ impl Derive for Bip32DeterministicPrivateKey {
         if *parts.peek().unwrap() == "m" {
             parts.next();
         }
-        // todo: unwrap()
+
         let ret: std::result::Result<Vec<ChildNumber>, bitcoin::util::bip32::Error> =
             parts.map(str::parse).collect();
         let children_nums = ret.map_err(transform_bip32_error)?;
@@ -81,7 +81,7 @@ impl Derive for Bip32DeterministicPublicKey {
         if *parts.peek().unwrap() == "m" {
             parts.next();
         }
-        // todo: unwrap()
+
         let ret: std::result::Result<Vec<ChildNumber>, bitcoin::util::bip32::Error> =
             parts.map(str::parse).collect();
         let children_nums = ret.map_err(transform_bip32_error)?;

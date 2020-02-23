@@ -192,6 +192,7 @@ mod tests {
     use tcx_btc_fork::transaction::Utxo;
 
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
+    use tcx_substrate::{ExtrinsicEra, SubstrateTxIn, SubstrateTxOut};
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 
     static OTHER_MNEMONIC: &'static str =
@@ -256,7 +257,8 @@ mod tests {
 
     fn import_default_wallet() -> WalletResult {
         let param = HdStoreImportParam {
-            mnemonic: TEST_MNEMONIC.to_string(),
+            mnemonic: OTHER_MNEMONIC.to_string(),
+            // mnemonic: TEST_MNEMONIC.to_string(),
             password: TEST_PASSWORD.to_string(),
             source: "MNEMONIC".to_string(),
             name: "test-wallet".to_string(),
@@ -604,6 +606,13 @@ mod tests {
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
                 },
+                Derivation {
+                    chain_type: "KUSAMA".to_string(),
+                    path: "//kusama//imToken/0".to_string(),
+                    network: "".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                },
             ];
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
@@ -613,7 +622,7 @@ mod tests {
             let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
             let derived_accounts: AccountsResponse =
                 AccountsResponse::decode(derived_accounts_bytes).unwrap();
-            assert_eq!(5, derived_accounts.accounts.len());
+            assert_eq!(6, derived_accounts.accounts.len());
             assert_eq!(
                 "LQ3JqCohgLQ3x1CJXYERnJTy1ySaqr1E32",
                 derived_accounts.accounts[0].address
@@ -641,6 +650,11 @@ mod tests {
             assert_eq!(
                 "ckt1qyqgkffut7e7md39tp5ts9vxssj7wdw8z4cquyflka",
                 derived_accounts.accounts[4].address
+            );
+
+            assert_eq!(
+                "HFEP5ePp69xrCLTYcDnzqJTgmH87RUKprkoRUuEmu9Tk49s",
+                derived_accounts.accounts[5].address
             );
 
             remove_created_wallet(&import_result.id);
@@ -1335,6 +1349,105 @@ mod tests {
             let output: TronTxOutput = TronTxOutput::decode(&ret).unwrap();
             let expected_sign = "bbf5ce0549490613a26c3ac4fc8574e748eabda05662b2e49cea818216b9da18691e78cd6379000e9c8a35c13dfbf620f269be90a078b58799b56dc20da3bdf200";
             assert_eq!(expected_sign, output.signatures[0]);
+            remove_created_wallet(&wallet.id);
+        })
+    }
+
+    #[test]
+    pub fn test_sign_substrate_tx() {
+        run_test(|| {
+            let derivation = Derivation {
+                chain_type: "KUSAMA".to_string(),
+                path: "//kusama//imToken/0".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            };
+
+            let wallet = import_and_derive(derivation);
+
+            // let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
+            // let input = TronTxInput { raw_data };
+            let input = SubstrateTxIn {
+                method: "transfer_keep_alive".to_string(),
+                address: "DksmaBQvQUVUyFJQo8GF62Sy4TdXVJAaYgQKQkWE818WhR6".to_string(),
+                amount: 6000000,
+                era: Some(ExtrinsicEra {
+                    current: 1133391,
+                    period: 2400,
+                }),
+                nonce: 68,
+                tip: 2000000,
+                sepc_version: 1045,
+                genesis_hash: "3fd7b9eb6a00376e5be61f01abb429ffb0b104be05eaff4d458da48fcd425baf"
+                    .to_string(),
+                block_hash: "38da45f94748885e991a4de82ecb2a9f9cacdca7e92d4264bbf6566873c8e51c"
+                    .to_string(),
+            };
+            // let input = SubstrateTxIn {
+            //     method: "transfer_keep_alive".to_string(),
+            //     address: "Fy2rsYCoowQBtuFXqLE65ehAY9T6KWcGiNCQAyPDCkfpm4s".to_string(),
+            //     amount: 12,
+            //     era: Some(ExtrinsicEra { current: 1129520, period: 2400 }),
+            //     nonce: 68,
+            //     tip: 2000000,
+            //     sepc_version: 1045,
+            //     genesis_hash: "3fd7b9eb6a00376e5be61f01abb429ffb0b104be05eaff4d458da48fcd425baf".to_string(),
+            //     block_hash: "2fb919ccefe375c588187bfca0951abfb2264fbba2fd2239348fb0993ad52281".to_string()
+            // };
+            let input_value = encode_message(input).unwrap();
+            let tx = SignParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "KUSAMA".to_string(),
+                address: wallet.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: input_value.clone(),
+                }),
+            };
+
+            // let ret = call_api("sign_tx", tx);
+            // assert!(ret.is_err());
+            // assert_eq!(format!("{}", ret.err().unwrap()), "password_incorrect");
+            //
+            // let tx = SignParam {
+            //     id: wallet.id.to_string(),
+            //     password: TEST_PASSWORD.to_string(),
+            //     chain_type: "TRON1".to_string(),
+            //     address: wallet.accounts.first().unwrap().address.to_string(),
+            //     input: Some(::prost_types::Any {
+            //         type_url: "imtoken".to_string(),
+            //         value: input_value.clone(),
+            //     }),
+            // };
+            //
+            // let ret = call_api("sign_tx", tx);
+            // assert!(ret.is_err());
+            // assert_eq!(format!("{}", ret.err().unwrap()), "unsupported_chain");
+
+            // let tx = SignParam {
+            //     id: wallet.id.to_string(),
+            //     password: TEST_PASSWORD.to_string(),
+            //     chain_type: "TRON".to_string(),
+            //     address: wallet.accounts.first().unwrap().address.to_string(),
+            //     input: Some(::prost_types::Any {
+            //         type_url: "imtoken".to_string(),
+            //         value: input_value,
+            //     }),
+            // };
+
+            let ret = call_api("sign_tx", tx).unwrap();
+            let output: SubstrateTxOut = SubstrateTxOut::decode(&ret).unwrap();
+
+            // let expected_sign = "bbf5ce0549490613a26c3ac4fc8574e748eabda05662b2e49cea818216b9da18691e78cd6379000e9c8a35c13dfbf620f269be90a078b58799b56dc20da3bdf200";
+            // 4902
+            // 84
+            // ffce9e36de55716d91b1c50caa36a58cee6d28e532a710df0cf90609363947dd7802c604c1f2b44a175e37ea9572361208309b0a082eb15751085cdbb766ca5a7bcd1bee4dbd93185d59f2eace31a38e75609b08f5dbdf950ffbf4975d5a0253bbba899b7a0802127a000400ff3449417a6a618ae6e316c127182a3cffbe76af5eb4d16afccb665a2940ee101702366e01
+
+            // let expected_sign = format!("{}{}", output.method, output.signature);
+            let expected_sign = output.signature;
+            assert_eq!("", expected_sign);
             remove_created_wallet(&wallet.id);
         })
     }

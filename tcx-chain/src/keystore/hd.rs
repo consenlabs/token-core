@@ -12,7 +12,7 @@ use crate::keystore::{transform_mnemonic_error, Store};
 use std::collections::HashMap;
 
 use std::str::FromStr;
-use tcx_constants::CoinInfo;
+use tcx_constants::{CoinInfo, CurveType};
 use tcx_crypto::hash::dsha256;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
@@ -169,14 +169,22 @@ impl HdKeystore {
         let root = TypedDeterministicPrivateKey::from_mnemonic(coin_info.curve, &cache.mnemonic)?;
 
         let private_key = root.derive(&coin_info.derivation_path)?.private_key();
+        println!("private key: {}", hex::encode(private_key.to_bytes()));
         let public_key = private_key.public_key();
 
         let address = A::from_public_key(&public_key, coin_info)?;
-
-        let ext_pub_key = root
-            .derive(&get_account_path(&coin_info.derivation_path)?)?
-            .deterministic_public_key()
-            .to_hex();
+        // todo: ext_pub_key
+        let ext_pub_key = match coin_info.curve {
+            CurveType::SubSr25519 => "".to_owned(),
+            _ => root
+                .derive(&get_account_path(&coin_info.derivation_path)?)?
+                .deterministic_public_key()
+                .to_hex(),
+        };
+        // let ext_pub_key = root
+        //     .derive(&account_path)?
+        //     .deterministic_public_key()
+        //     .to_hex();
 
         let account = Account {
             address,

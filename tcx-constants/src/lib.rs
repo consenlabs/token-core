@@ -9,7 +9,7 @@ pub use btc_fork_network::{
 pub use coin_info::CoinInfo;
 pub use curve::CurveType;
 
-type Result<T> = std::result::Result<T, failure::Error>;
+pub type Result<T> = std::result::Result<T, failure::Error>;
 
 #[macro_use]
 extern crate lazy_static;

@@ -1,10 +1,13 @@
 use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
-use crate::{FromHex, Result, ToHex};
+use crate::{FromHex, Result, Ss58Codec, ToHex};
 use schnorrkel::{ExpansionMode, MiniSecretKey};
+use sp_core::crypto::Ss58AddressFormat;
+use sp_core::crypto::Ss58Codec as SpSs58Codec;
 use sp_core::sr25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};
 use sp_keyring::ed25519::Keyring;
 use std::io;
+//use sp_core::crypto::Ss58Codec;
 
 #[derive(Clone)]
 pub struct Sr25519PublicKey(pub Public);
@@ -91,6 +94,22 @@ impl FromHex for Sr25519PublicKey {
         Ok(pk)
     }
 }
+//
+//impl Ss58Codec for Sr25519PublicKey {
+//    fn from_ss58check_with_version(s: &str) -> Result<(Self, Vec<u8>)> {
+//        // todo: address from
+//        let (addr, ver) = Public::from_ss58check_with_version(s)
+//            .map_err(|_| format_err!("parse address error"))?;
+//        Ok((Sr25519PublicKey::from(addr), vec!(ver)))
+//    }
+//
+//    fn to_ss58check_with_version(&self, version: &[u8]) -> String {
+////        sp_core::crypto::Ss58AddressFormat::frx;
+//        // todo: unwrap()
+//        let ver = Ss58AddressFormat::Custom(version.first().unwrap().clone());
+//        self.0.to_ss58check_with_version(ver)
+//    }
+//}
 
 //impl Ss58Codec for Sr25519PrivateKey {
 //    fn from_ss58check_with_version(wif: &str) -> Result<(Self, Vec<u8>)> {

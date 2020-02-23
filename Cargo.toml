@@ -9,7 +9,7 @@ members = [
     "tcx-btc-fork",
     "tcx-bch",
     "tcx-ckb",
-    "tcx-polkadot",
+    "tcx-substrate",
     "tcx",
 
     "tcx-tester",

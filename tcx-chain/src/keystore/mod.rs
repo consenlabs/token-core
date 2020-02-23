@@ -340,7 +340,7 @@ impl ChainSigner for Keystore {
         } else {
             self.find_private_key(symbol, address)?
         };
-
+        println!("pk: {}", hex::encode(private_key.to_bytes()));
         private_key.sign_recoverable(data)
     }
 

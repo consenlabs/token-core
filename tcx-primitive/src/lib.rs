@@ -25,6 +25,7 @@ pub use crate::rand::generate_mnemonic;
 pub use crate::secp256k1::{
     private_key_without_version, verify_private_key, Secp256k1PrivateKey, Secp256k1PublicKey,
 };
+pub use crate::sr25519::{Sr25519PrivateKey, Sr25519PublicKey};
 
 /// Key that can be encoded to/from SS58.
 pub trait Ss58Codec: Sized {
