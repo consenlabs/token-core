@@ -28,4 +28,5 @@ codec = { package = "parity-scale-codec", version = "1.0.0", default-features = 
 failure = "0.1.5"
 
 [dev-dependencies]
-sp-keyring = { path = "../../substrate/primitives/keyring" }
+sp-core = { path = "../../substrate/primitives/core" }
+sp-runtime = { path = "../../substrate/primitives/runtime" }

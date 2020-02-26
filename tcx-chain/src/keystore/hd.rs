@@ -169,7 +169,6 @@ impl HdKeystore {
         let root = TypedDeterministicPrivateKey::from_mnemonic(coin_info.curve, &cache.mnemonic)?;
 
         let private_key = root.derive(&coin_info.derivation_path)?.private_key();
-        println!("private key: {}", hex::encode(private_key.to_bytes()));
         let public_key = private_key.public_key();
 
         let address = A::from_public_key(&public_key, coin_info)?;

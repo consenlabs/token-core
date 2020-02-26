@@ -1,6 +1,8 @@
 use crate::era::Era;
 use crate::transaction::ExtrinsicEra;
-use crate::{SubstrateAddress, SubstrateTxIn, SubstrateTxOut, ACCOUNT_INDEX_FLAG};
+use crate::{
+    SubstrateAddress, SubstrateTxIn, SubstrateTxOut, ACCOUNT_INDEX_FLAG, PAYLOAD_HASH_THRESHOLD,
+};
 use base58::FromBase58;
 use byteorder::{LittleEndian, WriteBytesExt};
 use codec::{Compact, Decode, Encode, HasCompact};
@@ -44,6 +46,15 @@ impl SubstrateTxIn {
         };
 
         Ok([method_raw, era_raw, inner_tx.encode()].concat())
+    }
+
+    pub fn hash_unsigned_payload(&self) -> Result<Vec<u8>> {
+        let payload = self.unsigned_payload()?;
+        if payload.len() > PAYLOAD_HASH_THRESHOLD {
+            Ok(blake2_256(&payload).to_vec())
+        } else {
+            Ok(payload)
+        }
     }
 
     pub fn method_raw(&self) -> Result<Vec<u8>> {

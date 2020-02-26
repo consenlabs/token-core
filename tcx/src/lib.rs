@@ -191,6 +191,9 @@ mod tests {
     use tcx_btc_fork::transaction::BtcForkTxInput;
     use tcx_btc_fork::transaction::Utxo;
 
+    use sp_core::sr25519::Public;
+    use sp_core::{Pair, Public as TraitPublic};
+    use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
     use tcx_substrate::{ExtrinsicEra, SubstrateTxIn, SubstrateTxOut};
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
@@ -1371,15 +1374,15 @@ mod tests {
                 address: "EwDXBhgNrcNvMVhm9fRq5YCTdAsPRBPo3t4tUZ85Q9ydKNs".to_string(),
                 amount: 10000000000,
                 era: Some(ExtrinsicEra {
-                    current: 1200015,
+                    current: 1202925,
                     period: 2400,
                 }),
-                nonce: 7,
+                nonce: 5,
                 tip: 10000000000,
                 sepc_version: 1045,
                 genesis_hash: "b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
                     .to_string(),
-                block_hash: "6686fe28c93660e5abaefcfbfc0d203e7ddfbbba1e0e4e720cce929fd6ebcbf1"
+                block_hash: "790628ced8e0649883f3dd20344d9e6b014f076e788742f0925cf3875997e883"
                     .to_string(),
             };
 
@@ -1398,9 +1401,35 @@ mod tests {
             let ret = call_api("sign_tx", tx).unwrap();
             let output: SubstrateTxOut = SubstrateTxOut::decode(&ret).unwrap();
 
-            let expected_sig = "550284ff3b9e4fe20dc00cc6debdebd226d38ff5a80057be2c494c71cb016540d8c429bd005ae3b3c9cb7070fc8c5d5eedb3fe1495e5f3c481116bfc4361a07d090db849d1deb4a6a0a81bf9dfaf99e31972a9832ed92782edd0d47a7dda31f0d57db1760225030c0700e40b54020400ff68686f29461fcc99ab3538c391e42556e49efc1ffa7933da42335aa626fae25a0700e40b5402";
+            let expected_ret_before_sig =
+                "550284ffce9e36de55716d91b1c50caa36a58cee6d28e532a710df0cf90609363947dd7801";
+            let expected_ret_after_sig = "dbae140700e40b54020400ff68686f29461fcc99ab3538c391e42556e49efc1ffa7933da42335aa626fae25a0700e40b5402";
 
-            assert_eq!(output.signature, expected_sig);
+            assert_eq!(
+                output.signature[0..74].to_string(),
+                expected_ret_before_sig,
+                "before sig"
+            );
+            assert_eq!(
+                output.signature[202..].to_string(),
+                expected_ret_after_sig,
+                "after sig"
+            );
+
+            let sig_bytes = hex::decode(output.signature[74..202].to_string()).unwrap();
+            let signature = sp_core::sr25519::Signature::from_slice(&sig_bytes);
+
+            let pub_key =
+                hex::decode("ce9e36de55716d91b1c50caa36a58cee6d28e532a710df0cf90609363947dd78")
+                    .unwrap();
+            let singer = sp_core::sr25519::Public::from_slice(&pub_key);
+            let msg = hex::decode("0400ff68686f29461fcc99ab3538c391e42556e49efc1ffa7933da42335aa626fae25a0700e40b5402dbae140700e40b540215040000b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe790628ced8e0649883f3dd20344d9e6b014f076e788742f0925cf3875997e883").unwrap();
+
+            assert!(
+                sp_core::sr25519::Signature::verify(&signature, msg.as_slice(), &singer),
+                "assert sig"
+            );
+
             remove_created_wallet(&wallet.id);
         })
     }

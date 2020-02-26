@@ -37,3 +37,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 prost-build = "0.5.0"
+
+[dev-dependencies]
+sp-core = { path = "../../substrate/primitives/core" }
+sp-runtime = { path = "../../substrate/primitives/runtime" }
