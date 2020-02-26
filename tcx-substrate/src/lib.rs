@@ -7,6 +7,12 @@ mod tx_serializer;
 pub use address::SubstrateAddress;
 pub use transaction::{ExtrinsicEra, SubstrateTxIn, SubstrateTxOut};
 
+pub(crate) const ACCOUNT_INDEX_FLAG: u8 = 0xff;
+pub(crate) const SIGNATURE_TYPE_ED25519: u8 = 0x00;
+pub(crate) const SIGNATURE_TYPE_SR25519: u8 = 0x01;
+pub(crate) const SIGNED_EXTRINSIC_V4: u8 = 0x84;
+pub(crate) const PAYLOAD_HASH_THRESHOLD: int = 256;
+
 #[cfg(test)]
 mod tests {
     use sp_core::crypto::Ss58Codec;

@@ -1,6 +1,6 @@
 use crate::era::Era;
 use crate::transaction::ExtrinsicEra;
-use crate::{SubstrateAddress, SubstrateTxIn, SubstrateTxOut};
+use crate::{SubstrateAddress, SubstrateTxIn, SubstrateTxOut, ACCOUNT_INDEX_FLAG};
 use base58::FromBase58;
 use byteorder::{LittleEndian, WriteBytesExt};
 use codec::{Compact, Decode, Encode, HasCompact};
@@ -42,22 +42,13 @@ impl SubstrateTxIn {
             genesis_hash: hex_to_h256(&self.genesis_hash),
             block_hash: hex_to_h256(&self.block_hash),
         };
-        // let inner_tx = (
-        //     method_raw,
-        //     self.era_raw(),
-        //     self.nonce,
-        //     self.tip as u128,
-        //     self.sepc_version,
-        //     hex_to_h256(&self.genesis_hash),
-        //     hex_to_h256(&self.block_hash)
-        //     );
 
         Ok([method_raw, era_raw, inner_tx.encode()].concat())
     }
 
     pub fn method_raw(&self) -> Result<Vec<u8>> {
         let method = match self.method.as_str() {
-            "transfer" => hex::decode("0600").map_err(|_| format_err!("expected no error")),
+            "transfer" => hex::decode("0400").map_err(|_| format_err!("expected no error")),
             "transfer_keep_alive" => {
                 hex::decode("0603").map_err(|_| format_err!("expected no error"))
             }
@@ -67,15 +58,10 @@ impl SubstrateTxIn {
 
         let pub_key = Public::from_ss58check(&self.address)
             .map_err(|_| format_err!("invalid address format"))?;
-        // let addr = bs58::decode(&self.address).into_vec().map_err(|_|format_err!("invalid address format"))?;
-        // let big_amount: u128 = self.amount as u128;
-        // let mut amount_bytes = [0u8; mem::size_of::<u128>()];
-        // amount_bytes.as_mut()
-        //     .write_u128::<LittleEndian>(big_amount)
-        //     .expect("Unable to write");
-        let account_index_flag = vec![0xffu8];
 
-        let concated_bytes: Vec<u8> = [
+        let account_index_flag = vec![ACCOUNT_INDEX_FLAG];
+
+        let concat_bytes: Vec<u8> = [
             method.clone(),
             account_index_flag,
             pub_key.to_vec(),
@@ -83,12 +69,7 @@ impl SubstrateTxIn {
         ]
         .concat();
 
-        // println!("{}", hex::encode([method.clone(), addr.clone(), Compact::<u128>(self.amount as u128).encode()].concat()));
-        // let a = Compact::<u128>(self.amount as u128).encode();
-        // Ok([method, pub_key.to_vec(), amount_bytes.to_vec()].concat())
-        // println!("method: {}", hex::encode(codec::Encode::encode(&concated_bytes)));
-        // Ok(codec::Encode::encode(&concated_bytes))
-        Ok(concated_bytes)
+        Ok(concat_bytes)
     }
 
     pub fn era_raw(&self) -> Vec<u8> {
@@ -97,40 +78,10 @@ impl SubstrateTxIn {
         era.encode()
         // crate::era::Era::Immortal.encode()
     }
-
-    //    public toU8a (isBare?: boolean): Uint8Array {
-    //    const period = this.period.toNumber();
-    //    const phase = this.phase.toNumber();
-    //    const quantizeFactor = Math.max(period >> 12, 1);
-    //    const trailingZeros = this.getTrailingZeros(period);
-    //    const encoded = Math.min(15, Math.max(1, trailingZeros - 1)) + (((phase / quantizeFactor) << 4));
-    //    const first = encoded >> 8;
-    //    const second = encoded & 0xff;
-    //
-    //    return new Uint8Array([second, first]);
-    //    }
-
-    //    /** @internal */
-    //    private static decodeMortalObject (registry: Registry, value: MortalMethod): MortalEraValue {
-    //    const { current, period } = value;
-    //    let calPeriod = Math.pow(2, Math.ceil(Math.log2(period)));
-    //    calPeriod = Math.min(Math.max(calPeriod, 4), 1 << 16);
-    //    const phase = current % calPeriod;
-    //    const quantizeFactor = Math.max(calPeriod >> 12, 1);
-    //    const quantizedPhase = phase / quantizeFactor * quantizeFactor;
-    //
-    //    return [new U64(registry, calPeriod), new U64(registry, quantizedPhase)];
-    //    }
-    //    fn serialize_era(&self) -> Vec<u8> {
-    //
-    //        let current = self.era.unwrap().current;
-    //        let period = self.era.unwrap().period;
-    //        let calc_period = period.log
-    //    }
 }
 
 impl ExtrinsicEra {
-    fn default() -> Self {
+    pub(crate) fn default() -> Self {
         ExtrinsicEra {
             current: 4302222,
             period: 2400,
