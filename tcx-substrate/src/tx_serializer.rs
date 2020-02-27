@@ -59,9 +59,10 @@ impl SubstrateTxIn {
 
     pub fn method_raw(&self) -> Result<Vec<u8>> {
         let method = match self.method.as_str() {
+            // todo: To discuss with frontend determining who calc the method raw
             "transfer" => hex::decode("0400").map_err(|_| format_err!("expected no error")),
             "transfer_keep_alive" => {
-                hex::decode("0603").map_err(|_| format_err!("expected no error"))
+                hex::decode("0403").map_err(|_| format_err!("expected no error"))
             }
             // todo: stack method
             _ => Err(format_err!("unsupported_method")),

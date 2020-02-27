@@ -22,6 +22,7 @@ message SubstrateTxOut {
     string signature = 1;
 //    string signature = 2;
 }
+
 //#[derive(Debug, PartialEq, Encode, Decode)]
 //    struct PolkadotTx {
 //        //        #[codec(compact)]
