@@ -107,10 +107,6 @@ impl TraitPublicKey for Secp256k1PublicKey {
         Ok(Secp256k1PublicKey(key))
     }
 
-    fn write_into<W: io::Write>(&self, writer: W) {
-        self.0.write_into(writer);
-    }
-
     fn to_bytes(&self) -> Vec<u8> {
         self.0.to_bytes()
     }

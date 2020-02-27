@@ -7,6 +7,8 @@ mod derive;
 mod ecc;
 mod rand;
 mod secp256k1;
+mod sr25519;
+mod subkey;
 
 use core::result;
 
@@ -15,7 +17,7 @@ pub type Result<T> = result::Result<T, failure::Error>;
 pub use crate::bip32::{Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey};
 pub use crate::derive::{get_account_path, Derive, DeriveJunction, DerivePath};
 pub use crate::ecc::{
-    DeterministicPrivateKey, DeterministicPublicKey, DeterministicType, PrivateKey, PublicKey,
+    DeterministicPrivateKey, DeterministicPublicKey, PrivateKey, PublicKey,
     TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
     TypedPrivateKeyDisplay, TypedPublicKey,
 };
@@ -23,6 +25,7 @@ pub use crate::rand::generate_mnemonic;
 pub use crate::secp256k1::{
     private_key_without_version, verify_private_key, Secp256k1PrivateKey, Secp256k1PublicKey,
 };
+pub use crate::sr25519::{Sr25519PrivateKey, Sr25519PublicKey};
 
 /// Key that can be encoded to/from SS58.
 pub trait Ss58Codec: Sized {

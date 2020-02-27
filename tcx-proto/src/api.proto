@@ -88,6 +88,14 @@ message AccountsResponse {
     repeated AccountResponse accounts = 1;
 }
 
+message KeystoreCommonExportParam {
+    string id = 1;
+    string password = 2;
+    KeyType type = 3;
+    string value = 4;
+}
+
+
 // FUNCTION: hd_store_export(KeystoreCommonExportResult): KeystoreCommonExistsResult
 //
 // export the mnemonic from a hd keystore
@@ -114,6 +122,7 @@ message PrivateKeyStoreImportParam {
     bool overwrite = 3;
 }
 
+// Deprecated use ExportPrivateKeyParam instead
 // FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult
 //
 // export the private key from a private key keystore
@@ -122,6 +131,18 @@ message PrivateKeyStoreExportParam {
     string password = 2;
     string chainType = 3;
     string network = 4;
+}
+
+// FUNCTION: export_private_key(ExportPrivateKeyParam): KeystoreCommonExportResult
+//
+// export the private key from a private key keystore or a hd keystore
+message ExportPrivateKeyParam {
+    string id = 1;
+    string password = 2;
+    string chainType = 3;
+    string network = 4;
+    string mainAddress = 5;
+    string path = 6;
 }
 
 /// Keystore Common
