@@ -195,7 +195,7 @@ mod tests {
     use sp_core::{Pair, Public as TraitPublic};
     use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
-    use tcx_substrate::{ExtrinsicEra, SubstrateTxIn, SubstrateTxOut};
+    use tcx_substrate::{ExtrinsicEra, SubstrateRawTxIn, SubstrateTxIn, SubstrateTxOut};
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 
     static OTHER_MNEMONIC: &'static str =
@@ -1356,8 +1356,86 @@ mod tests {
         })
     }
 
+    // #[test]
+    // pub fn test_sign_substrate_tx() {
+    //     run_test(|| {
+    //         let derivation = Derivation {
+    //             chain_type: "KUSAMA".to_string(),
+    //             path: "//kusama//imToken/0".to_string(),
+    //             network: "".to_string(),
+    //             seg_wit: "".to_string(),
+    //             chain_id: "".to_string(),
+    //         };
+    //
+    //         let wallet = import_and_derive(derivation);
+    //
+    //         let input = SubstrateTxIn {
+    //             method: "transfer".to_string(),
+    //             address: "EwDXBhgNrcNvMVhm9fRq5YCTdAsPRBPo3t4tUZ85Q9ydKNs".to_string(),
+    //             amount: 10000000000,
+    //             era: Some(ExtrinsicEra {
+    //                 current: 1202925,
+    //                 period: 2400,
+    //             }),
+    //             nonce: 5,
+    //             tip: 10000000000,
+    //             sepc_version: 1045,
+    //             genesis_hash: "b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
+    //                 .to_string(),
+    //             block_hash: "790628ced8e0649883f3dd20344d9e6b014f076e788742f0925cf3875997e883"
+    //                 .to_string(),
+    //         };
+    //
+    //         let input_value = encode_message(input).unwrap();
+    //         let tx = SignParam {
+    //             id: wallet.id.to_string(),
+    //             password: TEST_PASSWORD.to_string(),
+    //             chain_type: "KUSAMA".to_string(),
+    //             address: wallet.accounts.first().unwrap().address.to_string(),
+    //             input: Some(::prost_types::Any {
+    //                 type_url: "imtoken".to_string(),
+    //                 value: input_value.clone(),
+    //             }),
+    //         };
+    //
+    //         let ret = call_api("sign_tx", tx).unwrap();
+    //         let output: SubstrateTxOut = SubstrateTxOut::decode(&ret).unwrap();
+    //
+    //         let expected_ret_before_sig =
+    //             "550284ffce9e36de55716d91b1c50caa36a58cee6d28e532a710df0cf90609363947dd7801";
+    //         let expected_ret_after_sig = "dbae140700e40b54020400ff68686f29461fcc99ab3538c391e42556e49efc1ffa7933da42335aa626fae25a0700e40b5402";
+    //
+    //         assert_eq!(
+    //             output.signature[0..74].to_string(),
+    //             expected_ret_before_sig,
+    //             "before sig"
+    //         );
+    //         assert_eq!(
+    //             output.signature[202..].to_string(),
+    //             expected_ret_after_sig,
+    //             "after sig"
+    //         );
+    //
+    //         let sig_bytes = hex::decode(output.signature[74..202].to_string()).unwrap();
+    //         let signature = sp_core::sr25519::Signature::from_slice(&sig_bytes);
+    //
+    //         let pub_key =
+    //             hex::decode("ce9e36de55716d91b1c50caa36a58cee6d28e532a710df0cf90609363947dd78")
+    //                 .unwrap();
+    //         let singer = sp_core::sr25519::Public::from_slice(&pub_key);
+    //         let msg = hex::decode("0400ff68686f29461fcc99ab3538c391e42556e49efc1ffa7933da42335aa626fae25a0700e40b5402dbae140700e40b540215040000b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe790628ced8e0649883f3dd20344d9e6b014f076e788742f0925cf3875997e883").unwrap();
+    //
+    //         assert!(
+    //             sp_core::sr25519::Signature::verify(&signature, msg.as_slice(), &singer),
+    //             "assert sig"
+    //         );
+    //
+    //         remove_created_wallet(&wallet.id);
+    //     })
+    // }
+
     #[test]
-    pub fn test_sign_substrate_tx() {
+    pub fn test_sign_substrate_raw_tx() {
         run_test(|| {
             let derivation = Derivation {
                 chain_type: "KUSAMA".to_string(),
@@ -1368,22 +1446,9 @@ mod tests {
             };
 
             let wallet = import_and_derive(derivation);
-
-            let input = SubstrateTxIn {
-                method: "transfer".to_string(),
-                address: "EwDXBhgNrcNvMVhm9fRq5YCTdAsPRBPo3t4tUZ85Q9ydKNs".to_string(),
-                amount: 10000000000,
-                era: Some(ExtrinsicEra {
-                    current: 1202925,
-                    period: 2400,
-                }),
-                nonce: 5,
-                tip: 10000000000,
-                sepc_version: 1045,
-                genesis_hash: "b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
-                    .to_string(),
-                block_hash: "790628ced8e0649883f3dd20344d9e6b014f076e788742f0925cf3875997e883"
-                    .to_string(),
+            let unsigned_msg = "0x0600ffd7568e5f0a7eda67a82691ff379ac4bba4f9c9b859fe779b5d46363b61ad2db9e56c0703d148e25901007b000000dcd1346701ca8396496e52aa2785b1748deb6db09551b72159dcb3e08991025bde8f69eeb5e065e18c6950ff708d7e551f68dc9bf59a07c52367c0280f805ec7";
+            let input = SubstrateRawTxIn {
+                raw_data: unsigned_msg.to_string(),
             };
 
             let input_value = encode_message(input).unwrap();
@@ -1405,25 +1470,16 @@ mod tests {
                 "550284ffce9e36de55716d91b1c50caa36a58cee6d28e532a710df0cf90609363947dd7801";
             let expected_ret_after_sig = "dbae140700e40b54020400ff68686f29461fcc99ab3538c391e42556e49efc1ffa7933da42335aa626fae25a0700e40b5402";
 
-            assert_eq!(
-                output.signature[0..74].to_string(),
-                expected_ret_before_sig,
-                "before sig"
-            );
-            assert_eq!(
-                output.signature[202..].to_string(),
-                expected_ret_after_sig,
-                "after sig"
-            );
+            assert_eq!(output.signature[0..4].to_string(), "0x01",);
 
-            let sig_bytes = hex::decode(output.signature[74..202].to_string()).unwrap();
+            let sig_bytes = hex::decode(output.signature[4..].to_string()).unwrap();
             let signature = sp_core::sr25519::Signature::from_slice(&sig_bytes);
 
             let pub_key =
                 hex::decode("ce9e36de55716d91b1c50caa36a58cee6d28e532a710df0cf90609363947dd78")
                     .unwrap();
             let singer = sp_core::sr25519::Public::from_slice(&pub_key);
-            let msg = hex::decode("0400ff68686f29461fcc99ab3538c391e42556e49efc1ffa7933da42335aa626fae25a0700e40b5402dbae140700e40b540215040000b0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe790628ced8e0649883f3dd20344d9e6b014f076e788742f0925cf3875997e883").unwrap();
+            let msg = hex::decode("0600ffd7568e5f0a7eda67a82691ff379ac4bba4f9c9b859fe779b5d46363b61ad2db9e56c0703d148e25901007b000000dcd1346701ca8396496e52aa2785b1748deb6db09551b72159dcb3e08991025bde8f69eeb5e065e18c6950ff708d7e551f68dc9bf59a07c52367c0280f805ec7").unwrap();
 
             assert!(
                 sp_core::sr25519::Signature::verify(&signature, msg.as_slice(), &singer),

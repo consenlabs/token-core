@@ -18,22 +18,11 @@ message SubstrateTxIn {
     string blockHash = 9;
 }
 
+message SubstrateRawTxIn {
+    string rawData = 1;
+}
+
 message SubstrateTxOut {
     string signature = 1;
 //    string signature = 2;
 }
-
-//#[derive(Debug, PartialEq, Encode, Decode)]
-//    struct PolkadotTx {
-//        //        #[codec(compact)]
-//        method: Vec<u8>,
-//        era_period: u8,
-//        era_phase: u8,
-//        #[codec(compact)]
-//        nonce: u32,
-//        #[codec(compact)]
-//        tip: u128,
-//        spec_version: u32,
-//        genesis_hash: H256,
-//        block_hash: H256,
-//    }

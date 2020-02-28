@@ -33,6 +33,14 @@ fn hex_to_h256(hex: &str) -> H256 {
     H256(array)
 }
 
+pub(crate) fn hash_unsigned_payload(payload: &[u8]) -> Result<Vec<u8>> {
+    if payload.len() > PAYLOAD_HASH_THRESHOLD {
+        Ok(blake2_256(&payload).to_vec())
+    } else {
+        Ok(payload.to_vec())
+    }
+}
+
 impl SubstrateTxIn {
     pub fn unsigned_payload(&self) -> Result<Vec<u8>> {
         let method_raw = self.method_raw()?;
@@ -50,11 +58,7 @@ impl SubstrateTxIn {
 
     pub fn hash_unsigned_payload(&self) -> Result<Vec<u8>> {
         let payload = self.unsigned_payload()?;
-        if payload.len() > PAYLOAD_HASH_THRESHOLD {
-            Ok(blake2_256(&payload).to_vec())
-        } else {
-            Ok(payload)
-        }
+        hash_unsigned_payload(&payload)
     }
 
     pub fn method_raw(&self) -> Result<Vec<u8>> {
