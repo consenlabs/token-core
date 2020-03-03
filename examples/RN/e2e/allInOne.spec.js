@@ -8,9 +8,9 @@ import mnemonicPrivateKeyFlow from './specs/wallet/mnemonicPrivateKeyFlow'
 const repeatImport = false
 const runRobust = false
 
-createFlow()
-/*
+// createFlow()
 mnemonicFlow(repeatImport, runRobust)
+/*
 privateKeyFlow(repeatImport, runRobust)
 mnemonicPrivateKeyFlow()
 signTxFlow()
