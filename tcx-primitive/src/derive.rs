@@ -28,7 +28,7 @@ pub enum DeriveJunction {
 pub trait Derive: Sized {
     //    fn derive_old<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self>;
 
-    fn derive(&self, path: &str) -> Result<Self> {
+    fn derive(&self, _path: &str) -> Result<Self> {
         unimplemented!()
     }
 }
