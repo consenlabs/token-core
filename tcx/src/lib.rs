@@ -191,7 +191,6 @@ mod tests {
     use tcx_btc_fork::transaction::BtcForkTxInput;
     use tcx_btc_fork::transaction::Utxo;
 
-    use sp_core::sr25519::Public;
     use sp_core::{Pair, Public as TraitPublic};
     use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
@@ -260,7 +259,7 @@ mod tests {
 
     fn import_default_wallet() -> WalletResult {
         let param = HdStoreImportParam {
-            mnemonic: OTHER_MNEMONIC.to_string(),
+            mnemonic: TEST_MNEMONIC.to_string(),
             // mnemonic: TEST_MNEMONIC.to_string(),
             password: TEST_PASSWORD.to_string(),
             source: "MNEMONIC".to_string(),
@@ -1457,6 +1456,7 @@ mod tests {
             };
 
             let wallet = import_and_derive(derivation);
+
             let unsigned_msg = "0x0600ffd7568e5f0a7eda67a82691ff379ac4bba4f9c9b859fe779b5d46363b61ad2db9e56c0703d148e25901007b000000dcd1346701ca8396496e52aa2785b1748deb6db09551b72159dcb3e08991025bde8f69eeb5e065e18c6950ff708d7e551f68dc9bf59a07c52367c0280f805ec7";
             let input = SubstrateRawTxIn {
                 raw_data: unsigned_msg.to_string(),
@@ -1477,17 +1477,13 @@ mod tests {
             let ret = call_api("sign_tx", tx).unwrap();
             let output: SubstrateTxOut = SubstrateTxOut::decode(&ret).unwrap();
 
-            let expected_ret_before_sig =
-                "550284ffce9e36de55716d91b1c50caa36a58cee6d28e532a710df0cf90609363947dd7801";
-            let expected_ret_after_sig = "dbae140700e40b54020400ff68686f29461fcc99ab3538c391e42556e49efc1ffa7933da42335aa626fae25a0700e40b5402";
-
             assert_eq!(output.signature[0..4].to_string(), "0x01",);
 
             let sig_bytes = hex::decode(output.signature[4..].to_string()).unwrap();
             let signature = sp_core::sr25519::Signature::from_slice(&sig_bytes);
 
             let pub_key =
-                hex::decode("ce9e36de55716d91b1c50caa36a58cee6d28e532a710df0cf90609363947dd78")
+                hex::decode("90742a577c8515391a46b7881c98c80ec92fe04255bb5b5fec862c7d633ada21")
                     .unwrap();
             let singer = sp_core::sr25519::Public::from_slice(&pub_key);
             let msg = hex::decode("0600ffd7568e5f0a7eda67a82691ff379ac4bba4f9c9b859fe779b5d46363b61ad2db9e56c0703d148e25901007b000000dcd1346701ca8396496e52aa2785b1748deb6db09551b72159dcb3e08991025bde8f69eeb5e065e18c6950ff708d7e551f68dc9bf59a07c52367c0280f805ec7").unwrap();

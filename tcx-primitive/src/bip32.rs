@@ -263,11 +263,10 @@ impl Ss58Codec for Bip32DeterministicPrivateKey {
 mod tests {
     use crate::ToHex;
     use crate::{
-        Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DerivePath,
-        DeterministicPrivateKey, PrivateKey, Ss58Codec,
+        Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DeterministicPrivateKey,
+        PrivateKey, Ss58Codec,
     };
     use bip39::{Language, Mnemonic, Seed};
-    use std::str::FromStr;
 
     fn default_seed() -> Seed {
         let mn = Mnemonic::from_phrase(

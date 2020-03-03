@@ -19,8 +19,8 @@ use std::marker::PhantomData;
 use tcx_chain::Address;
 use tcx_constants::CoinInfo;
 use tcx_primitive::{
-    Bip32DeterministicPublicKey, Derive, DerivePath, DeterministicPublicKey, FromHex, PrivateKey,
-    PublicKey, TypedDeterministicPublicKey,
+    Bip32DeterministicPublicKey, Derive, DeterministicPublicKey, FromHex, PrivateKey, PublicKey,
+    TypedDeterministicPublicKey,
 };
 
 const DUST: u64 = 546;

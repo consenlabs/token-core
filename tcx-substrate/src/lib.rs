@@ -15,14 +15,11 @@ pub(crate) const PAYLOAD_HASH_THRESHOLD: usize = 256;
 
 #[cfg(test)]
 mod tests {
-    use sp_core::crypto::Ss58Codec;
-    use sp_keyring::Sr25519Keyring;
 
     use codec::HasCompact;
     use codec::{Decode, Encode};
-    use sp_core::offchain::Capability::Keystore;
-    use sp_core::{blake2_256, H256};
-    use sp_keyring::ed25519::Keyring;
+
+    use sp_core::H256;
 
     #[test]
     fn it_works() {

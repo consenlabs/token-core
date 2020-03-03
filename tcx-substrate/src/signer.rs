@@ -1,17 +1,13 @@
 use crate::transaction::{SubstrateRawTxIn, SubstrateTxIn, SubstrateTxOut};
-use crate::tx_serializer::{hash_unsigned_payload, ExtrinsicSignature};
-use crate::{
-    ACCOUNT_INDEX_FLAG, PAYLOAD_HASH_THRESHOLD, SIGNATURE_TYPE_ED25519, SIGNATURE_TYPE_SR25519,
-    SIGNED_EXTRINSIC_V4,
-};
+use crate::tx_serializer::hash_unsigned_payload;
+use crate::{ACCOUNT_INDEX_FLAG, SIGNATURE_TYPE_SR25519, SIGNED_EXTRINSIC_V4};
 use base58::FromBase58;
 use codec::Compact;
 use codec::Encode;
 use failure::format_err;
-use sp_core::{blake2_256, Pair};
+
 use tcx_chain::{ChainSigner, Keystore, TransactionSigner as TraitTransactionSigner};
 use tcx_constants::Result;
-use tcx_primitive::{PublicKey, Sr25519PublicKey, Ss58Codec};
 
 impl TraitTransactionSigner<SubstrateTxIn, SubstrateTxOut> for Keystore {
     fn sign_transaction(

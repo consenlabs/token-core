@@ -3,7 +3,7 @@ use sp_core::crypto::Ss58Codec;
 use sp_core::sr25519::Public;
 use tcx_chain::Address;
 use tcx_constants::{CoinInfo, Result};
-use tcx_primitive::{PublicKey, Sr25519PrivateKey, Sr25519PublicKey, TypedPublicKey};
+use tcx_primitive::{PublicKey, Sr25519PublicKey, TypedPublicKey};
 
 pub struct SubstrateAddress();
 
@@ -26,7 +26,7 @@ impl Address for SubstrateAddress {
 
     fn is_valid(address: &str, coin: &CoinInfo) -> bool {
         match Public::from_ss58check_with_version(address) {
-            Ok((addr, version)) => match coin.network.as_str() {
+            Ok((_addr, version)) => match coin.network.as_str() {
                 "KUSAMA" => version == Ss58AddressFormat::KusamaAccountDirect,
                 "POLKADOT" => version == Ss58AddressFormat::PolkadotAccountDirect,
                 _ => false,

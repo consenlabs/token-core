@@ -333,9 +333,9 @@ impl Derive for TypedDeterministicPrivateKey {
 #[cfg(test)]
 mod tests {
     use super::{PrivateKey, PublicKey, TypedDeterministicPrivateKey, TypedPrivateKey};
-    use crate::{Derive, DerivePath, TypedPublicKey};
+    use crate::{Derive, TypedPublicKey};
     use bip39::{Language, Mnemonic, Seed};
-    use std::str::FromStr;
+
     use tcx_constants::{CurveType, TEST_MNEMONIC};
 
     fn default_seed() -> Seed {
