@@ -39,5 +39,5 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 prost-build = "0.5.0"
 
 [dev-dependencies]
-sp-core = { path = "../../substrate/primitives/core" }
-sp-runtime = { path = "../../substrate/primitives/runtime" }
+sp-core = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master", package = "sp-core" }
+sp-runtime = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master", package = "sp-runtime" }

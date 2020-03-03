@@ -12,8 +12,7 @@ tcx-chain = { path = "../tcx-chain" }
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants" }
 
-sp-core = { path = "../../substrate/primitives/core" }
-sp-keyring = { path = "../../substrate/primitives/keyring" }
+sp-core = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master", package = "sp-core" }
 hex = "0.4.0"
 byteorder = "1.2"
 
@@ -28,5 +27,5 @@ codec = { package = "parity-scale-codec", version = "1.0.0", default-features = 
 failure = "0.1.5"
 
 [dev-dependencies]
-sp-core = { path = "../../substrate/primitives/core" }
-sp-runtime = { path = "../../substrate/primitives/runtime" }
+sp-runtime = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master", package = "sp-runtime" }
+sp-keyring = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master", package = "sp-keyring" }

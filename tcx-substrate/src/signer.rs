@@ -9,7 +9,6 @@ use codec::Compact;
 use codec::Encode;
 use failure::format_err;
 use sp_core::{blake2_256, Pair};
-use sp_keyring::ed25519::Keyring;
 use tcx_chain::{ChainSigner, Keystore, TransactionSigner as TraitTransactionSigner};
 use tcx_constants::Result;
 use tcx_primitive::{PublicKey, Sr25519PublicKey, Ss58Codec};
