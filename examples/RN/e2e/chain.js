@@ -1,6 +1,8 @@
 export const formatHdStoreParams = ({ mnemonic, password, chainType, network, segWit }) => {
   switch (chainType) {
     case 'TRON':
+    case 'KUSAMA':
+    case 'POLKADOT':
       return {
         chainType,
         mnemonic,
