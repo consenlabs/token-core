@@ -113,7 +113,7 @@ lazy_static! {
         coin_infos.push(CoinInfo {
             coin: "POLKADOT".to_string(),
             derivation_path: "//polkadot//imToken/0".to_string(),
-            curve: CurveType::SECP256k1,
+            curve: CurveType::SubSr25519,
             network: "".to_string(),
             seg_wit: "".to_string(),
         });

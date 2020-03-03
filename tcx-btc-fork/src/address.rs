@@ -325,9 +325,7 @@ mod tests {
     use tcx_constants::btc_fork_network::network_from_param;
 
     use tcx_constants::{CoinInfo, CurveType};
-    use tcx_primitive::{
-        Bip32DeterministicPrivateKey, Derive, DerivePath, DeterministicPrivateKey, Ss58Codec,
-    };
+    use tcx_primitive::{Bip32DeterministicPrivateKey, Derive, DeterministicPrivateKey, Ss58Codec};
 
     #[test]
     pub fn test_btc_fork_address() {

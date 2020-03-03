@@ -9,7 +9,6 @@ use crate::{Result, Ss58Codec};
 use bitcoin::util::base58;
 
 use bitcoin::secp256k1::Message;
-use std::io;
 use tcx_constants::{network_from_coin, CoinInfo};
 
 #[cfg_attr(tarpaulin, skip)]

@@ -1,12 +1,10 @@
-use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
-use crate::{FromHex, Result, Ss58Codec, ToHex};
+use crate::ecc::{PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
+use crate::{FromHex, Result, ToHex};
 use schnorrkel::{ExpansionMode, MiniSecretKey};
-use sp_core::crypto::Ss58AddressFormat;
-use sp_core::crypto::Ss58Codec as SpSs58Codec;
+
 use sp_core::sr25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};
-use sp_keyring::ed25519::Keyring;
-use std::io;
+
 //use sp_core::crypto::Ss58Codec;
 
 #[derive(Clone)]

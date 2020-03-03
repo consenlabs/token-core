@@ -1,13 +1,11 @@
 use super::Result;
 use crate::{
-    Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DeriveJunction, FromHex,
+    Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, FromHex,
     Secp256k1PrivateKey, Secp256k1PublicKey, ToHex,
 };
-use std::io;
 
 use crate::ecc::TypedDeterministicPrivateKey::{Bip32Sepc256k1, SubSr25519};
 use crate::sr25519::{Sr25519PrivateKey, Sr25519PublicKey};
-use serde::{Deserialize, Serialize};
 use sp_core::Pair;
 use tcx_constants::CurveType;
 
@@ -335,9 +333,9 @@ impl Derive for TypedDeterministicPrivateKey {
 #[cfg(test)]
 mod tests {
     use super::{PrivateKey, PublicKey, TypedDeterministicPrivateKey, TypedPrivateKey};
-    use crate::{Derive, DerivePath, TypedPublicKey};
+    use crate::{Derive, TypedPublicKey};
     use bip39::{Language, Mnemonic, Seed};
-    use std::str::FromStr;
+
     use tcx_constants::{CurveType, TEST_MNEMONIC};
 
     fn default_seed() -> Seed {

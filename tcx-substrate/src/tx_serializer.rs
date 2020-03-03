@@ -3,17 +3,16 @@ use crate::transaction::ExtrinsicEra;
 use crate::{
     SubstrateAddress, SubstrateTxIn, SubstrateTxOut, ACCOUNT_INDEX_FLAG, PAYLOAD_HASH_THRESHOLD,
 };
-use base58::FromBase58;
-use byteorder::{LittleEndian, WriteBytesExt};
-use codec::{Compact, Decode, Encode, HasCompact};
+
+use codec::{Compact, Decode, Encode};
 use failure::format_err;
 use prost::Message;
 use sp_core::crypto::Ss58Codec as SpSs58Codec;
 use sp_core::sr25519::Public;
 use sp_core::{blake2_256, H256};
-use std::mem;
+
 use tcx_constants::Result;
-use tcx_primitive::{Sr25519PublicKey, Ss58Codec};
+use tcx_primitive::Ss58Codec;
 
 #[derive(Debug, PartialEq, Encode, Decode)]
 struct SubstrateInnerTx {
@@ -120,15 +119,14 @@ pub struct ExtrinsicSignature {
 mod tests {
     use crate::transaction::ExtrinsicEra;
     use crate::SubstrateTxIn;
-    use base58::ToBase58;
-    use codec::{Decode, Encode};
+
     use sp_core::blake2_256;
-    use sp_core::crypto::Ss58Codec;
-    use sp_keyring::sr25519::Keyring;
+
+    use sp_keyring::ed25519::Keyring;
 
     #[test]
     fn serialize_tx() {
-        let expected = "0603ff96074594cccf1cd185fa8a72ceaeefd86648f8d45514f3ce33c31bdd07e4655d419ceb580800fb030000e3777fa922cafbff200cadeaea1a76bd7898ad5b89f7848999058b50e715f6361fc7493f3c1e9ac758a183839906475f8363aafb1b1d3e910fe16fab4ae1b582";
+        let expected = "0403ff96074594cccf1cd185fa8a72ceaeefd86648f8d45514f3ce33c31bdd07e4655d419ceb580800fb030000e3777fa922cafbff200cadeaea1a76bd7898ad5b89f7848999058b50e715f6361fc7493f3c1e9ac758a183839906475f8363aafb1b1d3e910fe16fab4ae1b582";
 
         let tx_in = SubstrateTxIn {
             method: "transfer_keep_alive".to_string(),
@@ -152,6 +150,6 @@ mod tests {
             payload
         };
         let sig = hex::encode(Keyring::Alice.sign(&hash).0.to_vec());
-        assert_eq!(sig, "019880e3de5c0f02dfa0ef76ad725b79c94d26586c9a3d44ec6e10af6a803b4e378fea7eea77242df5e26f3f2ecbea8f36fb11dc84aea7dea934a190ccf6ac3b84")
+        assert_eq!(sig, "03079d9c1ad91fc76c0d49fa679dba20c1d94c132843152af05d8b767c43b687df76b3cda51a0d454d8262f46d527cac338574f3915ab479b6c323db0ada920f")
     }
 }

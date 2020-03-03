@@ -11,12 +11,11 @@ use crate::keystore::{transform_mnemonic_error, Store};
 
 use std::collections::HashMap;
 
-use std::str::FromStr;
 use tcx_constants::{CoinInfo, CurveType};
 use tcx_crypto::hash::dsha256;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
-    generate_mnemonic, get_account_path, Derive, DerivePath, ToHex, TypedDeterministicPrivateKey,
+    generate_mnemonic, get_account_path, Derive, ToHex, TypedDeterministicPrivateKey,
     TypedDeterministicPublicKey, TypedPrivateKey,
 };
 
@@ -59,7 +58,7 @@ impl HdKeystore {
         let mnemonic_bytes = self.store.crypto.decrypt(password)?;
         let mnemonic_str = String::from_utf8(mnemonic_bytes)?;
 
-        let mnemonic = Mnemonic::from_phrase(&mnemonic_str, Language::English)
+        let _mnemonic = Mnemonic::from_phrase(&mnemonic_str, Language::English)
             .map_err(transform_mnemonic_error)?;
 
         self.cache = Some(Cache {
