@@ -3,24 +3,19 @@ use super::Result;
 use crate::constant::SECP256K1_ENGINE;
 use crate::ecc::{DeterministicPrivateKey, DeterministicPublicKey, KeyError};
 
-use crate::{
-    Derive, DeriveJunction, FromHex, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec, ToHex,
-};
+use crate::{Derive, FromHex, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec, ToHex};
 use bitcoin::util::key::PublicKey;
 
 use bitcoin::util::base58;
 use bitcoin::util::base58::Error::InvalidLength;
 use bitcoin::util::bip32::{
-    ChainCode, ChildNumber, DerivationPath, Error as Bip32Error, ExtendedPrivKey, ExtendedPubKey,
-    Fingerprint,
+    ChainCode, ChildNumber, Error as Bip32Error, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
 use bitcoin::Network;
 use byteorder::BigEndian;
 use byteorder::ByteOrder;
 
-use bip39::{Language, Mnemonic, MnemonicType};
-use std::convert::TryInto;
-use std::str::FromStr;
+use bip39::{Language, Mnemonic};
 
 pub struct Bip32DeterministicPrivateKey(ExtendedPrivKey);
 

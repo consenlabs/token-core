@@ -616,6 +616,13 @@ mod tests {
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
                 },
+                Derivation {
+                    chain_type: "POLKADOT".to_string(),
+                    path: "//polkadot//imToken/0".to_string(),
+                    network: "".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                },
             ];
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
@@ -625,7 +632,7 @@ mod tests {
             let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
             let derived_accounts: AccountsResponse =
                 AccountsResponse::decode(derived_accounts_bytes).unwrap();
-            assert_eq!(6, derived_accounts.accounts.len());
+            assert_eq!(7, derived_accounts.accounts.len());
             assert_eq!(
                 "LQ3JqCohgLQ3x1CJXYERnJTy1ySaqr1E32",
                 derived_accounts.accounts[0].address
@@ -658,6 +665,10 @@ mod tests {
             assert_eq!(
                 "HFEP5ePp69xrCLTYcDnzqJTgmH87RUKprkoRUuEmu9Tk49s",
                 derived_accounts.accounts[5].address
+            );
+            assert_eq!(
+                "13GVaZUS28zTCroTPq8dyppfm8F4cAvoJsSZ3yvmtyRYLSLJ",
+                derived_accounts.accounts[6].address
             );
 
             remove_created_wallet(&import_result.id);
