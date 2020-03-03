@@ -5,7 +5,7 @@ mod transaction;
 mod tx_serializer;
 
 pub use address::SubstrateAddress;
-pub use transaction::{ExtrinsicEra, SubstrateTxIn, SubstrateTxOut};
+pub use transaction::{ExtrinsicEra, SubstrateRawTxIn, SubstrateTxIn, SubstrateTxOut};
 
 pub(crate) const ACCOUNT_INDEX_FLAG: u8 = 0xff;
 pub(crate) const SIGNATURE_TYPE_ED25519: u8 = 0x00;
