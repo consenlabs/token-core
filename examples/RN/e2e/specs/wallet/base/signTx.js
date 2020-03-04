@@ -1,4 +1,4 @@
-import { id, toHaveText } from '../../../utils.js'
+import { id, toHaveText, imToHaveText } from '../../../utils.js'
 
 export default async function (params) {
   const { chainType, mnemonic, password, address, network, segWit, input, signature } = params
@@ -31,8 +31,16 @@ export default async function (params) {
 
   // 3. verify signature
   await waitFor(id('signature')).toExist().withTimeout(2000)
-  await toHaveText('signature', signature)
 
+  switch (chainType) {
+    case 'KUSAMA':
+    case 'POLKADOT':
+      await imToHaveText('signature', signature)
+      break
+    default:
+      await toHaveText('signature', signature)
+      break
+  }
   // go back
   await id('goBack').tap()
 }

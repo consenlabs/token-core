@@ -43,6 +43,13 @@ export async function getTextValue(testText) {
   }
 }
 
+export async function imToHaveText(testID, expectText) {
+  let realText = await readTextValue(testID)
+  if (realText.indexOf(expectText) == -1)  {
+    await expect(id(testID)).toNotExist()
+  }
+}
+
 export async function toHaveText(testID, expectText) {
   await expect(id(testID)).toHaveText(expectText)
 }
