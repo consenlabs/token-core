@@ -68,6 +68,8 @@ const getParamsAndResponseType = (method: any, params: any) => {
       let InputType: any = protoRoot.transaction.BtcForkTxInput
       switch (chainType) {
         case 'TRON':
+        case 'KUSAMA':
+        case 'POLKADOT':
           ResponseType = protoRoot.transaction.TronTxOutput
           InputType = protoRoot.transaction.TronTxInput
           break

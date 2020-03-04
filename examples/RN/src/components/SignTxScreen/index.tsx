@@ -144,9 +144,19 @@ class CPK extends React.Component<Props, State> {
     this.setState({ isLoading: true })
 
     try {
+      let chain = ''
+      switch (chainType) {
+        case 'TRON':
+        case 'KUSAMA':
+        case 'POLKADOT':
+          chain = chainType
+          break
+        default:
+          break
+      }
       const res = await walletAPI.signTx(params)
       // @ts-ignore
-      const signature = chainType === 'TRON' ? res.signatures[0] : res.signature
+      const signature = chainType === chain ? res.signatures[0] : res.signature
       this.setState({ signature, isLoading: false })
     } catch (err) {
       this.setState({ isLoading: false })
