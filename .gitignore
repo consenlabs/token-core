@@ -36,3 +36,4 @@ tcx/cheader/tcx.h
 lcov.info
 ccov/
 tarpaulin-report.html
+tools/ios-token-v2-release-build.sh
