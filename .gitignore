@@ -14,6 +14,10 @@ tools/android-token-v2-simulator-build.sh
 tools/ios-token-v2-build.sh
 tools/ios-token-v2-simulator-build.sh
 tools/ios-token-v2-release-build.sh
+tools/ios-release-build.sh
+
+ios-release/**
+
 *.rlib
 *.dll
 .gdb_history

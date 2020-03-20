@@ -1,6 +1,0 @@
-framework module TokenCoreX {
-  umbrella header "TokenCoreX-umbrella.h"
-
-  export *
-  module * { export * }
-}
