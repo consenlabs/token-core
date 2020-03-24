@@ -10,6 +10,9 @@ properties.load(project.rootProject.file('local.properties').newDataInputStream(
 def BINTRAY_USER = properties.getProperty('BINTRAY_USER')
 def BINTRAY_KEY = properties.getProperty('BINTRAY_KEY')
 
+def NEXUS_USER = properties.getProperty('NEXUS_USER')
+def NEXUS_PASSWORD = properties.getProperty('NEXUS_PASSWORD')
+
 task sourcesJar(type: Jar) {
     classifier = 'sources'
     from android.sourceSets.main.java.sourceFiles
@@ -41,6 +44,16 @@ publishing {
                         dependencyNode.appendNode('version', it.version)
                     }
                 }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name 'nexus'
+            url "https://nexus.token.im/repository/im-releases/"
+            credentials {
+                username NEXUS_USER
+                password NEXUS_PASSWORD
             }
         }
     }
