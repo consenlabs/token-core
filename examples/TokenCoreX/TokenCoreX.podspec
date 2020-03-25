@@ -24,7 +24,7 @@ A cross-platform library that implements crypto wallet functions for blockchains
   s.homepage         = 'https://github.com/consenlabs/token-core'
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'Apache Licence v2.0', :file => 'LICENSE' }
-  s.author           = 'Neal Xu', 'sun', 'Kai'
+  s.author           = {'imToken Dev Team' => 'dev@token.im'}
   # s.source           = { :git => 'https://github.com/consenlabs/token-core.git', :tag => s.version.to_s }
   s.source           = { :http => "https://github.com/consenlabs/token-core/releases/download/v#{s.version}/ios-v#{s.version}.zip" }
   s.social_media_url = 'https://twitter.com/imTokenOfficial'
