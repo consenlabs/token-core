@@ -152,7 +152,6 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
                 is_success: false,
                 error: err.to_string(),
             };
-            // eprintln!("{:#?}", rsp);
             let rsp_bytes = encode_message(rsp).expect("encode error");
             let ret_str = hex::encode(rsp_bytes);
             CString::new(ret_str).unwrap().into_raw()
@@ -323,7 +322,6 @@ mod tests {
         let _ = unsafe { clear_err() };
         let param_bytes = encode_message(param).unwrap();
         let param_hex = hex::encode(param_bytes);
-        println!("hex: {}", param_hex);
         let ret_hex = unsafe { _to_str(call_tcx_api(_to_c_char(&param_hex))) };
         let err = unsafe { _to_str(get_last_err_message()) };
         if !err.is_empty() {
@@ -368,8 +366,7 @@ mod tests {
             // let ret_bytes = call_api("hd_store_import", import_param).unwrap();
             let ret_bytes = hex::decode("0a2434656239623136392d323237392d343439332d616535342d62396233643761303630323512036161611a084d4e454d4f4e494328e9a1a2f305").unwrap();
             let ret: WalletResult = WalletResult::decode(ret_bytes).unwrap();
-            println!("{:?}", ret);
-            assert!(!ret.accounts.is_empty())
+            assert!(ret.accounts.is_empty())
         });
     }
 
@@ -419,7 +416,7 @@ mod tests {
 
             assert!(import_result.accounts.is_empty());
             assert_eq!(import_result.name, "aaa");
-            assert_eq!(import_result.source, "MNEMONIC1");
+            assert_eq!(import_result.source, "MNEMONIC");
             remove_created_wallet(&import_result.id);
         })
     }
