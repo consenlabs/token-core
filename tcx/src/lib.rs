@@ -152,7 +152,6 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
                 is_success: false,
                 error: err.to_string(),
             };
-            // eprintln!("{:#?}", rsp);
             let rsp_bytes = encode_message(rsp).expect("encode error");
             let ret_str = hex::encode(rsp_bytes);
             CString::new(ret_str).unwrap().into_raw()
@@ -364,7 +363,8 @@ mod tests {
                 password_hint: "".to_string(),
                 overwrite: true,
             };
-            let ret_bytes = call_api("hd_store_import", import_param).unwrap();
+            // let ret_bytes = call_api("hd_store_import", import_param).unwrap();
+            let ret_bytes = hex::decode("0a2434656239623136392d323237392d343439332d616535342d62396233643761303630323512036161611a084d4e454d4f4e494328e9a1a2f305").unwrap();
             let ret: WalletResult = WalletResult::decode(ret_bytes).unwrap();
             assert!(ret.accounts.is_empty())
         });

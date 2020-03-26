@@ -55,7 +55,8 @@ public class MainActivity extends AppCompatActivity {
           param.put("network", "MAINNET");
           param.put("source", "MNEMONIC");
           TokenCore.INSTANCE.clear_err();
-          String response = TokenCore.INSTANCE.import_wallet_from_mnemonic(param.toString());
+          String response = TokenCore.INSTANCE.call_tcx_api("0a0f68645f73746f72655f63726561746512230a07696d746f6b656e12180a11496e7365637572652050613535773072641a03616161");
+          Log.d("TCX", "response: " + response);
           String err = TokenCore.INSTANCE.get_last_err_message();
           if (!TextUtils.isEmpty(err)) {
             tvResult.setText(err);
@@ -82,9 +83,10 @@ public class MainActivity extends AppCompatActivity {
 
     void init_token_core_x(String jsonStr);
 
-    String import_wallet_from_mnemonic(String jsonStr);
+    String call_tcx_api(String hex);
 
     void clear_err();
+    void free_const_string();
 
     String get_last_err_message();
   }
