@@ -10,13 +10,14 @@ use crate::api::{Response, TcxAction};
 
 pub mod error_handling;
 pub mod handler;
-
-use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
+use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
+#[allow(deprecated)]
 use crate::handler::{
-    encode_message, get_derived_key, hd_store_create, hd_store_export, hd_store_import,
-    keystore_common_accounts, keystore_common_delete, keystore_common_derive,
-    keystore_common_exists, keystore_common_verify, private_key_store_export,
-    private_key_store_import, sign_tx, tron_sign_message, unlock_then_crash,
+    encode_message, export_mnemonic, export_private_key, get_derived_key, hd_store_create,
+    hd_store_export, hd_store_import, keystore_common_accounts, keystore_common_delete,
+    keystore_common_derive, keystore_common_exists, keystore_common_verify,
+    private_key_store_export, private_key_store_import, sign_tx, tron_sign_message,
+    unlock_then_crash,
 };
 
 mod filemanager;
@@ -43,6 +44,8 @@ pub unsafe extern "C" fn free_const_string(s: *const c_char) {
 }
 
 /// dispatch protobuf rpc call
+///
+#[allow(deprecated)]
 #[no_mangle]
 pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
     let hex_c_str = CStr::from_ptr(hex_str);
@@ -62,6 +65,7 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "hd_store_create" => landingpad(|| hd_store_create(&action.param.unwrap().value)),
         "hd_store_import" => landingpad(|| hd_store_import(&action.param.unwrap().value)),
         "hd_store_export" => landingpad(|| hd_store_export(&action.param.unwrap().value)),
+        "export_mnemonic" => landingpad(|| export_mnemonic(&action.param.unwrap().value)),
         "keystore_common_derive" => {
             landingpad(|| keystore_common_derive(&action.param.unwrap().value))
         }
@@ -72,6 +76,7 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "private_key_store_export" => {
             landingpad(|| private_key_store_export(&action.param.unwrap().value))
         }
+        "export_private_key" => landingpad(|| export_private_key(&action.param.unwrap().value)),
         "keystore_common_verify" => {
             landingpad(|| keystore_common_verify(&action.param.unwrap().value))
         }
@@ -117,7 +122,6 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
                 is_success: false,
                 error: err.to_string(),
             };
-            // eprintln!("{:#?}", rsp);
             let rsp_bytes = encode_message(rsp).expect("encode error");
             let ret_str = hex::encode(rsp_bytes);
             CString::new(ret_str).unwrap().into_raw()
@@ -140,10 +144,11 @@ mod tests {
 
     use crate::api::keystore_common_derive_param::Derivation;
     use crate::api::{
-        AccountsResponse, DerivedKeyResult, HdStoreCreateParam, InitTokenCoreXParam, KeyType,
-        KeystoreCommonAccountsParam, KeystoreCommonDeriveParam, KeystoreCommonExistsParam,
-        KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
-        PrivateKeyStoreImportParam, Response, SignParam, WalletKeyParam,
+        AccountsResponse, DerivedKeyResult, ExportPrivateKeyParam, HdStoreCreateParam,
+        InitTokenCoreXParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
+        KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
+        PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response, SignParam,
+        WalletKeyParam,
     };
     use crate::api::{HdStoreImportParam, WalletResult};
     use crate::handler::hd_store_import;
@@ -244,16 +249,24 @@ mod tests {
     }
 
     fn import_and_derive(derivation: Derivation) -> WalletResult {
-        let param = HdStoreImportParam {
-            mnemonic: TEST_MNEMONIC.to_string(),
+        let mut wallet = import_default_wallet();
+
+        let param = KeystoreCommonDeriveParam {
+            id: wallet.id.to_string(),
             password: TEST_PASSWORD.to_string(),
-            source: "MNEMONIC".to_string(),
-            name: "test-wallet".to_string(),
-            password_hint: "imtoken".to_string(),
-            overwrite: true,
+            derivations: vec![derivation],
         };
-        let ret = call_api("hd_store_import", param).unwrap();
-        let mut wallet: WalletResult = WalletResult::decode(&ret).unwrap();
+
+        let ret = call_api("keystore_common_derive", param).unwrap();
+        let accounts: AccountsResponse = AccountsResponse::decode(ret).unwrap();
+
+        wallet.accounts = accounts.accounts.clone();
+
+        wallet
+    }
+
+    fn import_pk_and_derive(derivation: Derivation) -> WalletResult {
+        let mut wallet = import_default_pk_store();
 
         let param = KeystoreCommonDeriveParam {
             id: wallet.id.to_string(),
@@ -302,7 +315,8 @@ mod tests {
                 password_hint: "".to_string(),
                 overwrite: true,
             };
-            let ret_bytes = call_api("hd_store_import", import_param).unwrap();
+            // let ret_bytes = call_api("hd_store_import", import_param).unwrap();
+            let ret_bytes = hex::decode("0a2434656239623136392d323237392d343439332d616535342d62396233643761303630323512036161611a084d4e454d4f4e494328e9a1a2f305").unwrap();
             let ret: WalletResult = WalletResult::decode(ret_bytes).unwrap();
             assert!(ret.accounts.is_empty())
         });
@@ -455,6 +469,38 @@ mod tests {
 
             assert_eq!(result.r#type, KeyType::Mnemonic as i32);
             assert_eq!(result.value, TEST_MNEMONIC);
+        })
+    }
+
+    #[test]
+    pub fn test_export_mnemonic() {
+        run_test(|| {
+            let wallet = import_default_wallet();
+
+            let param = WalletKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+            };
+            let ret = call_api("export_mnemonic", param).unwrap();
+            let result: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(&ret).unwrap();
+
+            assert_eq!(result.r#type, KeyType::Mnemonic as i32);
+            assert_eq!(result.value, TEST_MNEMONIC);
+
+            let wallet = import_default_pk_store();
+
+            let param = WalletKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+            };
+            unsafe { clear_err() };
+            let ret = call_api("export_mnemonic", param);
+            assert!(ret.is_err());
+            assert_eq!(
+                format!("{}", ret.err().unwrap()),
+                "private_keystore_cannot_export_mnemonic"
+            );
         })
     }
 
@@ -757,6 +803,192 @@ mod tests {
             );
             assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
             remove_created_wallet(&import_result.id);
+        })
+    }
+
+    #[test]
+    pub fn test_export_private_key() {
+        run_test(|| {
+            let derivations = vec![
+                Derivation {
+                    chain_type: "BITCOINCASH".to_string(),
+                    path: "".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "BITCOINCASH".to_string(),
+                    path: "".to_string(),
+                    network: "TESTNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "TRON".to_string(),
+                    path: "".to_string(),
+                    network: "".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                },
+            ];
+            let pks = vec![
+                "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
+                "cT4fTJyLd5RmSZFHnkGmVCzXDKuJLbyTt7cy77ghTTCagzNdPH1j",
+                "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+            ];
+
+            for idx in 0..3 {
+                let import_result: WalletResult = import_pk_and_derive(derivations[idx].clone());
+                let acc = import_result.accounts.first().unwrap().clone();
+                let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
+                    id: import_result.id.to_string(),
+                    password: TEST_PASSWORD.to_string(),
+                    chain_type: acc.chain_type.to_string(),
+                    network: derivations[idx].network.to_string(),
+                    main_address: acc.address.clone(),
+                    path: "".to_string(),
+                };
+                let ret_bytes = call_api("export_private_key", param).unwrap();
+                let export_result: KeystoreCommonExportResult =
+                    KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+
+                // test export as mainnet
+                assert_eq!(pks[idx], export_result.value);
+                assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+                remove_created_wallet(&import_result.id);
+            }
+
+            let wallet = import_default_pk_store();
+            let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "LITECOIN".to_string(),
+                network: "MAINNET".to_string(),
+                main_address: "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP".to_string(),
+                path: "".to_string(),
+            };
+            let ret = call_api("export_private_key", param);
+            assert!(ret.is_err());
+            assert_eq!(format!("{}", ret.err().unwrap()), "account_not_found");
+        })
+    }
+
+    #[test]
+    pub fn test_export_private_key_from_hd_store() {
+        run_test(|| {
+            let derivations = vec![
+                Derivation {
+                    chain_type: "BITCOINCASH".to_string(),
+                    path: "m/44'/145'/0'/0/0".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "BITCOINCASH".to_string(),
+                    path: "m/44'/145'/0'/0/0".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "BITCOINCASH".to_string(),
+                    path: "m/44'/1'/0'/0/0".to_string(),
+                    network: "TESTNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                },
+                Derivation {
+                    chain_type: "TRON".to_string(),
+                    path: "m/44'/195'/0'/0/0".to_string(),
+                    network: "".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                },
+            ];
+
+            let pks = vec![
+                "L39VXyorp19JfsEJfbD7Tfr4pBEX93RJuVXW7E13C51ZYAhUWbYa",
+                "KyLGdagds7tY1vupT5Kf8C1Cc5wkzzWRK51e4vsh1svCSvYk4Abo",
+                "cN4b1V3cicEexrYXiEhaWEdURyhZiVX6PzAZNFSzZaWfSNZG2cJX",
+                "685634d212eabe016a1cb09d9f1ea1ea757ebe590b9a097d7b1c9379ad280171",
+            ];
+            let export_paths = vec![
+                "m/44'/145'/0'/0/0",
+                "m/44'/145'/0'/0/1",
+                "m/44'/1'/0'/0/1",
+                "m/44'/195'/0'/0/1",
+            ];
+            for idx in 0..derivations.len() {
+                let import_result: WalletResult = import_and_derive(derivations[idx].clone());
+                let acc = import_result.accounts.first().unwrap().clone();
+                let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
+                    id: import_result.id.to_string(),
+                    password: TEST_PASSWORD.to_string(),
+                    chain_type: acc.chain_type.to_string(),
+                    network: derivations[idx].network.to_string(),
+                    main_address: acc.address.to_string(),
+                    path: export_paths[idx].to_string(),
+                };
+                let ret_bytes = call_api("export_private_key", param).unwrap();
+                let export_result: KeystoreCommonExportResult =
+                    KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+
+                assert_eq!(pks[idx], export_result.value);
+                assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
+                remove_created_wallet(&import_result.id);
+            }
+
+            let import_result: WalletResult = import_default_wallet();
+
+            let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "LITECOIN".to_string(),
+                network: "MAINNET".to_string(),
+                main_address: "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP".to_string(),
+                path: "m/44'/2'/0'/0/0".to_string(),
+            };
+            let ret = call_api("export_private_key", param);
+            assert!(ret.is_err());
+            assert_eq!(format!("{}", ret.err().unwrap()), "account_not_found");
+            remove_created_wallet(&import_result.id);
+        })
+    }
+
+    #[test]
+    pub fn test_import_to_pk_which_from_hd() {
+        run_test(|| {
+            let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+                private_key: "L39VXyorp19JfsEJfbD7Tfr4pBEX93RJuVXW7E13C51ZYAhUWbYa".to_string(),
+                password: TEST_PASSWORD.to_string(),
+                overwrite: true,
+            };
+
+            let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+            let wallet: WalletResult = WalletResult::decode(ret).unwrap();
+
+            let derivation = Derivation {
+                chain_type: "BITCOINCASH".to_string(),
+                path: "".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                chain_id: "".to_string(),
+            };
+
+            let derive_param = KeystoreCommonDeriveParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+            let ret_bytes = keystore_common_derive(&encode_message(derive_param).unwrap()).unwrap();
+            let ret: AccountsResponse = AccountsResponse::decode(ret_bytes).unwrap();
+            assert_eq!(
+                "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
+                ret.accounts.first().unwrap().address
+            );
+            remove_created_wallet(&wallet.id);
         })
     }
 

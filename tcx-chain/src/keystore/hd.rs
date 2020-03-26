@@ -137,14 +137,14 @@ impl HdKeystore {
     pub(crate) fn find_private_key_by_path(
         &mut self,
         symbol: &str,
-        address: &str,
-        path: &str,
+        main_address: &str,
+        relative_path: &str,
     ) -> Result<TypedPrivateKey> {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
-        if !cache.keys.contains_key(address) {
+        if !cache.keys.contains_key(main_address) {
             let account = self
-                .account(symbol, address)
+                .account(symbol, main_address)
                 .ok_or(Error::AccountNotFound)?;
 
             let esk = TypedDeterministicPrivateKey::from_seed(
@@ -161,13 +161,13 @@ impl HdKeystore {
                 .as_mut()
                 .unwrap()
                 .keys
-                .insert(address.to_owned(), k);
+                .insert(main_address.to_owned(), k);
         }
 
-        let esk = &self.cache.as_ref().unwrap().keys[address];
+        let esk = &self.cache.as_ref().unwrap().keys[main_address];
 
         Ok(esk
-            .derive(DerivePath::from_str(path)?.into_iter())?
+            .derive(DerivePath::from_str(relative_path)?.into_iter())?
             .private_key())
     }
 

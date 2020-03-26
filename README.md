@@ -5,18 +5,29 @@
 
 Next generation core inside imToken Wallet.
 
-WARNING: not production ready yet.
+A cross-platform library that implements crypto wallet functions for blockchains, exporting c interfaces in Protobuf
+protocol. This library totally wrote in Rust, and now provides friendly interfaces for the mobile platform including
+ReactNative, iOS, and Android.
 
 ## Goals
-* Unify interface for wallet common logic with multi blockchain support
+* Abstration interfaces that provide crypto wallet common logic with multi blockchain support
 * Cross platform, on mobile, desktop, server side
 * Multi keystore support, with file, HSM, KMS, hardware-wallet
 
-## Layout
+## Packages
 * `tcx` wallet interface wrapper
-* `tcx-bch` | `tcx-btc-fork` | `tcx-tron` packages contain particular chain logic(address & signer)
-* `tcx-chain` common interface
+* `tcx-bch` | `tcx-btc-fork` | `tcx-tron` | `tcx-ckb` packages contain particular chain operations
+* `tcx-chain` keystore and signer interface
+* `tcx-proto` protobuf datastructure definition
+* `tcx-constants` blockchain spec definition
 * [`tcx-primitive` | `tcx-crypto`] low level component
+
+## Examples
+We provide three example applications, 
+
+* [ReactNative](examples/RN), full functions including all expose API, and e2e testing
+* [iOS](examples/iOSExample)
+* [Android](examples/android)
 
 ## Test Coverage
 We can use [tarpaulin](https://github.com/xd009642/tarpaulin) to know the coverage rate.
@@ -40,6 +51,7 @@ and they aren't affected by some simple issues. If the checks fail, pre-commit w
 * [Crypto keys abstraction design](docs/KEYS.zh.md)
 * [Architecture design](docs/TECH.zh.md)
 * [How to add more blockchain support](docs/INTEGRATION.md)
+* [Security](SECURITY.md) including the bug bounty program
 * [FAQ](docs/FAQ.md)
 
 ## License

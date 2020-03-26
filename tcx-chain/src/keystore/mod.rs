@@ -222,6 +222,31 @@ impl Keystore {
         }
     }
 
+    pub fn export_private_key(
+        &mut self,
+        coin: &str,
+        main_address: &str,
+        path: Option<&str>,
+    ) -> Result<String> {
+        match self {
+            Keystore::PrivateKey(pk_store) => {
+                let _ = pk_store
+                    .account(coin, main_address)
+                    .ok_or(Error::AccountNotFound)?;
+                pk_store.private_key()
+            }
+            Keystore::Hd(hd_store) => {
+                let typed_pk = if let Some(path) = path {
+                    hd_store.find_private_key_by_path(coin, main_address, path)?
+                } else {
+                    hd_store.find_private_key(coin, main_address)?
+                };
+
+                Ok(hex::encode(typed_pk.to_bytes()))
+            }
+        }
+    }
+
     pub fn lock(&mut self) {
         match self {
             Keystore::PrivateKey(ks) => ks.lock(),

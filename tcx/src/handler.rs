@@ -5,7 +5,7 @@ use std::path::Path;
 use bytes::BytesMut;
 use prost::Message;
 use serde_json::Value;
-use tcx_primitive::{private_key_without_version, FromHex, TypedPrivateKey};
+use tcx_primitive::{get_account_path, private_key_without_version, FromHex, TypedPrivateKey};
 
 use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
@@ -21,10 +21,10 @@ use tcx_tron::TrxAddress;
 use crate::api::keystore_common_derive_param::Derivation;
 use crate::api::sign_param::Key;
 use crate::api::{
-    AccountResponse, AccountsResponse, DerivedKeyResult, HdStoreCreateParam, HdStoreImportParam,
-    KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam, KeystoreCommonExistsParam,
-    KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
-    PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
+    AccountResponse, AccountsResponse, DerivedKeyResult, ExportPrivateKeyParam, HdStoreCreateParam,
+    HdStoreImportParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
+    KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
+    PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
@@ -32,6 +32,7 @@ use crate::filemanager::{cache_keystore, clean_keystore, flush_keystore, WALLET_
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 
 use crate::IS_DEBUG;
+use tcx_chain::tcx_ensure;
 use tcx_chain::Address;
 use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
@@ -199,6 +200,30 @@ pub(crate) fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     Ok(ret)
 }
 
+#[deprecated(
+    since = "2.5.1",
+    note = "Please use the export_mnemonic function instead"
+)]
+#[allow(deprecated)]
+pub(crate) fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
+    let param: WalletKeyParam = WalletKeyParam::decode(data).expect("hd_store_export");
+    let mut map = KEYSTORE_MAP.write();
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+
+    let export_result = KeystoreCommonExportResult {
+        id: guard.keystore().id(),
+        r#type: KeyType::Mnemonic as i32,
+        value: guard.keystore().export()?,
+    };
+
+    encode_message(export_result)
+}
+
 fn enc_xpub(xpub: &str, network: &str) -> Result<String> {
     let xpk = Bip32DeterministicPublicKey::from_hex(xpub)?;
     let ext_pub_key: String;
@@ -252,8 +277,8 @@ pub(crate) fn keystore_common_derive(data: &[u8]) -> Result<Vec<u8>> {
     encode_message(accounts_rsp)
 }
 
-pub(crate) fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
-    let param: WalletKeyParam = WalletKeyParam::decode(data).expect("keystore_common_delete");
+pub(crate) fn export_mnemonic(data: &[u8]) -> Result<Vec<u8>> {
+    let param: WalletKeyParam = WalletKeyParam::decode(data).expect("export_mnemonic");
     let mut map = KEYSTORE_MAP.write();
     let keystore: &mut Keystore = match map.get_mut(&param.id) {
         Some(keystore) => Ok(keystore),
@@ -261,6 +286,11 @@ pub(crate) fn hd_store_export(data: &[u8]) -> Result<Vec<u8>> {
     }?;
 
     let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+
+    tcx_ensure!(
+        guard.keystore().determinable(),
+        format_err!("{}", "private_keystore_cannot_export_mnemonic")
+    );
 
     let export_result = KeystoreCommonExportResult {
         id: guard.keystore().id(),
@@ -331,6 +361,10 @@ pub(crate) fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
     Ok(ret)
 }
 
+#[deprecated(
+    since = "2.5.1",
+    note = "Please use the export_private_key function instead"
+)]
 pub(crate) fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let param: PrivateKeyStoreExportParam =
         PrivateKeyStoreExportParam::decode(data).expect("private_key_store_export");
@@ -343,6 +377,59 @@ pub(crate) fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
 
     let pk_hex = guard.keystore().export()?;
+
+    // private_key prefix is only about chain type and network
+    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
+    let value = if param.chain_type.as_str() == "TRON" {
+        Ok(pk_hex.to_string())
+    } else {
+        let bytes = hex::decode(pk_hex.to_string())?;
+        let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
+        typed_pk.fmt(&coin_info)
+    }?;
+
+    let export_result = KeystoreCommonExportResult {
+        id: guard.keystore().id(),
+        r#type: KeyType::PrivateKey as i32,
+        value,
+    };
+
+    encode_message(export_result)
+}
+
+pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
+    let param: ExportPrivateKeyParam =
+        ExportPrivateKeyParam::decode(data).expect("export_private_key");
+    let mut map = KEYSTORE_MAP.write();
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+
+    let pk_hex = if param.path.is_empty() {
+        guard
+            .keystore_mut()
+            .export_private_key(&param.chain_type, &param.main_address, None)?
+    } else {
+        // get the relative path
+        let mut relative_path: &str = param.path.as_str();
+        if param.path.starts_with("m") {
+            let acc_path = get_account_path(relative_path)?;
+            relative_path = &relative_path[acc_path.len()..];
+        }
+
+        if relative_path.starts_with("/") {
+            relative_path = &relative_path[1..];
+        }
+
+        guard.keystore_mut().export_private_key(
+            &param.chain_type,
+            &param.main_address,
+            Some(relative_path),
+        )?
+    };
 
     // private_key prefix is only about chain type and network
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
