@@ -1,0 +1,109 @@
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.jfrog.artifactory'
+
+version '1.1.0'
+group 'com.consenlabs.android'
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def BINTRAY_USER = properties.getProperty('BINTRAY_USER')
+def BINTRAY_KEY = properties.getProperty('BINTRAY_KEY')
+
+def NEXUS_USER = properties.getProperty('NEXUS_USER')
+def NEXUS_PASSWORD = properties.getProperty('NEXUS_PASSWORD')
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.sourceFiles
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+publishing {
+    publications {
+        Production(MavenPublication) {
+            artifact("$buildDir/outputs/aar/tokencorex-release.aar")
+            artifact sourcesJar {
+                classifier "sources"
+            }
+            groupId this.group
+            artifactId 'token-core-x'
+            version this.version
+
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                configurations.implementation.allDependencies.each {
+                    if (it.name != 'unspecified') {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name 'nexus'
+            url "https://nexus.token.im/repository/im-releases/"
+            credentials {
+                username NEXUS_USER
+                password NEXUS_PASSWORD
+            }
+        }
+    }
+}
+
+artifactory {
+    contextUrl = 'https://oss.jfrog.org'
+    resolve {
+        repository {
+            repoKey = 'libs-release'
+        }
+    }
+    publish {
+        repository {
+            if (this.version.endsWith("-SNAPSHOT")) {
+                repoKey = 'oss-snapshot-local'
+            } else {
+                repoKey = 'oss-release-local'
+            }
+            username = BINTRAY_USER
+            password = BINTRAY_KEY
+        }
+        defaults {
+            publications 'Production'
+            properties = [ 'bintray.repo': 'consenlabs/token-core-x', 'bintray.package': 'com.consenlabs.android.token-core-x', 'bintray.version': this.version.toString() ]
+        }
+    }
+}
+
+bintray {
+    user = BINTRAY_USER
+    key = BINTRAY_KEY
+    publications = ['Production']
+    configurations = ['archives']
+    override = true
+    pkg {
+        userOrg = 'consenlabs'
+        repo = 'token-core-x'
+        name = 'com.consenlabs.android.token-core-x'
+        description = "A cross-platform library that implements crypto wallet functions for blockchains"
+        publish = true
+        publicDownloadNumbers = true
+        licenses = ['MIT']
+        vcsUrl = 'https://github.com/consenlabs/token-core.git'
+        dryRun = false
+        version {
+            name = this.version
+            desc = "TokenCoreX ${this.version}"
+            released = new Date()
+            vcsTag = this.version
+        }
+    }
+}

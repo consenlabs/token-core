@@ -39,7 +39,7 @@ dependencies {
 //    implementation project(':tokencore')
     // https://mvnrepository.com/artifact/net.java.dev.jna/jna
     implementation 'net.java.dev.jna:jna:5.3.1@aar'
-
+    implementation project(":tokencorex")
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'

@@ -1,2 +1,2 @@
 //include ':app', ':tokencore'
-include ':app'
+include ':app', ':tokencorex'

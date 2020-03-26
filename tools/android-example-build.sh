@@ -3,7 +3,7 @@
 export ANDROID_NDK_TOOLCHAINS=$HOME/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin
 export PATH=$ANDROID_NDK_TOOLCHAINS:$PATH
 
-JNI_LIBS=../examples/android/app/src/main/jniLibs
+JNI_LIBS=examples/android/tokencorex/src/main/jniLibs
 if [ ! -d $JNI_LIBS ]; then
     mkdir $JNI_LIBS
     mkdir $JNI_LIBS/arm64-v8a
@@ -22,8 +22,8 @@ if [ ! -d aarch64-linux-android-clang ]; then
 fi
 popd
 
-pushd ../libs/secp256k1
-JNI_LIBS=../../examples/android/app/src/main/jniLibs
+pushd libs/secp256k1
+JNI_LIBS=../../examples/android/tokencorex/src/main/jniLibs
 
 cargo build --target aarch64-linux-android --release
 cargo build --target armv7-linux-androideabi --release
@@ -40,8 +40,8 @@ cp target/x86_64-linux-android/release/libsecp256k1.so $JNI_LIBS/x86_64
 popd
 
 
-pushd ../tcx
-JNI_LIBS=../../token-v2/android/app/src/main/jniLibs
+pushd tcx
+JNI_LIBS=../examples/android/tokencorex/src/main/jniLibs
 
 cargo build --target aarch64-linux-android --release
 cargo build --target armv7-linux-androideabi --release
