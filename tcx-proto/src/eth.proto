@@ -1,0 +1,17 @@
+syntax = "proto3";
+package transaction;
+
+message EthTxInput {
+    string nonce = 1;
+    string gasPrice = 2;
+    string gasLimit = 3;
+    string to = 4;
+    string value = 5;
+    string data = 6;
+    int32 chainId = 7;
+}
+
+message EthTxOutput {
+    string signature = 1;
+    string txHash = 2;
+}

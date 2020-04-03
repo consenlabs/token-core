@@ -10,6 +10,7 @@ members = [
     "tcx-bch",
     "tcx-ckb",
     "tcx-substrate",
+    "tcx-eth",
     "tcx",
 
     "tcx-tester",
