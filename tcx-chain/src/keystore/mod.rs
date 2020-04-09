@@ -340,7 +340,6 @@ impl ChainSigner for Keystore {
         } else {
             self.find_private_key(symbol, address)?
         };
-
         private_key.sign_recoverable(data)
     }
 

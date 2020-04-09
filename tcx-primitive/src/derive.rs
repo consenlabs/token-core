@@ -26,7 +26,11 @@ pub enum DeriveJunction {
 }
 
 pub trait Derive: Sized {
-    fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self>;
+    //    fn derive_old<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self>;
+
+    fn derive(&self, _path: &str) -> Result<Self> {
+        unimplemented!()
+    }
 }
 
 // TODO add parity string derivation path
@@ -61,13 +65,13 @@ impl FromStr for DeriveJunction {
     fn from_str(inp: &str) -> Result<Self> {
         Ok(
             if inp.chars().last().map_or(false, |l| l == '\'' || l == 'h') {
-                DeriveJunction::hard(
+                DeriveJunction::Hard(
                     inp[0..inp.len() - 1]
                         .parse()
                         .map_err(|_| KeyError::InvalidChildNumberFormat)?,
                 )
             } else {
-                DeriveJunction::soft(
+                DeriveJunction::Soft(
                     inp.parse()
                         .map_err(|_| KeyError::InvalidChildNumberFormat)?,
                 )

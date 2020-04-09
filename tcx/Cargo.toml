@@ -12,6 +12,7 @@ tcx-btc-fork = {path = "../tcx-btc-fork"}
 tcx-bch = {path = "../tcx-bch"}
 tcx-tron = {path = "../tcx-tron"}
 tcx-ckb = {path = "../tcx-ckb"}
+tcx-substrate = {path = "../tcx-substrate"}
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants"}
 
@@ -36,3 +37,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 prost-build = "0.5.0"
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master", package = "sp-core" }
+sp-runtime = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master", package = "sp-runtime" }

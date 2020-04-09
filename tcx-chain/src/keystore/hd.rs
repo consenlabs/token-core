@@ -11,18 +11,16 @@ use crate::keystore::{transform_mnemonic_error, Store};
 
 use std::collections::HashMap;
 
-use std::str::FromStr;
-use tcx_constants::CoinInfo;
+use tcx_constants::{CoinInfo, CurveType};
 use tcx_crypto::hash::dsha256;
 use tcx_crypto::{Crypto, Pbkdf2Params};
 use tcx_primitive::{
-    generate_mnemonic, get_account_path, Derive, DerivePath, DeterministicType, ToHex,
-    TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
+    generate_mnemonic, get_account_path, Derive, ToHex, TypedDeterministicPrivateKey,
+    TypedDeterministicPublicKey, TypedPrivateKey,
 };
 
 struct Cache {
     mnemonic: String,
-    seed: Vec<u8>,
     keys: HashMap<String, TypedDeterministicPrivateKey>,
 }
 
@@ -34,6 +32,7 @@ pub struct HdKeystore {
 pub fn key_hash_from_mnemonic(mnemonic: &str) -> Result<String> {
     let mn =
         Mnemonic::from_phrase(mnemonic, Language::English).map_err(transform_mnemonic_error)?;
+
     let seed = Seed::new(&mn, "");
 
     let bytes = dsha256(seed.as_bytes())[..20].to_vec();
@@ -59,12 +58,11 @@ impl HdKeystore {
         let mnemonic_bytes = self.store.crypto.decrypt(password)?;
         let mnemonic_str = String::from_utf8(mnemonic_bytes)?;
 
-        let mnemonic = Mnemonic::from_phrase(&mnemonic_str, Language::English)
+        let _mnemonic = Mnemonic::from_phrase(&mnemonic_str, Language::English)
             .map_err(transform_mnemonic_error)?;
 
         self.cache = Some(Cache {
             mnemonic: mnemonic_str,
-            seed: bip39::Seed::new(&mnemonic, &"").as_bytes().to_vec(),
             keys: HashMap::new(),
         });
 
@@ -92,15 +90,9 @@ impl HdKeystore {
             .account(symbol, address)
             .ok_or(Error::AccountNotFound)?;
 
-        let root = TypedDeterministicPrivateKey::from_seed(
-            DeterministicType::BIP32,
-            account.curve,
-            &cache.seed,
-        )?;
+        let root = TypedDeterministicPrivateKey::from_mnemonic(account.curve, &cache.mnemonic)?;
 
-        Ok(root
-            .derive(DerivePath::from_str(&account.derivation_path)?.into_iter())?
-            .private_key())
+        Ok(root.derive(&account.derivation_path)?.private_key())
     }
 
     pub(crate) fn find_deterministic_public_key(
@@ -112,11 +104,7 @@ impl HdKeystore {
             .account(symbol, address)
             .ok_or(Error::AccountNotFound)?;
 
-        TypedDeterministicPublicKey::from_hex(
-            DeterministicType::BIP32,
-            account.curve,
-            &account.ext_pub_key,
-        )
+        TypedDeterministicPublicKey::from_hex(account.curve, &account.ext_pub_key)
     }
 
     pub(crate) fn find_private_key_by_path(
@@ -132,15 +120,9 @@ impl HdKeystore {
                 .account(symbol, main_address)
                 .ok_or(Error::AccountNotFound)?;
 
-            let esk = TypedDeterministicPrivateKey::from_seed(
-                DeterministicType::BIP32,
-                account.curve,
-                &cache.seed,
-            )?;
+            let esk = TypedDeterministicPrivateKey::from_mnemonic(account.curve, &cache.mnemonic)?;
 
-            let k = esk.derive(
-                DerivePath::from_str(&get_account_path(&account.derivation_path)?)?.into_iter(),
-            )?;
+            let k = esk.derive(&get_account_path(&account.derivation_path)?)?;
 
             self.cache
                 .as_mut()
@@ -151,9 +133,7 @@ impl HdKeystore {
 
         let esk = &self.cache.as_ref().unwrap().keys[main_address];
 
-        Ok(esk
-            .derive(DerivePath::from_str(relative_path)?.into_iter())?
-            .private_key())
+        Ok(esk.derive(relative_path)?.private_key())
     }
 
     pub fn new(password: &str, meta: Metadata) -> HdKeystore {
@@ -185,25 +165,24 @@ impl HdKeystore {
     pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<Account> {
         let cache = self.cache.as_ref().ok_or(Error::KeystoreLocked)?;
 
-        let root = TypedDeterministicPrivateKey::from_seed(
-            DeterministicType::BIP32,
-            coin_info.curve,
-            &cache.seed,
-        )?;
+        let root = TypedDeterministicPrivateKey::from_mnemonic(coin_info.curve, &cache.mnemonic)?;
 
-        let private_key = root
-            .derive(DerivePath::from_str(&coin_info.derivation_path)?.into_iter())?
-            .private_key();
+        let private_key = root.derive(&coin_info.derivation_path)?.private_key();
         let public_key = private_key.public_key();
 
         let address = A::from_public_key(&public_key, coin_info)?;
-
-        let ext_pub_key = root
-            .derive(
-                DerivePath::from_str(&get_account_path(&coin_info.derivation_path)?)?.into_iter(),
-            )?
-            .deterministic_public_key()
-            .to_hex();
+        // todo: ext_pub_key
+        let ext_pub_key = match coin_info.curve {
+            CurveType::SubSr25519 => "".to_owned(),
+            _ => root
+                .derive(&get_account_path(&coin_info.derivation_path)?)?
+                .deterministic_public_key()
+                .to_hex(),
+        };
+        // let ext_pub_key = root
+        //     .derive(&account_path)?
+        //     .deterministic_public_key()
+        //     .to_hex();
 
         let account = Account {
             address,
@@ -361,6 +340,24 @@ mod tests {
         let wrong_password_err = keystore.unlock_by_password("WrongPassword").err().unwrap();
         assert_eq!(format!("{}", wrong_password_err), "password_incorrect");
     }
+
+    //    #[test]
+    //    pub fn generate_seed() {
+    //        let mnemonic = Mnemonic::from_phrase(
+    //            "favorite liar zebra assume hurt cage any damp inherit rescue delay panic",
+    //            Language::English,
+    //        )
+    //        .unwrap();
+    //
+    //        //        let entropy = mnemonic.entropy();
+    //
+    //        let seed = bip39::Seed::new(&mnemonic, &"").as_bytes().to_vec();
+    //
+    //        assert_eq!(
+    //            "235c69907d33b85f27bd78e73ff5d0c67bd4894515cc30c77f4391859bc1a3f2",
+    //            hex::encode(seed)
+    //        );
+    //    }
 
     #[test]
     pub fn derive_key_at_paths() {
