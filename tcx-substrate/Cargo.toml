@@ -1,0 +1,31 @@
+[package]
+name = "tcx-substrate"
+version = "0.1.0"
+authors = ["Neal Xu <imxuneal@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tcx-crypto = { path = "../tcx-crypto" }
+tcx-chain = { path = "../tcx-chain" }
+tcx-primitive = { path = "../tcx-primitive" }
+tcx-constants = { path = "../tcx-constants" }
+
+sp-core = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master-0.7.18", package = "sp-core" }
+hex = "0.4.0"
+byteorder = "1.2"
+
+prost = "0.5.0"
+bytes = "0.4.12"
+prost-types = "0.5.0"
+
+base58 = "0.1.0"
+bs58 = "0.3.0"
+codec = { package = "parity-scale-codec", version = "1.0.0", default-features = false, features = ["derive"] }
+
+failure = "0.1.5"
+
+[dev-dependencies]
+sp-runtime = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master-0.7.18", package = "sp-runtime" }
+sp-keyring = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master-0.7.18", package = "sp-keyring" }

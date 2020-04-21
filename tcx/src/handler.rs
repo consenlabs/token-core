@@ -40,6 +40,7 @@ use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::KDF_ROUNDS;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
+use tcx_substrate::{SubstrateAddress, SubstrateRawTxIn, SubstrateTxIn};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
@@ -64,6 +65,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "LITECOIN" => keystore.derive_coin::<BtcForkAddress>(&coin_info),
         "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
         "NERVOS" => keystore.derive_coin::<CkbAddress>(&coin_info),
+        "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -570,6 +572,7 @@ pub(crate) fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         "BITCOINCASH" | "LITECOIN" => sign_btc_fork_transaction(&param, guard.keystore_mut()),
         "TRON" => sign_tron_tx(&param, guard.keystore_mut()),
         "NERVOS" => sign_nervos_ckb(&param, guard.keystore_mut()),
+        "POLKADOT" | "KUSAMA" => sign_substrate_tx_raw(&param, guard.keystore_mut()),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -662,6 +665,22 @@ pub(crate) fn get_derived_key(data: &[u8]) -> Result<Vec<u8>> {
         derived_key: dk,
     };
     encode_message(ret)
+}
+
+pub(crate) fn sign_substrate_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: SubstrateTxIn =
+        SubstrateTxIn::decode(&param.input.as_ref().expect("tx_input").value.clone())
+            .expect("SubstrateTxIn");
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
+}
+
+pub(crate) fn sign_substrate_tx_raw(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: SubstrateRawTxIn =
+        SubstrateRawTxIn::decode(&param.input.as_ref().expect("raw_tx_input").value.clone())
+            .expect("SubstrateTxIn");
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
 }
 
 pub(crate) fn unlock_then_crash(data: &[u8]) -> Result<Vec<u8>> {
