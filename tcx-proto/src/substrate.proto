@@ -1,23 +1,6 @@
 syntax = "proto3";
 package transaction;
 
-message ExtrinsicEra {
-    uint64 current = 1;
-    uint64 period = 2;
-}
-
-message SubstrateTxIn {
-    string method = 1;
-    string address = 2;
-    int64 amount = 3;
-    ExtrinsicEra era = 4;
-    uint32 nonce = 5;
-    uint64 tip = 6;
-    uint32 sepcVersion = 7;
-    string genesisHash = 8;
-    string blockHash = 9;
-}
-
 message SubstrateRawTxIn {
     string rawData = 1;
 }

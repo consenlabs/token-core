@@ -166,7 +166,7 @@ mod tests {
     use sp_core::{Pair, Public as TraitPublic};
     use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
-    use tcx_substrate::{ExtrinsicEra, SubstrateRawTxIn, SubstrateTxIn, SubstrateTxOut};
+    use tcx_substrate::{SubstrateRawTxIn, SubstrateTxOut};
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 
     static OTHER_MNEMONIC: &'static str =
