@@ -338,6 +338,7 @@ mod tests {
 
     use tcx_constants::{CurveType, TEST_MNEMONIC};
 
+    #[warn(dead_code)]
     fn default_seed() -> Seed {
         let mn = Mnemonic::from_phrase(
             "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",

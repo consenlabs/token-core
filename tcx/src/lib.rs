@@ -10,7 +10,7 @@ use crate::api::{Response, TcxAction};
 
 pub mod error_handling;
 pub mod handler;
-use crate::error_handling::{landingpad, Result, LAST_BACKTRACE, LAST_ERROR};
+use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
 #[allow(deprecated)]
 use crate::handler::{
     encode_message, export_mnemonic, export_private_key, get_derived_key, hd_store_create,
@@ -154,7 +154,6 @@ mod tests {
     use crate::api::{HdStoreImportParam, WalletResult};
     use crate::handler::hd_store_import;
     use crate::handler::{encode_message, private_key_store_import};
-    //    use crate::init_token_core_x;
     use prost::Message;
     use tcx_chain::Keystore;
     use tcx_constants::{TEST_MNEMONIC, TEST_PASSWORD};
@@ -163,7 +162,7 @@ mod tests {
     use tcx_btc_fork::transaction::BtcForkTxInput;
     use tcx_btc_fork::transaction::Utxo;
 
-    use sp_core::{Pair, Public as TraitPublic};
+    use sp_core::Public as TraitPublic;
     use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
     use tcx_substrate::{SubstrateRawTxIn, SubstrateTxOut};
@@ -311,7 +310,7 @@ mod tests {
     #[test]
     fn test_call_tcx_api() {
         run_test(|| {
-            let import_param = HdStoreImportParam {
+            let _import_param = HdStoreImportParam {
                 mnemonic: TEST_MNEMONIC.to_string(),
                 password: TEST_PASSWORD.to_string(),
                 source: "MNEMONIC".to_string(),
