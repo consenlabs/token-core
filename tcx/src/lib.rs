@@ -135,6 +135,7 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
 mod tests {
     use super::*;
     use crate::filemanager::KEYSTORE_MAP;
+    use api::sign_param::Key;
     use error_handling::Result;
     use std::ffi::{CStr, CString};
     use std::fs::remove_file;
@@ -162,7 +163,6 @@ mod tests {
     use tcx_btc_fork::transaction::BtcForkTxInput;
     use tcx_btc_fork::transaction::Utxo;
 
-    use crate::api::sign_param::Key;
     use sp_core::{Pair, Public as TraitPublic};
     use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
@@ -1415,7 +1415,7 @@ mod tests {
             let input_value = encode_message(input).unwrap();
             let tx = SignParam {
                 id: wallet.id.to_string(),
-                password: TEST_PASSWORD.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
                 chain_type: "KUSAMA".to_string(),
                 address: wallet.accounts.first().unwrap().address.to_string(),
                 input: Some(::prost_types::Any {
