@@ -7,5 +7,4 @@ message SubstrateRawTxIn {
 
 message SubstrateTxOut {
     string signature = 1;
-//    string signature = 2;
 }
