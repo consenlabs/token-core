@@ -83,3 +83,31 @@ impl FromHex for Sr25519PublicKey {
         Ok(pk)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_private_key_from_slice() {
+        let pk_bytes: Vec<u8> =
+            hex::decode("1111111111111111111111111111111111111111111111111111111111111111")
+                .unwrap();
+        let pk: Sr25519PrivateKey = Sr25519PrivateKey::from_slice(&pk_bytes).unwrap();
+        assert_eq!("704b72419b89bab3a4632685428901bf5715b44e40ec0df50f01fdc1553bf60b092539815e61663c7f9c4c9c377346f5d2936875bd760f0ac5c5f4f6e78a6d76", hex::encode(pk.to_bytes()));
+        let public_key: Sr25519PublicKey = pk.public_key();
+        assert_eq!(
+            "50780547322a1ceba67ea8c552c9bc6c686f8698ac9a8cafab7cd15a1db19859",
+            public_key.to_hex()
+        );
+        assert_eq!(
+            "5DtDLm5rQHShDqojQpsvcN8tRXHVFaecfDoRet1SU6BFD9Fi",
+            format!("{}", public_key)
+        );
+    }
+
+    #[test]
+    fn test_sign_sr25519() {
+        // use integration test
+    }
+}
