@@ -16,9 +16,9 @@ tcx-substrate = {path = "../tcx-substrate"}
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants"}
 
-prost = "0.5.0"
-bytes = "0.4.12"
-prost-types = "0.5.0"
+prost = "0.6.1"
+bytes = "0.5.4"
+prost-types = "0.6.1"
 
 libc = "0.2.0"
 log = "0.4.6"

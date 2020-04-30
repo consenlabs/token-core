@@ -581,9 +581,16 @@ pub(crate) fn sign_btc_fork_transaction(
     param: &SignParam,
     keystore: &mut Keystore,
 ) -> Result<Vec<u8>> {
-    let input: BtcForkTxInput =
-        BtcForkTxInput::decode(&param.input.as_ref().expect("tx_input").value.clone())
-            .expect("BitcoinForkTransactionInput");
+    let input: BtcForkTxInput = BtcForkTxInput::decode(
+        param
+            .input
+            .as_ref()
+            .expect("tx_input")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("BitcoinForkTransactionInput");
     let coin = coin_info_from_param(&param.chain_type, &input.network, &input.seg_wit)?;
 
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
@@ -609,17 +616,31 @@ pub(crate) fn sign_btc_fork_transaction(
 }
 
 pub(crate) fn sign_nervos_ckb(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
-    let input: CkbTxInput =
-        CkbTxInput::decode(&param.input.as_ref().expect("tx_iput").value.clone())
-            .expect("CkbTxInput");
+    let input: CkbTxInput = CkbTxInput::decode(
+        param
+            .input
+            .as_ref()
+            .expect("tx_iput")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("CkbTxInput");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
 }
 
 pub(crate) fn sign_tron_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
-    let input: TronTxInput =
-        TronTxInput::decode(&param.input.as_ref().expect("tx_input").value.clone())
-            .expect("TronTxInput");
+    let input: TronTxInput = TronTxInput::decode(
+        param
+            .input
+            .as_ref()
+            .expect("tx_input")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("TronTxInput");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
 
     encode_message(signed_tx)
@@ -641,9 +662,15 @@ pub(crate) fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
         }
     };
 
-    let input: TronMessageInput =
-        TronMessageInput::decode(param.input.expect("TronMessageInput").value.clone())
-            .expect("TronMessageInput");
+    let input: TronMessageInput = TronMessageInput::decode(
+        param
+            .input
+            .expect("TronMessageInput")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("TronMessageInput");
     let signed_tx = guard
         .keystore_mut()
         .sign_message(&param.chain_type, &param.address, &input)?;
@@ -668,9 +695,16 @@ pub(crate) fn get_derived_key(data: &[u8]) -> Result<Vec<u8>> {
 }
 
 pub(crate) fn sign_substrate_tx_raw(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
-    let input: SubstrateRawTxIn =
-        SubstrateRawTxIn::decode(&param.input.as_ref().expect("raw_tx_input").value.clone())
-            .expect("SubstrateTxIn");
+    let input: SubstrateRawTxIn = SubstrateRawTxIn::decode(
+        param
+            .input
+            .as_ref()
+            .expect("raw_tx_input")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("SubstrateTxIn");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
 }

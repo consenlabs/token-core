@@ -52,7 +52,7 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
     let hex_str = hex_c_str.to_str().expect("parse_arguments to_str");
 
     let data = hex::decode(hex_str).expect("parse_arguments hex decode");
-    let action: TcxAction = TcxAction::decode(data).expect("decode tcx api");
+    let action: TcxAction = TcxAction::decode(data.as_slice()).expect("decode tcx api");
     let reply: Vec<u8> = match action.method.to_lowercase().as_str() {
         "init_token_core_x" => landingpad(|| {
             handler::init_token_core_x(&action.param.unwrap().value).unwrap();
@@ -237,7 +237,7 @@ mod tests {
             overwrite: true,
         };
         let ret = hd_store_import(&encode_message(param).unwrap()).unwrap();
-        WalletResult::decode(&ret).unwrap()
+        WalletResult::decode(ret.as_slice()).unwrap()
     }
 
     fn import_default_pk_store() -> WalletResult {
@@ -248,7 +248,7 @@ mod tests {
         };
 
         let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
-        WalletResult::decode(ret).unwrap()
+        WalletResult::decode(ret.as_slice()).unwrap()
     }
 
     fn import_and_derive(derivation: Derivation) -> WalletResult {
@@ -261,7 +261,7 @@ mod tests {
         };
 
         let ret = call_api("keystore_common_derive", param).unwrap();
-        let accounts: AccountsResponse = AccountsResponse::decode(ret).unwrap();
+        let accounts: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
 
         wallet.accounts = accounts.accounts.clone();
 
@@ -278,7 +278,7 @@ mod tests {
         };
 
         let ret = call_api("keystore_common_derive", param).unwrap();
-        let accounts: AccountsResponse = AccountsResponse::decode(ret).unwrap();
+        let accounts: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
 
         wallet.accounts = accounts.accounts.clone();
 
@@ -300,7 +300,7 @@ mod tests {
         let err = unsafe { _to_str(get_last_err_message()) };
         if !err.is_empty() {
             let err_bytes = hex::decode(err).unwrap();
-            let err_ret: Response = Response::decode(err_bytes).unwrap();
+            let err_ret: Response = Response::decode(err_bytes.as_slice()).unwrap();
             Err(format_err!("{}", err_ret.error))
         } else {
             Ok(hex::decode(ret_hex).unwrap())
@@ -320,7 +320,7 @@ mod tests {
             };
             // let ret_bytes = call_api("hd_store_import", import_param).unwrap();
             let ret_bytes = hex::decode("0a2434656239623136392d323237392d343439332d616535342d62396233643761303630323512036161611a084d4e454d4f4e494328e9a1a2f305").unwrap();
-            let ret: WalletResult = WalletResult::decode(ret_bytes).unwrap();
+            let ret: WalletResult = WalletResult::decode(ret_bytes.as_slice()).unwrap();
             assert!(ret.accounts.is_empty())
         });
     }
@@ -365,7 +365,7 @@ mod tests {
             };
 
             let ret = call_api("hd_store_create", param).unwrap();
-            let import_result: WalletResult = WalletResult::decode(&ret).unwrap();
+            let import_result: WalletResult = WalletResult::decode(ret.as_slice()).unwrap();
 
             assert!(import_result.accounts.is_empty());
             assert_eq!(import_result.name, "aaa");
@@ -393,7 +393,7 @@ mod tests {
             };
 
             let ret = call_api("keystore_common_derive", param).unwrap();
-            let result: AccountsResponse = AccountsResponse::decode(&ret).unwrap();
+            let result: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
             assert_eq!(result.accounts.first().unwrap().chain_type, "BITCOINCASH");
             assert_eq!(
                 result.accounts.first().unwrap().address,
@@ -446,7 +446,7 @@ mod tests {
             };
 
             let ret = call_api("keystore_common_derive", param).unwrap();
-            let result: AccountsResponse = AccountsResponse::decode(&ret).unwrap();
+            let result: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
             assert_eq!(result.accounts.first().unwrap().chain_type, "LITECOIN");
             assert_eq!(
                 result.accounts.first().unwrap().address,
@@ -468,7 +468,7 @@ mod tests {
             };
             let ret = call_api("hd_store_export", param).unwrap();
             let result: KeystoreCommonExportResult =
-                KeystoreCommonExportResult::decode(&ret).unwrap();
+                KeystoreCommonExportResult::decode(ret.as_slice()).unwrap();
 
             assert_eq!(result.r#type, KeyType::Mnemonic as i32);
             assert_eq!(result.value, TEST_MNEMONIC);
@@ -486,7 +486,7 @@ mod tests {
             };
             let ret = call_api("export_mnemonic", param).unwrap();
             let result: KeystoreCommonExportResult =
-                KeystoreCommonExportResult::decode(&ret).unwrap();
+                KeystoreCommonExportResult::decode(ret.as_slice()).unwrap();
 
             assert_eq!(result.r#type, KeyType::Mnemonic as i32);
             assert_eq!(result.value, TEST_MNEMONIC);
@@ -519,7 +519,7 @@ mod tests {
                 overwrite: true,
             };
             let ret = call_api("hd_store_import", param).unwrap();
-            let import_result: WalletResult = WalletResult::decode(&ret).unwrap();
+            let import_result: WalletResult = WalletResult::decode(ret.as_slice()).unwrap();
 
             let derivations = vec![
                 Derivation {
@@ -579,7 +579,7 @@ mod tests {
             };
             let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
             let derived_accounts: AccountsResponse =
-                AccountsResponse::decode(derived_accounts_bytes).unwrap();
+                AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
             assert_eq!(7, derived_accounts.accounts.len());
             assert_eq!(
                 "LQ3JqCohgLQ3x1CJXYERnJTy1ySaqr1E32",
@@ -716,7 +716,7 @@ mod tests {
             };
             let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
             let derived_accounts: AccountsResponse =
-                AccountsResponse::decode(derived_accounts_bytes).unwrap();
+                AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
             assert_eq!(5, derived_accounts.accounts.len());
             assert_eq!(
                 "LgGNTHMkgETS7oQcoekvACJQcH355xECog",
@@ -762,7 +762,7 @@ mod tests {
             };
             let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
             let derived_accounts: AccountsResponse =
-                AccountsResponse::decode(derived_accounts_bytes).unwrap();
+                AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
             assert_eq!(
                 "LgGNTHMkgETS7oQcoekvACJQcH355xECog",
                 derived_accounts.accounts[0].address
@@ -773,7 +773,7 @@ mod tests {
                 id: import_result.id.to_string(),
             };
             let accounts_ret = call_api("keystore_common_accounts", param).unwrap();
-            let ret = AccountsResponse::decode(accounts_ret).unwrap();
+            let ret = AccountsResponse::decode(accounts_ret.as_slice()).unwrap();
             assert_eq!(5, ret.accounts.len());
 
             remove_created_wallet(&import_result.id);
@@ -792,7 +792,7 @@ mod tests {
             };
             let ret_bytes = call_api("private_key_store_export", param).unwrap();
             let export_result: KeystoreCommonExportResult =
-                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+                KeystoreCommonExportResult::decode(ret_bytes.as_slice()).unwrap();
             assert_eq!(
                 "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
                 export_result.value
@@ -807,7 +807,7 @@ mod tests {
             };
             let ret_bytes = call_api("private_key_store_export", param).unwrap();
             let export_result: KeystoreCommonExportResult =
-                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+                KeystoreCommonExportResult::decode(ret_bytes.as_slice()).unwrap();
             assert_eq!(
                 "cT4fTJyLd5RmSZFHnkGmVCzXDKuJLbyTt7cy77ghTTCagzNdPH1j",
                 export_result.value
@@ -822,7 +822,7 @@ mod tests {
             };
             let ret_bytes = call_api("private_key_store_export", param).unwrap();
             let export_result: KeystoreCommonExportResult =
-                KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+                KeystoreCommonExportResult::decode(ret_bytes.as_slice()).unwrap();
             assert_eq!(
                 "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
                 export_result.value
@@ -877,7 +877,7 @@ mod tests {
                 };
                 let ret_bytes = call_api("export_private_key", param).unwrap();
                 let export_result: KeystoreCommonExportResult =
-                    KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+                    KeystoreCommonExportResult::decode(ret_bytes.as_slice()).unwrap();
 
                 // test export as mainnet
                 assert_eq!(pks[idx], export_result.value);
@@ -959,7 +959,7 @@ mod tests {
                 };
                 let ret_bytes = call_api("export_private_key", param).unwrap();
                 let export_result: KeystoreCommonExportResult =
-                    KeystoreCommonExportResult::decode(&ret_bytes).unwrap();
+                    KeystoreCommonExportResult::decode(ret_bytes.as_slice()).unwrap();
 
                 assert_eq!(pks[idx], export_result.value);
                 assert_eq!(KeyType::PrivateKey as i32, export_result.r#type);
@@ -993,7 +993,7 @@ mod tests {
             };
 
             let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
-            let wallet: WalletResult = WalletResult::decode(ret).unwrap();
+            let wallet: WalletResult = WalletResult::decode(ret.as_slice()).unwrap();
 
             let derivation = Derivation {
                 chain_type: "BITCOINCASH".to_string(),
@@ -1009,7 +1009,7 @@ mod tests {
                 derivations: vec![derivation],
             };
             let ret_bytes = keystore_common_derive(&encode_message(derive_param).unwrap()).unwrap();
-            let ret: AccountsResponse = AccountsResponse::decode(ret_bytes).unwrap();
+            let ret: AccountsResponse = AccountsResponse::decode(ret_bytes.as_slice()).unwrap();
             assert_eq!(
                 "qzld7dav7d2sfjdl6x9snkvf6raj8lfxjcj5fa8y2r",
                 ret.accounts.first().unwrap().address
@@ -1029,7 +1029,7 @@ mod tests {
                 };
 
                 let ret_bytes = call_api("keystore_common_verify", param).unwrap();
-                let result: Response = Response::decode(&ret_bytes).unwrap();
+                let result: Response = Response::decode(ret_bytes.as_slice()).unwrap();
                 assert!(result.is_success);
 
                 let param: WalletKeyParam = WalletKeyParam {
@@ -1054,7 +1054,7 @@ mod tests {
             };
 
             let ret_bytes = private_key_store_import(&encode_message(param).unwrap()).unwrap();
-            let import_result: WalletResult = WalletResult::decode(&ret_bytes).unwrap();
+            let import_result: WalletResult = WalletResult::decode(ret_bytes.as_slice()).unwrap();
 
             let param: WalletKeyParam = WalletKeyParam {
                 id: import_result.id.to_string(),
@@ -1071,7 +1071,7 @@ mod tests {
             };
 
             let ret_bytes = call_api("keystore_common_delete", param).unwrap();
-            let ret: Response = Response::decode(ret_bytes).unwrap();
+            let ret: Response = Response::decode(ret_bytes.as_slice()).unwrap();
             assert!(ret.is_success);
 
             let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
@@ -1081,7 +1081,7 @@ mod tests {
 
             let ret_bytes = call_api("keystore_common_exists", param).unwrap();
             let ret: KeystoreCommonExistsResult =
-                KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
 
             assert_eq!(false, ret.is_exists);
         })
@@ -1098,7 +1098,7 @@ mod tests {
 
             let ret_bytes = call_api("keystore_common_exists", param).unwrap();
             let result: KeystoreCommonExistsResult =
-                KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
             assert!(result.is_exists);
             assert_eq!(result.id, wallet.id);
 
@@ -1110,7 +1110,7 @@ mod tests {
 
             let ret_bytes = call_api("keystore_common_exists", param).unwrap();
             let result: KeystoreCommonExistsResult =
-                KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
             assert!(result.is_exists);
             assert_eq!(result.id, wallet.id);
 
@@ -1122,7 +1122,7 @@ mod tests {
 
             let ret_bytes = call_api("keystore_common_exists", param).unwrap();
             let result: KeystoreCommonExistsResult =
-                KeystoreCommonExistsResult::decode(&ret_bytes).unwrap();
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
             assert!(result.is_exists);
             assert_eq!(result.id, wallet.id);
         })
@@ -1138,7 +1138,7 @@ mod tests {
             };
 
             let ret_bytes = call_api("keystore_common_accounts", param).unwrap();
-            let result: AccountsResponse = AccountsResponse::decode(&ret_bytes).unwrap();
+            let result: AccountsResponse = AccountsResponse::decode(ret_bytes.as_slice()).unwrap();
             assert_eq!(0, result.accounts.len());
 
             let derivations = vec![Derivation {
@@ -1155,7 +1155,7 @@ mod tests {
             };
             let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
             let derived_accounts: AccountsResponse =
-                AccountsResponse::decode(derived_accounts_bytes).unwrap();
+                AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
             assert_eq!(1, derived_accounts.accounts.len());
             assert_eq!(
                 "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP",
@@ -1242,7 +1242,7 @@ mod tests {
             };
 
             let ret = call_api("sign_tx", tx).unwrap();
-            let output: CkbTxOutput = CkbTxOutput::decode(&ret).unwrap();
+            let output: CkbTxOutput = CkbTxOutput::decode(ret.as_slice()).unwrap();
             assert_eq!("0x5500000010000000550000005500000041000000776e010ac7e7166afa50fe54cfecf0a7106a2f11e8110e071ccab67cb30ed5495aa5c5f5ca2967a2fe4a60d5ad8c811382e51d8f916ba2911552bef6dedeca8a00", output.witnesses[0]);
             assert_eq!("0x5500000010000000550000005500000041000000914591d8abd5233740207337b0588fec58cad63143ddf204970526022b6db26d68311e9af49e1625e3a90e8a66eb1694632558d561d1e5d02cc7c7254e2d546100", output.witnesses[1]);
 
@@ -1308,7 +1308,7 @@ mod tests {
             };
 
             let ret = call_api("sign_tx", tx).unwrap();
-            let output: TronTxOutput = TronTxOutput::decode(&ret).unwrap();
+            let output: TronTxOutput = TronTxOutput::decode(ret.as_slice()).unwrap();
             let expected_sign = "bbf5ce0549490613a26c3ac4fc8574e748eabda05662b2e49cea818216b9da18691e78cd6379000e9c8a35c13dfbf620f269be90a078b58799b56dc20da3bdf200";
             assert_eq!(expected_sign, output.signatures[0]);
             remove_created_wallet(&wallet.id);
@@ -1424,7 +1424,7 @@ mod tests {
             };
 
             let ret = call_api("sign_tx", tx).unwrap();
-            let output: SubstrateTxOut = SubstrateTxOut::decode(&ret).unwrap();
+            let output: SubstrateTxOut = SubstrateTxOut::decode(ret.as_slice()).unwrap();
 
             assert_eq!(output.signature[0..4].to_string(), "0x01",);
 
@@ -1465,7 +1465,7 @@ mod tests {
             };
 
             let ret = call_api("keystore_common_derive", param).unwrap();
-            let rsp: AccountsResponse = AccountsResponse::decode(ret).unwrap();
+            let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
 
             let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
             let input = TronTxInput { raw_data };
@@ -1481,7 +1481,7 @@ mod tests {
             };
 
             let ret = call_api("sign_tx", tx).unwrap();
-            let output: TronTxOutput = TronTxOutput::decode(&ret).unwrap();
+            let output: TronTxOutput = TronTxOutput::decode(ret.as_slice()).unwrap();
             let expected_sign = "7758c92df76d50774a67fdca6c90b922fc84be68c69164d4c7f500327bfa4b9655709b6b1f88e07e3bda266d7ca4b48c934557917692f63a31e301d79d7107d001";
             assert_eq!(expected_sign, output.signatures[0]);
             remove_created_wallet(&import_result.id);
@@ -1507,14 +1507,14 @@ mod tests {
             };
 
             let ret = call_api("keystore_common_derive", param).unwrap();
-            let rsp: AccountsResponse = AccountsResponse::decode(ret).unwrap();
+            let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
 
             let param = WalletKeyParam {
                 id: import_result.id.to_string(),
                 password: TEST_PASSWORD.to_string(),
             };
             let ret_bytes = get_derived_key(&encode_message(param).unwrap()).unwrap();
-            let ret: DerivedKeyResult = DerivedKeyResult::decode(ret_bytes).unwrap();
+            let ret: DerivedKeyResult = DerivedKeyResult::decode(ret_bytes.as_slice()).unwrap();
             let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
             let input = TronTxInput { raw_data };
             let tx = SignParam {
@@ -1529,7 +1529,7 @@ mod tests {
             };
 
             let ret = call_api("sign_tx", tx).unwrap();
-            let output: TronTxOutput = TronTxOutput::decode(&ret).unwrap();
+            let output: TronTxOutput = TronTxOutput::decode(ret.as_slice()).unwrap();
             let expected_sign = "7758c92df76d50774a67fdca6c90b922fc84be68c69164d4c7f500327bfa4b9655709b6b1f88e07e3bda266d7ca4b48c934557917692f63a31e301d79d7107d001";
             assert_eq!(expected_sign, output.signatures[0]);
 
@@ -1603,7 +1603,8 @@ mod tests {
                 };
 
                 let sign_result = call_api("tron_sign_msg", tx).unwrap();
-                let ret: TronMessageOutput = TronMessageOutput::decode(sign_result).unwrap();
+                let ret: TronMessageOutput =
+                    TronMessageOutput::decode(sign_result.as_slice()).unwrap();
                 assert_eq!(expected, ret.signature);
             }
             //            let input = TronMessageInput {
@@ -1640,7 +1641,7 @@ mod tests {
             };
 
             let ret_bytes = get_derived_key(&encode_message(dk_param).unwrap()).unwrap();
-            let ret: DerivedKeyResult = DerivedKeyResult::decode(ret_bytes).unwrap();
+            let ret: DerivedKeyResult = DerivedKeyResult::decode(ret_bytes.as_slice()).unwrap();
 
             let tx = SignParam {
                 id: wallet.id.to_string(),
@@ -1654,7 +1655,7 @@ mod tests {
             };
 
             let sign_result = call_api("tron_sign_msg", tx).unwrap();
-            let ret: TronMessageOutput = TronMessageOutput::decode(sign_result).unwrap();
+            let ret: TronMessageOutput = TronMessageOutput::decode(sign_result.as_slice()).unwrap();
             assert_eq!("16417c6489da3a88ef980bf0a42551b9e76181d03e7334548ab3cb36e7622a484482722882a29e2fe4587b95c739a68624ebf9ada5f013a9340d883f03fcf9af1b", ret.signature);
 
             let tx = SignParam {
@@ -1698,7 +1699,7 @@ mod tests {
                 };
 
                 let ret = call_api("keystore_common_derive", param).unwrap();
-                let rsp: AccountsResponse = AccountsResponse::decode(ret).unwrap();
+                let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
 
                 let unspents = vec![Utxo {
                     tx_hash: "a477af6b2667c29670467e4e0728b685ee07b240235771862318e29ddbe58458"
@@ -1776,7 +1777,7 @@ mod tests {
             }
 
             let ret = call_api("sign_tx", tx).unwrap();
-            let output: TronTxOutput = TronTxOutput::decode(&ret).unwrap();
+            let output: TronTxOutput = TronTxOutput::decode(ret.as_slice()).unwrap();
             let expected_sign = "bbf5ce0549490613a26c3ac4fc8574e748eabda05662b2e49cea818216b9da18691e78cd6379000e9c8a35c13dfbf620f269be90a078b58799b56dc20da3bdf200";
             assert_eq!(expected_sign, output.signatures[0]);
 
@@ -1816,7 +1817,7 @@ mod tests {
         };
 
         let ret = call_api("get_derived_key", param).unwrap();
-        let dk_ret: DerivedKeyResult = DerivedKeyResult::decode(ret).unwrap();
+        let dk_ret: DerivedKeyResult = DerivedKeyResult::decode(ret.as_slice()).unwrap();
         assert_eq!(dk_ret.derived_key, "119a38ab626aaf8806e223833b29da7aa1d0623e282164d1dd73b0b5e0a88fb4b88937efadd9ca9d4ee931d7b2b33594d75ac4f4d651602819998237b27860fa");
     }
     //
@@ -1840,7 +1841,7 @@ mod tests {
     //
     //        let ret = call_api("private_key_store_export", param).unwrap();
     //        let export_ret: KeystoreCommonExportResult =
-    //            KeystoreCommonExportResult::decode(ret).unwrap();
+    //            KeystoreCommonExportResult::decode(ret.as_slice()).unwrap();
     //        assert_eq!(
     //            "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
     //            export_ret.value
@@ -1858,7 +1859,7 @@ mod tests {
             let _ret = call_api("unlock_then_crash", param);
             let err = unsafe { _to_str(get_last_err_message()) };
             let err_bytes = hex::decode(err).unwrap();
-            let rsp: Response = Response::decode(err_bytes).unwrap();
+            let rsp: Response = Response::decode(err_bytes.as_slice()).unwrap();
             assert!(!rsp.is_success);
             assert_eq!(rsp.error, "test_unlock_then_crash");
             let map = KEYSTORE_MAP.read();
