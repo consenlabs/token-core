@@ -42,9 +42,9 @@ lcov.info
 ccov/
 tarpaulin-report.html
 tools/ios-token-v2-release-build.sh
-
-tcx-btc-fork/src/transaction.rs
-tcx-ckb/src/transaction.rs
-tcx-substrate/src/transaction.rs
-tcx-tron/src/transaction.rs
-tcx/src/api.rs
+#
+#tcx-btc-fork/src/transaction.rs
+#tcx-ckb/src/transaction.rs
+#tcx-substrate/src/transaction.rs
+#tcx-tron/src/transaction.rs
+#tcx/src/api.rs
