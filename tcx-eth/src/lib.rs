@@ -1,6 +1,8 @@
 mod address;
 mod singer;
 mod transaction;
+#[macro_use]
+extern crate failure;
 
 #[cfg(test)]
 mod tests {

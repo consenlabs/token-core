@@ -8,7 +8,7 @@ message EthTxInput {
     string to = 4;
     string value = 5;
     string data = 6;
-    int32 chainId = 7;
+    uint32 chainId = 7;
 }
 
 message EthTxOutput {

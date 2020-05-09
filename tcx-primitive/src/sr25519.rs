@@ -49,6 +49,10 @@ impl TraitPrivateKey for Sr25519PrivateKey {
         self.sign(data)
     }
 
+    fn recover(data: &[u8], sig: &[u8]) -> Result<Vec<u8>> {
+        unimplemented!()
+    }
+
     fn to_bytes(&self) -> Vec<u8> {
         self.0.to_raw_vec()
     }

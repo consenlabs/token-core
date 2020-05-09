@@ -61,6 +61,8 @@ pub trait PrivateKey: Sized {
 
     fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>>;
 
+    fn recover(data: &[u8], sig: &[u8]) -> Result<Vec<u8>>;
+
     fn to_bytes(&self) -> Vec<u8>;
 }
 
@@ -144,6 +146,13 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(sk) => sk.sign_recoverable(data),
             TypedPrivateKey::Sr25519(sk) => sk.sign_recoverable(data),
+        }
+    }
+
+    pub fn recover(&self, data: &[u8], sig: &[u8]) -> Result<Vec<u8>> {
+        match self {
+            TypedPrivateKey::Secp256k1(sk) => Secp256k1PrivateKey::recover(data, sig),
+            TypedPrivateKey::Sr25519(sk) => Sr25519PrivateKey::recover(data, sig),
         }
     }
 }

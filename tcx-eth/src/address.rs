@@ -19,7 +19,7 @@ impl EthAddress {
 
         let lower_address = address.to_lowercase();
         let without_prefix = lower_address.as_bytes();
-        keccak_hash::keccak_256(&without_prefix, &mut address_hash);
+        let address_hash = tiny_keccak::keccak256(without_prefix);
         let address_hex = hex::encode(address_hash);
 
         for i in 0..address.len() {
@@ -42,8 +42,7 @@ impl Address for EthAddress {
     fn from_public_key(public_key: &TypedPublicKey, coin: &CoinInfo) -> Result<String> {
         let bytes = public_key.as_secp256k1().unwrap().to_uncompressed();
         let without_prefix = &bytes[1..];
-        let mut hashed_bytes = [0u8; 32];
-        keccak_hash::keccak_256(&without_prefix, &mut hashed_bytes);
+        let mut hashed_bytes = tiny_keccak::keccak256(without_prefix);
         let add_bytes = &hashed_bytes[(hashed_bytes.len() - 20)..];
         Ok(hex::encode(add_bytes))
     }
@@ -105,12 +104,6 @@ mod tests {
         )
         .unwrap();
         let pub_key = pk.public_key();
-        // let pub_key = bitcoin::PublicKey {
-        //     compressed: false,
-        //     key: secp256k1::PublicKey::from_slice(&pub_key_bytes).unwrap(),
-        // };
-
-        // let k1_pub_key = Secp256k1PublicKey(pub_key);
         let typed_pub_key = TypedPublicKey::Secp256k1(pub_key);
         let addr = EthAddress::from_public_key(&typed_pub_key, &eth_coin).unwrap();
         assert_eq!("ef678007d18427e6022059dbc264f27507cd1ffc", addr);

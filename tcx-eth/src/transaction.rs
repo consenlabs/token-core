@@ -12,8 +12,8 @@ pub struct EthTxInput {
     pub value: std::string::String,
     #[prost(string, tag = "6")]
     pub data: std::string::String,
-    #[prost(string, tag = "7")]
-    pub chain_id: std::string::String,
+    #[prost(uint32, tag = "7")]
+    pub chain_id: u32,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EthTxOutput {
