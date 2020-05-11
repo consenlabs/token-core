@@ -1,6 +1,7 @@
 mod address;
 mod singer;
 mod transaction;
+mod util;
 #[macro_use]
 extern crate failure;
 

@@ -7,40 +7,21 @@ use tcx_primitive::{
 };
 
 use crate::transaction::{EthTxInput, EthTxOutput};
+use crate::util::*;
 use failure::Fail;
 use num_bigint::{BigInt, BigUint};
 use rlp::{Rlp, RlpStream};
 use secp256k1::Signature;
 use tcx_constants::Result;
 
-// use parity_scale_codec::Encode;
-
-#[derive(Fail, Debug)]
-pub enum Error {
-    #[fail(display = "invalid_big_num_in_hex# hex: {}", _0)]
-    InvalidBigNumInHex(String),
-    #[fail(display = "invalid_big_num_in_num# address: {}", _0)]
-    InvalidBigNumInDigit(String),
-}
-
-struct SignatureData {
-    v: u32,
+pub struct SignatureData {
+    pub v: u32,
     r: Vec<u8>,
     s: Vec<u8>,
 }
 
-impl Clone for SignatureData {
-    fn clone(&self) -> Self {
-        SignatureData {
-            v: self.v,
-            r: self.r.clone(),
-            s: self.s.clone(),
-        }
-    }
-}
-
 impl SignatureData {
-    fn to_eip155(&self, chain_id: u32) -> Self {
+    pub fn to_eip155(&self, chain_id: u32) -> Self {
         let v = self.v + (chain_id * 2) + 8;
         return SignatureData {
             v,
@@ -49,7 +30,7 @@ impl SignatureData {
         };
     }
 
-    fn new(chain_id: u32) -> Self {
+    pub fn new(chain_id: u32) -> Self {
         return SignatureData {
             v: chain_id,
             r: vec![],
@@ -57,7 +38,7 @@ impl SignatureData {
         };
     }
 
-    fn from_raw(bytes: &[u8]) -> Result<Self> {
+    pub fn from_raw(bytes: &[u8]) -> Result<Self> {
         let v: i32;
         let v = match bytes.len() {
             65 => Ok(bytes[64] as u32),
@@ -71,13 +52,23 @@ impl SignatureData {
         });
     }
 
-    fn from_rsv(rs: &[u8], v: i32) -> Result<Self> {
+    pub fn from_rsv(rs: &[u8], v: i32) -> Result<Self> {
         let rsv = [rs, &vec![v as u8]].concat();
         Self::from_raw(&rsv)
     }
 
-    fn to_vec(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> Vec<u8> {
         [self.r.clone(), self.s.clone(), vec![self.v as u8]].concat()
+    }
+}
+
+impl Clone for SignatureData {
+    fn clone(&self) -> Self {
+        SignatureData {
+            v: self.v,
+            r: self.r.clone(),
+            s: self.s.clone(),
+        }
     }
 }
 
@@ -124,49 +115,6 @@ impl EthTxInput {
     }
 }
 
-fn sign_message(msg: &[u8], prv_key: &TypedPrivateKey) -> Result<SignatureData> {
-    let mut hashed_tx = tiny_keccak::keccak256(&msg);
-    let signed_tx = prv_key.sign(&hashed_tx)?;
-    // todo: sign should return SignatureData struct
-    let sig = Signature::parse_der(&signed_tx)?;
-    let mut sig_data = SignatureData::from_raw(&sig.serialize())?;
-    let recover_id = calc_recover_id(&sig_data, &hashed_tx, &prv_key)?;
-    sig_data.v = recover_id;
-    Ok(sig_data)
-}
-
-fn parse_big_int(value: &str) -> Result<BigInt> {
-    // todo check is hex or digit
-    if value.starts_with("0x") || value.starts_with("0X") {
-        let value_without_0x = &value[2..];
-        let bytes = hex::decode(value_without_0x)?;
-        return BigInt::parse_bytes(&bytes, 16)
-            .ok_or(Error::InvalidBigNumInHex(value.to_string()).into());
-    } else {
-        return BigInt::parse_bytes(&value.as_bytes(), 10)
-            .ok_or(Error::InvalidBigNumInDigit(value.to_string()).into());
-    }
-}
-
-fn calc_recover_id(
-    sig_data: &SignatureData,
-    value: &[u8],
-    prv_key: &TypedPrivateKey,
-) -> Result<u32> {
-    let mut rec_id = 0u32;
-    for i in 0..4 {
-        let mut sig_data_with_recover_id: SignatureData = sig_data.clone();
-        sig_data_with_recover_id.v = i;
-        let pub_key = prv_key.recover(value, &sig_data_with_recover_id.to_vec())?;
-        if pub_key == prv_key.as_secp256k1()?.public_key().to_uncompressed() {
-            return Ok(i + 27);
-        }
-    }
-    Err(format_err!(
-        "Could not construct a recoverable key. This should never happen."
-    ))
-}
-
 impl TransactionSigner<EthTxInput, EthTxOutput> for Keystore {
     fn sign_transaction(
         &mut self,
@@ -200,20 +148,15 @@ fn personal_sign(data: &str, prv_key: &TypedPrivateKey) -> Result<Vec<u8>> {
     Ok(sig.to_vec())
 }
 
-fn data_to_bytes(data: &str) -> Vec<u8> {
-    if is_hex(data) {
-        hex::decode(data).expect("is_hex function is sure the data is hex")
-    } else {
-        data.as_bytes().to_vec()
-    }
-}
-
-fn is_hex(data: &str) -> bool {
-    if data.to_ascii_lowercase().starts_with("0x") {
-        return hex::decode(&data[2..]).is_ok();
-    } else {
-        return hex::decode(data).is_ok();
-    }
+fn sign_message(msg: &[u8], prv_key: &TypedPrivateKey) -> Result<SignatureData> {
+    let mut hashed_tx = tiny_keccak::keccak256(&msg);
+    let signed_tx = prv_key.sign(&hashed_tx)?;
+    // todo: sign should return SignatureData struct
+    let sig = Signature::parse_der(&signed_tx)?;
+    let mut sig_data = SignatureData::from_raw(&sig.serialize())?;
+    let recover_id = calc_recover_id(&sig_data, &hashed_tx, &prv_key)?;
+    sig_data.v = recover_id;
+    Ok(sig_data)
 }
 
 #[cfg(test)]
