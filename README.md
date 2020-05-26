@@ -50,9 +50,9 @@ Every time you will try to commit, pre-commit will run checks on your files to m
 and they aren't affected by some simple issues. If the checks fail, pre-commit won't let you commit.
 
 ## Read More
-* [How to build project](docs/BUILD.zh.md)
-* [Crypto keys abstraction design](docs/KEYS.zh.md)
-* [Architecture design](docs/TECH.zh.md)
+* [How to build project](docs/BUILD.md)
+* [Crypto keys abstraction design (Chinese)](docs/KEYS.zh.md)
+* [Architecture design (Chinese)](docs/TECH.zh.md)
 * [How to add more blockchain support](docs/INTEGRATION.md)
 * [Security](SECURITY.md) including the bug bounty program
 * [FAQ](docs/FAQ.md)
