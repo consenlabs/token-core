@@ -9,6 +9,9 @@ A cross-platform library that implements crypto wallet functions for blockchains
 protocol. This library totally wrote in Rust, and now provides friendly interfaces for the mobile platform including
 ReactNative, iOS, and Android.
 
+TokenCoreX welcomes contribution from everyone. See [CONTRIBUTING.md](./CONTRIBUTING.md) for help getting started. 
+In all communications and contributions, this project follows the [Code of Conduct](./CODE_OF_CONDUCT.md)
+
 ## Goals
 * Abstration interfaces that provide crypto wallet common logic with multi blockchain support
 * Cross platform, on mobile, desktop, server side
