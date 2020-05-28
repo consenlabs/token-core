@@ -23,7 +23,7 @@ cargo install cbindgen
 lib files will be compiled and copied to the directory you set before.   
 
 ## Setup Android compile tool-chain  
-1. Install Android SDK or use the SDK providing by Android Studio (you can find it in `/Users/xxx/Library/Android/sdk`)   
+1. Install Android SDK or use the SDK providing by Android Studio (you can find it in `/Users/$$your_username$$/Library/Android/sdk` on macOS)   
 2. Config `~/.cargo/config`   
 
 ```
