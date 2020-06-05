@@ -1,0 +1,28 @@
+syntax = "proto3";
+package api;
+
+message VerifyDerivedKeyParam {
+    string id = 1;
+    string derivedKey = 2;
+}
+
+message DerivedKeyResult {
+    string id = 1;
+    string derivedKey = 2;
+}
+
+/// Only used in Android or iOS
+
+message CacheDerivedKeyResult {
+    string id = 1;
+    bool enableDerivedKey = 2;
+    string mode = 3;
+}
+
+message WalletId {
+    string id = 1;
+}
+
+message BiometricModeResult {
+    string mode = 1;
+}

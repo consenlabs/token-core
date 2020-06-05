@@ -205,6 +205,9 @@ export namespace api {
 
         /** InitTokenCoreXParam xpubCommonIv */
         xpubCommonIv?: (string|null);
+
+        /** InitTokenCoreXParam isDebug */
+        isDebug?: (boolean|null);
     }
 
     /** Represents an InitTokenCoreXParam. */
@@ -224,6 +227,9 @@ export namespace api {
 
         /** InitTokenCoreXParam xpubCommonIv. */
         public xpubCommonIv: string;
+
+        /** InitTokenCoreXParam isDebug. */
+        public isDebug: boolean;
 
         /**
          * Creates a new InitTokenCoreXParam instance using the specified properties.
@@ -291,6 +297,696 @@ export namespace api {
 
         /**
          * Converts this InitTokenCoreXParam to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of an ExportPrivateKeyParam. */
+    interface IExportPrivateKeyParam {
+
+        /** ExportPrivateKeyParam id */
+        id?: (string|null);
+
+        /** ExportPrivateKeyParam password */
+        password?: (string|null);
+
+        /** ExportPrivateKeyParam chainType */
+        chainType?: (string|null);
+
+        /** ExportPrivateKeyParam network */
+        network?: (string|null);
+
+        /** ExportPrivateKeyParam mainAddress */
+        mainAddress?: (string|null);
+
+        /** ExportPrivateKeyParam path */
+        path?: (string|null);
+    }
+
+    /** export the private key from a private key keystore or a hd keystore */
+    class ExportPrivateKeyParam implements IExportPrivateKeyParam {
+
+        /**
+         * Constructs a new ExportPrivateKeyParam.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IExportPrivateKeyParam);
+
+        /** ExportPrivateKeyParam id. */
+        public id: string;
+
+        /** ExportPrivateKeyParam password. */
+        public password: string;
+
+        /** ExportPrivateKeyParam chainType. */
+        public chainType: string;
+
+        /** ExportPrivateKeyParam network. */
+        public network: string;
+
+        /** ExportPrivateKeyParam mainAddress. */
+        public mainAddress: string;
+
+        /** ExportPrivateKeyParam path. */
+        public path: string;
+
+        /**
+         * Creates a new ExportPrivateKeyParam instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns ExportPrivateKeyParam instance
+         */
+        public static create(properties?: api.IExportPrivateKeyParam): api.ExportPrivateKeyParam;
+
+        /**
+         * Encodes the specified ExportPrivateKeyParam message. Does not implicitly {@link api.ExportPrivateKeyParam.verify|verify} messages.
+         * @param message ExportPrivateKeyParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IExportPrivateKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified ExportPrivateKeyParam message, length delimited. Does not implicitly {@link api.ExportPrivateKeyParam.verify|verify} messages.
+         * @param message ExportPrivateKeyParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IExportPrivateKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes an ExportPrivateKeyParam message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns ExportPrivateKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.ExportPrivateKeyParam;
+
+        /**
+         * Decodes an ExportPrivateKeyParam message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns ExportPrivateKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.ExportPrivateKeyParam;
+
+        /**
+         * Verifies an ExportPrivateKeyParam message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates an ExportPrivateKeyParam message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns ExportPrivateKeyParam
+         */
+        public static fromObject(object: { [k: string]: any }): api.ExportPrivateKeyParam;
+
+        /**
+         * Creates a plain object from an ExportPrivateKeyParam message. Also converts values to other types if specified.
+         * @param message ExportPrivateKeyParam
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.ExportPrivateKeyParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this ExportPrivateKeyParam to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a WalletKeyParam. */
+    interface IWalletKeyParam {
+
+        /** WalletKeyParam id */
+        id?: (string|null);
+
+        /** WalletKeyParam password */
+        password?: (string|null);
+    }
+
+    /** verify the password of the keystore */
+    class WalletKeyParam implements IWalletKeyParam {
+
+        /**
+         * Constructs a new WalletKeyParam.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IWalletKeyParam);
+
+        /** WalletKeyParam id. */
+        public id: string;
+
+        /** WalletKeyParam password. */
+        public password: string;
+
+        /**
+         * Creates a new WalletKeyParam instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns WalletKeyParam instance
+         */
+        public static create(properties?: api.IWalletKeyParam): api.WalletKeyParam;
+
+        /**
+         * Encodes the specified WalletKeyParam message. Does not implicitly {@link api.WalletKeyParam.verify|verify} messages.
+         * @param message WalletKeyParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IWalletKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified WalletKeyParam message, length delimited. Does not implicitly {@link api.WalletKeyParam.verify|verify} messages.
+         * @param message WalletKeyParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IWalletKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a WalletKeyParam message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns WalletKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.WalletKeyParam;
+
+        /**
+         * Decodes a WalletKeyParam message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns WalletKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.WalletKeyParam;
+
+        /**
+         * Verifies a WalletKeyParam message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a WalletKeyParam message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns WalletKeyParam
+         */
+        public static fromObject(object: { [k: string]: any }): api.WalletKeyParam;
+
+        /**
+         * Creates a plain object from a WalletKeyParam message. Also converts values to other types if specified.
+         * @param message WalletKeyParam
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.WalletKeyParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this WalletKeyParam to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a VerifyDerivedKeyParam. */
+    interface IVerifyDerivedKeyParam {
+
+        /** VerifyDerivedKeyParam id */
+        id?: (string|null);
+
+        /** VerifyDerivedKeyParam derivedKey */
+        derivedKey?: (string|null);
+    }
+
+    /** Represents a VerifyDerivedKeyParam. */
+    class VerifyDerivedKeyParam implements IVerifyDerivedKeyParam {
+
+        /**
+         * Constructs a new VerifyDerivedKeyParam.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IVerifyDerivedKeyParam);
+
+        /** VerifyDerivedKeyParam id. */
+        public id: string;
+
+        /** VerifyDerivedKeyParam derivedKey. */
+        public derivedKey: string;
+
+        /**
+         * Creates a new VerifyDerivedKeyParam instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns VerifyDerivedKeyParam instance
+         */
+        public static create(properties?: api.IVerifyDerivedKeyParam): api.VerifyDerivedKeyParam;
+
+        /**
+         * Encodes the specified VerifyDerivedKeyParam message. Does not implicitly {@link api.VerifyDerivedKeyParam.verify|verify} messages.
+         * @param message VerifyDerivedKeyParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IVerifyDerivedKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified VerifyDerivedKeyParam message, length delimited. Does not implicitly {@link api.VerifyDerivedKeyParam.verify|verify} messages.
+         * @param message VerifyDerivedKeyParam message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IVerifyDerivedKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a VerifyDerivedKeyParam message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns VerifyDerivedKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.VerifyDerivedKeyParam;
+
+        /**
+         * Decodes a VerifyDerivedKeyParam message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns VerifyDerivedKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.VerifyDerivedKeyParam;
+
+        /**
+         * Verifies a VerifyDerivedKeyParam message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a VerifyDerivedKeyParam message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns VerifyDerivedKeyParam
+         */
+        public static fromObject(object: { [k: string]: any }): api.VerifyDerivedKeyParam;
+
+        /**
+         * Creates a plain object from a VerifyDerivedKeyParam message. Also converts values to other types if specified.
+         * @param message VerifyDerivedKeyParam
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.VerifyDerivedKeyParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this VerifyDerivedKeyParam to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a DerivedKeyResult. */
+    interface IDerivedKeyResult {
+
+        /** DerivedKeyResult id */
+        id?: (string|null);
+
+        /** DerivedKeyResult derivedKey */
+        derivedKey?: (string|null);
+    }
+
+    /** Represents a DerivedKeyResult. */
+    class DerivedKeyResult implements IDerivedKeyResult {
+
+        /**
+         * Constructs a new DerivedKeyResult.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IDerivedKeyResult);
+
+        /** DerivedKeyResult id. */
+        public id: string;
+
+        /** DerivedKeyResult derivedKey. */
+        public derivedKey: string;
+
+        /**
+         * Creates a new DerivedKeyResult instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns DerivedKeyResult instance
+         */
+        public static create(properties?: api.IDerivedKeyResult): api.DerivedKeyResult;
+
+        /**
+         * Encodes the specified DerivedKeyResult message. Does not implicitly {@link api.DerivedKeyResult.verify|verify} messages.
+         * @param message DerivedKeyResult message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IDerivedKeyResult, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified DerivedKeyResult message, length delimited. Does not implicitly {@link api.DerivedKeyResult.verify|verify} messages.
+         * @param message DerivedKeyResult message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IDerivedKeyResult, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a DerivedKeyResult message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns DerivedKeyResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.DerivedKeyResult;
+
+        /**
+         * Decodes a DerivedKeyResult message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns DerivedKeyResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.DerivedKeyResult;
+
+        /**
+         * Verifies a DerivedKeyResult message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a DerivedKeyResult message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns DerivedKeyResult
+         */
+        public static fromObject(object: { [k: string]: any }): api.DerivedKeyResult;
+
+        /**
+         * Creates a plain object from a DerivedKeyResult message. Also converts values to other types if specified.
+         * @param message DerivedKeyResult
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.DerivedKeyResult, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this DerivedKeyResult to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a CacheDerivedKeyResult. */
+    interface ICacheDerivedKeyResult {
+
+        /** CacheDerivedKeyResult id */
+        id?: (string|null);
+
+        /** CacheDerivedKeyResult enableDerivedKey */
+        enableDerivedKey?: (boolean|null);
+
+        /** CacheDerivedKeyResult mode */
+        mode?: (string|null);
+    }
+
+    /** Represents a CacheDerivedKeyResult. */
+    class CacheDerivedKeyResult implements ICacheDerivedKeyResult {
+
+        /**
+         * Constructs a new CacheDerivedKeyResult.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.ICacheDerivedKeyResult);
+
+        /** CacheDerivedKeyResult id. */
+        public id: string;
+
+        /** CacheDerivedKeyResult enableDerivedKey. */
+        public enableDerivedKey: boolean;
+
+        /** CacheDerivedKeyResult mode. */
+        public mode: string;
+
+        /**
+         * Creates a new CacheDerivedKeyResult instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns CacheDerivedKeyResult instance
+         */
+        public static create(properties?: api.ICacheDerivedKeyResult): api.CacheDerivedKeyResult;
+
+        /**
+         * Encodes the specified CacheDerivedKeyResult message. Does not implicitly {@link api.CacheDerivedKeyResult.verify|verify} messages.
+         * @param message CacheDerivedKeyResult message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.ICacheDerivedKeyResult, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified CacheDerivedKeyResult message, length delimited. Does not implicitly {@link api.CacheDerivedKeyResult.verify|verify} messages.
+         * @param message CacheDerivedKeyResult message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.ICacheDerivedKeyResult, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a CacheDerivedKeyResult message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns CacheDerivedKeyResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.CacheDerivedKeyResult;
+
+        /**
+         * Decodes a CacheDerivedKeyResult message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns CacheDerivedKeyResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.CacheDerivedKeyResult;
+
+        /**
+         * Verifies a CacheDerivedKeyResult message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a CacheDerivedKeyResult message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns CacheDerivedKeyResult
+         */
+        public static fromObject(object: { [k: string]: any }): api.CacheDerivedKeyResult;
+
+        /**
+         * Creates a plain object from a CacheDerivedKeyResult message. Also converts values to other types if specified.
+         * @param message CacheDerivedKeyResult
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.CacheDerivedKeyResult, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this CacheDerivedKeyResult to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a WalletId. */
+    interface IWalletId {
+
+        /** WalletId id */
+        id?: (string|null);
+    }
+
+    /** Represents a WalletId. */
+    class WalletId implements IWalletId {
+
+        /**
+         * Constructs a new WalletId.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IWalletId);
+
+        /** WalletId id. */
+        public id: string;
+
+        /**
+         * Creates a new WalletId instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns WalletId instance
+         */
+        public static create(properties?: api.IWalletId): api.WalletId;
+
+        /**
+         * Encodes the specified WalletId message. Does not implicitly {@link api.WalletId.verify|verify} messages.
+         * @param message WalletId message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IWalletId, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified WalletId message, length delimited. Does not implicitly {@link api.WalletId.verify|verify} messages.
+         * @param message WalletId message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IWalletId, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a WalletId message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns WalletId
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.WalletId;
+
+        /**
+         * Decodes a WalletId message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns WalletId
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.WalletId;
+
+        /**
+         * Verifies a WalletId message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a WalletId message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns WalletId
+         */
+        public static fromObject(object: { [k: string]: any }): api.WalletId;
+
+        /**
+         * Creates a plain object from a WalletId message. Also converts values to other types if specified.
+         * @param message WalletId
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.WalletId, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this WalletId to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a BiometricModeResult. */
+    interface IBiometricModeResult {
+
+        /** BiometricModeResult mode */
+        mode?: (string|null);
+    }
+
+    /** Represents a BiometricModeResult. */
+    class BiometricModeResult implements IBiometricModeResult {
+
+        /**
+         * Constructs a new BiometricModeResult.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: api.IBiometricModeResult);
+
+        /** BiometricModeResult mode. */
+        public mode: string;
+
+        /**
+         * Creates a new BiometricModeResult instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns BiometricModeResult instance
+         */
+        public static create(properties?: api.IBiometricModeResult): api.BiometricModeResult;
+
+        /**
+         * Encodes the specified BiometricModeResult message. Does not implicitly {@link api.BiometricModeResult.verify|verify} messages.
+         * @param message BiometricModeResult message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: api.IBiometricModeResult, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified BiometricModeResult message, length delimited. Does not implicitly {@link api.BiometricModeResult.verify|verify} messages.
+         * @param message BiometricModeResult message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: api.IBiometricModeResult, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a BiometricModeResult message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns BiometricModeResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.BiometricModeResult;
+
+        /**
+         * Decodes a BiometricModeResult message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns BiometricModeResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.BiometricModeResult;
+
+        /**
+         * Verifies a BiometricModeResult message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a BiometricModeResult message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns BiometricModeResult
+         */
+        public static fromObject(object: { [k: string]: any }): api.BiometricModeResult;
+
+        /**
+         * Creates a plain object from a BiometricModeResult message. Also converts values to other types if specified.
+         * @param message BiometricModeResult
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: api.BiometricModeResult, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this BiometricModeResult to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
@@ -1367,102 +2063,6 @@ export namespace api {
         public toJSON(): { [k: string]: any };
     }
 
-    /** Properties of a WalletKeyParam. */
-    interface IWalletKeyParam {
-
-        /** WalletKeyParam id */
-        id?: (string|null);
-
-        /** WalletKeyParam password */
-        password?: (string|null);
-    }
-
-    /** Represents a WalletKeyParam. */
-    class WalletKeyParam implements IWalletKeyParam {
-
-        /**
-         * Constructs a new WalletKeyParam.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: api.IWalletKeyParam);
-
-        /** WalletKeyParam id. */
-        public id: string;
-
-        /** WalletKeyParam password. */
-        public password: string;
-
-        /**
-         * Creates a new WalletKeyParam instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns WalletKeyParam instance
-         */
-        public static create(properties?: api.IWalletKeyParam): api.WalletKeyParam;
-
-        /**
-         * Encodes the specified WalletKeyParam message. Does not implicitly {@link api.WalletKeyParam.verify|verify} messages.
-         * @param message WalletKeyParam message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: api.IWalletKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified WalletKeyParam message, length delimited. Does not implicitly {@link api.WalletKeyParam.verify|verify} messages.
-         * @param message WalletKeyParam message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: api.IWalletKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a WalletKeyParam message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns WalletKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.WalletKeyParam;
-
-        /**
-         * Decodes a WalletKeyParam message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns WalletKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.WalletKeyParam;
-
-        /**
-         * Verifies a WalletKeyParam message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a WalletKeyParam message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns WalletKeyParam
-         */
-        public static fromObject(object: { [k: string]: any }): api.WalletKeyParam;
-
-        /**
-         * Creates a plain object from a WalletKeyParam message. Also converts values to other types if specified.
-         * @param message WalletKeyParam
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: api.WalletKeyParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this WalletKeyParam to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
     /** Properties of a KeystoreCommonExistsParam. */
     interface IKeystoreCommonExistsParam {
 
@@ -1754,6 +2354,9 @@ export namespace api {
         /** SignParam password */
         password?: (string|null);
 
+        /** SignParam derivedKey */
+        derivedKey?: (string|null);
+
         /** SignParam chainType */
         chainType?: (string|null);
 
@@ -1779,6 +2382,9 @@ export namespace api {
         /** SignParam password. */
         public password: string;
 
+        /** SignParam derivedKey. */
+        public derivedKey: string;
+
         /** SignParam chainType. */
         public chainType: string;
 
@@ -1787,6 +2393,9 @@ export namespace api {
 
         /** SignParam input. */
         public input?: (google.protobuf.IAny|null);
+
+        /** SignParam key. */
+        public key?: ("password"|"derivedKey");
 
         /**
          * Creates a new SignParam instance using the specified properties.
@@ -2553,300 +3162,6 @@ export namespace api {
 
         /**
          * Converts this HdStoreExtendedPublicKeyResponse to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
-    /** Properties of a CacheDerivedKeyParam. */
-    interface ICacheDerivedKeyParam {
-
-        /** CacheDerivedKeyParam id */
-        id?: (string|null);
-
-        /** CacheDerivedKeyParam derivedKey */
-        derivedKey?: (string|null);
-
-        /** CacheDerivedKeyParam tempPassword */
-        tempPassword?: (string|null);
-    }
-
-    /** Represents a CacheDerivedKeyParam. */
-    class CacheDerivedKeyParam implements ICacheDerivedKeyParam {
-
-        /**
-         * Constructs a new CacheDerivedKeyParam.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: api.ICacheDerivedKeyParam);
-
-        /** CacheDerivedKeyParam id. */
-        public id: string;
-
-        /** CacheDerivedKeyParam derivedKey. */
-        public derivedKey: string;
-
-        /** CacheDerivedKeyParam tempPassword. */
-        public tempPassword: string;
-
-        /**
-         * Creates a new CacheDerivedKeyParam instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns CacheDerivedKeyParam instance
-         */
-        public static create(properties?: api.ICacheDerivedKeyParam): api.CacheDerivedKeyParam;
-
-        /**
-         * Encodes the specified CacheDerivedKeyParam message. Does not implicitly {@link api.CacheDerivedKeyParam.verify|verify} messages.
-         * @param message CacheDerivedKeyParam message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: api.ICacheDerivedKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified CacheDerivedKeyParam message, length delimited. Does not implicitly {@link api.CacheDerivedKeyParam.verify|verify} messages.
-         * @param message CacheDerivedKeyParam message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: api.ICacheDerivedKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a CacheDerivedKeyParam message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns CacheDerivedKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.CacheDerivedKeyParam;
-
-        /**
-         * Decodes a CacheDerivedKeyParam message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns CacheDerivedKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.CacheDerivedKeyParam;
-
-        /**
-         * Verifies a CacheDerivedKeyParam message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a CacheDerivedKeyParam message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns CacheDerivedKeyParam
-         */
-        public static fromObject(object: { [k: string]: any }): api.CacheDerivedKeyParam;
-
-        /**
-         * Creates a plain object from a CacheDerivedKeyParam message. Also converts values to other types if specified.
-         * @param message CacheDerivedKeyParam
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: api.CacheDerivedKeyParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this CacheDerivedKeyParam to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
-    /** Properties of a VerifyDerivedKeyParam. */
-    interface IVerifyDerivedKeyParam {
-
-        /** VerifyDerivedKeyParam id */
-        id?: (string|null);
-
-        /** VerifyDerivedKeyParam derivedKey */
-        derivedKey?: (string|null);
-    }
-
-    /** Represents a VerifyDerivedKeyParam. */
-    class VerifyDerivedKeyParam implements IVerifyDerivedKeyParam {
-
-        /**
-         * Constructs a new VerifyDerivedKeyParam.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: api.IVerifyDerivedKeyParam);
-
-        /** VerifyDerivedKeyParam id. */
-        public id: string;
-
-        /** VerifyDerivedKeyParam derivedKey. */
-        public derivedKey: string;
-
-        /**
-         * Creates a new VerifyDerivedKeyParam instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns VerifyDerivedKeyParam instance
-         */
-        public static create(properties?: api.IVerifyDerivedKeyParam): api.VerifyDerivedKeyParam;
-
-        /**
-         * Encodes the specified VerifyDerivedKeyParam message. Does not implicitly {@link api.VerifyDerivedKeyParam.verify|verify} messages.
-         * @param message VerifyDerivedKeyParam message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: api.IVerifyDerivedKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified VerifyDerivedKeyParam message, length delimited. Does not implicitly {@link api.VerifyDerivedKeyParam.verify|verify} messages.
-         * @param message VerifyDerivedKeyParam message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: api.IVerifyDerivedKeyParam, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a VerifyDerivedKeyParam message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns VerifyDerivedKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.VerifyDerivedKeyParam;
-
-        /**
-         * Decodes a VerifyDerivedKeyParam message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns VerifyDerivedKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.VerifyDerivedKeyParam;
-
-        /**
-         * Verifies a VerifyDerivedKeyParam message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a VerifyDerivedKeyParam message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns VerifyDerivedKeyParam
-         */
-        public static fromObject(object: { [k: string]: any }): api.VerifyDerivedKeyParam;
-
-        /**
-         * Creates a plain object from a VerifyDerivedKeyParam message. Also converts values to other types if specified.
-         * @param message VerifyDerivedKeyParam
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: api.VerifyDerivedKeyParam, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this VerifyDerivedKeyParam to JSON.
-         * @returns JSON object
-         */
-        public toJSON(): { [k: string]: any };
-    }
-
-    /** Properties of a DerivedKeyResult. */
-    interface IDerivedKeyResult {
-
-        /** DerivedKeyResult id */
-        id?: (string|null);
-
-        /** DerivedKeyResult derivedKey */
-        derivedKey?: (string|null);
-    }
-
-    /** Represents a DerivedKeyResult. */
-    class DerivedKeyResult implements IDerivedKeyResult {
-
-        /**
-         * Constructs a new DerivedKeyResult.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: api.IDerivedKeyResult);
-
-        /** DerivedKeyResult id. */
-        public id: string;
-
-        /** DerivedKeyResult derivedKey. */
-        public derivedKey: string;
-
-        /**
-         * Creates a new DerivedKeyResult instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns DerivedKeyResult instance
-         */
-        public static create(properties?: api.IDerivedKeyResult): api.DerivedKeyResult;
-
-        /**
-         * Encodes the specified DerivedKeyResult message. Does not implicitly {@link api.DerivedKeyResult.verify|verify} messages.
-         * @param message DerivedKeyResult message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: api.IDerivedKeyResult, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Encodes the specified DerivedKeyResult message, length delimited. Does not implicitly {@link api.DerivedKeyResult.verify|verify} messages.
-         * @param message DerivedKeyResult message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encodeDelimited(message: api.IDerivedKeyResult, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a DerivedKeyResult message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns DerivedKeyResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): api.DerivedKeyResult;
-
-        /**
-         * Decodes a DerivedKeyResult message from the specified reader or buffer, length delimited.
-         * @param reader Reader or buffer to decode from
-         * @returns DerivedKeyResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): api.DerivedKeyResult;
-
-        /**
-         * Verifies a DerivedKeyResult message.
-         * @param message Plain object to verify
-         * @returns `null` if valid, otherwise the reason why it is not
-         */
-        public static verify(message: { [k: string]: any }): (string|null);
-
-        /**
-         * Creates a DerivedKeyResult message from a plain object. Also converts values to their respective internal types.
-         * @param object Plain object
-         * @returns DerivedKeyResult
-         */
-        public static fromObject(object: { [k: string]: any }): api.DerivedKeyResult;
-
-        /**
-         * Creates a plain object from a DerivedKeyResult message. Also converts values to other types if specified.
-         * @param message DerivedKeyResult
-         * @param [options] Conversion options
-         * @returns Plain object
-         */
-        public static toObject(message: api.DerivedKeyResult, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-        /**
-         * Converts this DerivedKeyResult to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
@@ -4017,6 +4332,186 @@ export namespace transaction {
 
         /**
          * Converts this CkbTxOutput to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a SubstrateRawTxIn. */
+    interface ISubstrateRawTxIn {
+
+        /** SubstrateRawTxIn rawData */
+        rawData?: (string|null);
+    }
+
+    /** Represents a SubstrateRawTxIn. */
+    class SubstrateRawTxIn implements ISubstrateRawTxIn {
+
+        /**
+         * Constructs a new SubstrateRawTxIn.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: transaction.ISubstrateRawTxIn);
+
+        /** SubstrateRawTxIn rawData. */
+        public rawData: string;
+
+        /**
+         * Creates a new SubstrateRawTxIn instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns SubstrateRawTxIn instance
+         */
+        public static create(properties?: transaction.ISubstrateRawTxIn): transaction.SubstrateRawTxIn;
+
+        /**
+         * Encodes the specified SubstrateRawTxIn message. Does not implicitly {@link transaction.SubstrateRawTxIn.verify|verify} messages.
+         * @param message SubstrateRawTxIn message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: transaction.ISubstrateRawTxIn, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified SubstrateRawTxIn message, length delimited. Does not implicitly {@link transaction.SubstrateRawTxIn.verify|verify} messages.
+         * @param message SubstrateRawTxIn message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: transaction.ISubstrateRawTxIn, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a SubstrateRawTxIn message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns SubstrateRawTxIn
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): transaction.SubstrateRawTxIn;
+
+        /**
+         * Decodes a SubstrateRawTxIn message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns SubstrateRawTxIn
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): transaction.SubstrateRawTxIn;
+
+        /**
+         * Verifies a SubstrateRawTxIn message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a SubstrateRawTxIn message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns SubstrateRawTxIn
+         */
+        public static fromObject(object: { [k: string]: any }): transaction.SubstrateRawTxIn;
+
+        /**
+         * Creates a plain object from a SubstrateRawTxIn message. Also converts values to other types if specified.
+         * @param message SubstrateRawTxIn
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: transaction.SubstrateRawTxIn, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this SubstrateRawTxIn to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a SubstrateTxOut. */
+    interface ISubstrateTxOut {
+
+        /** SubstrateTxOut signature */
+        signature?: (string|null);
+    }
+
+    /** Represents a SubstrateTxOut. */
+    class SubstrateTxOut implements ISubstrateTxOut {
+
+        /**
+         * Constructs a new SubstrateTxOut.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: transaction.ISubstrateTxOut);
+
+        /** SubstrateTxOut signature. */
+        public signature: string;
+
+        /**
+         * Creates a new SubstrateTxOut instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns SubstrateTxOut instance
+         */
+        public static create(properties?: transaction.ISubstrateTxOut): transaction.SubstrateTxOut;
+
+        /**
+         * Encodes the specified SubstrateTxOut message. Does not implicitly {@link transaction.SubstrateTxOut.verify|verify} messages.
+         * @param message SubstrateTxOut message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: transaction.ISubstrateTxOut, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified SubstrateTxOut message, length delimited. Does not implicitly {@link transaction.SubstrateTxOut.verify|verify} messages.
+         * @param message SubstrateTxOut message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: transaction.ISubstrateTxOut, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a SubstrateTxOut message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns SubstrateTxOut
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): transaction.SubstrateTxOut;
+
+        /**
+         * Decodes a SubstrateTxOut message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns SubstrateTxOut
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): transaction.SubstrateTxOut;
+
+        /**
+         * Verifies a SubstrateTxOut message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a SubstrateTxOut message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns SubstrateTxOut
+         */
+        public static fromObject(object: { [k: string]: any }): transaction.SubstrateTxOut;
+
+        /**
+         * Creates a plain object from a SubstrateTxOut message. Also converts values to other types if specified.
+         * @param message SubstrateTxOut
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: transaction.SubstrateTxOut, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this SubstrateTxOut to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
