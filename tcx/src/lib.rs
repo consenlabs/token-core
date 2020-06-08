@@ -1849,6 +1849,14 @@ mod tests {
     //    }
 
     #[test]
+    fn decode_error() {
+        let err = "1211756e737570706f727465645f636861696e";
+        let error_bytes = hex::decode(err).unwrap();
+        let rsp: Response = Response::decode(error_bytes.as_slice()).unwrap();
+        assert_eq!("1", format!("{:?}", rsp))
+    }
+
+    #[test]
     fn test_panic_keystore_locked() {
         run_test(|| {
             let wallet = import_default_wallet();
