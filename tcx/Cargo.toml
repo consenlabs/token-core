@@ -39,5 +39,5 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 prost-build = "0.5.0"
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master-0.7.18", package = "sp-core" }
-sp-runtime = { git = "https://github.com/paritytech/substrate/", branch = "polkadot-master-0.7.18", package = "sp-runtime" }
+sp-core = "2.0.0-rc3"
+sp-runtime = "2.0.0-rc3"

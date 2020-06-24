@@ -14,10 +14,10 @@ impl Address for SubstrateAddress {
         let address = match coin.coin.as_str() {
             "KUSAMA" => sr_pk
                 .0
-                .to_ss58check_with_version(Ss58AddressFormat::KusamaAccountDirect),
+                .to_ss58check_with_version(Ss58AddressFormat::KusamaAccount),
             "POLKADOT" => sr_pk
                 .0
-                .to_ss58check_with_version(Ss58AddressFormat::PolkadotAccountDirect),
+                .to_ss58check_with_version(Ss58AddressFormat::PolkadotAccount),
             _ => "".to_owned(),
         };
 
@@ -27,8 +27,8 @@ impl Address for SubstrateAddress {
     fn is_valid(address: &str, coin: &CoinInfo) -> bool {
         match Public::from_ss58check_with_version(address) {
             Ok((_addr, version)) => match coin.coin.as_str() {
-                "KUSAMA" => version == Ss58AddressFormat::KusamaAccountDirect,
-                "POLKADOT" => version == Ss58AddressFormat::PolkadotAccountDirect,
+                "KUSAMA" => version == Ss58AddressFormat::KusamaAccount,
+                "POLKADOT" => version == Ss58AddressFormat::PolkadotAccount,
                 _ => false,
             },
             Err(_) => false,

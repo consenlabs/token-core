@@ -48,3 +48,4 @@ tools/ios-token-v2-release-build.sh
 #tcx-substrate/src/transaction.rs
 #tcx-tron/src/transaction.rs
 #tcx/src/api.rs
+tools/ios-internal-release.sh
