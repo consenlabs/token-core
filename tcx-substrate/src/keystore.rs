@@ -15,17 +15,9 @@ const SEED_LENGTH: usize = 32;
 // const
 
 fn decrypt_content(password: &str, encrypted: &str) -> Result<String> {
-    // let mut sec = [0u8; 64];
     let encrypted_bytes = hex::decode(encrypted)?;
     let nonce: &[u8; 24] = &encrypted_bytes[0..NONCE_LENGTH].try_into().unwrap();
-    println!("nonce: {}", hex::encode(nonce.clone()));
     let ciphertext = &encrypted_bytes[NONCE_LENGTH..];
-    println!("cipher_text: {}", hex::encode(ciphertext.clone()));
-    // let mut encoded = Vec::with_capacity(cipher_text.len());
-    // for idx in 0..cipher_text.len() {
-    //     encoded.push(0u8)
-    // }
-    // encoded.resize(cipher_text.len(), 0u8);
     let padding_password = password_to_key(password);
     let key = GenericArray::from_slice(&padding_password);
     let cipher = XSalsa20Poly1305::new(key);
@@ -33,18 +25,8 @@ fn decrypt_content(password: &str, encrypted: &str) -> Result<String> {
     let encoded = cipher
         .decrypt(nonce, ciphertext.as_ref())
         .map_err(|e| format_err!("{}", "decrypt error"))?;
-    // let mut encoded = [0u8; 133];
 
-    // let key = password_to_key(password);
-    // let key: [u8; 32] = hex::decode("696d746f6b656e31000000000000000000000000000000000000000000")
-    println!("key: {}", hex::encode(key.clone()));
-    // let ret = secretbox::xsalsa20poly1305::secretbox_open(&mut encoded, cipher_text, nonce, &key);
-    // assert!(ret, "open secretbox failed");
-    // let sec_hex = hex::encode(sec.to_vec());
-    // let pkcs8_header = "3053020101300506032b657004220420";
-    println!("encoded: {}", hex::encode(encoded.to_vec().clone()));
     let header = &encoded[0..PKCS8_HEADER.len()];
-    println!("header: {}", hex::encode(header.clone()));
 
     assert!(header == PKCS8_HEADER, "Invalid Pkcs8 header found in body");
 
@@ -74,12 +56,6 @@ fn password_to_key(password: &str) -> [u8; 32] {
         key[idx] = password_bytes[idx]
     }
     key
-    // let remain = pwd_len - iter_len;
-    // if remain > 0 {
-    //     for idx in 0..remain {
-    //         key[iter_len + idx] = 0
-    //     }
-    // }
 }
 
 #[cfg(test)]
