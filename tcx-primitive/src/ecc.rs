@@ -42,6 +42,8 @@ pub enum KeyError {
     NotEnoughMemory,
     #[fail(display = "invalid_curve_type")]
     InvalidCurveType,
+    #[fail(display = "invalid_sr25519_key")]
+    InvalidSr25519Key,
 }
 
 pub trait PublicKey: Sized {

@@ -785,7 +785,7 @@ mod tests {
     pub fn test_64bytes_private_key_store_import() {
         run_test(|| {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
-                private_key: "416c696365202020202020202020202020202020202020202020202020202020"
+                private_key: "416c696365202020202020202020202020202020202020202020202020202020d172a74cda4c865912c32ba0a80a57ae69abae410e5ccb59dee84e2f4432db4f"
                     .to_string(),
                 password: TEST_PASSWORD.to_string(),
                 overwrite: true,
@@ -814,7 +814,7 @@ mod tests {
             assert_eq!(1, derived_accounts.accounts.len());
 
             assert_eq!(
-                "13iz1UvC8XMnHTW2wgoG7SxUhNgbp7trCgjxcuqTne9bGMQX",
+                "133smEABgtt8FRkZGrZfAzCV522bxo2y5FwVoTcSaY8z1nEq",
                 derived_accounts.accounts[0].address
             );
 
@@ -823,7 +823,7 @@ mod tests {
                 password: TEST_PASSWORD.to_string(),
                 chain_type: "POLKADOT".to_string(),
                 network: "".to_string(),
-                main_address: "13iz1UvC8XMnHTW2wgoG7SxUhNgbp7trCgjxcuqTne9bGMQX".to_string(),
+                main_address: "133smEABgtt8FRkZGrZfAzCV522bxo2y5FwVoTcSaY8z1nEq".to_string(),
                 path: "".to_string(),
             };
 
@@ -832,37 +832,8 @@ mod tests {
                 KeystoreCommonExportResult::decode(export_pk_bytes.as_slice()).unwrap();
             assert_eq!(
                 export_pk.value,
-                "416c696365202020202020202020202020202020202020202020202020202020"
+                "416c696365202020202020202020202020202020202020202020202020202020d172a74cda4c865912c32ba0a80a57ae69abae410e5ccb59dee84e2f4432db4f"
             );
-            // pk rederive
-            // let derivations = vec![Derivation {
-            //     chain_type: "LITECOIN".to_string(),
-            //     path: "m/44'/2'/0'/0/0".to_string(),
-            //     network: "MAINNET".to_string(),
-            //     seg_wit: "NONE".to_string(),
-            //     chain_id: "".to_string(),
-            // }];
-            // let param = KeystoreCommonDeriveParam {
-            //     id: import_result.id.to_string(),
-            //     password: TEST_PASSWORD.to_string(),
-            //     derivations,
-            // };
-            // let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
-            // let derived_accounts: AccountsResponse =
-            //     AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
-            // assert_eq!(
-            //     "LgGNTHMkgETS7oQcoekvACJQcH355xECog",
-            //     derived_accounts.accounts[0].address
-            // );
-            // assert_eq!("", derived_accounts.accounts[0].extended_xpub_key);
-            //
-            // let param = KeystoreCommonAccountsParam {
-            //     id: import_result.id.to_string(),
-            // };
-            // let accounts_ret = call_api("keystore_common_accounts", param).unwrap();
-            // let ret = AccountsResponse::decode(accounts_ret.as_slice()).unwrap();
-            // assert_eq!(5, ret.accounts.len());
-
             remove_created_wallet(&import_result.id);
         })
     }

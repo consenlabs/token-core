@@ -1,6 +1,6 @@
-use crate::ecc::{PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
+use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
 use crate::{FromHex, Result, ToHex};
-use schnorrkel::{ExpansionMode, MiniSecretKey};
+use schnorrkel::{ExpansionMode, MiniSecretKey, SecretKey};
 
 use sp_core::sr25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};
@@ -29,11 +29,12 @@ impl TraitPrivateKey for Sr25519PrivateKey {
     type PublicKey = Sr25519PublicKey;
 
     fn from_slice(data: &[u8]) -> Result<Self> {
-        let mini_key: MiniSecretKey =
-            MiniSecretKey::from_bytes(data).expect("32 bytes can always build a key; qed");
-
-        let kp = mini_key.expand_to_keypair(ExpansionMode::Ed25519);
-        Ok(Sr25519PrivateKey(Pair::from(kp)))
+        // let mini_key: MiniSecretKey =
+        //     MiniSecretKey::from_bytes(data).expect("32 bytes can always build a key; qed");
+        //
+        // let kp = mini_key.expand_to_keypair(ExpansionMode::Ed25519);
+        let pk = SecretKey::from_ed25519_bytes(data).map_err(|_| KeyError::InvalidSr25519Key)?;
+        Ok(Sr25519PrivateKey(Pair::from(pk)))
     }
 
     fn public_key(&self) -> Self::PublicKey {

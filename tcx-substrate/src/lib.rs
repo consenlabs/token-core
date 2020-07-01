@@ -11,3 +11,4 @@ pub(crate) const PAYLOAD_HASH_THRESHOLD: usize = 256;
 
 #[macro_use]
 extern crate failure;
+extern crate serde_json;
