@@ -1534,6 +1534,84 @@ mod tests {
     }
 
     #[test]
+    pub fn test_import_multi_curve() {
+        run_test(|| {
+            let keystore_str: &str = r#"{
+  "address": "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS",
+  "encoded": "0xf7e7e89d3016c9b4d93bb1129adf69e5949ca1fb58c29da4591ddc72c52238a35835e3f2ae023f9867ff301bc4132463527ac03525eaac54664a7cb658eae68a0bbc99354222c194d6100b2bf3a492639229077a2e2818d8196e002f0b5556104be23b11633858259dbbd3f91ea1d34d6ce182b62d8381af1ef3c35e9ab1583267cfa41aa58bfd64435c2b5047baf9052f0953d9f7854d2d396dfcad13",
+  "encoding": {
+    "content": [
+      "pkcs8",
+      "sr25519"
+    ],
+    "type": "xsalsa20-poly1305",
+    "version": "2"
+  },
+  "meta": {
+    "genesisHash": "0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe",
+    "name": "keystore_import",
+    "tags": [],
+    "whenCreated": 1593591324334
+  }
+}"#;
+
+            let param = ImportSubstrateKeystoreParam {
+                keystore: keystore_str.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "KUSAMA".to_string(),
+                r#override: true,
+            };
+            // let param_bytes = encode_message(param).unwrap();
+            let ret_bytes = call_api("substrate_keystore_import", param).unwrap();
+            let wallet_ret: WalletResult = WalletResult::decode(ret_bytes.as_slice()).unwrap();
+            let derivation = Derivation {
+                chain_type: "KUSAMA".to_string(),
+                path: "".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            };
+
+            let param = KeystoreCommonDeriveParam {
+                id: wallet_ret.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+
+            let ret = call_api("keystore_common_derive", param).unwrap();
+            let accounts: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
+
+            assert_eq!(
+                accounts.accounts[0].address,
+                "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"
+            );
+
+            let derivation = Derivation {
+                chain_type: "LITECOIN".to_string(),
+                path: "".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                chain_id: "".to_string(),
+            };
+
+            let param = KeystoreCommonDeriveParam {
+                id: wallet_ret.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+
+            let ret = call_api("keystore_common_derive", param);
+            assert!(ret.is_err());
+            assert_eq!(
+                format!("{}", ret.err().unwrap()),
+                "pkstore_can_not_add_other_curve_account"
+            );
+
+            remove_created_wallet(&wallet_ret.id);
+        })
+    }
+
+    #[test]
     pub fn test_sign_substrate_raw_tx() {
         run_test(|| {
             let derivation = Derivation {
