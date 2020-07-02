@@ -182,13 +182,3 @@ message HdStoreExtendedPublicKeyResponse {
     string extendedPublicKey = 1;
 }
 
-message ImportSubstrateKeystoreParam {
-    string keystore = 1;
-    string password = 2;
-    string chainType = 3;
-    bool override = 4;
-}
-
-message ExportSubstrateKeystoreResult {
-    string keystore = 1;
-}

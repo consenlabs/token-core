@@ -156,11 +156,11 @@ mod tests {
 
     use crate::api::keystore_common_derive_param::Derivation;
     use crate::api::{
-        AccountsResponse, DerivedKeyResult, ExportPrivateKeyParam, ExportSubstrateKeystoreResult,
-        HdStoreCreateParam, ImportSubstrateKeystoreParam, InitTokenCoreXParam, KeyType,
-        KeystoreCommonAccountsParam, KeystoreCommonDeriveParam, KeystoreCommonExistsParam,
-        KeystoreCommonExistsResult, KeystoreCommonExportResult, PrivateKeyStoreExportParam,
-        PrivateKeyStoreImportParam, Response, SignParam, WalletKeyParam,
+        AccountsResponse, DerivedKeyResult, ExportPrivateKeyParam, HdStoreCreateParam,
+        InitTokenCoreXParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
+        KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
+        PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response, SignParam,
+        WalletKeyParam,
     };
     use crate::api::{HdStoreImportParam, WalletResult};
     use crate::handler::hd_store_import;
@@ -176,7 +176,10 @@ mod tests {
     use sp_core::Public as TraitPublic;
     use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
-    use tcx_substrate::{SubstrateRawTxIn, SubstrateTxOut};
+    use tcx_substrate::{
+        ExportSubstrateKeystoreResult, ImportSubstrateKeystoreParam, SubstrateRawTxIn,
+        SubstrateTxOut,
+    };
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 
     static OTHER_MNEMONIC: &'static str =
@@ -1985,13 +1988,13 @@ mod tests {
     //        );
     //    }
 
-    #[test]
-    fn decode_error() {
-        let err = "1211756e737570706f727465645f636861696e";
-        let error_bytes = hex::decode(err).unwrap();
-        let rsp: Response = Response::decode(error_bytes.as_slice()).unwrap();
-        assert_eq!("1", format!("{:?}", rsp))
-    }
+    // #[test]
+    // fn decode_error() {
+    //     let err = "1211756e737570706f727465645f636861696e";
+    //     let error_bytes = hex::decode(err).unwrap();
+    //     let rsp: Response = Response::decode(error_bytes.as_slice()).unwrap();
+    //     assert_eq!("1", format!("{:?}", rsp))
+    // }
 
     #[test]
     fn test_panic_keystore_locked() {

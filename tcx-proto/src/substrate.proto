@@ -2,6 +2,17 @@ syntax = "proto3";
 package transaction;
 
 
+message ImportSubstrateKeystoreParam {
+    string keystore = 1;
+    string password = 2;
+    string chainType = 3;
+    bool override = 4;
+}
+
+message ExportSubstrateKeystoreResult {
+    string keystore = 1;
+}
+
 message SubstrateRawTxIn {
     string rawData = 1;
 }
