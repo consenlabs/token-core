@@ -116,8 +116,8 @@ impl SubstrateKeystore {
             &self.encoded
         };
 
-        let decrypted_hex = decrypt_content(password, encoded)?;
-        let decrypted = hex::decode(decrypted_hex)?;
+        let decrypted = decrypt_content(password, encoded)?;
+        // let decrypted = hex::decode(decrypted_hex)?;
         let header = &decrypted[0..PKCS8_HEADER.len()];
 
         assert!(header == PKCS8_HEADER, "Invalid Pkcs8 header found in body");
@@ -196,7 +196,7 @@ fn password_to_key(password: &str) -> [u8; 32] {
     key
 }
 
-pub fn decode_pkcs8(keystore: &str, password: &str) -> Result<Vec<u8>> {
+pub fn decode_substrate_keystore(keystore: &str, password: &str) -> Result<Vec<u8>> {
     let ks: SubstrateKeystore = serde_json::from_str(keystore)?;
     let (secret_key, pub_key) = ks.decrypt(password)?;
     let priv_key = if secret_key.len() == 32 {
@@ -210,7 +210,11 @@ pub fn decode_pkcs8(keystore: &str, password: &str) -> Result<Vec<u8>> {
     Ok(secret_key)
 }
 
-pub fn encode_pkcs8(password: &str, prv_key: &[u8], coin: &CoinInfo) -> Result<String> {
+pub fn encode_substrate_keystore(
+    password: &str,
+    prv_key: &[u8],
+    coin: &CoinInfo,
+) -> Result<String> {
     let pk = Sr25519PrivateKey::from_slice(prv_key)?;
     let pub_key = pk.public_key();
     let addr = SubstrateAddress::from_public_key(&TypedPublicKey::Sr25519(pub_key.clone()), &coin)?;
@@ -229,7 +233,7 @@ mod test_super {
     fn test_decrypt_encoded() {
         let encoded = "d80bcaf72c744d5a9a6c4229280e360d98d408afbe67232c3418a2a591b3f2bf468a319b7e5c1717bb8285619a76584a7961eac2183f94cfa56ad975cb78ae87b4dc18e7c20036bd448aa52c5ee7a45c4cdf41923c8133d6bfc29c737b65dcfb357884b55fb36d4762446fb26bfd8fce49142cf0e7d3642e2095ea6e425a8e923629306875c36b72a82d517478a19c8786b1be611e77286ba6448bf93c";
         let decrypted = decrypt_content("testing", encoded).unwrap();
-        assert_eq!(hex::encode(decrypted), "416c696365202020202020202020202020202020202020202020202020202020d172a74cda4c865912c32ba0a80a57ae69abae410e5ccb59dee84e2f4432db4f");
+        assert_eq!(hex::encode(decrypted), "3053020101300506032b657004220420416c696365202020202020202020202020202020202020202020202020202020d172a74cda4c865912c32ba0a80a57ae69abae410e5ccb59dee84e2f4432db4fa123032100d172a74cda4c865912c32ba0a80a57ae69abae410e5ccb59dee84e2f4432db4f");
     }
 
     const KEYSTORE_STR: &str = r#"{
@@ -253,15 +257,15 @@ mod test_super {
 
     #[test]
     fn test_decrypt_from_keystore() {
-        let decrypted = decode_pkcs8(KEYSTORE_STR, TEST_PASSWORD).unwrap();
+        let decrypted = decode_substrate_keystore(KEYSTORE_STR, TEST_PASSWORD).unwrap();
         assert_eq!(hex::encode(decrypted), "00ea01b0116da6ca425c477521fd49cc763988ac403ab560f4022936a18a4341016e7df1f5020068c9b150e0722fea65a264d5fbb342d4af4ddf2f1cdbddf1fd");
     }
 
     #[test]
-    fn test_export_from_seed() {
+    fn test_export_from_sertket_key() {
         let prv_key = hex::decode("00ea01b0116da6ca425c477521fd49cc763988ac403ab560f4022936a18a4341016e7df1f5020068c9b150e0722fea65a264d5fbb342d4af4ddf2f1cdbddf1fd").unwrap();
         let coin_info = coin_info_from_param("KUSAMA", "", "").unwrap();
-        let export_json = encode_pkcs8(&TEST_PASSWORD, &prv_key, &coin_info).unwrap();
+        let export_json = encode_substrate_keystore(&TEST_PASSWORD, &prv_key, &coin_info).unwrap();
         assert_eq!(export_json, "");
     }
 

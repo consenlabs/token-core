@@ -316,6 +316,22 @@ pub struct HdStoreExtendedPublicKeyResponse {
     #[prost(string, tag = "1")]
     pub extended_public_key: std::string::String,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportSubstrateKeystoreParam {
+    #[prost(string, tag = "1")]
+    pub keystore: std::string::String,
+    #[prost(string, tag = "2")]
+    pub password: std::string::String,
+    #[prost(string, tag = "3")]
+    pub chain_type: std::string::String,
+    #[prost(bool, tag = "4")]
+    pub r#override: bool,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportSubstrateKeystoreResult {
+    #[prost(string, tag = "1")]
+    pub keystore: std::string::String,
+}
 /// only support two types
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]

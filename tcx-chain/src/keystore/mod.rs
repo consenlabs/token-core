@@ -49,6 +49,8 @@ pub enum Error {
     KeystoreLocked,
     #[fail(display = "invalid_version")]
     InvalidVersion,
+    #[fail(display = "pkstore_can_not_add_other_curve_account")]
+    PkstoreCannotAddOtherCurveAccount,
 }
 
 fn transform_mnemonic_error(err: failure::Error) -> Error {

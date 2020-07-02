@@ -77,6 +77,12 @@ impl PrivateKeystore {
     pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<Account> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
+        if self.store.active_accounts.len() > 0
+            && self.store.active_accounts[0].curve != coin_info.curve
+        {
+            return Err(Error::PkstoreCannotAddOtherCurveAccount.into());
+        }
+
         let sk = self.private_key.as_ref().unwrap();
 
         let account = Self::private_key_to_account::<A>(coin_info, sk)?;
