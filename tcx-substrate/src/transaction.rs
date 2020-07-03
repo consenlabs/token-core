@@ -1,5 +1,5 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ImportSubstrateKeystoreParam {
+pub struct SubstrateKeystoreParam {
     #[prost(string, tag = "1")]
     pub keystore: std::string::String,
     #[prost(string, tag = "2")]

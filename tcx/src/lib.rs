@@ -23,7 +23,9 @@ use crate::handler::{
 
 mod filemanager;
 
-use crate::handler::{export_substrate_keystore, import_substrate_keystore};
+use crate::handler::{
+    export_substrate_keystore, import_substrate_keystore, substrate_keystore_exists,
+};
 use parking_lot::RwLock;
 
 extern crate serde_json;
@@ -95,6 +97,10 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
 
         "tron_sign_msg" => landingpad(|| tron_sign_message(&action.param.unwrap().value)),
+
+        "substrate_keystore_exists" => {
+            landingpad(|| substrate_keystore_exists(&action.param.unwrap().value))
+        }
 
         "substrate_keystore_import" => {
             landingpad(|| import_substrate_keystore(&action.param.unwrap().value))
@@ -177,8 +183,7 @@ mod tests {
     use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
     use tcx_substrate::{
-        ExportSubstrateKeystoreResult, ImportSubstrateKeystoreParam, SubstrateRawTxIn,
-        SubstrateTxOut,
+        ExportSubstrateKeystoreResult, SubstrateKeystoreParam, SubstrateRawTxIn, SubstrateTxOut,
     };
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 
@@ -1486,15 +1491,27 @@ mod tests {
   }
 }"#;
 
-            let param = ImportSubstrateKeystoreParam {
+            let param = SubstrateKeystoreParam {
                 keystore: keystore_str.to_string(),
                 password: TEST_PASSWORD.to_string(),
                 chain_type: "KUSAMA".to_string(),
                 r#override: true,
             };
             // let param_bytes = encode_message(param).unwrap();
-            let ret_bytes = call_api("substrate_keystore_import", param).unwrap();
+
+            let ret_bytes = call_api("substrate_keystore_exists", param.clone()).unwrap();
+            let exists_result: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
+            assert!(!exists_result.is_exists);
+
+            let ret_bytes = call_api("substrate_keystore_import", param.clone()).unwrap();
             let wallet_ret: WalletResult = WalletResult::decode(ret_bytes.as_slice()).unwrap();
+
+            let ret_bytes = call_api("substrate_keystore_exists", param.clone()).unwrap();
+            let exists_result: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
+            assert!(exists_result.is_exists);
+
             let derivation = Derivation {
                 chain_type: "KUSAMA".to_string(),
                 path: "".to_string(),
@@ -1555,7 +1572,7 @@ mod tests {
   }
 }"#;
 
-            let param = ImportSubstrateKeystoreParam {
+            let param = SubstrateKeystoreParam {
                 keystore: keystore_str.to_string(),
                 password: TEST_PASSWORD.to_string(),
                 chain_type: "KUSAMA".to_string(),
