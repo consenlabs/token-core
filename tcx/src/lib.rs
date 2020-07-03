@@ -183,7 +183,8 @@ mod tests {
     use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
     use tcx_substrate::{
-        ExportSubstrateKeystoreResult, SubstrateKeystoreParam, SubstrateRawTxIn, SubstrateTxOut,
+        ExportSubstrateKeystoreResult, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
+        SubstrateTxOut,
     };
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 
@@ -1545,6 +1546,13 @@ mod tests {
             let ret = call_api("substrate_keystore_export", export_param).unwrap();
             let keystore_ret: ExportSubstrateKeystoreResult =
                 ExportSubstrateKeystoreResult::decode(ret.as_slice()).unwrap();
+
+            let keystore: SubstrateKeystore = serde_json::from_str(&keystore_ret.keystore).unwrap();
+            assert!(keystore.validate().is_ok());
+            assert_eq!(
+                keystore.address,
+                "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"
+            );
             // assert_eq!(keystore_ret.keystore, "");
             remove_created_wallet(&wallet_ret.id);
         })

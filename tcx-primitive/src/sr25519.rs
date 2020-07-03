@@ -1,6 +1,6 @@
 use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
 use crate::{FromHex, Result, ToHex};
-use schnorrkel::{ExpansionMode, MiniSecretKey, SecretKey};
+use schnorrkel::SecretKey;
 
 use sp_core::sr25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};

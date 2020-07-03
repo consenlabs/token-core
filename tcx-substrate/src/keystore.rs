@@ -3,7 +3,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use tcx_chain::Address;
-use tcx_constants::coin_info::coin_info_from_param;
+
 use tcx_constants::{CoinInfo, Result};
 use tcx_primitive::{
     DeterministicPrivateKey, PrivateKey, PublicKey, Sr25519PrivateKey, TypedPublicKey,
@@ -49,10 +49,6 @@ const SEC_LENGTH: usize = 64;
 const SEED_OFFSET: usize = PKCS8_HEADER.len();
 const SEED_LENGTH: usize = 32;
 
-// fn decrypt_keystore(keystore: &str) -> Result<String> {
-//     let keystore: SubstrateKeystore = serde_json::from_str(keystore)?;
-// }
-
 impl SubstrateKeystore {
     pub fn new(
         password: &str,
@@ -60,13 +56,9 @@ impl SubstrateKeystore {
         pub_key: &[u8],
         addr: &str,
     ) -> Result<SubstrateKeystore> {
-        // let pk = Sr25519PrivateKey::from_slice(prv_key)?;
-        // let pub_key = pk.public_key();
-        // let coin_info = coin_info_from_param("KUSAMA", "", "").unwrap();
-        // let new_addr = SubstrateAddress::from_public_key(&TypedPublicKey::Sr25519(pub_key.clone()), &coin_info)?;
         let encoding = format!(
             "0x{}",
-            SubstrateKeystore::encrypt_seed(password, prv_key, pub_key)?
+            SubstrateKeystore::encrypt(password, prv_key, pub_key)?
         );
 
         Ok(SubstrateKeystore {
@@ -117,7 +109,6 @@ impl SubstrateKeystore {
         };
 
         let decrypted = decrypt_content(password, encoded)?;
-        // let decrypted = hex::decode(decrypted_hex)?;
         let header = &decrypted[0..PKCS8_HEADER.len()];
 
         assert!(header == PKCS8_HEADER, "Invalid Pkcs8 header found in body");
@@ -143,23 +134,23 @@ impl SubstrateKeystore {
         Ok((secret_key, pub_key.to_vec()))
     }
 
-    pub fn encrypt_seed(password: &str, seed: &[u8], pub_key: &[u8]) -> Result<String> {
+    pub fn encrypt(password: &str, seed: &[u8], pub_key: &[u8]) -> Result<String> {
         let plaintext = [&PKCS8_HEADER, seed, &PKCS8_DIVIDER, pub_key].concat();
         encrypt_content(password, &plaintext)
     }
 }
 
-fn decrypt_content(password: &str, encrypted: &str) -> Result<Vec<u8>> {
-    let encrypted_bytes = hex::decode(encrypted)?;
-    let nonce: &[u8; 24] = &encrypted_bytes[0..NONCE_LENGTH].try_into().unwrap();
-    let ciphertext = &encrypted_bytes[NONCE_LENGTH..];
+fn decrypt_content(password: &str, encoded: &str) -> Result<Vec<u8>> {
+    let encoded_bytes = hex::decode(encoded)?;
+    let nonce: &[u8; 24] = &encoded_bytes[0..NONCE_LENGTH].try_into().unwrap();
+    let encrypted = &encoded_bytes[NONCE_LENGTH..];
     let padding_password = password_to_key(password);
     let key = GenericArray::from_slice(&padding_password);
     let cipher = XSalsa20Poly1305::new(key);
     let nonce = GenericArray::from_slice(nonce);
     cipher
-        .decrypt(nonce, ciphertext.as_ref())
-        .map_err(|e| format_err!("{}", "decrypt error"))
+        .decrypt(nonce, encrypted.as_ref())
+        .map_err(|_e| format_err!("{}", "decrypt error"))
 }
 
 fn encrypt_content(password: &str, plaintext: &[u8]) -> Result<String> {
@@ -170,7 +161,7 @@ fn encrypt_content(password: &str, plaintext: &[u8]) -> Result<String> {
     let nonce = GenericArray::from_slice(&nonce_bytes);
     let encoded = cipher
         .encrypt(&nonce, plaintext)
-        .map_err(|e| format_err!("{}", "encrypt error"))?;
+        .map_err(|_e| format_err!("{}", "encrypt error"))?;
 
     Ok(hex::encode([nonce_bytes.to_vec(), encoded].concat()))
 }
@@ -226,8 +217,7 @@ pub fn encode_substrate_keystore(
 #[cfg(test)]
 mod test_super {
     use super::*;
-    use tcx_constants::{CoinInfo, CurveType, TEST_PASSWORD};
-    use tcx_primitive::FromHex;
+    use tcx_constants::{coin_info_from_param, TEST_PASSWORD};
 
     #[test]
     fn test_decrypt_encoded() {
@@ -262,11 +252,15 @@ mod test_super {
     }
 
     #[test]
-    fn test_export_from_sertket_key() {
+    fn test_export_from_sertcet_key() {
         let prv_key = hex::decode("00ea01b0116da6ca425c477521fd49cc763988ac403ab560f4022936a18a4341016e7df1f5020068c9b150e0722fea65a264d5fbb342d4af4ddf2f1cdbddf1fd").unwrap();
         let coin_info = coin_info_from_param("KUSAMA", "", "").unwrap();
         let export_json = encode_substrate_keystore(&TEST_PASSWORD, &prv_key, &coin_info).unwrap();
-        assert_eq!(export_json, "");
+        let keystore: SubstrateKeystore = serde_json::from_str(&export_json).unwrap();
+        assert_eq!(
+            keystore.address,
+            "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"
+        );
     }
 
     #[test]
