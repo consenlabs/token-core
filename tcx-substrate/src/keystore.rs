@@ -15,6 +15,10 @@ use xsalsa20poly1305::XSalsa20Poly1305;
 pub enum Error {
     #[fail(display = "invalid_keystore# {}", _0)]
     InvalidKeystore(String),
+    #[fail(display = "keystore_public_key_unmatch")]
+    KeystorePublicKeyUnmatch,
+    #[fail(display = "password_incorrect")]
+    PasswordIncorrect,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -150,7 +154,7 @@ fn decrypt_content(password: &str, encoded: &str) -> Result<Vec<u8>> {
     let nonce = GenericArray::from_slice(nonce);
     cipher
         .decrypt(nonce, encrypted.as_ref())
-        .map_err(|_e| format_err!("{}", "decrypt error"))
+        .map_err(|_e| Error::PasswordIncorrect.into())
 }
 
 fn encrypt_content(password: &str, plaintext: &[u8]) -> Result<String> {
@@ -196,7 +200,7 @@ pub fn decode_substrate_keystore(keystore: &str, password: &str) -> Result<Vec<u
         Sr25519PrivateKey::from_slice(&secret_key)
     }?;
     if priv_key.public_key().to_bytes() != pub_key {
-        return Err(Error::InvalidKeystore("invalid public key".to_string()).into());
+        return Err(Error::KeystorePublicKeyUnmatch.into());
     }
     Ok(secret_key)
 }
@@ -249,6 +253,11 @@ mod test_super {
     fn test_decrypt_from_keystore() {
         let decrypted = decode_substrate_keystore(KEYSTORE_STR, TEST_PASSWORD).unwrap();
         assert_eq!(hex::encode(decrypted), "00ea01b0116da6ca425c477521fd49cc763988ac403ab560f4022936a18a4341016e7df1f5020068c9b150e0722fea65a264d5fbb342d4af4ddf2f1cdbddf1fd");
+        let decrypted = decode_substrate_keystore(KEYSTORE_STR, "wrong_password");
+        assert_eq!(
+            format!("{}", decrypted.err().unwrap()),
+            "password_incorrect"
+        );
     }
 
     #[test]
