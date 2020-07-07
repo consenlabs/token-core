@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use tcx_chain::Address;
 
+use std::time::{SystemTime, UNIX_EPOCH};
 use tcx_constants::{CoinInfo, Result};
 use tcx_primitive::{
     DeterministicPrivateKey, PrivateKey, PublicKey, Sr25519PrivateKey, TypedPublicKey,
@@ -43,6 +44,22 @@ pub struct SubstrateKeystoreEncoding {
 #[serde(rename_all = "camelCase")]
 pub struct SubstrateKeystoreMeta {
     pub name: String,
+    pub when_created: i64,
+}
+
+fn metadata_default_time() -> i64 {
+    let start = SystemTime::now();
+    let since_the_epoch = start.duration_since(UNIX_EPOCH).expect("get timestamp");
+    since_the_epoch.as_secs() as i64
+}
+
+impl Default for SubstrateKeystoreMeta {
+    fn default() -> Self {
+        SubstrateKeystoreMeta {
+            name: "Unknown".to_string(),
+            when_created: metadata_default_time(),
+        }
+    }
 }
 
 const NONCE_LENGTH: usize = 24;
@@ -73,9 +90,7 @@ impl SubstrateKeystore {
                 encoding_type: "xsalsa20-poly1305".to_string(),
                 version: "2".to_string(),
             },
-            meta: SubstrateKeystoreMeta {
-                name: "export from imToken".to_string(),
-            },
+            meta: SubstrateKeystoreMeta::default(),
         })
     }
 
@@ -191,9 +206,8 @@ fn password_to_key(password: &str) -> [u8; 32] {
     key
 }
 
-pub fn decode_substrate_keystore(keystore: &str, password: &str) -> Result<Vec<u8>> {
-    let ks: SubstrateKeystore = serde_json::from_str(keystore)?;
-    let (secret_key, pub_key) = ks.decrypt(password)?;
+pub fn decode_substrate_keystore(keystore: &SubstrateKeystore, password: &str) -> Result<Vec<u8>> {
+    let (secret_key, pub_key) = keystore.decrypt(password)?;
     let priv_key = if secret_key.len() == 32 {
         Sr25519PrivateKey::from_seed(&secret_key)
     } else {
@@ -209,13 +223,11 @@ pub fn encode_substrate_keystore(
     password: &str,
     prv_key: &[u8],
     coin: &CoinInfo,
-) -> Result<String> {
+) -> Result<SubstrateKeystore> {
     let pk = Sr25519PrivateKey::from_slice(prv_key)?;
     let pub_key = pk.public_key();
     let addr = SubstrateAddress::from_public_key(&TypedPublicKey::Sr25519(pub_key.clone()), &coin)?;
-    let keystore = SubstrateKeystore::new(password, prv_key, &pub_key.to_bytes(), &addr)?;
-    let keystore_str = serde_json::to_string(&keystore)?;
-    Ok(keystore_str)
+    SubstrateKeystore::new(password, prv_key, &pub_key.to_bytes(), &addr)
 }
 
 #[cfg(test)]
@@ -251,9 +263,10 @@ mod test_super {
 
     #[test]
     fn test_decrypt_from_keystore() {
-        let decrypted = decode_substrate_keystore(KEYSTORE_STR, TEST_PASSWORD).unwrap();
+        let ks: SubstrateKeystore = serde_json::from_str(KEYSTORE_STR).unwrap();
+        let decrypted = decode_substrate_keystore(&ks, TEST_PASSWORD).unwrap();
         assert_eq!(hex::encode(decrypted), "00ea01b0116da6ca425c477521fd49cc763988ac403ab560f4022936a18a4341016e7df1f5020068c9b150e0722fea65a264d5fbb342d4af4ddf2f1cdbddf1fd");
-        let decrypted = decode_substrate_keystore(KEYSTORE_STR, "wrong_password");
+        let decrypted = decode_substrate_keystore(&ks, "wrong_password");
         assert_eq!(
             format!("{}", decrypted.err().unwrap()),
             "password_incorrect"
@@ -264,8 +277,7 @@ mod test_super {
     fn test_export_from_sertcet_key() {
         let prv_key = hex::decode("00ea01b0116da6ca425c477521fd49cc763988ac403ab560f4022936a18a4341016e7df1f5020068c9b150e0722fea65a264d5fbb342d4af4ddf2f1cdbddf1fd").unwrap();
         let coin_info = coin_info_from_param("KUSAMA", "", "").unwrap();
-        let export_json = encode_substrate_keystore(&TEST_PASSWORD, &prv_key, &coin_info).unwrap();
-        let keystore: SubstrateKeystore = serde_json::from_str(&export_json).unwrap();
+        let keystore = encode_substrate_keystore(&TEST_PASSWORD, &prv_key, &coin_info).unwrap();
         assert_eq!(
             keystore.address,
             "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"

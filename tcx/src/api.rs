@@ -177,7 +177,11 @@ pub struct PrivateKeyStoreImportParam {
     pub private_key: std::string::String,
     #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(bool, tag = "3")]
+    #[prost(string, tag = "3")]
+    pub name: std::string::String,
+    #[prost(string, tag = "4")]
+    pub password_hint: std::string::String,
+    #[prost(bool, tag = "5")]
     pub overwrite: bool,
 }
 /// FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult

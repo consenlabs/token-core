@@ -264,6 +264,8 @@ mod tests {
         let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
             private_key: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
             password: TEST_PASSWORD.to_string(),
+            name: "import_default_pk_store".to_string(),
+            password_hint: "".to_string(),
             overwrite: true,
         };
 
@@ -807,6 +809,8 @@ mod tests {
                 private_key: "416c696365202020202020202020202020202020202020202020202020202020d172a74cda4c865912c32ba0a80a57ae69abae410e5ccb59dee84e2f4432db4f"
                     .to_string(),
                 password: TEST_PASSWORD.to_string(),
+                name: "test_64bytes_private_key_store_import".to_string(),
+                password_hint: "".to_string(),
                 overwrite: true,
             };
 
@@ -1066,6 +1070,8 @@ mod tests {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
                 private_key: "L39VXyorp19JfsEJfbD7Tfr4pBEX93RJuVXW7E13C51ZYAhUWbYa".to_string(),
                 password: TEST_PASSWORD.to_string(),
+                name: "test_import_to_pk_which_from_hd".to_string(),
+                password_hint: "".to_string(),
                 overwrite: true,
             };
 
@@ -1127,6 +1133,8 @@ mod tests {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
                 private_key: "5JZc7wGRUr4J1RHDcM9ySWKLfQ2xjRUEo612qC4RLJ3G7jzJ4qx".to_string(),
                 password: TEST_PASSWORD.to_string(),
+                name: "test_keystore_common_delete".to_string(),
+                password_hint: "".to_string(),
                 overwrite: true,
             };
 
@@ -1473,6 +1481,43 @@ mod tests {
     #[test]
     pub fn test_import_substrate_keystore() {
         run_test(|| {
+            let wrong_keystore_str: &str = r#"{
+  "address": "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS",
+  "encoded": "0xf7e7e89d3016c9b4d93bb1129adf69e5949ca1fb58c29da4591ddc72c52238a35835e3f2ae023f9867ff301bc4132463527ac03525eaac54664a7cb658eae68a0bbc99354222c194d6100b2bf3a492639229077a2e2818d8196e002f0b5556104be23b11633858259dbbd3f91ea1d34d6ce182b62d8381af1ef3c35e9ab1583267cfa41aa58bfd64435c2b5047baf9052f0953d9f7854d2d396dfcad13",
+  "encoding": {
+    "content": [
+      "pkcs8",
+      "sr25519"
+    ],
+    "type": "",
+    "version": "2"
+  },
+  "meta": {
+    "genesisHash": "0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe",
+    "name": "i_can_save_name",
+    "tags": [],
+    "whenCreated": 1593591324334
+  }
+}"#;
+
+            let param = SubstrateKeystoreParam {
+                keystore: wrong_keystore_str.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "KUSAMA".to_string(),
+                r#override: true,
+            };
+            // let param_bytes = encode_message(param).unwrap();
+
+            let ret = call_api("substrate_keystore_exists", param.clone());
+
+            // let ret: Response = Response::decode(ret_bytes.as_slice()).unwrap();
+
+            assert!(ret.is_err());
+            assert_eq!(
+                format!("{}", ret.err().unwrap()),
+                "invalid_keystore# only support xsalsa20-poly1305"
+            );
+
             let keystore_str: &str = r#"{
   "address": "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS",
   "encoded": "0xf7e7e89d3016c9b4d93bb1129adf69e5949ca1fb58c29da4591ddc72c52238a35835e3f2ae023f9867ff301bc4132463527ac03525eaac54664a7cb658eae68a0bbc99354222c194d6100b2bf3a492639229077a2e2818d8196e002f0b5556104be23b11633858259dbbd3f91ea1d34d6ce182b62d8381af1ef3c35e9ab1583267cfa41aa58bfd64435c2b5047baf9052f0953d9f7854d2d396dfcad13",
@@ -1486,7 +1531,7 @@ mod tests {
   },
   "meta": {
     "genesisHash": "0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe",
-    "name": "keystore_import",
+    "name": "i_can_save_name",
     "tags": [],
     "whenCreated": 1593591324334
   }
@@ -1501,6 +1546,7 @@ mod tests {
             // let param_bytes = encode_message(param).unwrap();
 
             let ret_bytes = call_api("substrate_keystore_exists", param.clone()).unwrap();
+
             let exists_result: KeystoreCommonExistsResult =
                 KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
             assert!(!exists_result.is_exists);
@@ -1553,6 +1599,9 @@ mod tests {
                 keystore.address,
                 "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"
             );
+            assert_eq!(keystore.meta.name, "i_can_save_name");
+            assert!(keystore.meta.when_created > 1594102917);
+
             // assert_eq!(keystore_ret.keystore, "");
             remove_created_wallet(&wallet_ret.id);
         })
