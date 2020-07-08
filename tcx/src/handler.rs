@@ -735,6 +735,23 @@ pub(crate) fn import_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
 
 pub(crate) fn export_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
     let param: ExportPrivateKeyParam = ExportPrivateKeyParam::decode(data.clone())?;
+    let meta: Metadata;
+    {
+        let map = KEYSTORE_MAP.read();
+
+        let keystore: &Keystore = match map.get(&param.id) {
+            Some(keystore) => Ok(keystore),
+            _ => Err(format_err!("{}", "wallet_not_found")),
+        }?;
+
+        // !!! Warning !!! HDKeystore only can export raw sr25519 key,
+        // but polkadotjs keystore needs a Ed25519 expanded secret key.
+        if keystore.determinable() {
+            return Err(format_err!("{}", "hd_wallet_cannot_export_keystore"));
+        }
+        meta = keystore.meta().clone();
+    }
+
     let ret = export_private_key(data)?;
     let export_result: KeystoreCommonExportResult =
         KeystoreCommonExportResult::decode(ret.as_slice())?;
@@ -742,15 +759,10 @@ pub(crate) fn export_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
     let pk_bytes = hex::decode(pk)?;
     let coin = coin_info_from_param(&param.chain_type, &param.network, "")?;
 
-    let mut map = KEYSTORE_MAP.write();
-    let keystore: &mut Keystore = match map.get_mut(&param.id) {
-        Some(keystore) => Ok(keystore),
-        _ => Err(format_err!("{}", "wallet_not_found")),
-    }?;
-
     let mut substrate_ks = encode_substrate_keystore(&param.password, &pk_bytes, &coin)?;
-    substrate_ks.meta.name = keystore.meta().name;
-    substrate_ks.meta.when_created = keystore.meta().timestamp;
+
+    substrate_ks.meta.name = meta.name;
+    substrate_ks.meta.when_created = meta.timestamp;
     let keystore_str = serde_json::to_string(&substrate_ks)?;
     let ret = ExportSubstrateKeystoreResult {
         keystore: keystore_str,

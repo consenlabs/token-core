@@ -1210,6 +1210,7 @@ mod tests {
                 KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
             assert!(result.is_exists);
             assert_eq!(result.id, wallet.id);
+            remove_created_wallet(&wallet.id);
         })
     }
 
@@ -1246,6 +1247,8 @@ mod tests {
                 "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP",
                 derived_accounts.accounts[0].address
             );
+
+            remove_created_wallet(&wallet.id);
         })
     }
 
@@ -1604,6 +1607,41 @@ mod tests {
 
             // assert_eq!(keystore_ret.keystore, "");
             remove_created_wallet(&wallet_ret.id);
+        })
+    }
+
+    #[test]
+    pub fn test_export_hd_polkadot_keystore() {
+        run_test(|| {
+            let derivation = Derivation {
+                chain_type: "KUSAMA".to_string(),
+                path: "".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            };
+            let wallet = import_and_derive(derivation);
+            assert_eq!(
+                wallet.accounts[0].address,
+                "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"
+            );
+
+            let export_param = ExportPrivateKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "KUSAMA".to_string(),
+                network: "".to_string(),
+                main_address: "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS".to_string(),
+                path: "".to_string(),
+            };
+            let ret = call_api("substrate_keystore_export", export_param);
+            assert!(ret.is_err());
+            assert_eq!(
+                format!("{}", ret.err().unwrap()),
+                "hd_wallet_cannot_export_keystore"
+            );
+
+            remove_created_wallet(&wallet.id);
         })
     }
 
