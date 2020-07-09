@@ -6,7 +6,7 @@ pub struct SubstrateKeystoreParam {
     pub password: std::string::String,
     #[prost(string, tag = "3")]
     pub chain_type: std::string::String,
-    #[prost(bool, tag = "6")]
+    #[prost(bool, tag = "4")]
     pub overwrite: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
