@@ -7,7 +7,7 @@ pub struct SubstrateKeystoreParam {
     #[prost(string, tag = "3")]
     pub chain_type: std::string::String,
     #[prost(bool, tag = "6")]
-    pub r#override: bool,
+    pub overwrite: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExportSubstrateKeystoreResult {

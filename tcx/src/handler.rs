@@ -727,7 +727,7 @@ pub(crate) fn import_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
         password: param.password.to_string(),
         name: ks.meta.name,
         password_hint: "".to_string(),
-        overwrite: param.r#override,
+        overwrite: param.overwrite,
     };
     let param_bytes = encode_message(pk_import_param)?;
     private_key_store_import(&param_bytes)

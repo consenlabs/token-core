@@ -6,7 +6,7 @@ message SubstrateKeystoreParam {
     string keystore = 1;
     string password = 2;
     string chainType = 3;
-    bool override = 6;
+    bool overwrite = 6;
 }
 
 

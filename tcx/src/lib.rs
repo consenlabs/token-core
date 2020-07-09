@@ -1507,7 +1507,7 @@ mod tests {
                 keystore: wrong_keystore_str.to_string(),
                 password: TEST_PASSWORD.to_string(),
                 chain_type: "KUSAMA".to_string(),
-                r#override: true,
+                overwrite: true,
             };
             // let param_bytes = encode_message(param).unwrap();
 
@@ -1544,7 +1544,7 @@ mod tests {
                 keystore: keystore_str.to_string(),
                 password: TEST_PASSWORD.to_string(),
                 chain_type: "KUSAMA".to_string(),
-                r#override: true,
+                overwrite: true,
             };
             // let param_bytes = encode_message(param).unwrap();
 
@@ -1671,7 +1671,7 @@ mod tests {
                 keystore: keystore_str.to_string(),
                 password: TEST_PASSWORD.to_string(),
                 chain_type: "KUSAMA".to_string(),
-                r#override: true,
+                overwrite: true,
             };
             // let param_bytes = encode_message(param).unwrap();
             let ret_bytes = call_api("substrate_keystore_import", param).unwrap();
