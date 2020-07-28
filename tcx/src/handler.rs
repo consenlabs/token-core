@@ -40,7 +40,10 @@ use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::KDF_ROUNDS;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
-use tcx_substrate::{SubstrateAddress, SubstrateRawTxIn};
+use tcx_substrate::{
+    decode_substrate_keystore, encode_substrate_keystore, ExportSubstrateKeystoreResult,
+    SubstrateAddress, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
+};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
@@ -339,8 +342,13 @@ pub(crate) fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     let pk_bytes = key_data_from_any_format_pk(&param.private_key)?;
     let private_key = hex::encode(pk_bytes);
-    let pk_store =
-        PrivateKeystore::from_private_key(&private_key, &param.password, Source::Private);
+    let meta = Metadata {
+        name: param.name,
+        password_hint: param.password_hint,
+        source: Source::Private,
+        ..Metadata::default()
+    };
+    let pk_store = PrivateKeystore::from_private_key(&private_key, &param.password, meta);
 
     let mut keystore = Keystore::PrivateKey(pk_store);
 
@@ -435,7 +443,7 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
 
     // private_key prefix is only about chain type and network
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
-    let value = if param.chain_type.as_str() == "TRON" {
+    let value = if ["TRON", "POLKADOT", "KUSAMA"].contains(&param.chain_type.as_str()) {
         Ok(pk_hex.to_string())
     } else {
         let bytes = hex::decode(pk_hex.to_string())?;
@@ -707,6 +715,74 @@ pub(crate) fn sign_substrate_tx_raw(param: &SignParam, keystore: &mut Keystore) 
     .expect("SubstrateTxIn");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
+}
+
+pub(crate) fn import_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
+    let param: SubstrateKeystoreParam = SubstrateKeystoreParam::decode(data)?;
+    let ks: SubstrateKeystore = serde_json::from_str(&param.keystore)?;
+    let _ = ks.validate()?;
+    let pk = decode_substrate_keystore(&ks, &param.password)?;
+    let pk_import_param = PrivateKeyStoreImportParam {
+        private_key: hex::encode(pk),
+        password: param.password.to_string(),
+        name: ks.meta.name,
+        password_hint: "".to_string(),
+        overwrite: param.overwrite,
+    };
+    let param_bytes = encode_message(pk_import_param)?;
+    private_key_store_import(&param_bytes)
+}
+
+pub(crate) fn export_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
+    let param: ExportPrivateKeyParam = ExportPrivateKeyParam::decode(data.clone())?;
+    let meta: Metadata;
+    {
+        let map = KEYSTORE_MAP.read();
+
+        let keystore: &Keystore = match map.get(&param.id) {
+            Some(keystore) => Ok(keystore),
+            _ => Err(format_err!("{}", "wallet_not_found")),
+        }?;
+
+        // !!! Warning !!! HDKeystore only can export raw sr25519 key,
+        // but polkadotjs keystore needs a Ed25519 expanded secret key.
+        if keystore.determinable() {
+            return Err(format_err!("{}", "hd_wallet_cannot_export_keystore"));
+        }
+        meta = keystore.meta().clone();
+    }
+
+    let ret = export_private_key(data)?;
+    let export_result: KeystoreCommonExportResult =
+        KeystoreCommonExportResult::decode(ret.as_slice())?;
+    let pk = export_result.value;
+    let pk_bytes = hex::decode(pk)?;
+    let coin = coin_info_from_param(&param.chain_type, &param.network, "")?;
+
+    let mut substrate_ks = encode_substrate_keystore(&param.password, &pk_bytes, &coin)?;
+
+    substrate_ks.meta.name = meta.name;
+    substrate_ks.meta.when_created = meta.timestamp;
+    let keystore_str = serde_json::to_string(&substrate_ks)?;
+    let ret = ExportSubstrateKeystoreResult {
+        keystore: keystore_str,
+    };
+    encode_message(ret)
+}
+
+pub(crate) fn substrate_keystore_exists(data: &[u8]) -> Result<Vec<u8>> {
+    let param: SubstrateKeystoreParam = SubstrateKeystoreParam::decode(data)?;
+    let ks: SubstrateKeystore = serde_json::from_str(&param.keystore)?;
+    let _ = ks.validate()?;
+    let pk = decode_substrate_keystore(&ks, &param.password)?;
+
+    let pk_hex = hex::encode(&pk);
+    let exists_param = KeystoreCommonExistsParam {
+        r#type: KeyType::PrivateKey as i32,
+        value: pk_hex,
+    };
+    let exists_param_bytes = encode_message(exists_param)?;
+    keystore_common_exists(&exists_param_bytes)
 }
 
 pub(crate) fn unlock_then_crash(data: &[u8]) -> Result<Vec<u8>> {

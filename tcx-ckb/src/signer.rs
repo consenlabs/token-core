@@ -417,6 +417,7 @@ mod tests {
         let mut ks = Keystore::from_private_key(
             "dcec27d0d975b0378471183a03f7071dea8532aaf968be796719ecd20af6988f",
             "Password",
+            Metadata::default(),
         );
         ks.unlock_by_password("Password").unwrap();
 

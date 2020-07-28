@@ -10,6 +10,7 @@ use crate::api::{Response, TcxAction};
 
 pub mod error_handling;
 pub mod handler;
+
 use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
 #[allow(deprecated)]
 use crate::handler::{
@@ -22,6 +23,9 @@ use crate::handler::{
 
 mod filemanager;
 
+use crate::handler::{
+    export_substrate_keystore, import_substrate_keystore, substrate_keystore_exists,
+};
 use parking_lot::RwLock;
 
 extern crate serde_json;
@@ -93,6 +97,19 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
 
         "tron_sign_msg" => landingpad(|| tron_sign_message(&action.param.unwrap().value)),
+
+        "substrate_keystore_exists" => {
+            landingpad(|| substrate_keystore_exists(&action.param.unwrap().value))
+        }
+
+        "substrate_keystore_import" => {
+            landingpad(|| import_substrate_keystore(&action.param.unwrap().value))
+        }
+
+        "substrate_keystore_export" => {
+            landingpad(|| export_substrate_keystore(&action.param.unwrap().value))
+        }
+
         // !!! WARNING !!! used for `cache_dk` feature
         "get_derived_key" => landingpad(|| get_derived_key(&action.param.unwrap().value)),
         // !!! WARNING !!! used for test only
@@ -165,7 +182,10 @@ mod tests {
     use sp_core::Public as TraitPublic;
     use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
-    use tcx_substrate::{SubstrateRawTxIn, SubstrateTxOut};
+    use tcx_substrate::{
+        ExportSubstrateKeystoreResult, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
+        SubstrateTxOut,
+    };
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
 
     static OTHER_MNEMONIC: &'static str =
@@ -244,6 +264,8 @@ mod tests {
         let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
             private_key: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
             password: TEST_PASSWORD.to_string(),
+            name: "import_default_pk_store".to_string(),
+            password_hint: "".to_string(),
             overwrite: true,
         };
 
@@ -781,6 +803,65 @@ mod tests {
     }
 
     #[test]
+    pub fn test_64bytes_private_key_store_import() {
+        run_test(|| {
+            let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+                private_key: "416c696365202020202020202020202020202020202020202020202020202020d172a74cda4c865912c32ba0a80a57ae69abae410e5ccb59dee84e2f4432db4f"
+                    .to_string(),
+                password: TEST_PASSWORD.to_string(),
+                name: "test_64bytes_private_key_store_import".to_string(),
+                password_hint: "".to_string(),
+                overwrite: true,
+            };
+
+            let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(ret.as_slice()).unwrap();
+
+            assert_eq!(0, import_result.accounts.len());
+
+            let derivations = vec![Derivation {
+                chain_type: "POLKADOT".to_string(),
+                path: "".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            }];
+            let param = KeystoreCommonDeriveParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations,
+            };
+            let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
+            let derived_accounts: AccountsResponse =
+                AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
+            assert_eq!(1, derived_accounts.accounts.len());
+
+            assert_eq!(
+                "133smEABgtt8FRkZGrZfAzCV522bxo2y5FwVoTcSaY8z1nEq",
+                derived_accounts.accounts[0].address
+            );
+
+            let export_param = ExportPrivateKeyParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "POLKADOT".to_string(),
+                network: "".to_string(),
+                main_address: "133smEABgtt8FRkZGrZfAzCV522bxo2y5FwVoTcSaY8z1nEq".to_string(),
+                path: "".to_string(),
+            };
+
+            let export_pk_bytes = call_api("export_private_key", export_param).unwrap();
+            let export_pk: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(export_pk_bytes.as_slice()).unwrap();
+            assert_eq!(
+                export_pk.value,
+                "416c696365202020202020202020202020202020202020202020202020202020d172a74cda4c865912c32ba0a80a57ae69abae410e5ccb59dee84e2f4432db4f"
+            );
+            remove_created_wallet(&import_result.id);
+        })
+    }
+
+    #[test]
     pub fn test_private_key_store_export() {
         run_test(|| {
             let import_result: WalletResult = import_default_pk_store();
@@ -989,6 +1070,8 @@ mod tests {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
                 private_key: "L39VXyorp19JfsEJfbD7Tfr4pBEX93RJuVXW7E13C51ZYAhUWbYa".to_string(),
                 password: TEST_PASSWORD.to_string(),
+                name: "test_import_to_pk_which_from_hd".to_string(),
+                password_hint: "".to_string(),
                 overwrite: true,
             };
 
@@ -1050,6 +1133,8 @@ mod tests {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
                 private_key: "5JZc7wGRUr4J1RHDcM9ySWKLfQ2xjRUEo612qC4RLJ3G7jzJ4qx".to_string(),
                 password: TEST_PASSWORD.to_string(),
+                name: "test_keystore_common_delete".to_string(),
+                password_hint: "".to_string(),
                 overwrite: true,
             };
 
@@ -1125,6 +1210,7 @@ mod tests {
                 KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
             assert!(result.is_exists);
             assert_eq!(result.id, wallet.id);
+            remove_created_wallet(&wallet.id);
         })
     }
 
@@ -1161,6 +1247,8 @@ mod tests {
                 "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP",
                 derived_accounts.accounts[0].address
             );
+
+            remove_created_wallet(&wallet.id);
         })
     }
 
@@ -1392,6 +1480,248 @@ mod tests {
     //         remove_created_wallet(&wallet.id);
     //     })
     // }
+
+    #[test]
+    pub fn test_import_substrate_keystore() {
+        run_test(|| {
+            let wrong_keystore_str: &str = r#"{
+  "address": "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS",
+  "encoded": "0xf7e7e89d3016c9b4d93bb1129adf69e5949ca1fb58c29da4591ddc72c52238a35835e3f2ae023f9867ff301bc4132463527ac03525eaac54664a7cb658eae68a0bbc99354222c194d6100b2bf3a492639229077a2e2818d8196e002f0b5556104be23b11633858259dbbd3f91ea1d34d6ce182b62d8381af1ef3c35e9ab1583267cfa41aa58bfd64435c2b5047baf9052f0953d9f7854d2d396dfcad13",
+  "encoding": {
+    "content": [
+      "pkcs8",
+      "sr25519"
+    ],
+    "type": "",
+    "version": "2"
+  },
+  "meta": {
+    "genesisHash": "0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe",
+    "name": "i_can_save_name",
+    "tags": [],
+    "whenCreated": 1593591324334
+  }
+}"#;
+
+            let param = SubstrateKeystoreParam {
+                keystore: wrong_keystore_str.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "KUSAMA".to_string(),
+                overwrite: true,
+            };
+            // let param_bytes = encode_message(param).unwrap();
+
+            let ret = call_api("substrate_keystore_exists", param.clone());
+
+            // let ret: Response = Response::decode(ret_bytes.as_slice()).unwrap();
+
+            assert!(ret.is_err());
+            assert_eq!(
+                format!("{}", ret.err().unwrap()),
+                "invalid_keystore# only support xsalsa20-poly1305"
+            );
+
+            let keystore_str: &str = r#"{
+  "address": "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS",
+  "encoded": "0xf7e7e89d3016c9b4d93bb1129adf69e5949ca1fb58c29da4591ddc72c52238a35835e3f2ae023f9867ff301bc4132463527ac03525eaac54664a7cb658eae68a0bbc99354222c194d6100b2bf3a492639229077a2e2818d8196e002f0b5556104be23b11633858259dbbd3f91ea1d34d6ce182b62d8381af1ef3c35e9ab1583267cfa41aa58bfd64435c2b5047baf9052f0953d9f7854d2d396dfcad13",
+  "encoding": {
+    "content": [
+      "pkcs8",
+      "sr25519"
+    ],
+    "type": "xsalsa20-poly1305",
+    "version": "2"
+  },
+  "meta": {
+    "genesisHash": "0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe",
+    "name": "i_can_save_name",
+    "tags": [],
+    "whenCreated": 1593591324334
+  }
+}"#;
+
+            let param = SubstrateKeystoreParam {
+                keystore: keystore_str.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "KUSAMA".to_string(),
+                overwrite: true,
+            };
+            // let param_bytes = encode_message(param).unwrap();
+
+            let ret_bytes = call_api("substrate_keystore_exists", param.clone()).unwrap();
+
+            let exists_result: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
+            assert!(!exists_result.is_exists);
+
+            let ret_bytes = call_api("substrate_keystore_import", param.clone()).unwrap();
+            let wallet_ret: WalletResult = WalletResult::decode(ret_bytes.as_slice()).unwrap();
+
+            let ret_bytes = call_api("substrate_keystore_exists", param.clone()).unwrap();
+            let exists_result: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
+            assert!(exists_result.is_exists);
+
+            let derivation = Derivation {
+                chain_type: "KUSAMA".to_string(),
+                path: "".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            };
+
+            let param = KeystoreCommonDeriveParam {
+                id: wallet_ret.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+
+            let ret = call_api("keystore_common_derive", param).unwrap();
+            let accounts: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
+
+            assert_eq!(
+                accounts.accounts[0].address,
+                "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"
+            );
+
+            let export_param = ExportPrivateKeyParam {
+                id: wallet_ret.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "KUSAMA".to_string(),
+                network: "".to_string(),
+                main_address: "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS".to_string(),
+                path: "".to_string(),
+            };
+            let ret = call_api("substrate_keystore_export", export_param).unwrap();
+            let keystore_ret: ExportSubstrateKeystoreResult =
+                ExportSubstrateKeystoreResult::decode(ret.as_slice()).unwrap();
+
+            let keystore: SubstrateKeystore = serde_json::from_str(&keystore_ret.keystore).unwrap();
+            assert!(keystore.validate().is_ok());
+            assert_eq!(
+                keystore.address,
+                "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"
+            );
+            assert_eq!(keystore.meta.name, "i_can_save_name");
+            assert!(keystore.meta.when_created > 1594102917);
+
+            // assert_eq!(keystore_ret.keystore, "");
+            remove_created_wallet(&wallet_ret.id);
+        })
+    }
+
+    #[test]
+    pub fn test_export_hd_polkadot_keystore() {
+        run_test(|| {
+            let derivation = Derivation {
+                chain_type: "KUSAMA".to_string(),
+                path: "".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            };
+            let wallet = import_and_derive(derivation);
+            assert_eq!(
+                wallet.accounts[0].address,
+                "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"
+            );
+
+            let export_param = ExportPrivateKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "KUSAMA".to_string(),
+                network: "".to_string(),
+                main_address: "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS".to_string(),
+                path: "".to_string(),
+            };
+            let ret = call_api("substrate_keystore_export", export_param);
+            assert!(ret.is_err());
+            assert_eq!(
+                format!("{}", ret.err().unwrap()),
+                "hd_wallet_cannot_export_keystore"
+            );
+
+            remove_created_wallet(&wallet.id);
+        })
+    }
+
+    #[test]
+    pub fn test_import_multi_curve() {
+        run_test(|| {
+            let keystore_str: &str = r#"{
+  "address": "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS",
+  "encoded": "0xf7e7e89d3016c9b4d93bb1129adf69e5949ca1fb58c29da4591ddc72c52238a35835e3f2ae023f9867ff301bc4132463527ac03525eaac54664a7cb658eae68a0bbc99354222c194d6100b2bf3a492639229077a2e2818d8196e002f0b5556104be23b11633858259dbbd3f91ea1d34d6ce182b62d8381af1ef3c35e9ab1583267cfa41aa58bfd64435c2b5047baf9052f0953d9f7854d2d396dfcad13",
+  "encoding": {
+    "content": [
+      "pkcs8",
+      "sr25519"
+    ],
+    "type": "xsalsa20-poly1305",
+    "version": "2"
+  },
+  "meta": {
+    "genesisHash": "0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe",
+    "name": "keystore_import",
+    "tags": [],
+    "whenCreated": 1593591324334
+  }
+}"#;
+
+            let param = SubstrateKeystoreParam {
+                keystore: keystore_str.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "KUSAMA".to_string(),
+                overwrite: true,
+            };
+            // let param_bytes = encode_message(param).unwrap();
+            let ret_bytes = call_api("substrate_keystore_import", param).unwrap();
+            let wallet_ret: WalletResult = WalletResult::decode(ret_bytes.as_slice()).unwrap();
+            let derivation = Derivation {
+                chain_type: "KUSAMA".to_string(),
+                path: "".to_string(),
+                network: "".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            };
+
+            let param = KeystoreCommonDeriveParam {
+                id: wallet_ret.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+
+            let ret = call_api("keystore_common_derive", param).unwrap();
+            let accounts: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
+
+            assert_eq!(
+                accounts.accounts[0].address,
+                "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"
+            );
+
+            let derivation = Derivation {
+                chain_type: "LITECOIN".to_string(),
+                path: "".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "NONE".to_string(),
+                chain_id: "".to_string(),
+            };
+
+            let param = KeystoreCommonDeriveParam {
+                id: wallet_ret.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+
+            let ret = call_api("keystore_common_derive", param);
+            assert!(ret.is_err());
+            assert_eq!(
+                format!("{}", ret.err().unwrap()),
+                "pkstore_can_not_add_other_curve_account"
+            );
+
+            remove_created_wallet(&wallet_ret.id);
+        })
+    }
 
     #[test]
     pub fn test_sign_substrate_raw_tx() {
@@ -1847,6 +2177,14 @@ mod tests {
     //            export_ret.value
     //        );
     //    }
+
+    // #[test]
+    // fn decode_error() {
+    //     let err = "1211756e737570706f727465645f636861696e";
+    //     let error_bytes = hex::decode(err).unwrap();
+    //     let rsp: Response = Response::decode(error_bytes.as_slice()).unwrap();
+    //     assert_eq!("1", format!("{:?}", rsp))
+    // }
 
     #[test]
     fn test_panic_keystore_locked() {

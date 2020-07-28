@@ -34,6 +34,13 @@ build-ios-rn-example: ##@build generate the iOS RN compiled file
 build-android-rn-example: ##@build generate the Android RN compiled file
 	sh ./tools/android-rn-example-build.sh
 
+internal-release-android:
+	./tools/android-token-v2-build.sh
+    
+internal-release-ios: ##@build generate the Android RN compiled file
+	sh ./tools/ios-framework-build.sh
+	sh ./tools/ios-internal-release.sh $(VER)
+
 e2e: ##@test run e2e test
 	(cd examples/RN && yarn)
 	(cd examples/RN/ios && pod install)

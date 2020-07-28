@@ -84,7 +84,9 @@ enum KeyType {
 message PrivateKeyStoreImportParam {
     string privateKey = 1;
     string password = 2;
-    bool overwrite = 3;
+    string name = 3;
+    string passwordHint = 4;
+    bool overwrite = 5;
 }
 
 // FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult
@@ -181,3 +183,4 @@ message HdStoreExtendedPublicKeyParam {
 message HdStoreExtendedPublicKeyResponse {
     string extendedPublicKey = 1;
 }
+

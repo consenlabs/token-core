@@ -1,6 +1,6 @@
-use crate::ecc::{PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
+use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
 use crate::{FromHex, Result, ToHex};
-use schnorrkel::{ExpansionMode, MiniSecretKey};
+use schnorrkel::SecretKey;
 
 use sp_core::sr25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};
@@ -29,11 +29,12 @@ impl TraitPrivateKey for Sr25519PrivateKey {
     type PublicKey = Sr25519PublicKey;
 
     fn from_slice(data: &[u8]) -> Result<Self> {
-        let mini_key: MiniSecretKey =
-            MiniSecretKey::from_bytes(data).expect("32 bytes can always build a key; qed");
-
-        let kp = mini_key.expand_to_keypair(ExpansionMode::Ed25519);
-        Ok(Sr25519PrivateKey(Pair::from(kp)))
+        // let mini_key: MiniSecretKey =
+        //     MiniSecretKey::from_bytes(data).expect("32 bytes can always build a key; qed");
+        //
+        // let kp = mini_key.expand_to_keypair(ExpansionMode::Ed25519);
+        let pk = SecretKey::from_ed25519_bytes(data).map_err(|_| KeyError::InvalidSr25519Key)?;
+        Ok(Sr25519PrivateKey(Pair::from(pk)))
     }
 
     fn public_key(&self) -> Self::PublicKey {
@@ -91,17 +92,20 @@ mod tests {
     #[test]
     fn test_private_key_from_slice() {
         let pk_bytes: Vec<u8> =
-            hex::decode("1111111111111111111111111111111111111111111111111111111111111111")
+            hex::decode("00ea01b0116da6ca425c477521fd49cc763988ac403ab560f4022936a18a4341016e7df1f5020068c9b150e0722fea65a264d5fbb342d4af4ddf2f1cdbddf1fd")
                 .unwrap();
         let pk: Sr25519PrivateKey = Sr25519PrivateKey::from_slice(&pk_bytes).unwrap();
-        assert_eq!("704b72419b89bab3a4632685428901bf5715b44e40ec0df50f01fdc1553bf60b092539815e61663c7f9c4c9c377346f5d2936875bd760f0ac5c5f4f6e78a6d76", hex::encode(pk.to_bytes()));
+        assert_eq!(
+            &hex::encode(pk.to_bytes())[64..],
+            "016e7df1f5020068c9b150e0722fea65a264d5fbb342d4af4ddf2f1cdbddf1fd"
+        );
         let public_key: Sr25519PublicKey = pk.public_key();
         assert_eq!(
-            "50780547322a1ceba67ea8c552c9bc6c686f8698ac9a8cafab7cd15a1db19859",
+            "fc581c897af481b10cf846d88754f1d115e486e5b7bcc39c0588c01b0a9b7a11",
             public_key.to_hex()
         );
         assert_eq!(
-            "5DtDLm5rQHShDqojQpsvcN8tRXHVFaecfDoRet1SU6BFD9Fi",
+            "5Hma6gDS9yY7gPTuAFvmMDNcxPf9JqMZdPsaihfXiyw5NRnQ",
             format!("{}", public_key)
         );
     }

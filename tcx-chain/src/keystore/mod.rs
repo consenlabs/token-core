@@ -49,6 +49,8 @@ pub enum Error {
     KeystoreLocked,
     #[fail(display = "invalid_version")]
     InvalidVersion,
+    #[fail(display = "pkstore_can_not_add_other_curve_account")]
+    PkstoreCannotAddOtherCurveAccount,
 }
 
 fn transform_mnemonic_error(err: failure::Error) -> Error {
@@ -135,11 +137,11 @@ pub enum Keystore {
 }
 
 impl Keystore {
-    pub fn from_private_key(private_key: &str, password: &str) -> Keystore {
+    pub fn from_private_key(private_key: &str, password: &str, meta: Metadata) -> Keystore {
         Keystore::PrivateKey(PrivateKeystore::from_private_key(
             private_key,
             password,
-            Source::Wif,
+            meta,
         ))
     }
 
@@ -682,10 +684,16 @@ mod tests {
             "512115eca3ae86646aeb06861d551e403b543509"
         );
 
+        let meta = Metadata {
+            name: "test_create".to_string(),
+            password_hint: TEST_PASSWORD.to_string(),
+            source: Source::Private,
+            ..Metadata::default()
+        };
         let pk_store = PrivateKeystore::from_private_key(
             "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
             TEST_PASSWORD,
-            Source::Private,
+            meta,
         );
         let keystore = PrivateKey(pk_store);
         assert_eq!(0, keystore.accounts().len());

@@ -1,5 +1,5 @@
 use super::Account;
-use super::{Address, Metadata, Source};
+use super::{Address, Metadata};
 use tcx_constants::CoinInfo;
 use tcx_crypto::{Crypto, Key, Pbkdf2Params};
 
@@ -77,6 +77,12 @@ impl PrivateKeystore {
     pub(crate) fn derive_coin<A: Address>(&mut self, coin_info: &CoinInfo) -> Result<Account> {
         tcx_ensure!(self.private_key.is_some(), Error::KeystoreLocked);
 
+        if self.store.active_accounts.len() > 0
+            && self.store.active_accounts[0].curve != coin_info.curve
+        {
+            return Err(Error::PkstoreCannotAddOtherCurveAccount.into());
+        }
+
         let sk = self.private_key.as_ref().unwrap();
 
         let account = Self::private_key_to_account::<A>(coin_info, sk)?;
@@ -105,16 +111,11 @@ impl PrivateKeystore {
         self.store.crypto.verify_password(password)
     }
 
-    pub fn from_private_key(private_key: &str, password: &str, source: Source) -> PrivateKeystore {
+    pub fn from_private_key(private_key: &str, password: &str, meta: Metadata) -> PrivateKeystore {
         let key_data: Vec<u8> = hex::decode(private_key).expect("hex can't decode");
         let key_hash = key_hash_from_private_key(&key_data);
         //        let pk_bytes = hex::decode(private_key).expect("valid private_key");
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, &key_data);
-
-        let meta = Metadata {
-            source,
-            ..Metadata::default()
-        };
 
         let store = Store {
             key_hash,
@@ -164,15 +165,20 @@ impl PrivateKeystore {
 
 #[cfg(test)]
 mod tests {
-    use crate::{PrivateKeystore, Source};
+    use crate::{Metadata, PrivateKeystore, Source};
     use tcx_constants::TEST_PASSWORD;
 
     #[test]
     pub fn from_private_key_test() {
+        let meta = Metadata {
+            name: "from_private_key_test".to_string(),
+            source: Source::Private,
+            ..Metadata::default()
+        };
         let keystore = PrivateKeystore::from_private_key(
             "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
             TEST_PASSWORD,
-            Source::Private,
+            meta,
         );
         assert_eq!(keystore.store.version, 11001);
         assert_ne!(keystore.store.id, "");
