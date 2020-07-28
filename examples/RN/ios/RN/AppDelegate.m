@@ -12,6 +12,7 @@
 #import <React/RCTRootView.h>
 #import "tcx.h"
 #import "TcxApi.h"
+#import "Api.pbobjc.h"
 
 @implementation AppDelegate
 
@@ -70,7 +71,12 @@
       NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
     clear_err();
     const char *param = [jsonString cStringUsingEncoding:NSASCIIStringEncoding];
-    init_token_core_x(param);
+    InitTokenCoreXParam  *initParam = [[InitTokenCoreXParam alloc] init];
+    initParam.fileDir = walletsDirectory;
+    initParam.xpubCommonKey = @"B888D25EC8C12BD5043777B1AC49F872";
+    initParam.xpubCommonIv = @"9C0C30889CBCC5E01AB5B2BB88715799";
+    initParam.isDebug = YES;
+//    init_token_core_x(param);
   }
     
   rootView.backgroundColor = [[UIColor alloc] initWithRed:1.0f green:1.0f blue:1.0f alpha:1];

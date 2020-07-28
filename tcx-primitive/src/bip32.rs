@@ -3,9 +3,7 @@ use super::Result;
 use crate::constant::SECP256K1_ENGINE;
 use crate::ecc::{DeterministicPrivateKey, DeterministicPublicKey, KeyError};
 
-use crate::{
-    Derive, DeriveJunction, FromHex, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec, ToHex,
-};
+use crate::{Derive, FromHex, Secp256k1PrivateKey, Secp256k1PublicKey, Ss58Codec, ToHex};
 use bitcoin::util::key::PublicKey;
 
 use bitcoin::util::base58;
@@ -17,7 +15,7 @@ use bitcoin::Network;
 use byteorder::BigEndian;
 use byteorder::ByteOrder;
 
-use std::convert::TryInto;
+use bip39::{Language, Mnemonic};
 
 pub struct Bip32DeterministicPrivateKey(ExtendedPrivKey);
 
@@ -42,37 +40,49 @@ impl Bip32DeterministicPrivateKey {
             ExtendedPrivKey::new_master(Network::Bitcoin, seed).map_err(transform_bip32_error)?;
         Ok(Bip32DeterministicPrivateKey(epk))
     }
+
+    pub fn from_mnemonic(mnemonic: &str) -> Result<Self> {
+        let mn = Mnemonic::from_phrase(mnemonic, Language::English)?;
+        let seed = bip39::Seed::new(&mn, "");
+        let epk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_ref())
+            .map_err(transform_bip32_error)?;
+        Ok(Bip32DeterministicPrivateKey(epk))
+    }
 }
 
 impl Derive for Bip32DeterministicPrivateKey {
-    fn derive<T: Iterator<Item = DeriveJunction>>(&self, path: T) -> Result<Self> {
-        let mut extended_key = self.0.clone();
+    fn derive(&self, path: &str) -> Result<Self> {
+        let extended_key = self.0.clone();
 
-        for j in path {
-            let child_number = j.try_into()?;
-
-            extended_key = extended_key
-                .ckd_priv(&SECP256K1_ENGINE, child_number)
-                .map_err(transform_bip32_error)?;
+        let mut parts = path.split('/').peekable();
+        if *parts.peek().unwrap() == "m" {
+            parts.next();
         }
 
-        Ok(Bip32DeterministicPrivateKey(extended_key))
+        let ret: std::result::Result<Vec<ChildNumber>, bitcoin::util::bip32::Error> =
+            parts.map(str::parse).collect();
+        let children_nums = ret.map_err(transform_bip32_error)?;
+
+        let child_key = extended_key.derive_priv(&SECP256K1_ENGINE, &children_nums)?;
+        Ok(Bip32DeterministicPrivateKey(child_key))
     }
 }
 
 impl Derive for Bip32DeterministicPublicKey {
-    fn derive<Iter: Iterator<Item = DeriveJunction>>(&self, path: Iter) -> Result<Self> {
-        let mut extended_key = self.0.clone();
+    fn derive(&self, path: &str) -> Result<Self> {
+        let extended_key = self.0.clone();
 
-        for j in path {
-            let child_number = j.try_into()?;
-
-            extended_key = extended_key
-                .ckd_pub(&SECP256K1_ENGINE, child_number)
-                .map_err(transform_bip32_error)?;
+        let mut parts = path.split('/').peekable();
+        if *parts.peek().unwrap() == "m" {
+            parts.next();
         }
 
-        Ok(Bip32DeterministicPublicKey(extended_key))
+        let ret: std::result::Result<Vec<ChildNumber>, bitcoin::util::bip32::Error> =
+            parts.map(str::parse).collect();
+        let children_nums = ret.map_err(transform_bip32_error)?;
+
+        let child_key = extended_key.derive_pub(&SECP256K1_ENGINE, &children_nums)?;
+        Ok(Bip32DeterministicPublicKey(child_key))
     }
 }
 
@@ -83,6 +93,14 @@ impl DeterministicPrivateKey for Bip32DeterministicPrivateKey {
     fn from_seed(seed: &[u8]) -> Result<Self> {
         let esk =
             ExtendedPrivKey::new_master(Network::Bitcoin, seed).map_err(transform_bip32_error)?;
+        Ok(Bip32DeterministicPrivateKey(esk))
+    }
+
+    fn from_mnemonic(mnemonic: &str) -> Result<Self> {
+        let mn = Mnemonic::from_phrase(mnemonic, Language::English)?;
+        let seed = bip39::Seed::new(&mn, "");
+        let esk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())
+            .map_err(transform_bip32_error)?;
         Ok(Bip32DeterministicPrivateKey(esk))
     }
 
@@ -245,11 +263,10 @@ impl Ss58Codec for Bip32DeterministicPrivateKey {
 mod tests {
     use crate::ToHex;
     use crate::{
-        Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DerivePath,
-        DeterministicPrivateKey, PrivateKey, Ss58Codec,
+        Bip32DeterministicPrivateKey, Bip32DeterministicPublicKey, Derive, DeterministicPrivateKey,
+        PrivateKey, Ss58Codec,
     };
     use bip39::{Language, Mnemonic, Seed};
-    use std::str::FromStr;
 
     fn default_seed() -> Seed {
         let mn = Mnemonic::from_phrase(
@@ -274,7 +291,7 @@ mod tests {
             .iter()
             .map(|path| {
                 hex::encode(
-                    esk.derive(DerivePath::from_str(path).unwrap().into_iter())
+                    esk.derive(path)
                         .unwrap()
                         .private_key()
                         .public_key()
@@ -297,15 +314,13 @@ mod tests {
         let root = Bip32DeterministicPrivateKey::from_seed(seed.as_bytes()).unwrap();
 
         let dpk = root
-            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
+            .derive("m/44'/0'/0'")
             .unwrap()
             .deterministic_public_key();
 
         assert_eq!(dpk.to_string(), "xpub6CqzLtyKdJN53jPY13W6GdyB8ZGWuFZuBPU4Xh9DXm6Q1cULVLtsyfXSjx4G77rNdCRBgi83LByaWxjtDaZfLAKT6vFUq3EhPtNwTpJigx8");
 
-        let dsk = root
-            .derive(DerivePath::from_str("m/44'/0'/0'").unwrap().into_iter())
-            .unwrap();
+        let dsk = root.derive("m/44'/0'/0'").unwrap();
 
         assert_eq!(dsk.to_string(), "xprv9yrdwPSRnvomqFK4u1y5uW2SaXS2Vnr3pAYTjJjbyRZR8p9BwoadRsCxtgUFdAKeRPbwvGRcCSYMV69nNK4N2kadevJ6L5iQVy1SwGKDTHQ");
     }

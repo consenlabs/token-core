@@ -26,6 +26,10 @@ export const COSMOS_DEFAULT_PATH = "m/44'/118'/0'/0/0"
 
 export const NERVOS_DEFAULT_PATH = "m/44'/309'/0'/0/0"
 
+export const KUSAMA_DEFAULT_PATH = "//kusama//imToken/0"
+
+export const POLKADOT_DEFAULT_PATH = "//polkadot//imToken/0"
+
 // wallet path
 export const PATH = {
   BITCOIN: {
@@ -53,6 +57,8 @@ export const PATH = {
   COSMOS: COSMOS_DEFAULT_PATH,
   TRON: TRON_DEFAULT_PATH,
   NERVOS: NERVOS_DEFAULT_PATH,
+  KUSAMA: KUSAMA_DEFAULT_PATH,
+  POLKADOT: POLKADOT_DEFAULT_PATH,
   BITCOINCASH: {
     145: BITCOINCASH_MAINNET_PATH,
     1: BITCOINCASH_TESTNET_PATH,
@@ -75,6 +81,12 @@ export const getChainPath = (chainType: __chainType, network = 'TESTNET' as __ne
       return PATH[chainType][chainId as 1 | 145]
 
     case 'NERVOS':
+      return PATH[chainType]
+
+    case 'KUSAMA':
+      return PATH[chainType]
+
+    case 'POLKADOT':
       return PATH[chainType]
 
     default:

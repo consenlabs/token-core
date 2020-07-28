@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		70149B672423751200D64475 /* libsecp256k1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 70149B662423751200D64475 /* libsecp256k1.a */; };
 		70CC2E182419E661006B191A /* TokenCoreX.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70CC2E0E2419E661006B191A /* TokenCoreX.framework */; };
 		70CC2E1D2419E661006B191A /* TokenCoreXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70CC2E1C2419E661006B191A /* TokenCoreXTests.swift */; };
 		70CC2E1F2419E661006B191A /* TokenCoreX.h in Headers */ = {isa = PBXBuildFile; fileRef = 70CC2E112419E661006B191A /* TokenCoreX.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -26,7 +25,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		70149B662423751200D64475 /* libsecp256k1.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsecp256k1.a; sourceTree = "<group>"; };
 		70CC2E0E2419E661006B191A /* TokenCoreX.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = TokenCoreX.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		70CC2E112419E661006B191A /* TokenCoreX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TokenCoreX.h; sourceTree = "<group>"; };
 		70CC2E122419E661006B191A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -42,7 +40,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				70149B672423751200D64475 /* libsecp256k1.a in Frameworks */,
 				70CC2E2E2419EA0A006B191A /* libtcx.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -80,7 +77,6 @@
 		70CC2E102419E661006B191A /* TokenCoreX */ = {
 			isa = PBXGroup;
 			children = (
-				70149B662423751200D64475 /* libsecp256k1.a */,
 				70CC2E292419E6A4006B191A /* libtcx.a */,
 				70CC2E282419E6A4006B191A /* tcx.h */,
 				70CC2E112419E661006B191A /* TokenCoreX.h */,

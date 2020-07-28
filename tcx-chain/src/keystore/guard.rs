@@ -18,6 +18,15 @@ impl<'a> KeystoreGuard<'a> {
         Ok(KeystoreGuard { keystore: ks })
     }
 
+    pub fn unlock_by_derived_key(
+        ks: &'a mut Keystore,
+        derived_key: &str,
+    ) -> Result<KeystoreGuard<'a>> {
+        ks.unlock_by_derived_key(derived_key)?;
+
+        Ok(KeystoreGuard { keystore: ks })
+    }
+
     pub fn keystore_mut(&mut self) -> &mut Keystore {
         self.keystore
     }

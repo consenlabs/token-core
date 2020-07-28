@@ -9,7 +9,6 @@ use crate::{Result, Ss58Codec};
 use bitcoin::util::base58;
 
 use bitcoin::secp256k1::Message;
-use std::io;
 use tcx_constants::{network_from_coin, CoinInfo};
 
 #[cfg_attr(tarpaulin, skip)]
@@ -105,10 +104,6 @@ impl TraitPublicKey for Secp256k1PublicKey {
     fn from_slice(data: &[u8]) -> Result<Self> {
         let key = PublicKey::from_slice(data)?;
         Ok(Secp256k1PublicKey(key))
-    }
-
-    fn write_into<W: io::Write>(&self, writer: W) {
-        self.0.write_into(writer);
     }
 
     fn to_bytes(&self) -> Vec<u8> {

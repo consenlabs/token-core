@@ -452,6 +452,7 @@ $root.api = (function() {
          * @property {string|null} [fileDir] InitTokenCoreXParam fileDir
          * @property {string|null} [xpubCommonKey] InitTokenCoreXParam xpubCommonKey
          * @property {string|null} [xpubCommonIv] InitTokenCoreXParam xpubCommonIv
+         * @property {boolean|null} [isDebug] InitTokenCoreXParam isDebug
          */
 
         /**
@@ -494,6 +495,14 @@ $root.api = (function() {
         InitTokenCoreXParam.prototype.xpubCommonIv = "";
 
         /**
+         * InitTokenCoreXParam isDebug.
+         * @member {boolean} isDebug
+         * @memberof api.InitTokenCoreXParam
+         * @instance
+         */
+        InitTokenCoreXParam.prototype.isDebug = false;
+
+        /**
          * Creates a new InitTokenCoreXParam instance using the specified properties.
          * @function create
          * @memberof api.InitTokenCoreXParam
@@ -523,6 +532,8 @@ $root.api = (function() {
                 writer.uint32(/* id 2, wireType 2 =*/18).string(message.xpubCommonKey);
             if (message.xpubCommonIv != null && message.hasOwnProperty("xpubCommonIv"))
                 writer.uint32(/* id 3, wireType 2 =*/26).string(message.xpubCommonIv);
+            if (message.isDebug != null && message.hasOwnProperty("isDebug"))
+                writer.uint32(/* id 4, wireType 0 =*/32).bool(message.isDebug);
             return writer;
         };
 
@@ -565,6 +576,9 @@ $root.api = (function() {
                     break;
                 case 3:
                     message.xpubCommonIv = reader.string();
+                    break;
+                case 4:
+                    message.isDebug = reader.bool();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -610,6 +624,9 @@ $root.api = (function() {
             if (message.xpubCommonIv != null && message.hasOwnProperty("xpubCommonIv"))
                 if (!$util.isString(message.xpubCommonIv))
                     return "xpubCommonIv: string expected";
+            if (message.isDebug != null && message.hasOwnProperty("isDebug"))
+                if (typeof message.isDebug !== "boolean")
+                    return "isDebug: boolean expected";
             return null;
         };
 
@@ -631,6 +648,8 @@ $root.api = (function() {
                 message.xpubCommonKey = String(object.xpubCommonKey);
             if (object.xpubCommonIv != null)
                 message.xpubCommonIv = String(object.xpubCommonIv);
+            if (object.isDebug != null)
+                message.isDebug = Boolean(object.isDebug);
             return message;
         };
 
@@ -651,6 +670,7 @@ $root.api = (function() {
                 object.fileDir = "";
                 object.xpubCommonKey = "";
                 object.xpubCommonIv = "";
+                object.isDebug = false;
             }
             if (message.fileDir != null && message.hasOwnProperty("fileDir"))
                 object.fileDir = message.fileDir;
@@ -658,6 +678,8 @@ $root.api = (function() {
                 object.xpubCommonKey = message.xpubCommonKey;
             if (message.xpubCommonIv != null && message.hasOwnProperty("xpubCommonIv"))
                 object.xpubCommonIv = message.xpubCommonIv;
+            if (message.isDebug != null && message.hasOwnProperty("isDebug"))
+                object.isDebug = message.isDebug;
             return object;
         };
 
@@ -673,6 +695,1540 @@ $root.api = (function() {
         };
 
         return InitTokenCoreXParam;
+    })();
+
+    api.ExportPrivateKeyParam = (function() {
+
+        /**
+         * Properties of an ExportPrivateKeyParam.
+         * @memberof api
+         * @interface IExportPrivateKeyParam
+         * @property {string|null} [id] ExportPrivateKeyParam id
+         * @property {string|null} [password] ExportPrivateKeyParam password
+         * @property {string|null} [chainType] ExportPrivateKeyParam chainType
+         * @property {string|null} [network] ExportPrivateKeyParam network
+         * @property {string|null} [mainAddress] ExportPrivateKeyParam mainAddress
+         * @property {string|null} [path] ExportPrivateKeyParam path
+         */
+
+        /**
+         * Constructs a new ExportPrivateKeyParam.
+         * @memberof api
+         * @classdesc export the private key from a private key keystore or a hd keystore
+         * @implements IExportPrivateKeyParam
+         * @constructor
+         * @param {api.IExportPrivateKeyParam=} [properties] Properties to set
+         */
+        function ExportPrivateKeyParam(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * ExportPrivateKeyParam id.
+         * @member {string} id
+         * @memberof api.ExportPrivateKeyParam
+         * @instance
+         */
+        ExportPrivateKeyParam.prototype.id = "";
+
+        /**
+         * ExportPrivateKeyParam password.
+         * @member {string} password
+         * @memberof api.ExportPrivateKeyParam
+         * @instance
+         */
+        ExportPrivateKeyParam.prototype.password = "";
+
+        /**
+         * ExportPrivateKeyParam chainType.
+         * @member {string} chainType
+         * @memberof api.ExportPrivateKeyParam
+         * @instance
+         */
+        ExportPrivateKeyParam.prototype.chainType = "";
+
+        /**
+         * ExportPrivateKeyParam network.
+         * @member {string} network
+         * @memberof api.ExportPrivateKeyParam
+         * @instance
+         */
+        ExportPrivateKeyParam.prototype.network = "";
+
+        /**
+         * ExportPrivateKeyParam mainAddress.
+         * @member {string} mainAddress
+         * @memberof api.ExportPrivateKeyParam
+         * @instance
+         */
+        ExportPrivateKeyParam.prototype.mainAddress = "";
+
+        /**
+         * ExportPrivateKeyParam path.
+         * @member {string} path
+         * @memberof api.ExportPrivateKeyParam
+         * @instance
+         */
+        ExportPrivateKeyParam.prototype.path = "";
+
+        /**
+         * Creates a new ExportPrivateKeyParam instance using the specified properties.
+         * @function create
+         * @memberof api.ExportPrivateKeyParam
+         * @static
+         * @param {api.IExportPrivateKeyParam=} [properties] Properties to set
+         * @returns {api.ExportPrivateKeyParam} ExportPrivateKeyParam instance
+         */
+        ExportPrivateKeyParam.create = function create(properties) {
+            return new ExportPrivateKeyParam(properties);
+        };
+
+        /**
+         * Encodes the specified ExportPrivateKeyParam message. Does not implicitly {@link api.ExportPrivateKeyParam.verify|verify} messages.
+         * @function encode
+         * @memberof api.ExportPrivateKeyParam
+         * @static
+         * @param {api.IExportPrivateKeyParam} message ExportPrivateKeyParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        ExportPrivateKeyParam.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+            if (message.password != null && message.hasOwnProperty("password"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.password);
+            if (message.chainType != null && message.hasOwnProperty("chainType"))
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.chainType);
+            if (message.network != null && message.hasOwnProperty("network"))
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.network);
+            if (message.mainAddress != null && message.hasOwnProperty("mainAddress"))
+                writer.uint32(/* id 5, wireType 2 =*/42).string(message.mainAddress);
+            if (message.path != null && message.hasOwnProperty("path"))
+                writer.uint32(/* id 6, wireType 2 =*/50).string(message.path);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified ExportPrivateKeyParam message, length delimited. Does not implicitly {@link api.ExportPrivateKeyParam.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.ExportPrivateKeyParam
+         * @static
+         * @param {api.IExportPrivateKeyParam} message ExportPrivateKeyParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        ExportPrivateKeyParam.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes an ExportPrivateKeyParam message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.ExportPrivateKeyParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.ExportPrivateKeyParam} ExportPrivateKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        ExportPrivateKeyParam.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.ExportPrivateKeyParam();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                case 2:
+                    message.password = reader.string();
+                    break;
+                case 3:
+                    message.chainType = reader.string();
+                    break;
+                case 4:
+                    message.network = reader.string();
+                    break;
+                case 5:
+                    message.mainAddress = reader.string();
+                    break;
+                case 6:
+                    message.path = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes an ExportPrivateKeyParam message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.ExportPrivateKeyParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.ExportPrivateKeyParam} ExportPrivateKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        ExportPrivateKeyParam.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies an ExportPrivateKeyParam message.
+         * @function verify
+         * @memberof api.ExportPrivateKeyParam
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        ExportPrivateKeyParam.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.id != null && message.hasOwnProperty("id"))
+                if (!$util.isString(message.id))
+                    return "id: string expected";
+            if (message.password != null && message.hasOwnProperty("password"))
+                if (!$util.isString(message.password))
+                    return "password: string expected";
+            if (message.chainType != null && message.hasOwnProperty("chainType"))
+                if (!$util.isString(message.chainType))
+                    return "chainType: string expected";
+            if (message.network != null && message.hasOwnProperty("network"))
+                if (!$util.isString(message.network))
+                    return "network: string expected";
+            if (message.mainAddress != null && message.hasOwnProperty("mainAddress"))
+                if (!$util.isString(message.mainAddress))
+                    return "mainAddress: string expected";
+            if (message.path != null && message.hasOwnProperty("path"))
+                if (!$util.isString(message.path))
+                    return "path: string expected";
+            return null;
+        };
+
+        /**
+         * Creates an ExportPrivateKeyParam message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.ExportPrivateKeyParam
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.ExportPrivateKeyParam} ExportPrivateKeyParam
+         */
+        ExportPrivateKeyParam.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.ExportPrivateKeyParam)
+                return object;
+            var message = new $root.api.ExportPrivateKeyParam();
+            if (object.id != null)
+                message.id = String(object.id);
+            if (object.password != null)
+                message.password = String(object.password);
+            if (object.chainType != null)
+                message.chainType = String(object.chainType);
+            if (object.network != null)
+                message.network = String(object.network);
+            if (object.mainAddress != null)
+                message.mainAddress = String(object.mainAddress);
+            if (object.path != null)
+                message.path = String(object.path);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from an ExportPrivateKeyParam message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.ExportPrivateKeyParam
+         * @static
+         * @param {api.ExportPrivateKeyParam} message ExportPrivateKeyParam
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        ExportPrivateKeyParam.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.id = "";
+                object.password = "";
+                object.chainType = "";
+                object.network = "";
+                object.mainAddress = "";
+                object.path = "";
+            }
+            if (message.id != null && message.hasOwnProperty("id"))
+                object.id = message.id;
+            if (message.password != null && message.hasOwnProperty("password"))
+                object.password = message.password;
+            if (message.chainType != null && message.hasOwnProperty("chainType"))
+                object.chainType = message.chainType;
+            if (message.network != null && message.hasOwnProperty("network"))
+                object.network = message.network;
+            if (message.mainAddress != null && message.hasOwnProperty("mainAddress"))
+                object.mainAddress = message.mainAddress;
+            if (message.path != null && message.hasOwnProperty("path"))
+                object.path = message.path;
+            return object;
+        };
+
+        /**
+         * Converts this ExportPrivateKeyParam to JSON.
+         * @function toJSON
+         * @memberof api.ExportPrivateKeyParam
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        ExportPrivateKeyParam.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return ExportPrivateKeyParam;
+    })();
+
+    api.WalletKeyParam = (function() {
+
+        /**
+         * Properties of a WalletKeyParam.
+         * @memberof api
+         * @interface IWalletKeyParam
+         * @property {string|null} [id] WalletKeyParam id
+         * @property {string|null} [password] WalletKeyParam password
+         */
+
+        /**
+         * Constructs a new WalletKeyParam.
+         * @memberof api
+         * @classdesc verify the password of the keystore
+         * @implements IWalletKeyParam
+         * @constructor
+         * @param {api.IWalletKeyParam=} [properties] Properties to set
+         */
+        function WalletKeyParam(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * WalletKeyParam id.
+         * @member {string} id
+         * @memberof api.WalletKeyParam
+         * @instance
+         */
+        WalletKeyParam.prototype.id = "";
+
+        /**
+         * WalletKeyParam password.
+         * @member {string} password
+         * @memberof api.WalletKeyParam
+         * @instance
+         */
+        WalletKeyParam.prototype.password = "";
+
+        /**
+         * Creates a new WalletKeyParam instance using the specified properties.
+         * @function create
+         * @memberof api.WalletKeyParam
+         * @static
+         * @param {api.IWalletKeyParam=} [properties] Properties to set
+         * @returns {api.WalletKeyParam} WalletKeyParam instance
+         */
+        WalletKeyParam.create = function create(properties) {
+            return new WalletKeyParam(properties);
+        };
+
+        /**
+         * Encodes the specified WalletKeyParam message. Does not implicitly {@link api.WalletKeyParam.verify|verify} messages.
+         * @function encode
+         * @memberof api.WalletKeyParam
+         * @static
+         * @param {api.IWalletKeyParam} message WalletKeyParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        WalletKeyParam.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+            if (message.password != null && message.hasOwnProperty("password"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.password);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified WalletKeyParam message, length delimited. Does not implicitly {@link api.WalletKeyParam.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.WalletKeyParam
+         * @static
+         * @param {api.IWalletKeyParam} message WalletKeyParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        WalletKeyParam.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a WalletKeyParam message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.WalletKeyParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.WalletKeyParam} WalletKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        WalletKeyParam.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.WalletKeyParam();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                case 2:
+                    message.password = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a WalletKeyParam message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.WalletKeyParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.WalletKeyParam} WalletKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        WalletKeyParam.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a WalletKeyParam message.
+         * @function verify
+         * @memberof api.WalletKeyParam
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        WalletKeyParam.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.id != null && message.hasOwnProperty("id"))
+                if (!$util.isString(message.id))
+                    return "id: string expected";
+            if (message.password != null && message.hasOwnProperty("password"))
+                if (!$util.isString(message.password))
+                    return "password: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a WalletKeyParam message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.WalletKeyParam
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.WalletKeyParam} WalletKeyParam
+         */
+        WalletKeyParam.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.WalletKeyParam)
+                return object;
+            var message = new $root.api.WalletKeyParam();
+            if (object.id != null)
+                message.id = String(object.id);
+            if (object.password != null)
+                message.password = String(object.password);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a WalletKeyParam message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.WalletKeyParam
+         * @static
+         * @param {api.WalletKeyParam} message WalletKeyParam
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        WalletKeyParam.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.id = "";
+                object.password = "";
+            }
+            if (message.id != null && message.hasOwnProperty("id"))
+                object.id = message.id;
+            if (message.password != null && message.hasOwnProperty("password"))
+                object.password = message.password;
+            return object;
+        };
+
+        /**
+         * Converts this WalletKeyParam to JSON.
+         * @function toJSON
+         * @memberof api.WalletKeyParam
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        WalletKeyParam.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return WalletKeyParam;
+    })();
+
+    api.VerifyDerivedKeyParam = (function() {
+
+        /**
+         * Properties of a VerifyDerivedKeyParam.
+         * @memberof api
+         * @interface IVerifyDerivedKeyParam
+         * @property {string|null} [id] VerifyDerivedKeyParam id
+         * @property {string|null} [derivedKey] VerifyDerivedKeyParam derivedKey
+         */
+
+        /**
+         * Constructs a new VerifyDerivedKeyParam.
+         * @memberof api
+         * @classdesc Represents a VerifyDerivedKeyParam.
+         * @implements IVerifyDerivedKeyParam
+         * @constructor
+         * @param {api.IVerifyDerivedKeyParam=} [properties] Properties to set
+         */
+        function VerifyDerivedKeyParam(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * VerifyDerivedKeyParam id.
+         * @member {string} id
+         * @memberof api.VerifyDerivedKeyParam
+         * @instance
+         */
+        VerifyDerivedKeyParam.prototype.id = "";
+
+        /**
+         * VerifyDerivedKeyParam derivedKey.
+         * @member {string} derivedKey
+         * @memberof api.VerifyDerivedKeyParam
+         * @instance
+         */
+        VerifyDerivedKeyParam.prototype.derivedKey = "";
+
+        /**
+         * Creates a new VerifyDerivedKeyParam instance using the specified properties.
+         * @function create
+         * @memberof api.VerifyDerivedKeyParam
+         * @static
+         * @param {api.IVerifyDerivedKeyParam=} [properties] Properties to set
+         * @returns {api.VerifyDerivedKeyParam} VerifyDerivedKeyParam instance
+         */
+        VerifyDerivedKeyParam.create = function create(properties) {
+            return new VerifyDerivedKeyParam(properties);
+        };
+
+        /**
+         * Encodes the specified VerifyDerivedKeyParam message. Does not implicitly {@link api.VerifyDerivedKeyParam.verify|verify} messages.
+         * @function encode
+         * @memberof api.VerifyDerivedKeyParam
+         * @static
+         * @param {api.IVerifyDerivedKeyParam} message VerifyDerivedKeyParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        VerifyDerivedKeyParam.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.derivedKey);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified VerifyDerivedKeyParam message, length delimited. Does not implicitly {@link api.VerifyDerivedKeyParam.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.VerifyDerivedKeyParam
+         * @static
+         * @param {api.IVerifyDerivedKeyParam} message VerifyDerivedKeyParam message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        VerifyDerivedKeyParam.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a VerifyDerivedKeyParam message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.VerifyDerivedKeyParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.VerifyDerivedKeyParam} VerifyDerivedKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        VerifyDerivedKeyParam.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.VerifyDerivedKeyParam();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                case 2:
+                    message.derivedKey = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a VerifyDerivedKeyParam message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.VerifyDerivedKeyParam
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.VerifyDerivedKeyParam} VerifyDerivedKeyParam
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        VerifyDerivedKeyParam.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a VerifyDerivedKeyParam message.
+         * @function verify
+         * @memberof api.VerifyDerivedKeyParam
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        VerifyDerivedKeyParam.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.id != null && message.hasOwnProperty("id"))
+                if (!$util.isString(message.id))
+                    return "id: string expected";
+            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
+                if (!$util.isString(message.derivedKey))
+                    return "derivedKey: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a VerifyDerivedKeyParam message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.VerifyDerivedKeyParam
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.VerifyDerivedKeyParam} VerifyDerivedKeyParam
+         */
+        VerifyDerivedKeyParam.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.VerifyDerivedKeyParam)
+                return object;
+            var message = new $root.api.VerifyDerivedKeyParam();
+            if (object.id != null)
+                message.id = String(object.id);
+            if (object.derivedKey != null)
+                message.derivedKey = String(object.derivedKey);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a VerifyDerivedKeyParam message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.VerifyDerivedKeyParam
+         * @static
+         * @param {api.VerifyDerivedKeyParam} message VerifyDerivedKeyParam
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        VerifyDerivedKeyParam.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.id = "";
+                object.derivedKey = "";
+            }
+            if (message.id != null && message.hasOwnProperty("id"))
+                object.id = message.id;
+            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
+                object.derivedKey = message.derivedKey;
+            return object;
+        };
+
+        /**
+         * Converts this VerifyDerivedKeyParam to JSON.
+         * @function toJSON
+         * @memberof api.VerifyDerivedKeyParam
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        VerifyDerivedKeyParam.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return VerifyDerivedKeyParam;
+    })();
+
+    api.DerivedKeyResult = (function() {
+
+        /**
+         * Properties of a DerivedKeyResult.
+         * @memberof api
+         * @interface IDerivedKeyResult
+         * @property {string|null} [id] DerivedKeyResult id
+         * @property {string|null} [derivedKey] DerivedKeyResult derivedKey
+         */
+
+        /**
+         * Constructs a new DerivedKeyResult.
+         * @memberof api
+         * @classdesc Represents a DerivedKeyResult.
+         * @implements IDerivedKeyResult
+         * @constructor
+         * @param {api.IDerivedKeyResult=} [properties] Properties to set
+         */
+        function DerivedKeyResult(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * DerivedKeyResult id.
+         * @member {string} id
+         * @memberof api.DerivedKeyResult
+         * @instance
+         */
+        DerivedKeyResult.prototype.id = "";
+
+        /**
+         * DerivedKeyResult derivedKey.
+         * @member {string} derivedKey
+         * @memberof api.DerivedKeyResult
+         * @instance
+         */
+        DerivedKeyResult.prototype.derivedKey = "";
+
+        /**
+         * Creates a new DerivedKeyResult instance using the specified properties.
+         * @function create
+         * @memberof api.DerivedKeyResult
+         * @static
+         * @param {api.IDerivedKeyResult=} [properties] Properties to set
+         * @returns {api.DerivedKeyResult} DerivedKeyResult instance
+         */
+        DerivedKeyResult.create = function create(properties) {
+            return new DerivedKeyResult(properties);
+        };
+
+        /**
+         * Encodes the specified DerivedKeyResult message. Does not implicitly {@link api.DerivedKeyResult.verify|verify} messages.
+         * @function encode
+         * @memberof api.DerivedKeyResult
+         * @static
+         * @param {api.IDerivedKeyResult} message DerivedKeyResult message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        DerivedKeyResult.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.derivedKey);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified DerivedKeyResult message, length delimited. Does not implicitly {@link api.DerivedKeyResult.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.DerivedKeyResult
+         * @static
+         * @param {api.IDerivedKeyResult} message DerivedKeyResult message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        DerivedKeyResult.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a DerivedKeyResult message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.DerivedKeyResult
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.DerivedKeyResult} DerivedKeyResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        DerivedKeyResult.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.DerivedKeyResult();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                case 2:
+                    message.derivedKey = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a DerivedKeyResult message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.DerivedKeyResult
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.DerivedKeyResult} DerivedKeyResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        DerivedKeyResult.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a DerivedKeyResult message.
+         * @function verify
+         * @memberof api.DerivedKeyResult
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        DerivedKeyResult.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.id != null && message.hasOwnProperty("id"))
+                if (!$util.isString(message.id))
+                    return "id: string expected";
+            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
+                if (!$util.isString(message.derivedKey))
+                    return "derivedKey: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a DerivedKeyResult message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.DerivedKeyResult
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.DerivedKeyResult} DerivedKeyResult
+         */
+        DerivedKeyResult.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.DerivedKeyResult)
+                return object;
+            var message = new $root.api.DerivedKeyResult();
+            if (object.id != null)
+                message.id = String(object.id);
+            if (object.derivedKey != null)
+                message.derivedKey = String(object.derivedKey);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a DerivedKeyResult message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.DerivedKeyResult
+         * @static
+         * @param {api.DerivedKeyResult} message DerivedKeyResult
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        DerivedKeyResult.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.id = "";
+                object.derivedKey = "";
+            }
+            if (message.id != null && message.hasOwnProperty("id"))
+                object.id = message.id;
+            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
+                object.derivedKey = message.derivedKey;
+            return object;
+        };
+
+        /**
+         * Converts this DerivedKeyResult to JSON.
+         * @function toJSON
+         * @memberof api.DerivedKeyResult
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        DerivedKeyResult.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return DerivedKeyResult;
+    })();
+
+    api.CacheDerivedKeyResult = (function() {
+
+        /**
+         * Properties of a CacheDerivedKeyResult.
+         * @memberof api
+         * @interface ICacheDerivedKeyResult
+         * @property {string|null} [id] CacheDerivedKeyResult id
+         * @property {boolean|null} [enableDerivedKey] CacheDerivedKeyResult enableDerivedKey
+         * @property {string|null} [mode] CacheDerivedKeyResult mode
+         */
+
+        /**
+         * Constructs a new CacheDerivedKeyResult.
+         * @memberof api
+         * @classdesc Represents a CacheDerivedKeyResult.
+         * @implements ICacheDerivedKeyResult
+         * @constructor
+         * @param {api.ICacheDerivedKeyResult=} [properties] Properties to set
+         */
+        function CacheDerivedKeyResult(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * CacheDerivedKeyResult id.
+         * @member {string} id
+         * @memberof api.CacheDerivedKeyResult
+         * @instance
+         */
+        CacheDerivedKeyResult.prototype.id = "";
+
+        /**
+         * CacheDerivedKeyResult enableDerivedKey.
+         * @member {boolean} enableDerivedKey
+         * @memberof api.CacheDerivedKeyResult
+         * @instance
+         */
+        CacheDerivedKeyResult.prototype.enableDerivedKey = false;
+
+        /**
+         * CacheDerivedKeyResult mode.
+         * @member {string} mode
+         * @memberof api.CacheDerivedKeyResult
+         * @instance
+         */
+        CacheDerivedKeyResult.prototype.mode = "";
+
+        /**
+         * Creates a new CacheDerivedKeyResult instance using the specified properties.
+         * @function create
+         * @memberof api.CacheDerivedKeyResult
+         * @static
+         * @param {api.ICacheDerivedKeyResult=} [properties] Properties to set
+         * @returns {api.CacheDerivedKeyResult} CacheDerivedKeyResult instance
+         */
+        CacheDerivedKeyResult.create = function create(properties) {
+            return new CacheDerivedKeyResult(properties);
+        };
+
+        /**
+         * Encodes the specified CacheDerivedKeyResult message. Does not implicitly {@link api.CacheDerivedKeyResult.verify|verify} messages.
+         * @function encode
+         * @memberof api.CacheDerivedKeyResult
+         * @static
+         * @param {api.ICacheDerivedKeyResult} message CacheDerivedKeyResult message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        CacheDerivedKeyResult.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+            if (message.enableDerivedKey != null && message.hasOwnProperty("enableDerivedKey"))
+                writer.uint32(/* id 2, wireType 0 =*/16).bool(message.enableDerivedKey);
+            if (message.mode != null && message.hasOwnProperty("mode"))
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.mode);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified CacheDerivedKeyResult message, length delimited. Does not implicitly {@link api.CacheDerivedKeyResult.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.CacheDerivedKeyResult
+         * @static
+         * @param {api.ICacheDerivedKeyResult} message CacheDerivedKeyResult message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        CacheDerivedKeyResult.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a CacheDerivedKeyResult message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.CacheDerivedKeyResult
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.CacheDerivedKeyResult} CacheDerivedKeyResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        CacheDerivedKeyResult.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.CacheDerivedKeyResult();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                case 2:
+                    message.enableDerivedKey = reader.bool();
+                    break;
+                case 3:
+                    message.mode = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a CacheDerivedKeyResult message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.CacheDerivedKeyResult
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.CacheDerivedKeyResult} CacheDerivedKeyResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        CacheDerivedKeyResult.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a CacheDerivedKeyResult message.
+         * @function verify
+         * @memberof api.CacheDerivedKeyResult
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        CacheDerivedKeyResult.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.id != null && message.hasOwnProperty("id"))
+                if (!$util.isString(message.id))
+                    return "id: string expected";
+            if (message.enableDerivedKey != null && message.hasOwnProperty("enableDerivedKey"))
+                if (typeof message.enableDerivedKey !== "boolean")
+                    return "enableDerivedKey: boolean expected";
+            if (message.mode != null && message.hasOwnProperty("mode"))
+                if (!$util.isString(message.mode))
+                    return "mode: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a CacheDerivedKeyResult message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.CacheDerivedKeyResult
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.CacheDerivedKeyResult} CacheDerivedKeyResult
+         */
+        CacheDerivedKeyResult.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.CacheDerivedKeyResult)
+                return object;
+            var message = new $root.api.CacheDerivedKeyResult();
+            if (object.id != null)
+                message.id = String(object.id);
+            if (object.enableDerivedKey != null)
+                message.enableDerivedKey = Boolean(object.enableDerivedKey);
+            if (object.mode != null)
+                message.mode = String(object.mode);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a CacheDerivedKeyResult message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.CacheDerivedKeyResult
+         * @static
+         * @param {api.CacheDerivedKeyResult} message CacheDerivedKeyResult
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        CacheDerivedKeyResult.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.id = "";
+                object.enableDerivedKey = false;
+                object.mode = "";
+            }
+            if (message.id != null && message.hasOwnProperty("id"))
+                object.id = message.id;
+            if (message.enableDerivedKey != null && message.hasOwnProperty("enableDerivedKey"))
+                object.enableDerivedKey = message.enableDerivedKey;
+            if (message.mode != null && message.hasOwnProperty("mode"))
+                object.mode = message.mode;
+            return object;
+        };
+
+        /**
+         * Converts this CacheDerivedKeyResult to JSON.
+         * @function toJSON
+         * @memberof api.CacheDerivedKeyResult
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        CacheDerivedKeyResult.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return CacheDerivedKeyResult;
+    })();
+
+    api.WalletId = (function() {
+
+        /**
+         * Properties of a WalletId.
+         * @memberof api
+         * @interface IWalletId
+         * @property {string|null} [id] WalletId id
+         */
+
+        /**
+         * Constructs a new WalletId.
+         * @memberof api
+         * @classdesc Represents a WalletId.
+         * @implements IWalletId
+         * @constructor
+         * @param {api.IWalletId=} [properties] Properties to set
+         */
+        function WalletId(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * WalletId id.
+         * @member {string} id
+         * @memberof api.WalletId
+         * @instance
+         */
+        WalletId.prototype.id = "";
+
+        /**
+         * Creates a new WalletId instance using the specified properties.
+         * @function create
+         * @memberof api.WalletId
+         * @static
+         * @param {api.IWalletId=} [properties] Properties to set
+         * @returns {api.WalletId} WalletId instance
+         */
+        WalletId.create = function create(properties) {
+            return new WalletId(properties);
+        };
+
+        /**
+         * Encodes the specified WalletId message. Does not implicitly {@link api.WalletId.verify|verify} messages.
+         * @function encode
+         * @memberof api.WalletId
+         * @static
+         * @param {api.IWalletId} message WalletId message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        WalletId.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified WalletId message, length delimited. Does not implicitly {@link api.WalletId.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.WalletId
+         * @static
+         * @param {api.IWalletId} message WalletId message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        WalletId.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a WalletId message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.WalletId
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.WalletId} WalletId
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        WalletId.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.WalletId();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.id = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a WalletId message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.WalletId
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.WalletId} WalletId
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        WalletId.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a WalletId message.
+         * @function verify
+         * @memberof api.WalletId
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        WalletId.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.id != null && message.hasOwnProperty("id"))
+                if (!$util.isString(message.id))
+                    return "id: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a WalletId message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.WalletId
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.WalletId} WalletId
+         */
+        WalletId.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.WalletId)
+                return object;
+            var message = new $root.api.WalletId();
+            if (object.id != null)
+                message.id = String(object.id);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a WalletId message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.WalletId
+         * @static
+         * @param {api.WalletId} message WalletId
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        WalletId.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults)
+                object.id = "";
+            if (message.id != null && message.hasOwnProperty("id"))
+                object.id = message.id;
+            return object;
+        };
+
+        /**
+         * Converts this WalletId to JSON.
+         * @function toJSON
+         * @memberof api.WalletId
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        WalletId.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return WalletId;
+    })();
+
+    api.BiometricModeResult = (function() {
+
+        /**
+         * Properties of a BiometricModeResult.
+         * @memberof api
+         * @interface IBiometricModeResult
+         * @property {string|null} [mode] BiometricModeResult mode
+         */
+
+        /**
+         * Constructs a new BiometricModeResult.
+         * @memberof api
+         * @classdesc Represents a BiometricModeResult.
+         * @implements IBiometricModeResult
+         * @constructor
+         * @param {api.IBiometricModeResult=} [properties] Properties to set
+         */
+        function BiometricModeResult(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * BiometricModeResult mode.
+         * @member {string} mode
+         * @memberof api.BiometricModeResult
+         * @instance
+         */
+        BiometricModeResult.prototype.mode = "";
+
+        /**
+         * Creates a new BiometricModeResult instance using the specified properties.
+         * @function create
+         * @memberof api.BiometricModeResult
+         * @static
+         * @param {api.IBiometricModeResult=} [properties] Properties to set
+         * @returns {api.BiometricModeResult} BiometricModeResult instance
+         */
+        BiometricModeResult.create = function create(properties) {
+            return new BiometricModeResult(properties);
+        };
+
+        /**
+         * Encodes the specified BiometricModeResult message. Does not implicitly {@link api.BiometricModeResult.verify|verify} messages.
+         * @function encode
+         * @memberof api.BiometricModeResult
+         * @static
+         * @param {api.IBiometricModeResult} message BiometricModeResult message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        BiometricModeResult.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.mode != null && message.hasOwnProperty("mode"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.mode);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified BiometricModeResult message, length delimited. Does not implicitly {@link api.BiometricModeResult.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof api.BiometricModeResult
+         * @static
+         * @param {api.IBiometricModeResult} message BiometricModeResult message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        BiometricModeResult.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a BiometricModeResult message from the specified reader or buffer.
+         * @function decode
+         * @memberof api.BiometricModeResult
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {api.BiometricModeResult} BiometricModeResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        BiometricModeResult.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.BiometricModeResult();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.mode = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a BiometricModeResult message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof api.BiometricModeResult
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {api.BiometricModeResult} BiometricModeResult
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        BiometricModeResult.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a BiometricModeResult message.
+         * @function verify
+         * @memberof api.BiometricModeResult
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        BiometricModeResult.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.mode != null && message.hasOwnProperty("mode"))
+                if (!$util.isString(message.mode))
+                    return "mode: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a BiometricModeResult message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof api.BiometricModeResult
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {api.BiometricModeResult} BiometricModeResult
+         */
+        BiometricModeResult.fromObject = function fromObject(object) {
+            if (object instanceof $root.api.BiometricModeResult)
+                return object;
+            var message = new $root.api.BiometricModeResult();
+            if (object.mode != null)
+                message.mode = String(object.mode);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a BiometricModeResult message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof api.BiometricModeResult
+         * @static
+         * @param {api.BiometricModeResult} message BiometricModeResult
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        BiometricModeResult.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults)
+                object.mode = "";
+            if (message.mode != null && message.hasOwnProperty("mode"))
+                object.mode = message.mode;
+            return object;
+        };
+
+        /**
+         * Converts this BiometricModeResult to JSON.
+         * @function toJSON
+         * @memberof api.BiometricModeResult
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        BiometricModeResult.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return BiometricModeResult;
     })();
 
     api.HdStoreCreateParam = (function() {
@@ -3254,216 +4810,6 @@ $root.api = (function() {
         return PrivateKeyStoreExportParam;
     })();
 
-    api.WalletKeyParam = (function() {
-
-        /**
-         * Properties of a WalletKeyParam.
-         * @memberof api
-         * @interface IWalletKeyParam
-         * @property {string|null} [id] WalletKeyParam id
-         * @property {string|null} [password] WalletKeyParam password
-         */
-
-        /**
-         * Constructs a new WalletKeyParam.
-         * @memberof api
-         * @classdesc Represents a WalletKeyParam.
-         * @implements IWalletKeyParam
-         * @constructor
-         * @param {api.IWalletKeyParam=} [properties] Properties to set
-         */
-        function WalletKeyParam(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * WalletKeyParam id.
-         * @member {string} id
-         * @memberof api.WalletKeyParam
-         * @instance
-         */
-        WalletKeyParam.prototype.id = "";
-
-        /**
-         * WalletKeyParam password.
-         * @member {string} password
-         * @memberof api.WalletKeyParam
-         * @instance
-         */
-        WalletKeyParam.prototype.password = "";
-
-        /**
-         * Creates a new WalletKeyParam instance using the specified properties.
-         * @function create
-         * @memberof api.WalletKeyParam
-         * @static
-         * @param {api.IWalletKeyParam=} [properties] Properties to set
-         * @returns {api.WalletKeyParam} WalletKeyParam instance
-         */
-        WalletKeyParam.create = function create(properties) {
-            return new WalletKeyParam(properties);
-        };
-
-        /**
-         * Encodes the specified WalletKeyParam message. Does not implicitly {@link api.WalletKeyParam.verify|verify} messages.
-         * @function encode
-         * @memberof api.WalletKeyParam
-         * @static
-         * @param {api.IWalletKeyParam} message WalletKeyParam message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        WalletKeyParam.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.id != null && message.hasOwnProperty("id"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
-            if (message.password != null && message.hasOwnProperty("password"))
-                writer.uint32(/* id 2, wireType 2 =*/18).string(message.password);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified WalletKeyParam message, length delimited. Does not implicitly {@link api.WalletKeyParam.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof api.WalletKeyParam
-         * @static
-         * @param {api.IWalletKeyParam} message WalletKeyParam message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        WalletKeyParam.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a WalletKeyParam message from the specified reader or buffer.
-         * @function decode
-         * @memberof api.WalletKeyParam
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {api.WalletKeyParam} WalletKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        WalletKeyParam.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.WalletKeyParam();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.id = reader.string();
-                    break;
-                case 2:
-                    message.password = reader.string();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a WalletKeyParam message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof api.WalletKeyParam
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.WalletKeyParam} WalletKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        WalletKeyParam.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a WalletKeyParam message.
-         * @function verify
-         * @memberof api.WalletKeyParam
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        WalletKeyParam.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.id != null && message.hasOwnProperty("id"))
-                if (!$util.isString(message.id))
-                    return "id: string expected";
-            if (message.password != null && message.hasOwnProperty("password"))
-                if (!$util.isString(message.password))
-                    return "password: string expected";
-            return null;
-        };
-
-        /**
-         * Creates a WalletKeyParam message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof api.WalletKeyParam
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {api.WalletKeyParam} WalletKeyParam
-         */
-        WalletKeyParam.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.WalletKeyParam)
-                return object;
-            var message = new $root.api.WalletKeyParam();
-            if (object.id != null)
-                message.id = String(object.id);
-            if (object.password != null)
-                message.password = String(object.password);
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a WalletKeyParam message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof api.WalletKeyParam
-         * @static
-         * @param {api.WalletKeyParam} message WalletKeyParam
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        WalletKeyParam.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults) {
-                object.id = "";
-                object.password = "";
-            }
-            if (message.id != null && message.hasOwnProperty("id"))
-                object.id = message.id;
-            if (message.password != null && message.hasOwnProperty("password"))
-                object.password = message.password;
-            return object;
-        };
-
-        /**
-         * Converts this WalletKeyParam to JSON.
-         * @function toJSON
-         * @memberof api.WalletKeyParam
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        WalletKeyParam.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return WalletKeyParam;
-    })();
-
     api.KeystoreCommonExistsParam = (function() {
 
         /**
@@ -4092,6 +5438,7 @@ $root.api = (function() {
          * @interface ISignParam
          * @property {string|null} [id] SignParam id
          * @property {string|null} [password] SignParam password
+         * @property {string|null} [derivedKey] SignParam derivedKey
          * @property {string|null} [chainType] SignParam chainType
          * @property {string|null} [address] SignParam address
          * @property {google.protobuf.IAny|null} [input] SignParam input
@@ -4129,6 +5476,14 @@ $root.api = (function() {
         SignParam.prototype.password = "";
 
         /**
+         * SignParam derivedKey.
+         * @member {string} derivedKey
+         * @memberof api.SignParam
+         * @instance
+         */
+        SignParam.prototype.derivedKey = "";
+
+        /**
          * SignParam chainType.
          * @member {string} chainType
          * @memberof api.SignParam
@@ -4151,6 +5506,20 @@ $root.api = (function() {
          * @instance
          */
         SignParam.prototype.input = null;
+
+        // OneOf field names bound to virtual getters and setters
+        var $oneOfFields;
+
+        /**
+         * SignParam key.
+         * @member {"password"|"derivedKey"|undefined} key
+         * @memberof api.SignParam
+         * @instance
+         */
+        Object.defineProperty(SignParam.prototype, "key", {
+            get: $util.oneOfGetter($oneOfFields = ["password", "derivedKey"]),
+            set: $util.oneOfSetter($oneOfFields)
+        });
 
         /**
          * Creates a new SignParam instance using the specified properties.
@@ -4180,12 +5549,14 @@ $root.api = (function() {
                 writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
             if (message.password != null && message.hasOwnProperty("password"))
                 writer.uint32(/* id 2, wireType 2 =*/18).string(message.password);
+            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
+                writer.uint32(/* id 3, wireType 2 =*/26).string(message.derivedKey);
             if (message.chainType != null && message.hasOwnProperty("chainType"))
-                writer.uint32(/* id 3, wireType 2 =*/26).string(message.chainType);
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.chainType);
             if (message.address != null && message.hasOwnProperty("address"))
-                writer.uint32(/* id 4, wireType 2 =*/34).string(message.address);
+                writer.uint32(/* id 5, wireType 2 =*/42).string(message.address);
             if (message.input != null && message.hasOwnProperty("input"))
-                $root.google.protobuf.Any.encode(message.input, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
+                $root.google.protobuf.Any.encode(message.input, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
             return writer;
         };
 
@@ -4227,12 +5598,15 @@ $root.api = (function() {
                     message.password = reader.string();
                     break;
                 case 3:
-                    message.chainType = reader.string();
+                    message.derivedKey = reader.string();
                     break;
                 case 4:
-                    message.address = reader.string();
+                    message.chainType = reader.string();
                     break;
                 case 5:
+                    message.address = reader.string();
+                    break;
+                case 6:
                     message.input = $root.google.protobuf.Any.decode(reader, reader.uint32());
                     break;
                 default:
@@ -4270,12 +5644,22 @@ $root.api = (function() {
         SignParam.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
+            var properties = {};
             if (message.id != null && message.hasOwnProperty("id"))
                 if (!$util.isString(message.id))
                     return "id: string expected";
-            if (message.password != null && message.hasOwnProperty("password"))
+            if (message.password != null && message.hasOwnProperty("password")) {
+                properties.key = 1;
                 if (!$util.isString(message.password))
                     return "password: string expected";
+            }
+            if (message.derivedKey != null && message.hasOwnProperty("derivedKey")) {
+                if (properties.key === 1)
+                    return "key: multiple values";
+                properties.key = 1;
+                if (!$util.isString(message.derivedKey))
+                    return "derivedKey: string expected";
+            }
             if (message.chainType != null && message.hasOwnProperty("chainType"))
                 if (!$util.isString(message.chainType))
                     return "chainType: string expected";
@@ -4306,6 +5690,8 @@ $root.api = (function() {
                 message.id = String(object.id);
             if (object.password != null)
                 message.password = String(object.password);
+            if (object.derivedKey != null)
+                message.derivedKey = String(object.derivedKey);
             if (object.chainType != null)
                 message.chainType = String(object.chainType);
             if (object.address != null)
@@ -4333,15 +5719,22 @@ $root.api = (function() {
             var object = {};
             if (options.defaults) {
                 object.id = "";
-                object.password = "";
                 object.chainType = "";
                 object.address = "";
                 object.input = null;
             }
             if (message.id != null && message.hasOwnProperty("id"))
                 object.id = message.id;
-            if (message.password != null && message.hasOwnProperty("password"))
+            if (message.password != null && message.hasOwnProperty("password")) {
                 object.password = message.password;
+                if (options.oneofs)
+                    object.key = "password";
+            }
+            if (message.derivedKey != null && message.hasOwnProperty("derivedKey")) {
+                object.derivedKey = message.derivedKey;
+                if (options.oneofs)
+                    object.key = "derivedKey";
+            }
             if (message.chainType != null && message.hasOwnProperty("chainType"))
                 object.chainType = message.chainType;
             if (message.address != null && message.hasOwnProperty("address"))
@@ -5925,658 +7318,6 @@ $root.api = (function() {
         };
 
         return HdStoreExtendedPublicKeyResponse;
-    })();
-
-    api.CacheDerivedKeyParam = (function() {
-
-        /**
-         * Properties of a CacheDerivedKeyParam.
-         * @memberof api
-         * @interface ICacheDerivedKeyParam
-         * @property {string|null} [id] CacheDerivedKeyParam id
-         * @property {string|null} [derivedKey] CacheDerivedKeyParam derivedKey
-         * @property {string|null} [tempPassword] CacheDerivedKeyParam tempPassword
-         */
-
-        /**
-         * Constructs a new CacheDerivedKeyParam.
-         * @memberof api
-         * @classdesc Represents a CacheDerivedKeyParam.
-         * @implements ICacheDerivedKeyParam
-         * @constructor
-         * @param {api.ICacheDerivedKeyParam=} [properties] Properties to set
-         */
-        function CacheDerivedKeyParam(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * CacheDerivedKeyParam id.
-         * @member {string} id
-         * @memberof api.CacheDerivedKeyParam
-         * @instance
-         */
-        CacheDerivedKeyParam.prototype.id = "";
-
-        /**
-         * CacheDerivedKeyParam derivedKey.
-         * @member {string} derivedKey
-         * @memberof api.CacheDerivedKeyParam
-         * @instance
-         */
-        CacheDerivedKeyParam.prototype.derivedKey = "";
-
-        /**
-         * CacheDerivedKeyParam tempPassword.
-         * @member {string} tempPassword
-         * @memberof api.CacheDerivedKeyParam
-         * @instance
-         */
-        CacheDerivedKeyParam.prototype.tempPassword = "";
-
-        /**
-         * Creates a new CacheDerivedKeyParam instance using the specified properties.
-         * @function create
-         * @memberof api.CacheDerivedKeyParam
-         * @static
-         * @param {api.ICacheDerivedKeyParam=} [properties] Properties to set
-         * @returns {api.CacheDerivedKeyParam} CacheDerivedKeyParam instance
-         */
-        CacheDerivedKeyParam.create = function create(properties) {
-            return new CacheDerivedKeyParam(properties);
-        };
-
-        /**
-         * Encodes the specified CacheDerivedKeyParam message. Does not implicitly {@link api.CacheDerivedKeyParam.verify|verify} messages.
-         * @function encode
-         * @memberof api.CacheDerivedKeyParam
-         * @static
-         * @param {api.ICacheDerivedKeyParam} message CacheDerivedKeyParam message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        CacheDerivedKeyParam.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.id != null && message.hasOwnProperty("id"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
-            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
-                writer.uint32(/* id 2, wireType 2 =*/18).string(message.derivedKey);
-            if (message.tempPassword != null && message.hasOwnProperty("tempPassword"))
-                writer.uint32(/* id 3, wireType 2 =*/26).string(message.tempPassword);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified CacheDerivedKeyParam message, length delimited. Does not implicitly {@link api.CacheDerivedKeyParam.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof api.CacheDerivedKeyParam
-         * @static
-         * @param {api.ICacheDerivedKeyParam} message CacheDerivedKeyParam message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        CacheDerivedKeyParam.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a CacheDerivedKeyParam message from the specified reader or buffer.
-         * @function decode
-         * @memberof api.CacheDerivedKeyParam
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {api.CacheDerivedKeyParam} CacheDerivedKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        CacheDerivedKeyParam.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.CacheDerivedKeyParam();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.id = reader.string();
-                    break;
-                case 2:
-                    message.derivedKey = reader.string();
-                    break;
-                case 3:
-                    message.tempPassword = reader.string();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a CacheDerivedKeyParam message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof api.CacheDerivedKeyParam
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.CacheDerivedKeyParam} CacheDerivedKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        CacheDerivedKeyParam.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a CacheDerivedKeyParam message.
-         * @function verify
-         * @memberof api.CacheDerivedKeyParam
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        CacheDerivedKeyParam.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.id != null && message.hasOwnProperty("id"))
-                if (!$util.isString(message.id))
-                    return "id: string expected";
-            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
-                if (!$util.isString(message.derivedKey))
-                    return "derivedKey: string expected";
-            if (message.tempPassword != null && message.hasOwnProperty("tempPassword"))
-                if (!$util.isString(message.tempPassword))
-                    return "tempPassword: string expected";
-            return null;
-        };
-
-        /**
-         * Creates a CacheDerivedKeyParam message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof api.CacheDerivedKeyParam
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {api.CacheDerivedKeyParam} CacheDerivedKeyParam
-         */
-        CacheDerivedKeyParam.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.CacheDerivedKeyParam)
-                return object;
-            var message = new $root.api.CacheDerivedKeyParam();
-            if (object.id != null)
-                message.id = String(object.id);
-            if (object.derivedKey != null)
-                message.derivedKey = String(object.derivedKey);
-            if (object.tempPassword != null)
-                message.tempPassword = String(object.tempPassword);
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a CacheDerivedKeyParam message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof api.CacheDerivedKeyParam
-         * @static
-         * @param {api.CacheDerivedKeyParam} message CacheDerivedKeyParam
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        CacheDerivedKeyParam.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults) {
-                object.id = "";
-                object.derivedKey = "";
-                object.tempPassword = "";
-            }
-            if (message.id != null && message.hasOwnProperty("id"))
-                object.id = message.id;
-            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
-                object.derivedKey = message.derivedKey;
-            if (message.tempPassword != null && message.hasOwnProperty("tempPassword"))
-                object.tempPassword = message.tempPassword;
-            return object;
-        };
-
-        /**
-         * Converts this CacheDerivedKeyParam to JSON.
-         * @function toJSON
-         * @memberof api.CacheDerivedKeyParam
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        CacheDerivedKeyParam.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return CacheDerivedKeyParam;
-    })();
-
-    api.VerifyDerivedKeyParam = (function() {
-
-        /**
-         * Properties of a VerifyDerivedKeyParam.
-         * @memberof api
-         * @interface IVerifyDerivedKeyParam
-         * @property {string|null} [id] VerifyDerivedKeyParam id
-         * @property {string|null} [derivedKey] VerifyDerivedKeyParam derivedKey
-         */
-
-        /**
-         * Constructs a new VerifyDerivedKeyParam.
-         * @memberof api
-         * @classdesc Represents a VerifyDerivedKeyParam.
-         * @implements IVerifyDerivedKeyParam
-         * @constructor
-         * @param {api.IVerifyDerivedKeyParam=} [properties] Properties to set
-         */
-        function VerifyDerivedKeyParam(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * VerifyDerivedKeyParam id.
-         * @member {string} id
-         * @memberof api.VerifyDerivedKeyParam
-         * @instance
-         */
-        VerifyDerivedKeyParam.prototype.id = "";
-
-        /**
-         * VerifyDerivedKeyParam derivedKey.
-         * @member {string} derivedKey
-         * @memberof api.VerifyDerivedKeyParam
-         * @instance
-         */
-        VerifyDerivedKeyParam.prototype.derivedKey = "";
-
-        /**
-         * Creates a new VerifyDerivedKeyParam instance using the specified properties.
-         * @function create
-         * @memberof api.VerifyDerivedKeyParam
-         * @static
-         * @param {api.IVerifyDerivedKeyParam=} [properties] Properties to set
-         * @returns {api.VerifyDerivedKeyParam} VerifyDerivedKeyParam instance
-         */
-        VerifyDerivedKeyParam.create = function create(properties) {
-            return new VerifyDerivedKeyParam(properties);
-        };
-
-        /**
-         * Encodes the specified VerifyDerivedKeyParam message. Does not implicitly {@link api.VerifyDerivedKeyParam.verify|verify} messages.
-         * @function encode
-         * @memberof api.VerifyDerivedKeyParam
-         * @static
-         * @param {api.IVerifyDerivedKeyParam} message VerifyDerivedKeyParam message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        VerifyDerivedKeyParam.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.id != null && message.hasOwnProperty("id"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
-            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
-                writer.uint32(/* id 2, wireType 2 =*/18).string(message.derivedKey);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified VerifyDerivedKeyParam message, length delimited. Does not implicitly {@link api.VerifyDerivedKeyParam.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof api.VerifyDerivedKeyParam
-         * @static
-         * @param {api.IVerifyDerivedKeyParam} message VerifyDerivedKeyParam message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        VerifyDerivedKeyParam.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a VerifyDerivedKeyParam message from the specified reader or buffer.
-         * @function decode
-         * @memberof api.VerifyDerivedKeyParam
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {api.VerifyDerivedKeyParam} VerifyDerivedKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        VerifyDerivedKeyParam.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.VerifyDerivedKeyParam();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.id = reader.string();
-                    break;
-                case 2:
-                    message.derivedKey = reader.string();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a VerifyDerivedKeyParam message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof api.VerifyDerivedKeyParam
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.VerifyDerivedKeyParam} VerifyDerivedKeyParam
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        VerifyDerivedKeyParam.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a VerifyDerivedKeyParam message.
-         * @function verify
-         * @memberof api.VerifyDerivedKeyParam
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        VerifyDerivedKeyParam.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.id != null && message.hasOwnProperty("id"))
-                if (!$util.isString(message.id))
-                    return "id: string expected";
-            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
-                if (!$util.isString(message.derivedKey))
-                    return "derivedKey: string expected";
-            return null;
-        };
-
-        /**
-         * Creates a VerifyDerivedKeyParam message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof api.VerifyDerivedKeyParam
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {api.VerifyDerivedKeyParam} VerifyDerivedKeyParam
-         */
-        VerifyDerivedKeyParam.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.VerifyDerivedKeyParam)
-                return object;
-            var message = new $root.api.VerifyDerivedKeyParam();
-            if (object.id != null)
-                message.id = String(object.id);
-            if (object.derivedKey != null)
-                message.derivedKey = String(object.derivedKey);
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a VerifyDerivedKeyParam message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof api.VerifyDerivedKeyParam
-         * @static
-         * @param {api.VerifyDerivedKeyParam} message VerifyDerivedKeyParam
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        VerifyDerivedKeyParam.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults) {
-                object.id = "";
-                object.derivedKey = "";
-            }
-            if (message.id != null && message.hasOwnProperty("id"))
-                object.id = message.id;
-            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
-                object.derivedKey = message.derivedKey;
-            return object;
-        };
-
-        /**
-         * Converts this VerifyDerivedKeyParam to JSON.
-         * @function toJSON
-         * @memberof api.VerifyDerivedKeyParam
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        VerifyDerivedKeyParam.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return VerifyDerivedKeyParam;
-    })();
-
-    api.DerivedKeyResult = (function() {
-
-        /**
-         * Properties of a DerivedKeyResult.
-         * @memberof api
-         * @interface IDerivedKeyResult
-         * @property {string|null} [id] DerivedKeyResult id
-         * @property {string|null} [derivedKey] DerivedKeyResult derivedKey
-         */
-
-        /**
-         * Constructs a new DerivedKeyResult.
-         * @memberof api
-         * @classdesc Represents a DerivedKeyResult.
-         * @implements IDerivedKeyResult
-         * @constructor
-         * @param {api.IDerivedKeyResult=} [properties] Properties to set
-         */
-        function DerivedKeyResult(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * DerivedKeyResult id.
-         * @member {string} id
-         * @memberof api.DerivedKeyResult
-         * @instance
-         */
-        DerivedKeyResult.prototype.id = "";
-
-        /**
-         * DerivedKeyResult derivedKey.
-         * @member {string} derivedKey
-         * @memberof api.DerivedKeyResult
-         * @instance
-         */
-        DerivedKeyResult.prototype.derivedKey = "";
-
-        /**
-         * Creates a new DerivedKeyResult instance using the specified properties.
-         * @function create
-         * @memberof api.DerivedKeyResult
-         * @static
-         * @param {api.IDerivedKeyResult=} [properties] Properties to set
-         * @returns {api.DerivedKeyResult} DerivedKeyResult instance
-         */
-        DerivedKeyResult.create = function create(properties) {
-            return new DerivedKeyResult(properties);
-        };
-
-        /**
-         * Encodes the specified DerivedKeyResult message. Does not implicitly {@link api.DerivedKeyResult.verify|verify} messages.
-         * @function encode
-         * @memberof api.DerivedKeyResult
-         * @static
-         * @param {api.IDerivedKeyResult} message DerivedKeyResult message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        DerivedKeyResult.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.id != null && message.hasOwnProperty("id"))
-                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
-            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
-                writer.uint32(/* id 2, wireType 2 =*/18).string(message.derivedKey);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified DerivedKeyResult message, length delimited. Does not implicitly {@link api.DerivedKeyResult.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof api.DerivedKeyResult
-         * @static
-         * @param {api.IDerivedKeyResult} message DerivedKeyResult message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        DerivedKeyResult.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a DerivedKeyResult message from the specified reader or buffer.
-         * @function decode
-         * @memberof api.DerivedKeyResult
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {api.DerivedKeyResult} DerivedKeyResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        DerivedKeyResult.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.DerivedKeyResult();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.id = reader.string();
-                    break;
-                case 2:
-                    message.derivedKey = reader.string();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a DerivedKeyResult message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof api.DerivedKeyResult
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {api.DerivedKeyResult} DerivedKeyResult
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        DerivedKeyResult.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a DerivedKeyResult message.
-         * @function verify
-         * @memberof api.DerivedKeyResult
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        DerivedKeyResult.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.id != null && message.hasOwnProperty("id"))
-                if (!$util.isString(message.id))
-                    return "id: string expected";
-            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
-                if (!$util.isString(message.derivedKey))
-                    return "derivedKey: string expected";
-            return null;
-        };
-
-        /**
-         * Creates a DerivedKeyResult message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof api.DerivedKeyResult
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {api.DerivedKeyResult} DerivedKeyResult
-         */
-        DerivedKeyResult.fromObject = function fromObject(object) {
-            if (object instanceof $root.api.DerivedKeyResult)
-                return object;
-            var message = new $root.api.DerivedKeyResult();
-            if (object.id != null)
-                message.id = String(object.id);
-            if (object.derivedKey != null)
-                message.derivedKey = String(object.derivedKey);
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a DerivedKeyResult message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof api.DerivedKeyResult
-         * @static
-         * @param {api.DerivedKeyResult} message DerivedKeyResult
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        DerivedKeyResult.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults) {
-                object.id = "";
-                object.derivedKey = "";
-            }
-            if (message.id != null && message.hasOwnProperty("id"))
-                object.id = message.id;
-            if (message.derivedKey != null && message.hasOwnProperty("derivedKey"))
-                object.derivedKey = message.derivedKey;
-            return object;
-        };
-
-        /**
-         * Converts this DerivedKeyResult to JSON.
-         * @function toJSON
-         * @memberof api.DerivedKeyResult
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        DerivedKeyResult.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return DerivedKeyResult;
     })();
 
     return api;
@@ -9493,6 +10234,380 @@ $root.transaction = (function() {
         };
 
         return CkbTxOutput;
+    })();
+
+    transaction.SubstrateRawTxIn = (function() {
+
+        /**
+         * Properties of a SubstrateRawTxIn.
+         * @memberof transaction
+         * @interface ISubstrateRawTxIn
+         * @property {string|null} [rawData] SubstrateRawTxIn rawData
+         */
+
+        /**
+         * Constructs a new SubstrateRawTxIn.
+         * @memberof transaction
+         * @classdesc Represents a SubstrateRawTxIn.
+         * @implements ISubstrateRawTxIn
+         * @constructor
+         * @param {transaction.ISubstrateRawTxIn=} [properties] Properties to set
+         */
+        function SubstrateRawTxIn(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * SubstrateRawTxIn rawData.
+         * @member {string} rawData
+         * @memberof transaction.SubstrateRawTxIn
+         * @instance
+         */
+        SubstrateRawTxIn.prototype.rawData = "";
+
+        /**
+         * Creates a new SubstrateRawTxIn instance using the specified properties.
+         * @function create
+         * @memberof transaction.SubstrateRawTxIn
+         * @static
+         * @param {transaction.ISubstrateRawTxIn=} [properties] Properties to set
+         * @returns {transaction.SubstrateRawTxIn} SubstrateRawTxIn instance
+         */
+        SubstrateRawTxIn.create = function create(properties) {
+            return new SubstrateRawTxIn(properties);
+        };
+
+        /**
+         * Encodes the specified SubstrateRawTxIn message. Does not implicitly {@link transaction.SubstrateRawTxIn.verify|verify} messages.
+         * @function encode
+         * @memberof transaction.SubstrateRawTxIn
+         * @static
+         * @param {transaction.ISubstrateRawTxIn} message SubstrateRawTxIn message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        SubstrateRawTxIn.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.rawData != null && message.hasOwnProperty("rawData"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.rawData);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified SubstrateRawTxIn message, length delimited. Does not implicitly {@link transaction.SubstrateRawTxIn.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof transaction.SubstrateRawTxIn
+         * @static
+         * @param {transaction.ISubstrateRawTxIn} message SubstrateRawTxIn message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        SubstrateRawTxIn.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a SubstrateRawTxIn message from the specified reader or buffer.
+         * @function decode
+         * @memberof transaction.SubstrateRawTxIn
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {transaction.SubstrateRawTxIn} SubstrateRawTxIn
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        SubstrateRawTxIn.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.transaction.SubstrateRawTxIn();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.rawData = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a SubstrateRawTxIn message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof transaction.SubstrateRawTxIn
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {transaction.SubstrateRawTxIn} SubstrateRawTxIn
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        SubstrateRawTxIn.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a SubstrateRawTxIn message.
+         * @function verify
+         * @memberof transaction.SubstrateRawTxIn
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        SubstrateRawTxIn.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.rawData != null && message.hasOwnProperty("rawData"))
+                if (!$util.isString(message.rawData))
+                    return "rawData: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a SubstrateRawTxIn message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof transaction.SubstrateRawTxIn
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {transaction.SubstrateRawTxIn} SubstrateRawTxIn
+         */
+        SubstrateRawTxIn.fromObject = function fromObject(object) {
+            if (object instanceof $root.transaction.SubstrateRawTxIn)
+                return object;
+            var message = new $root.transaction.SubstrateRawTxIn();
+            if (object.rawData != null)
+                message.rawData = String(object.rawData);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a SubstrateRawTxIn message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof transaction.SubstrateRawTxIn
+         * @static
+         * @param {transaction.SubstrateRawTxIn} message SubstrateRawTxIn
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        SubstrateRawTxIn.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults)
+                object.rawData = "";
+            if (message.rawData != null && message.hasOwnProperty("rawData"))
+                object.rawData = message.rawData;
+            return object;
+        };
+
+        /**
+         * Converts this SubstrateRawTxIn to JSON.
+         * @function toJSON
+         * @memberof transaction.SubstrateRawTxIn
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        SubstrateRawTxIn.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return SubstrateRawTxIn;
+    })();
+
+    transaction.SubstrateTxOut = (function() {
+
+        /**
+         * Properties of a SubstrateTxOut.
+         * @memberof transaction
+         * @interface ISubstrateTxOut
+         * @property {string|null} [signature] SubstrateTxOut signature
+         */
+
+        /**
+         * Constructs a new SubstrateTxOut.
+         * @memberof transaction
+         * @classdesc Represents a SubstrateTxOut.
+         * @implements ISubstrateTxOut
+         * @constructor
+         * @param {transaction.ISubstrateTxOut=} [properties] Properties to set
+         */
+        function SubstrateTxOut(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * SubstrateTxOut signature.
+         * @member {string} signature
+         * @memberof transaction.SubstrateTxOut
+         * @instance
+         */
+        SubstrateTxOut.prototype.signature = "";
+
+        /**
+         * Creates a new SubstrateTxOut instance using the specified properties.
+         * @function create
+         * @memberof transaction.SubstrateTxOut
+         * @static
+         * @param {transaction.ISubstrateTxOut=} [properties] Properties to set
+         * @returns {transaction.SubstrateTxOut} SubstrateTxOut instance
+         */
+        SubstrateTxOut.create = function create(properties) {
+            return new SubstrateTxOut(properties);
+        };
+
+        /**
+         * Encodes the specified SubstrateTxOut message. Does not implicitly {@link transaction.SubstrateTxOut.verify|verify} messages.
+         * @function encode
+         * @memberof transaction.SubstrateTxOut
+         * @static
+         * @param {transaction.ISubstrateTxOut} message SubstrateTxOut message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        SubstrateTxOut.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.signature != null && message.hasOwnProperty("signature"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.signature);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified SubstrateTxOut message, length delimited. Does not implicitly {@link transaction.SubstrateTxOut.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof transaction.SubstrateTxOut
+         * @static
+         * @param {transaction.ISubstrateTxOut} message SubstrateTxOut message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        SubstrateTxOut.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a SubstrateTxOut message from the specified reader or buffer.
+         * @function decode
+         * @memberof transaction.SubstrateTxOut
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {transaction.SubstrateTxOut} SubstrateTxOut
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        SubstrateTxOut.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.transaction.SubstrateTxOut();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.signature = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a SubstrateTxOut message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof transaction.SubstrateTxOut
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {transaction.SubstrateTxOut} SubstrateTxOut
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        SubstrateTxOut.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a SubstrateTxOut message.
+         * @function verify
+         * @memberof transaction.SubstrateTxOut
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        SubstrateTxOut.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.signature != null && message.hasOwnProperty("signature"))
+                if (!$util.isString(message.signature))
+                    return "signature: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a SubstrateTxOut message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof transaction.SubstrateTxOut
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {transaction.SubstrateTxOut} SubstrateTxOut
+         */
+        SubstrateTxOut.fromObject = function fromObject(object) {
+            if (object instanceof $root.transaction.SubstrateTxOut)
+                return object;
+            var message = new $root.transaction.SubstrateTxOut();
+            if (object.signature != null)
+                message.signature = String(object.signature);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a SubstrateTxOut message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof transaction.SubstrateTxOut
+         * @static
+         * @param {transaction.SubstrateTxOut} message SubstrateTxOut
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        SubstrateTxOut.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults)
+                object.signature = "";
+            if (message.signature != null && message.hasOwnProperty("signature"))
+                object.signature = message.signature;
+            return object;
+        };
+
+        /**
+         * Converts this SubstrateTxOut to JSON.
+         * @function toJSON
+         * @memberof transaction.SubstrateTxOut
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        SubstrateTxOut.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return SubstrateTxOut;
     })();
 
     transaction.TronTxInput = (function() {

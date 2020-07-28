@@ -19,8 +19,9 @@ use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_tron::TrxAddress;
 
 use crate::api::keystore_common_derive_param::Derivation;
+use crate::api::sign_param::Key;
 use crate::api::{
-    AccountResponse, AccountsResponse, ExportPrivateKeyParam, HdStoreCreateParam,
+    AccountResponse, AccountsResponse, DerivedKeyResult, ExportPrivateKeyParam, HdStoreCreateParam,
     HdStoreImportParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
     KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
     PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
@@ -37,7 +38,12 @@ use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
+use tcx_crypto::KDF_ROUNDS;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
+use tcx_substrate::{
+    decode_substrate_keystore, encode_substrate_keystore, ExportSubstrateKeystoreResult,
+    SubstrateAddress, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
+};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
@@ -62,6 +68,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "LITECOIN" => keystore.derive_coin::<BtcForkAddress>(&coin_info),
         "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
         "NERVOS" => keystore.derive_coin::<CkbAddress>(&coin_info),
+        "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -71,11 +78,18 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
         file_dir,
         xpub_common_key,
         xpub_common_iv,
+        is_debug,
     } = InitTokenCoreXParam::decode(data).unwrap();
     *WALLET_FILE_DIR.write() = file_dir.to_string();
     *XPUB_COMMON_KEY_128.write() = xpub_common_key.to_string();
     *XPUB_COMMON_IV.write() = xpub_common_iv.to_string();
 
+    if is_debug {
+        *IS_DEBUG.write() = is_debug;
+        if is_debug {
+            *KDF_ROUNDS.write() = 1024;
+        }
+    }
     scan_keystores()?;
 
     Ok(())
@@ -328,8 +342,13 @@ pub(crate) fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     let pk_bytes = key_data_from_any_format_pk(&param.private_key)?;
     let private_key = hex::encode(pk_bytes);
-    let pk_store =
-        PrivateKeystore::from_private_key(&private_key, &param.password, Source::Private);
+    let meta = Metadata {
+        name: param.name,
+        password_hint: param.password_hint,
+        source: Source::Private,
+        ..Metadata::default()
+    };
+    let pk_store = PrivateKeystore::from_private_key(&private_key, &param.password, meta);
 
     let mut keystore = Keystore::PrivateKey(pk_store);
 
@@ -424,7 +443,7 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
 
     // private_key prefix is only about chain type and network
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
-    let value = if param.chain_type.as_str() == "TRON" {
+    let value = if ["TRON", "POLKADOT", "KUSAMA"].contains(&param.chain_type.as_str()) {
         Ok(pk_hex.to_string())
     } else {
         let bytes = hex::decode(pk_hex.to_string())?;
@@ -550,11 +569,18 @@ pub(crate) fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
+    let mut guard = match param.key.clone().unwrap() {
+        Key::Password(password) => KeystoreGuard::unlock_by_password(keystore, &password)?,
+        Key::DerivedKey(derived_key) => {
+            KeystoreGuard::unlock_by_derived_key(keystore, &derived_key)?
+        }
+    };
+
     match param.chain_type.as_str() {
         "BITCOINCASH" | "LITECOIN" => sign_btc_fork_transaction(&param, guard.keystore_mut()),
         "TRON" => sign_tron_tx(&param, guard.keystore_mut()),
         "NERVOS" => sign_nervos_ckb(&param, guard.keystore_mut()),
+        "POLKADOT" | "KUSAMA" => sign_substrate_tx_raw(&param, guard.keystore_mut()),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -563,9 +589,16 @@ pub(crate) fn sign_btc_fork_transaction(
     param: &SignParam,
     keystore: &mut Keystore,
 ) -> Result<Vec<u8>> {
-    let input: BtcForkTxInput =
-        BtcForkTxInput::decode(&param.input.as_ref().expect("tx_input").value.clone())
-            .expect("BitcoinForkTransactionInput");
+    let input: BtcForkTxInput = BtcForkTxInput::decode(
+        param
+            .input
+            .as_ref()
+            .expect("tx_input")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("BitcoinForkTransactionInput");
     let coin = coin_info_from_param(&param.chain_type, &input.network, &input.seg_wit)?;
 
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
@@ -591,17 +624,31 @@ pub(crate) fn sign_btc_fork_transaction(
 }
 
 pub(crate) fn sign_nervos_ckb(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
-    let input: CkbTxInput =
-        CkbTxInput::decode(&param.input.as_ref().expect("tx_iput").value.clone())
-            .expect("CkbTxInput");
+    let input: CkbTxInput = CkbTxInput::decode(
+        param
+            .input
+            .as_ref()
+            .expect("tx_iput")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("CkbTxInput");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
 }
 
 pub(crate) fn sign_tron_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
-    let input: TronTxInput =
-        TronTxInput::decode(&param.input.as_ref().expect("tx_input").value.clone())
-            .expect("TronTxInput");
+    let input: TronTxInput = TronTxInput::decode(
+        param
+            .input
+            .as_ref()
+            .expect("tx_input")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("TronTxInput");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
 
     encode_message(signed_tx)
@@ -616,14 +663,126 @@ pub(crate) fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
-    let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
-    let input: TronMessageInput =
-        TronMessageInput::decode(param.input.expect("TronMessageInput").value.clone())
-            .expect("TronMessageInput");
+    let mut guard = match param.key.unwrap() {
+        Key::Password(password) => KeystoreGuard::unlock_by_password(keystore, &password)?,
+        Key::DerivedKey(derived_key) => {
+            KeystoreGuard::unlock_by_derived_key(keystore, &derived_key)?
+        }
+    };
+
+    let input: TronMessageInput = TronMessageInput::decode(
+        param
+            .input
+            .expect("TronMessageInput")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("TronMessageInput");
     let signed_tx = guard
         .keystore_mut()
         .sign_message(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
+}
+
+pub(crate) fn get_derived_key(data: &[u8]) -> Result<Vec<u8>> {
+    let param: WalletKeyParam = WalletKeyParam::decode(data).unwrap();
+    let mut map = KEYSTORE_MAP.write();
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let dk = keystore.get_derived_key(&param.password)?;
+
+    let ret = DerivedKeyResult {
+        id: param.id.to_owned(),
+        derived_key: dk,
+    };
+    encode_message(ret)
+}
+
+pub(crate) fn sign_substrate_tx_raw(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: SubstrateRawTxIn = SubstrateRawTxIn::decode(
+        param
+            .input
+            .as_ref()
+            .expect("raw_tx_input")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("SubstrateTxIn");
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
+}
+
+pub(crate) fn import_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
+    let param: SubstrateKeystoreParam = SubstrateKeystoreParam::decode(data)?;
+    let ks: SubstrateKeystore = serde_json::from_str(&param.keystore)?;
+    let _ = ks.validate()?;
+    let pk = decode_substrate_keystore(&ks, &param.password)?;
+    let pk_import_param = PrivateKeyStoreImportParam {
+        private_key: hex::encode(pk),
+        password: param.password.to_string(),
+        name: ks.meta.name,
+        password_hint: "".to_string(),
+        overwrite: param.overwrite,
+    };
+    let param_bytes = encode_message(pk_import_param)?;
+    private_key_store_import(&param_bytes)
+}
+
+pub(crate) fn export_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
+    let param: ExportPrivateKeyParam = ExportPrivateKeyParam::decode(data.clone())?;
+    let meta: Metadata;
+    {
+        let map = KEYSTORE_MAP.read();
+
+        let keystore: &Keystore = match map.get(&param.id) {
+            Some(keystore) => Ok(keystore),
+            _ => Err(format_err!("{}", "wallet_not_found")),
+        }?;
+
+        // !!! Warning !!! HDKeystore only can export raw sr25519 key,
+        // but polkadotjs keystore needs a Ed25519 expanded secret key.
+        if keystore.determinable() {
+            return Err(format_err!("{}", "hd_wallet_cannot_export_keystore"));
+        }
+        meta = keystore.meta().clone();
+    }
+
+    let ret = export_private_key(data)?;
+    let export_result: KeystoreCommonExportResult =
+        KeystoreCommonExportResult::decode(ret.as_slice())?;
+    let pk = export_result.value;
+    let pk_bytes = hex::decode(pk)?;
+    let coin = coin_info_from_param(&param.chain_type, &param.network, "")?;
+
+    let mut substrate_ks = encode_substrate_keystore(&param.password, &pk_bytes, &coin)?;
+
+    substrate_ks.meta.name = meta.name;
+    substrate_ks.meta.when_created = meta.timestamp;
+    let keystore_str = serde_json::to_string(&substrate_ks)?;
+    let ret = ExportSubstrateKeystoreResult {
+        keystore: keystore_str,
+    };
+    encode_message(ret)
+}
+
+pub(crate) fn substrate_keystore_exists(data: &[u8]) -> Result<Vec<u8>> {
+    let param: SubstrateKeystoreParam = SubstrateKeystoreParam::decode(data)?;
+    let ks: SubstrateKeystore = serde_json::from_str(&param.keystore)?;
+    let _ = ks.validate()?;
+    let pk = decode_substrate_keystore(&ks, &param.password)?;
+
+    let pk_hex = hex::encode(&pk);
+    let exists_param = KeystoreCommonExistsParam {
+        r#type: KeyType::PrivateKey as i32,
+        value: pk_hex,
+    };
+    let exists_param_bytes = encode_message(exists_param)?;
+    keystore_common_exists(&exists_param_bytes)
 }
 
 pub(crate) fn unlock_then_crash(data: &[u8]) -> Result<Vec<u8>> {

@@ -4,7 +4,7 @@ pub mod hash;
 pub mod numberic_util;
 
 use core::result;
-pub use crypto::{Crypto, EncPair, Pbkdf2Params};
+pub use crypto::{Crypto, EncPair, Key, Pbkdf2Params};
 use parking_lot::RwLock;
 
 #[macro_use]
@@ -20,10 +20,14 @@ pub enum Error {
     KdfParamsInvalid,
     #[fail(display = "password_incorrect")]
     PasswordIncorrect,
+    #[fail(display = "derived_key_not_matched")]
+    DerivedKeyNotMatched,
     #[fail(display = "invalid_key_iv_length")]
     InvalidKeyIvLength,
     #[fail(display = "invalid_ciphertext")]
     InvalidCiphertext,
+    #[fail(display = "cached_dk_feature_not_support")]
+    CachedDkFeatureNotSupport,
 }
 
 lazy_static! {

@@ -31,6 +31,40 @@ pub struct InitTokenCoreXParam {
     pub xpub_common_key: std::string::String,
     #[prost(string, tag = "3")]
     pub xpub_common_iv: std::string::String,
+    #[prost(bool, tag = "4")]
+    pub is_debug: bool,
+}
+///
+///// FUNCTION: export_private_key(ExportPrivateKeyParam): KeystoreCommonExportResult
+/////
+///// export the private key from a private key keystore or a hd keystore
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportPrivateKeyParam {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(string, tag = "2")]
+    pub password: std::string::String,
+    #[prost(string, tag = "3")]
+    pub chain_type: std::string::String,
+    #[prost(string, tag = "4")]
+    pub network: std::string::String,
+    #[prost(string, tag = "5")]
+    pub main_address: std::string::String,
+    #[prost(string, tag = "6")]
+    pub path: std::string::String,
+}
+///
+////// Keystore Common
+///
+///// FUNCTION: keystore_common_verify(WalletKeyParam) -> Response
+/////
+///// verify the password of the keystore
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WalletKeyParam {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(string, tag = "2")]
+    pub password: std::string::String,
 }
 /// Hd Store
 
@@ -120,17 +154,6 @@ pub struct AccountsResponse {
     #[prost(message, repeated, tag = "1")]
     pub accounts: ::std::vec::Vec<AccountResponse>,
 }
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeystoreCommonExportParam {
-    #[prost(string, tag = "1")]
-    pub id: std::string::String,
-    #[prost(string, tag = "2")]
-    pub password: std::string::String,
-    #[prost(enumeration = "KeyType", tag = "3")]
-    pub r#type: i32,
-    #[prost(string, tag = "4")]
-    pub value: std::string::String,
-}
 /// FUNCTION: hd_store_export(KeystoreCommonExportResult): KeystoreCommonExistsResult
 ///
 /// export the mnemonic from a hd keystore
@@ -154,10 +177,13 @@ pub struct PrivateKeyStoreImportParam {
     pub private_key: std::string::String,
     #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(bool, tag = "3")]
+    #[prost(string, tag = "3")]
+    pub name: std::string::String,
+    #[prost(string, tag = "4")]
+    pub password_hint: std::string::String,
+    #[prost(bool, tag = "5")]
     pub overwrite: bool,
 }
-/// Deprecated use ExportPrivateKeyParam instead
 /// FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult
 ///
 /// export the private key from a private key keystore
@@ -172,36 +198,8 @@ pub struct PrivateKeyStoreExportParam {
     #[prost(string, tag = "4")]
     pub network: std::string::String,
 }
-/// FUNCTION: export_private_key(ExportPrivateKeyParam): KeystoreCommonExportResult
-///
-/// export the private key from a private key keystore or a hd keystore
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ExportPrivateKeyParam {
-    #[prost(string, tag = "1")]
-    pub id: std::string::String,
-    #[prost(string, tag = "2")]
-    pub password: std::string::String,
-    #[prost(string, tag = "3")]
-    pub chain_type: std::string::String,
-    #[prost(string, tag = "4")]
-    pub network: std::string::String,
-    #[prost(string, tag = "5")]
-    pub main_address: std::string::String,
-    #[prost(string, tag = "6")]
-    pub path: std::string::String,
-}
 /// Keystore Common
 
-/// FUNCTION: keystore_common_verify(WalletKeyParam) -> Response
-///
-/// verify the password of the keystore
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct WalletKeyParam {
-    #[prost(string, tag = "1")]
-    pub id: std::string::String,
-    #[prost(string, tag = "2")]
-    pub password: std::string::String,
-}
 // FUNCTION: keystore_common_delete(WalletKeyParam) -> Response
 //
 // delete the keystore
@@ -241,14 +239,23 @@ pub struct KeystoreCommonAccountsParam {
 pub struct SignParam {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag = "2")]
-    pub password: std::string::String,
-    #[prost(string, tag = "3")]
-    pub chain_type: std::string::String,
     #[prost(string, tag = "4")]
+    pub chain_type: std::string::String,
+    #[prost(string, tag = "5")]
     pub address: std::string::String,
-    #[prost(message, optional, tag = "5")]
+    #[prost(message, optional, tag = "6")]
     pub input: ::std::option::Option<::prost_types::Any>,
+    #[prost(oneof = "sign_param::Key", tags = "2, 3")]
+    pub key: ::std::option::Option<sign_param::Key>,
+}
+pub mod sign_param {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Key {
+        #[prost(string, tag = "2")]
+        Password(std::string::String),
+        #[prost(string, tag = "3")]
+        DerivedKey(std::string::String),
+    }
 }
 /// Other
 // TODO: annotate following message usage
@@ -321,15 +328,6 @@ pub enum KeyType {
     PrivateKey = 1,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CacheDerivedKeyParam {
-    #[prost(string, tag = "1")]
-    pub id: std::string::String,
-    #[prost(string, tag = "2")]
-    pub derived_key: std::string::String,
-    #[prost(string, tag = "3")]
-    pub temp_password: std::string::String,
-}
-#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VerifyDerivedKeyParam {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
@@ -342,4 +340,25 @@ pub struct DerivedKeyResult {
     pub id: std::string::String,
     #[prost(string, tag = "2")]
     pub derived_key: std::string::String,
+}
+/// Only used in Android or iOS
+
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CacheDerivedKeyResult {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(bool, tag = "2")]
+    pub enable_derived_key: bool,
+    #[prost(string, tag = "3")]
+    pub mode: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WalletId {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BiometricModeResult {
+    #[prost(string, tag = "1")]
+    pub mode: std::string::String,
 }

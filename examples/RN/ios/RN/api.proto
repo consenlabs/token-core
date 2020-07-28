@@ -1,0 +1,55 @@
+syntax = "proto3";
+package api;
+
+import "google/protobuf/any.proto";
+
+// Action Wrapper
+// There is a `call_tcx_api` method in tcx which act as a endpoint like RPC. It accepts a `TcxAction` param which method field is
+// the real action and param field is the real param of that method.
+// When an error occurred, the `call_tcx_api` will return a `Response` which isSuccess field be false and error field is the reason
+// which cause the error.
+message TcxAction {
+    string method = 1;
+    google.protobuf.Any param = 2;
+}
+
+// A common response when error occurred.
+message Response {
+    bool isSuccess = 1;
+    string error = 2;
+}
+
+/// Initialization
+
+// FUNCTION: init_token_core_x(InitTokenCoreXParam)
+//
+// initialize tcx by passing keystore folder and xpub encryption params
+message InitTokenCoreXParam {
+    string fileDir = 1;
+    string xpubCommonKey = 2;
+    string xpubCommonIv = 3;
+    bool isDebug = 4;
+}
+
+//
+//// FUNCTION: export_private_key(ExportPrivateKeyParam): KeystoreCommonExportResult
+////
+//// export the private key from a private key keystore or a hd keystore
+message ExportPrivateKeyParam {
+    string id = 1;
+    string password = 2;
+    string chainType = 3;
+    string network = 4;
+    string mainAddress = 5;
+    string path = 6;
+}
+//
+///// Keystore Common
+//
+//// FUNCTION: keystore_common_verify(WalletKeyParam) -> Response
+////
+//// verify the password of the keystore
+message WalletKeyParam {
+    string id = 1;
+    string password = 2;
+}

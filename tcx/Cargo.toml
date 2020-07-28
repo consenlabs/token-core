@@ -6,18 +6,19 @@ edition = "2018"
 
 [dependencies]
 tcx-proto = { path = "../tcx-proto" }
-tcx-crypto = { path = "../tcx-crypto" }
-tcx-chain = { path = "../tcx-chain" }
+tcx-crypto = { path = "../tcx-crypto", features = ["cache_dk"] }
+tcx-chain = { path = "../tcx-chain", features = ["cache_dk"] }
 tcx-btc-fork = {path = "../tcx-btc-fork"}
 tcx-bch = {path = "../tcx-bch"}
 tcx-tron = {path = "../tcx-tron"}
 tcx-ckb = {path = "../tcx-ckb"}
+tcx-substrate = {path = "../tcx-substrate"}
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants"}
 
-prost = "0.5.0"
-bytes = "0.4.12"
-prost-types = "0.5.0"
+prost = "0.6.1"
+bytes = "0.5.4"
+prost-types = "0.6.1"
 
 libc = "0.2.0"
 log = "0.4.6"
@@ -36,3 +37,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 prost-build = "0.5.0"
+
+[dev-dependencies]
+sp-core = "2.0.0-rc3"
+sp-runtime = "2.0.0-rc3"

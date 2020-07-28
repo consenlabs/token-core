@@ -21,6 +21,9 @@
 		70A05E61239E107E00DC3A93 /* NSData+NSData_Conversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 70A05E60239E107E00DC3A93 /* NSData+NSData_Conversion.m */; };
 		70D4F883238D041300750215 /* TcxApi.m in Sources */ = {isa = PBXBuildFile; fileRef = 70D4F882238D041300750215 /* TcxApi.m */; };
 		70D4F887238D10E200750215 /* libtcx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 70D4F879238D022200750215 /* libtcx.a */; };
+		70DE3E82248A16EC00336BE1 /* Api.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = 70DE3E7D248A16EC00336BE1 /* Api.pbobjc.m */; };
+		70DE3E83248A16EC00336BE1 /* CacheDerivedKey.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = 70DE3E7E248A16EC00336BE1 /* CacheDerivedKey.pbobjc.m */; };
+		70DE3E84248A16EC00336BE1 /* Params.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = 70DE3E7F248A16EC00336BE1 /* Params.pbobjc.m */; };
 		9419FD72C0CC6BF4889F6ABF /* libPods-RN-tvOSTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B47A8AF8ABB281E8348C4177 /* libPods-RN-tvOSTests.a */; };
 		97365ABC5D04415EA7487FAD /* libPods-RNTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F90ED7C824DC6595D87B377F /* libPods-RNTests.a */; };
 /* End PBXBuildFile section */
@@ -67,6 +70,12 @@
 		70D4F879238D022200750215 /* libtcx.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libtcx.a; sourceTree = "<group>"; };
 		70D4F881238D041300750215 /* TcxApi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TcxApi.h; path = RN/TcxApi.h; sourceTree = "<group>"; };
 		70D4F882238D041300750215 /* TcxApi.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = TcxApi.m; path = RN/TcxApi.m; sourceTree = "<group>"; };
+		70DE3E7C248A16EC00336BE1 /* Params.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Params.pbobjc.h; path = RN/Params.pbobjc.h; sourceTree = "<group>"; };
+		70DE3E7D248A16EC00336BE1 /* Api.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Api.pbobjc.m; path = RN/Api.pbobjc.m; sourceTree = "<group>"; };
+		70DE3E7E248A16EC00336BE1 /* CacheDerivedKey.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CacheDerivedKey.pbobjc.m; path = RN/CacheDerivedKey.pbobjc.m; sourceTree = "<group>"; };
+		70DE3E7F248A16EC00336BE1 /* Params.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Params.pbobjc.m; path = RN/Params.pbobjc.m; sourceTree = "<group>"; };
+		70DE3E80248A16EC00336BE1 /* CacheDerivedKey.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CacheDerivedKey.pbobjc.h; path = RN/CacheDerivedKey.pbobjc.h; sourceTree = "<group>"; };
+		70DE3E81248A16EC00336BE1 /* Api.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Api.pbobjc.h; path = RN/Api.pbobjc.h; sourceTree = "<group>"; };
 		8E800B5649DD72CEABD5722F /* libPods-RN-tvOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RN-tvOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9F13AA798A9F3F9EF22DE81D /* libPods-RN.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RN.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AD028F75B13B56F10F8F7FED /* Pods-RNTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RNTests.release.xcconfig"; path = "Target Support Files/Pods-RNTests/Pods-RNTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -135,6 +144,12 @@
 		13B07FAE1A68108700A75B9A /* RN */ = {
 			isa = PBXGroup;
 			children = (
+				70DE3E81248A16EC00336BE1 /* Api.pbobjc.h */,
+				70DE3E7D248A16EC00336BE1 /* Api.pbobjc.m */,
+				70DE3E80248A16EC00336BE1 /* CacheDerivedKey.pbobjc.h */,
+				70DE3E7E248A16EC00336BE1 /* CacheDerivedKey.pbobjc.m */,
+				70DE3E7C248A16EC00336BE1 /* Params.pbobjc.h */,
+				70DE3E7F248A16EC00336BE1 /* Params.pbobjc.m */,
 				70D4F874238D022100750215 /* TokenCoreX */,
 				008F07F21AC5B25A0029DE68 /* main.jsbundle */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
@@ -569,7 +584,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				70D4F883238D041300750215 /* TcxApi.m in Sources */,
+				70DE3E84248A16EC00336BE1 /* Params.pbobjc.m in Sources */,
+				70DE3E83248A16EC00336BE1 /* CacheDerivedKey.pbobjc.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */,
+				70DE3E82248A16EC00336BE1 /* Api.pbobjc.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				70A05E61239E107E00DC3A93 /* NSData+NSData_Conversion.m in Sources */,
 			);

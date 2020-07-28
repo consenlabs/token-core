@@ -1,0 +1,36 @@
+[package]
+name = "tcx-substrate"
+version = "0.1.0"
+authors = ["Neal Xu <imxuneal@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tcx-crypto = { path = "../tcx-crypto" }
+tcx-chain = { path = "../tcx-chain" }
+tcx-primitive = { path = "../tcx-primitive" }
+tcx-constants = { path = "../tcx-constants" }
+
+sp-core = "2.0.0-rc3"
+hex = "0.4.0"
+byteorder = "1.2"
+
+prost = "0.6.1"
+bytes = "0.5.4"
+prost-types = "0.6.1"
+
+base58 = "0.1.0"
+bs58 = "0.3.0"
+codec = { package = "parity-scale-codec", branch = "v1.0", default-features = false, features = ["derive"] }
+rand = "0.6"
+
+failure = "0.1.5"
+#tweetnacl = "0.2.1"
+xsalsa20poly1305 = "0.4.2"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+
+[dev-dependencies]
+sp-runtime = "2.0.0-rc3"
+sp-keyring = "2.0.0-rc3"

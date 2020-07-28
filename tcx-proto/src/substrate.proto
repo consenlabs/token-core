@@ -1,0 +1,23 @@
+syntax = "proto3";
+package transaction;
+
+
+message SubstrateKeystoreParam {
+    string keystore = 1;
+    string password = 2;
+    string chainType = 3;
+    bool overwrite = 4;
+}
+
+
+message ExportSubstrateKeystoreResult {
+    string keystore = 1;
+}
+
+message SubstrateRawTxIn {
+    string rawData = 1;
+}
+
+message SubstrateTxOut {
+    string signature = 1;
+}
