@@ -5,13 +5,12 @@ use std::convert::TryInto;
 use tcx_chain::Address;
 
 use byteorder::LittleEndian;
-use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{ReadBytesExt, WriteBytesExt};
 use regex::Regex;
 use serde::export::{fmt, PhantomData};
 use std::io::Cursor;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tcx_constants::{CoinInfo, Result};
-use tcx_crypto::crypto::SCryptParams;
 use tcx_crypto::numberic_util::random_iv;
 use tcx_primitive::{
     DeterministicPrivateKey, PrivateKey, PublicKey, Sr25519PrivateKey, TypedPublicKey,
@@ -133,7 +132,7 @@ fn scrypt_param_from_encoded(encoded: &[u8]) -> Result<(scrypt::ScryptParams, Ve
     let log_n = (n as f64).log2().round();
 
     let inner_params = scrypt::ScryptParams::new(log_n as u8, r, p).expect("init scrypt params");
-    if n != 1 << 15 || p != 1 || r != 8 {
+    if n != PJS_SCRYPT_N || p != PJS_SCRYPT_P || r != PJS_SCRYPT_R {
         Err(format_err!("Pjs keystore invalid params"))
     } else {
         Ok((inner_params, salt.to_vec()))
@@ -199,7 +198,7 @@ impl SubstrateKeystore {
     }
 
     fn decode_cipher_text(&self) -> Result<Vec<u8>> {
-        let hex_re = Regex::new(r"(?:0[xX])?[0-9a-fA-F]+").unwrap();
+        let hex_re = Regex::new(r"^(?:0[xX])?[0-9a-fA-F]+$").unwrap();
         if self.encoding.version == "3" {
             if !hex_re.is_match(&self.encoded) {
                 return base64::decode(&self.encoded)
@@ -463,7 +462,6 @@ mod test_super {
         let prv_key = hex::decode("00ea01b0116da6ca425c477521fd49cc763988ac403ab560f4022936a18a4341016e7df1f5020068c9b150e0722fea65a264d5fbb342d4af4ddf2f1cdbddf1fd").unwrap();
         let coin_info = coin_info_from_param("KUSAMA", "", "").unwrap();
         let keystore = encode_substrate_keystore(&TEST_PASSWORD, &prv_key, &coin_info).unwrap();
-        let keystore_str = serde_json::to_string(&keystore);
         assert_eq!(
             keystore.address,
             "JHBkzZJnLZ3S3HLvxjpFAjd6ywP7WAk5miL7MwVCn9a7jHS"
