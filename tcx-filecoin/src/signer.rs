@@ -1,43 +1,25 @@
-use tcx_chain::{Keystore, Result, TransactionSigner};
+use crate::transaction::{SignedMessage, UnsignedMessage};
+use crate::utils::message_digest;
+use tcx_chain::{ChainSigner, Keystore, Result, TransactionSigner};
 
-use crate::hash::new_blake2b;
-use crate::serializer::Serializer;
-use crate::{hex_to_bytes, Error};
-use std::collections::HashMap;
-use tcx_chain::ChainSigner;
-use crate::transaction::{SignedMessageOutput, MessageInput};
-
-
-pub struct FilecoinMessageSigner<'a> {
-    ks: &'a mut dyn ChainSigner,
-    symbol: &'a str,
-    address: &'a str,
-}
-
-impl<'a> FilecoinMessageSinger<'a> {
-    fn sign_message(&mut self, symbol: &str, address: &str, input: &MessageInput) {
-        self.ks.sign_recoverable_hash();
-    }
-}
-
-impl TransactionSigner<MssageInput, SignedMessageOutput> for Keystore {
+impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
     fn sign_transaction(
         &mut self,
         symbol: &str,
         address: &str,
-        tx: &MessageInput,
-    ) {
+        tx: &UnsignedMessage,
+    ) -> Result<SignedMessage> {
+        let cobr_buffer = serde_cbor::to_vec(tx)?;
+        let cid = message_digest(&cobr_buffer);
+
+        let sign = self.sign_recoverable_hash(&cid, symbol, address, None)?;
+
+        Ok(SignedMessage {
+            signature: hex::encode(&sign),
+            message: Some(tx.clone()),
+        })
     }
 }
 
 #[cfg(test)]
-mod tests {
-    #[test]
-    fn test_message_id() {
-
-    }
-
-
-}
-
-
+mod tests {}

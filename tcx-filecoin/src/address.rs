@@ -3,8 +3,8 @@ use tcx_constants::CoinInfo;
 use tcx_primitive::{PublicKey, TypedPublicKey};
 
 use super::Error;
+use crate::utils::{digest, HashSize};
 use base32::Alphabet;
-use blake2b_rs::Blake2bBuilder;
 
 const MAINNET_PREFIX: &'static str = "f";
 const TESTNET_PREFIX: &'static str = "t";
@@ -14,31 +14,15 @@ pub enum Protocol {
     Secp256k1 = 1,
 }
 
-pub enum HashSize {
-    Checksum = 4,
-    Payload = 20,
-}
-
 pub struct FilecoinAddress();
 
 impl FilecoinAddress {
-    fn hash(ingest: &[u8], hash_size: HashSize) -> Vec<u8> {
-        //allocate max length byte
-        let mut result = [0u8; 32];
-
-        let size = hash_size as usize;
-        let mut hasher = Blake2bBuilder::new(size).build();
-        hasher.update(ingest);
-        hasher.finalize(&mut result);
-        result[0..size].to_vec()
-    }
-
     fn checksum(ingest: &[u8]) -> Vec<u8> {
-        Self::hash(ingest, HashSize::Checksum)
+        digest(ingest, HashSize::Checksum)
     }
 
     fn address_hash(ingest: &[u8]) -> Vec<u8> {
-        Self::hash(ingest, HashSize::Payload)
+        digest(ingest, HashSize::Payload)
     }
 }
 
@@ -86,20 +70,10 @@ mod tests {
     use crate::address::HashSize;
     use tcx_chain::Address;
     use tcx_constants::{CoinInfo, CurveType};
-    use tcx_primitive::{PublicKey, Secp256k1PublicKey, TypedPublicKey};
+    use tcx_primitive::{Secp256k1PublicKey, TypedPublicKey};
 
     #[test]
-    fn hash() {
-        let payload = [1u8, 2];
-
-        assert_eq!(
-            FilecoinAddress::hash(&payload, HashSize::Checksum),
-            vec![219, 55, 214, 157]
-        );
-    }
-
-    #[test]
-    fn secp256k1_address() {
+    fn test_secp256k1_address() {
         let test_cases = vec![
             (
                 vec![

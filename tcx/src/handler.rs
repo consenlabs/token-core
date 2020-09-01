@@ -69,6 +69,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
         "NERVOS" => keystore.derive_coin::<CkbAddress>(&coin_info),
         "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
+        "FILECOIN" => keystore.derive_coin::<FilecoinAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -581,8 +582,25 @@ pub(crate) fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         "TRON" => sign_tron_tx(&param, guard.keystore_mut()),
         "NERVOS" => sign_nervos_ckb(&param, guard.keystore_mut()),
         "POLKADOT" | "KUSAMA" => sign_substrate_tx_raw(&param, guard.keystore_mut()),
+        "FILECOIN" => sign_filecoin_tx(&param, guard.keystore_mut()),
         _ => Err(format_err!("unsupported_chain")),
     }
+}
+
+pub(crate) fn sign_filecoin_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: UnsignedMessage = UnsignedMessage::decode(
+        param
+            .input
+            .as_ref()
+            .expect("invalid_message")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("FilecoinTxIn");
+
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
 }
 
 pub(crate) fn sign_btc_fork_transaction(
