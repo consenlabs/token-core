@@ -9,4 +9,7 @@ mod utils;
 pub enum Error {
     #[fail(display = "invalid_curve_type")]
     InvalidCurveType,
+
+    #[fail(display = "cannot_found_account")]
+    CannotFoundAccount,
 }

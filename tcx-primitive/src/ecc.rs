@@ -4,6 +4,7 @@ use crate::{
     Secp256k1PrivateKey, Secp256k1PublicKey, ToHex,
 };
 
+use crate::bls::{BLSPrivateKey, BLSPublicKey};
 use crate::ecc::TypedDeterministicPrivateKey::{Bip32Sepc256k1, SubSr25519};
 use crate::sr25519::{Sr25519PrivateKey, Sr25519PublicKey};
 use sp_core::Pair;
@@ -44,6 +45,8 @@ pub enum KeyError {
     InvalidCurveType,
     #[fail(display = "invalid_sr25519_key")]
     InvalidSr25519Key,
+    #[fail(display = "not_implement")]
+    NotImplement,
 }
 
 pub trait PublicKey: Sized {
@@ -92,6 +95,7 @@ pub trait TypedPrivateKeyDisplay {
 pub enum TypedPrivateKey {
     Secp256k1(Secp256k1PrivateKey),
     Sr25519(Sr25519PrivateKey),
+    BLS(BLSPrivateKey),
 }
 
 impl TypedPrivateKey {
@@ -99,6 +103,7 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(_) => CurveType::SECP256k1,
             TypedPrivateKey::Sr25519(_) => CurveType::SubSr25519,
+            TypedPrivateKey::BLS(_) => CurveType::BLS,
         }
     }
 
@@ -110,6 +115,7 @@ impl TypedPrivateKey {
             CurveType::SubSr25519 => Ok(TypedPrivateKey::Sr25519(Sr25519PrivateKey::from_slice(
                 data,
             )?)),
+            CurveType::BLS => Ok(TypedPrivateKey::BLS(BLSPrivateKey::from_slice(data)?)),
             _ => Err(KeyError::InvalidCurveType.into()),
         }
     }
@@ -125,6 +131,7 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(sk) => sk.to_bytes(),
             TypedPrivateKey::Sr25519(sk) => sk.to_bytes(),
+            TypedPrivateKey::BLS(sk) => sk.to_bytes(),
         }
     }
 
@@ -132,6 +139,7 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(sk) => TypedPublicKey::Secp256k1(sk.public_key()),
             TypedPrivateKey::Sr25519(sk) => TypedPublicKey::Sr25519(sk.public_key()),
+            TypedPrivateKey::BLS(sk) => TypedPublicKey::BLS(sk.public_key()),
         }
     }
 
@@ -139,6 +147,7 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(sk) => sk.sign(data),
             TypedPrivateKey::Sr25519(sk) => sk.sign(data),
+            TypedPrivateKey::BLS(sk) => sk.sign(data),
         }
     }
 
@@ -146,6 +155,7 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(sk) => sk.sign_recoverable(data),
             TypedPrivateKey::Sr25519(sk) => sk.sign_recoverable(data),
+            TypedPrivateKey::BLS(sk) => sk.sign_recoverable(data),
         }
     }
 }
@@ -153,6 +163,7 @@ impl TypedPrivateKey {
 pub enum TypedPublicKey {
     Secp256k1(Secp256k1PublicKey),
     Sr25519(Sr25519PublicKey),
+    BLS(BLSPublicKey),
 }
 
 impl TypedPublicKey {
@@ -160,6 +171,7 @@ impl TypedPublicKey {
         match self {
             TypedPublicKey::Secp256k1(_) => CurveType::SECP256k1,
             TypedPublicKey::Sr25519(_) => CurveType::SubSr25519,
+            TypedPublicKey::BLS(_) => CurveType::BLS,
         }
     }
 
@@ -171,6 +183,7 @@ impl TypedPublicKey {
             CurveType::SubSr25519 => {
                 Ok(TypedPublicKey::Sr25519(Sr25519PublicKey::from_slice(data)?))
             }
+            CurveType::BLS => Ok(TypedPublicKey::BLS(BLSPublicKey::from_slice(data)?)),
 
             _ => Err(KeyError::InvalidCurveType.into()),
         }
@@ -180,6 +193,7 @@ impl TypedPublicKey {
         match self {
             TypedPublicKey::Secp256k1(pk) => pk.to_bytes(),
             TypedPublicKey::Sr25519(pk) => pk.to_bytes(),
+            TypedPublicKey::BLS(pk) => pk.to_bytes(),
         }
     }
 

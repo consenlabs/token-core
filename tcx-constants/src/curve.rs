@@ -8,4 +8,5 @@ pub enum CurveType {
     SubSr25519,
     Curve25519, /* "curve25519" */
     NIST256p1,
+    BLS, /* "bls" */
 }
