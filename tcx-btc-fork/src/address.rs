@@ -198,7 +198,7 @@ impl FromStr for BtcForkAddress {
         let data = decode_base58(s)?;
         let (network, payload) = match data[0] {
             0 => {
-                let coin_info = coin_info_from_param("BITCOIN", "MAINNET", "NONE")
+                let coin_info = coin_info_from_param("BITCOIN", "MAINNET", "NONE", "")
                     .expect("BtcForkNetwork coin_info");
                 (
                     network_from_coin(&coin_info).expect("btc"),
@@ -206,7 +206,7 @@ impl FromStr for BtcForkAddress {
                 )
             }
             5 => {
-                let coin_info = coin_info_from_param("BITCOIN", "MAINNET", "P2WPKH")
+                let coin_info = coin_info_from_param("BITCOIN", "MAINNET", "P2WPKH", "")
                     .expect("BITCOIN-P2WPKH coin_info");
                 (
                     network_from_coin(&coin_info).expect("btc"),
@@ -214,7 +214,7 @@ impl FromStr for BtcForkAddress {
                 )
             }
             0x30 => {
-                let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE")
+                let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE", "")
                     .expect("LITECOIN coin_info");
                 (
                     network_from_coin(&coin_info).expect("ltc-L"),
@@ -222,7 +222,7 @@ impl FromStr for BtcForkAddress {
                 )
             }
             0x32 => {
-                let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH")
+                let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH", "")
                     .expect("LITECOIN-P2WPKH coin_info");
                 (
                     network_from_coin(&coin_info).expect("ltc"),
@@ -230,7 +230,7 @@ impl FromStr for BtcForkAddress {
                 )
             }
             0x3a => {
-                let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "P2WPKH")
+                let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "P2WPKH", "")
                     .expect("LITECOIN TESTNET P2WPKH coin_info");
                 (
                     network_from_coin(&coin_info).expect("ltc-testnet"),
@@ -238,7 +238,7 @@ impl FromStr for BtcForkAddress {
                 )
             }
             111 => {
-                let coin_info = coin_info_from_param("BITCOIN", "TESTNET", "NONE")
+                let coin_info = coin_info_from_param("BITCOIN", "TESTNET", "NONE", "")
                     .expect("BITCOIN-TESTNET coin_info");
                 (
                     network_from_coin(&coin_info).expect("btc-testnet"),
@@ -246,7 +246,7 @@ impl FromStr for BtcForkAddress {
                 )
             }
             196 => {
-                let coin_info = coin_info_from_param("BITCOIN", "TESTNET", "P2WPKH")
+                let coin_info = coin_info_from_param("BITCOIN", "TESTNET", "P2WPKH", "")
                     .expect("BITCOIN-TESTNET-P2WPKH coin_info");
                 (
                     network_from_coin(&coin_info).expect("btc-testnet"),
@@ -530,29 +530,29 @@ mod tests {
 
     #[test]
     pub fn address_valid_test() {
-        let coin = coin_info_from_param("BITCOIN", "MAINNET", "P2WPKH").unwrap();
+        let coin = coin_info_from_param("BITCOIN", "MAINNET", "P2WPKH", "").unwrap();
         assert!(BtcForkAddress::is_valid(
             "3Js9bGaZSQCNLudeGRHL4NExVinc25RbuG",
             &coin
         ));
-        let coin = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
+        let coin = coin_info_from_param("LITECOIN", "MAINNET", "NONE", "").unwrap();
         assert!(BtcForkAddress::is_valid(
             "Ldfdegx3hJygDuFDUA7Rkzjjx8gfFhP9DP",
             &coin
         ));
-        let coin = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH").unwrap();
+        let coin = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH", "").unwrap();
         assert!(BtcForkAddress::is_valid(
             "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDfW",
             &coin
         ));
 
-        let coin = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH").unwrap();
+        let coin = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH", "").unwrap();
         assert!(!BtcForkAddress::is_valid(
             "MR5Hu9zXPX3o9QuYNJGft1VMpRP418QDf",
             &coin
         ));
 
-        let coin = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH").unwrap();
+        let coin = coin_info_from_param("LITECOIN", "MAINNET", "P2WPKH", "").unwrap();
         assert!(!BtcForkAddress::is_valid("aaa", &coin));
     }
 }
