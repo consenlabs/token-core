@@ -15,4 +15,16 @@ pub enum Error {
 
     #[fail(display = "cannot_found_account")]
     CannotFoundAccount,
+
+    #[fail(display = "invalid_address")]
+    InvalidAddress,
+
+    #[fail(display = "invalid_format")]
+    InvalidFormat,
+
+    #[fail(display = "invalid_param")]
+    InvalidParam,
+
+    #[fail(display = "invalid_number")]
+    InvalidNumber,
 }

@@ -1,32 +1,28 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UnsignedMessage {
-    #[prost(int64, tag = "1")]
-    pub version: i64,
-    #[prost(string, tag = "2")]
+    #[prost(string, tag = "1")]
     pub to: std::string::String,
-    #[prost(string, tag = "3")]
+    #[prost(string, tag = "2")]
     pub from: std::string::String,
-    #[prost(int64, tag = "4")]
-    pub nonce: i64,
-    #[prost(string, tag = "5")]
+    #[prost(uint64, tag = "3")]
+    pub nonce: u64,
+    #[prost(string, tag = "4")]
     pub value: std::string::String,
-    #[prost(string, tag = "6")]
-    pub gas_price: std::string::String,
-    #[prost(int64, tag = "7")]
+    #[prost(int64, tag = "5")]
     pub gas_limit: i64,
-    #[prost(int64, tag = "8")]
-    pub method: i64,
-    #[prost(bytes, tag = "9")]
-    pub params: Vec<u8>,
+    #[prost(string, tag = "6")]
+    pub gas_fee_cap: std::string::String,
+    #[prost(string, tag = "7")]
+    pub gas_premium: std::string::String,
+    #[prost(uint64, tag = "8")]
+    pub method: u64,
+    #[prost(string, tag = "9")]
+    pub params: std::string::String,
 }
-
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignedMessage {
     #[prost(string, tag = "1")]
     pub signature: std::string::String,
-
-    #[prost(message, tag = "2")]
-    pub message: Option<UnsignedMessage>,
+    #[prost(message, optional, tag = "2")]
+    pub message: ::std::option::Option<UnsignedMessage>,
 }

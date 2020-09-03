@@ -136,8 +136,6 @@ pub mod keystore_common_derive_param {
         pub seg_wit: std::string::String,
         #[prost(string, tag = "5")]
         pub chain_id: std::string::String,
-        #[prost(string, tag = "6")]
-        pub curve: std::string::String,
     }
 }
 #[derive(Clone, PartialEq, ::prost::Message)]

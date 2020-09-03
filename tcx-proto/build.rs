@@ -33,6 +33,10 @@ fn main() {
     // tcx-substrate
     env::set_var("OUT_DIR", "../tcx-substrate/src");
     prost_build::compile_protos(&["src/substrate.proto"], &["src/"]).unwrap();
+
+    env::set_var("OUT_DIR", "../tcx-filecoin/src");
+    prost_build::compile_protos(&["src/filecoin.proto"], &["src/"]).unwrap();
+
     //    let targets = vec!["arm64-v8a", "armeabi-v7a", "x86", "x86_64"];
     //    for target in targets {
     //        println!("cargo:rustc-link-search=../../android/tokencore/build/intermediates/cmake/release/obj/{}/", target);
