@@ -27,7 +27,7 @@ impl TryFrom<&UnsignedMessage> for ForestUnsignedMessage {
             BigInt::from_str(&message.gas_premium).map_err(|_| Error::InvalidNumber)?;
 
         let message_params_bytes =
-            base64::decode(&message.params).map_err(|err| Error::InvalidParam)?;
+            base64::decode(&message.params).map_err(|_| Error::InvalidParam)?;
         let params = Serialized::new(message_params_bytes);
 
         let tmp = ForestUnsignedMessage::builder()
@@ -90,7 +90,7 @@ mod tests {
     use tcx_chain::{Keystore, Metadata, TransactionSigner};
     use tcx_constants::{CoinInfo, CurveType};
 
-    const EXAMPLE_CBOR_DATA:&str = "8a005501fd1d0f4dfcd7e99afcb99a8326b7dc459d32c6285501b882619d46558f3d9e316d11b48dcf211327025a0144000186a01961a84200014200010040";
+    const EXAMPLE_CBOR_DATA:&str = "8a005501fd1d0f4dfcd7e99afcb99a8326b7dc459d32c62855011eaf1c8a4bbfeeb0870b1745b1f57503470b71160144000186a0014200014200010040";
 
     fn unsigned_message1() -> UnsignedMessage {
         UnsignedMessage {
@@ -98,7 +98,7 @@ mod tests {
             from: "t1d2xrzcslx7xlbbylc5c3d5lvandqw4iwl6epxba".to_string(),
             nonce: 1,
             value: "100000".to_string(),
-            gas_limit: 25000,
+            gas_limit: 1,
             gas_fee_cap: "1".to_string(),
             gas_premium: "1".to_string(),
             method: 0,
@@ -142,7 +142,7 @@ mod tests {
             .clone();
 
         let signed_message = ks.sign_transaction("FILECOIN", &account.address, &unsigned_message);
-        println!("{}", signed_message.unwrap().signature);
+        assert_eq!(signed_message.unwrap().signature, "693aadc785f99a3bf9dec815086f0546db7a8cd71b9e608d40bdbc987160468a1ad36e00452e8b9975e9f4f264d2a23012de765f3d4657dc9337e49549aa85d901");
     }
 
     #[test]
