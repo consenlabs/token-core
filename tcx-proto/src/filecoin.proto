@@ -6,9 +6,9 @@ message UnsignedMessage {
     string from = 2;
     uint64 nonce = 3;
     string value = 4;
-    int64 gas_limit = 5;
-    string gas_fee_cap = 6;
-    string gas_premium = 7;
+    int64 gasLimit = 5;
+    string gasFeeCap = 6;
+    string gasPremium = 7;
     uint64 method = 8;
     string params = 9;
 }
