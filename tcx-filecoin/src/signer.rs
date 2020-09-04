@@ -57,8 +57,6 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
         let unsigned_message = forest_message::UnsignedMessage::try_from(tx)?;
 
         let cobr_buffer = to_vec(&unsigned_message)?;
-        let hash = message_digest(&cobr_buffer);
-
         let account = self.account(symbol, address);
 
         if account.is_none() {
@@ -67,11 +65,12 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
 
         let signature;
         match account.unwrap().curve {
-            CurveType::BLS => {
-                signature = self.sign_hash(&hash, symbol, address, None)?;
-            }
             CurveType::SECP256k1 => {
-                signature = self.sign_recoverable_hash(&hash, symbol, address, None)?;
+                let cid_hashed = message_digest(&cobr_buffer);
+                signature = self.sign_recoverable_hash(&cid_hashed, symbol, address, None)?;
+            }
+            CurveType::BLS => {
+                signature = self.sign_hash(&cobr_buffer, symbol, address, None)?;
             }
             _ => return Err(Error::InvalidCurveType.into()),
         }
@@ -90,10 +89,9 @@ mod tests {
     use tcx_chain::{Keystore, Metadata, TransactionSigner};
     use tcx_constants::{CoinInfo, CurveType};
 
-    const EXAMPLE_CBOR_DATA:&str = "8a005501fd1d0f4dfcd7e99afcb99a8326b7dc459d32c62855011eaf1c8a4bbfeeb0870b1745b1f57503470b71160144000186a0014200014200010040";
-
-    fn unsigned_message1() -> UnsignedMessage {
-        UnsignedMessage {
+    #[test]
+    fn test_sign_secp256k1() {
+        let unsigned_message = UnsignedMessage {
             to: "t17uoq6tp427uzv7fztkbsnn64iwotfrristwpryy".to_string(),
             from: "t1d2xrzcslx7xlbbylc5c3d5lvandqw4iwl6epxba".to_string(),
             nonce: 1,
@@ -103,23 +101,7 @@ mod tests {
             gas_premium: "1".to_string(),
             method: 0,
             params: "".to_string(),
-        }
-    }
-
-    #[test]
-    fn test_cobr() {
-        let unsigned_message =
-            forest_message::UnsignedMessage::try_from(&unsigned_message1()).unwrap();
-
-        assert_eq!(
-            hex::encode(&serde_cbor::to_vec(&unsigned_message).unwrap()),
-            EXAMPLE_CBOR_DATA
-        );
-    }
-
-    #[test]
-    fn test_sign_secp256k1() {
-        let unsigned_message = unsigned_message1();
+        };
 
         let mut ks = Keystore::from_private_key(
             "f15716d3b003b304b8055d9cc62e6b9c869d56cc930c3858d4d7c31f5f53f14a",
@@ -146,5 +128,41 @@ mod tests {
     }
 
     #[test]
-    fn test_sign_bls() {}
+    fn test_sign_bls() {
+        let unsigned_message = UnsignedMessage {
+            to: "t17uoq6tp427uzv7fztkbsnn64iwotfrristwpryy".to_string(),
+            from: "t3vxrizeiel2e2bxg3jhk62dlcutyc26fjnw6ua2sptu32dtjpwxbjawg666nqdngrkvvn45h7yb4qiya6ls7q".to_string(),
+            nonce: 1,
+            value: "100000".to_string(),
+            gas_limit: 2500,
+            gas_fee_cap: "2500".to_string(),
+            gas_premium: "2500".to_string(),
+            method: 0,
+            params: "".to_string(),
+        };
+
+        let mut ks = Keystore::from_private_key(
+            "d31ed8d06197f7631e58117d99c5ae4791183f17b6772eb4afc5c840e0f7d412",
+            "Password",
+            Metadata::default(),
+        );
+        ks.unlock_by_password("Password").unwrap();
+
+        let coin_info = CoinInfo {
+            coin: "FILECOIN".to_string(),
+            derivation_path: "".to_string(),
+            curve: CurveType::BLS,
+            network: "TESTNET".to_string(),
+            seg_wit: "".to_string(),
+        };
+
+        let account = ks
+            .derive_coin::<FilecoinAddress>(&coin_info)
+            .unwrap()
+            .clone();
+
+        let signed_message = ks.sign_transaction("FILECOIN", &account.address, &unsigned_message);
+        println!("{}", signed_message.unwrap().signature);
+        //        assert_eq!(signed_message.unwrap().signature, "693aadc785f99a3bf9dec815086f0546db7a8cd71b9e608d40bdbc987160468a1ad36e00452e8b9975e9f4f264d2a23012de765f3d4657dc9337e49549aa85d901");
+    }
 }
