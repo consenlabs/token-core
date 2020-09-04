@@ -56,7 +56,7 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
     ) -> Result<SignedMessage> {
         let unsigned_message = forest_message::UnsignedMessage::try_from(tx)?;
 
-        let cobr_buffer = to_vec(&unsigned_message)?;
+        let cbor_buffer = to_vec(&unsigned_message)?;
         let account = self.account(symbol, address);
 
         if account.is_none() {
@@ -66,11 +66,11 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
         let signature;
         match account.unwrap().curve {
             CurveType::SECP256k1 => {
-                let cid_hashed = message_digest(&cobr_buffer);
+                let cid_hashed = message_digest(&cbor_buffer);
                 signature = self.sign_recoverable_hash(&cid_hashed, symbol, address, None)?;
             }
             CurveType::BLS => {
-                signature = self.sign_hash(&cobr_buffer, symbol, address, None)?;
+                signature = self.sign_hash(&cbor_buffer, symbol, address, None)?;
             }
             _ => return Err(Error::InvalidCurveType.into()),
         }
@@ -134,7 +134,7 @@ mod tests {
             from: "t3vxrizeiel2e2bxg3jhk62dlcutyc26fjnw6ua2sptu32dtjpwxbjawg666nqdngrkvvn45h7yb4qiya6ls7q".to_string(),
             nonce: 1,
             value: "100000".to_string(),
-            gas_limit: 2500,
+            gas_limit: 25000,
             gas_fee_cap: "2500".to_string(),
             gas_premium: "2500".to_string(),
             method: 0,
@@ -162,7 +162,6 @@ mod tests {
             .clone();
 
         let signed_message = ks.sign_transaction("FILECOIN", &account.address, &unsigned_message);
-        println!("{}", signed_message.unwrap().signature);
-        //        assert_eq!(signed_message.unwrap().signature, "693aadc785f99a3bf9dec815086f0546db7a8cd71b9e608d40bdbc987160468a1ad36e00452e8b9975e9f4f264d2a23012de765f3d4657dc9337e49549aa85d901");
+        assert_eq!(signed_message.unwrap().signature, "a0e8380977d2ccc5dd4d5ebd823406ed22fde880a3bd0fa8426c16b34013c487c51107f5e2808031b680ff200aa16f770a12a82022cc0fd2a7b0302baacee87862fed11be087609d3b0daf90869558574e15b94b375a0f34bce9478e975bb02c");
     }
 }
