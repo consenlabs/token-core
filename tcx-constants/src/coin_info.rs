@@ -169,8 +169,8 @@ pub fn coin_info_from_param(
         .filter(|x| {
             x.coin.as_str() == chain_type
                 && (x.network.as_str() == network || network.is_empty())
-                && (x.seg_wit.as_str() == seg_wit
-                    || seg_wit.is_empty() && (x.curve.as_str() == curve || curve.is_empty()))
+                && (x.seg_wit.as_str() == seg_wit || seg_wit.is_empty())
+                && (x.curve.as_str() == curve || curve.is_empty())
         })
         .map(|x| x.clone())
         .collect::<Vec<CoinInfo>>();

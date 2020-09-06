@@ -85,7 +85,6 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
 #[cfg(test)]
 mod tests {
     use crate::{FilecoinAddress, UnsignedMessage};
-    use failure::_core::convert::TryFrom;
     use tcx_chain::{Keystore, Metadata, TransactionSigner};
     use tcx_constants::{CoinInfo, CurveType};
 

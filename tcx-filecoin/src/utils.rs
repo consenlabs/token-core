@@ -1,5 +1,4 @@
 use blake2b_rs::Blake2bBuilder;
-use tcx_chain::Result;
 
 pub enum HashSize {
     Checksum = 4,

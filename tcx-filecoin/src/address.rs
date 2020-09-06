@@ -67,7 +67,7 @@ impl Address for FilecoinAddress {
         ))
     }
 
-    fn is_valid(address: &str, coin: &CoinInfo) -> bool {
+    fn is_valid(_address: &str, _coin: &CoinInfo) -> bool {
         // TODO validate the address
         true
     }
@@ -76,10 +76,9 @@ impl Address for FilecoinAddress {
 #[cfg(test)]
 mod tests {
     use crate::address::FilecoinAddress;
-    use crate::address::HashSize;
     use tcx_chain::Address;
     use tcx_constants::{CoinInfo, CurveType};
-    use tcx_primitive::{Secp256k1PublicKey, TypedPublicKey};
+    use tcx_primitive::TypedPublicKey;
 
     #[test]
     fn test_bls_address() {
