@@ -407,6 +407,7 @@ mod tests {
                 network: "MAINNET".to_string(),
                 seg_wit: "NONE".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
@@ -460,6 +461,7 @@ mod tests {
                 network: "TESTNET".to_string(),
                 seg_wit: "NONE".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
@@ -550,6 +552,7 @@ mod tests {
                     network: "MAINNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "LITECOIN".to_string(),
@@ -557,6 +560,7 @@ mod tests {
                     network: "MAINNET".to_string(),
                     seg_wit: "P2WPKH".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "LITECOIN".to_string(),
@@ -564,6 +568,7 @@ mod tests {
                     network: "TESTNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "TRON".to_string(),
@@ -571,6 +576,7 @@ mod tests {
                     network: "".to_string(),
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "NERVOS".to_string(),
@@ -578,6 +584,7 @@ mod tests {
                     network: "TESTNET".to_string(),
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "KUSAMA".to_string(),
@@ -585,6 +592,7 @@ mod tests {
                     network: "".to_string(),
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "POLKADOT".to_string(),
@@ -592,6 +600,7 @@ mod tests {
                     network: "".to_string(),
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
             ];
             let param = KeystoreCommonDeriveParam {
@@ -657,6 +666,7 @@ mod tests {
                     network: "MAINNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "LITECOIN".to_string(),
@@ -664,6 +674,7 @@ mod tests {
                     network: "MAINNET".to_string(),
                     seg_wit: "P2WPKH".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "LITECOIN".to_string(),
@@ -671,6 +682,7 @@ mod tests {
                     network: "TESTNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
             ];
             for derivation in invalid_derivations {
@@ -701,6 +713,7 @@ mod tests {
                     network: "MAINNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "LITECOIN".to_string(),
@@ -708,6 +721,7 @@ mod tests {
                     network: "MAINNET".to_string(),
                     seg_wit: "P2WPKH".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "LITECOIN".to_string(),
@@ -715,6 +729,7 @@ mod tests {
                     network: "TESTNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "TRON".to_string(),
@@ -722,6 +737,7 @@ mod tests {
                     network: "".to_string(),
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "NERVOS".to_string(),
@@ -729,6 +745,7 @@ mod tests {
                     network: "TESTNET".to_string(),
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
             ];
             let param = KeystoreCommonDeriveParam {
@@ -776,6 +793,7 @@ mod tests {
                 network: "MAINNET".to_string(),
                 seg_wit: "NONE".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             }];
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
@@ -825,6 +843,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             }];
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
@@ -923,6 +942,7 @@ mod tests {
                     network: "MAINNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "BITCOINCASH".to_string(),
@@ -930,6 +950,7 @@ mod tests {
                     network: "TESTNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "TRON".to_string(),
@@ -937,6 +958,7 @@ mod tests {
                     network: "".to_string(),
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
             ];
             let pks = vec![
@@ -991,6 +1013,7 @@ mod tests {
                     network: "MAINNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "BITCOINCASH".to_string(),
@@ -998,6 +1021,7 @@ mod tests {
                     network: "MAINNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "BITCOINCASH".to_string(),
@@ -1005,6 +1029,7 @@ mod tests {
                     network: "TESTNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
                 Derivation {
                     chain_type: "TRON".to_string(),
@@ -1012,6 +1037,7 @@ mod tests {
                     network: "".to_string(),
                     seg_wit: "".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 },
             ];
 
@@ -1084,6 +1110,7 @@ mod tests {
                 network: "MAINNET".to_string(),
                 seg_wit: "NONE".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
 
             let derive_param = KeystoreCommonDeriveParam {
@@ -1233,6 +1260,7 @@ mod tests {
                 network: "MAINNET".to_string(),
                 seg_wit: "NONE".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             }];
             let param = KeystoreCommonDeriveParam {
                 id: wallet.id.to_string(),
@@ -1261,6 +1289,7 @@ mod tests {
                 network: "TESTNET".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
 
             let wallet = import_and_derive(derivation);
@@ -1347,6 +1376,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
 
             let wallet = import_and_derive(derivation);
@@ -1568,6 +1598,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
 
             let param = KeystoreCommonDeriveParam {
@@ -1619,6 +1650,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
             let wallet = import_and_derive(derivation);
             assert_eq!(
@@ -1682,6 +1714,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
 
             let param = KeystoreCommonDeriveParam {
@@ -1704,6 +1737,7 @@ mod tests {
                 network: "MAINNET".to_string(),
                 seg_wit: "NONE".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
 
             let param = KeystoreCommonDeriveParam {
@@ -1732,6 +1766,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
 
             let wallet = import_and_derive(derivation);
@@ -1787,6 +1822,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
@@ -1818,6 +1854,48 @@ mod tests {
         })
     }
 
+    pub fn test_sign_filecoin_secp256k1() {
+        run_test(|| {
+            let import_result = import_default_pk_store();
+
+            let derivation = Derivation {
+                chain_type: "FILECOIN".to_string(),
+                path: "".to_string(),
+                network: "TESTNET".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+                curve: "SECP256k1".to_string(),
+            };
+            let param = KeystoreCommonDeriveParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+
+            let ret = call_api("keystore_common_derive", param).unwrap();
+            let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
+
+            let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
+            let input = TronTxInput { raw_data };
+            let tx = SignParam {
+                id: import_result.id.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
+                chain_type: "FILECOIN".to_string(),
+                address: rsp.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(input).unwrap(),
+                }),
+            };
+
+            let ret = call_api("sign_tx", tx).unwrap();
+            let output: TronTxOutput = TronTxOutput::decode(ret.as_slice()).unwrap();
+            let expected_sign = "7758c92df76d50774a67fdca6c90b922fc84be68c69164d4c7f500327bfa4b9655709b6b1f88e07e3bda266d7ca4b48c934557917692f63a31e301d79d7107d001";
+            assert_eq!(expected_sign, output.signatures[0]);
+            remove_created_wallet(&import_result.id);
+        })
+    }
+
     #[test]
     pub fn test_sign_by_dk_in_pk_store() {
         run_test(|| {
@@ -1829,6 +1907,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
             let param = KeystoreCommonDeriveParam {
                 id: import_result.id.to_string(),
@@ -1891,6 +1970,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
             let wallet = import_and_derive(derivation);
 
@@ -1955,6 +2035,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
             let wallet = import_and_derive(derivation);
 
@@ -2021,6 +2102,7 @@ mod tests {
                     network: "TESTNET".to_string(),
                     seg_wit: "NONE".to_string(),
                     chain_id: "".to_string(),
+                    curve: "".to_string(),
                 };
                 let param = KeystoreCommonDeriveParam {
                     id: import_result.id.to_string(),
@@ -2082,6 +2164,7 @@ mod tests {
                 network: "".to_string(),
                 seg_wit: "".to_string(),
                 chain_id: "".to_string(),
+                curve: "".to_string(),
             };
 
             let wallet = import_and_derive(derivation);

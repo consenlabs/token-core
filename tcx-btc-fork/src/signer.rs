@@ -390,7 +390,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -433,7 +433,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -491,7 +491,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -536,7 +536,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -581,7 +581,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -622,7 +622,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -650,7 +650,7 @@ mod tests {
             derived_path: "0/0".to_string(),
             sequence: 0,
         }];
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tx_input = BtcForkTxInput {
             to: "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc".to_string(),
             amount: 1500000,
@@ -693,7 +693,7 @@ mod tests {
             derived_path: "0/0".to_string(),
             sequence: 0,
         }];
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tx_input = BtcForkTxInput {
             to: "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc".to_string(),
             amount: 545,
@@ -738,7 +738,7 @@ mod tests {
                 derived_path: "0/0".to_string(),
                 sequence: 0,
             }];
-            let coin_info = coin_info_from_param(chain_type, "TESTNET", "NONE").unwrap();
+            let coin_info = coin_info_from_param(chain_type, "TESTNET", "NONE", "").unwrap();
             let tx_input = BtcForkTxInput {
                 to: "address_invalid".to_string(),
                 amount: 500000,
@@ -791,7 +791,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -831,7 +831,7 @@ mod tests {
             network: "".to_string(),
             seg_wit: "".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE", "").unwrap();
         let tran = BitcoinForkSinger::<BtcForkAddress, SegWitTransactionSignComponent> {
             tx_input,
             coin_info,

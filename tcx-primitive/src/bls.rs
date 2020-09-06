@@ -35,7 +35,7 @@ impl TraitPrivateKey for BLSPrivateKey {
         Ok(self.0.sign(message).as_bytes())
     }
 
-    fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>> {
+    fn sign_recoverable(&self, _: &[u8]) -> Result<Vec<u8>> {
         Err(KeyError::NotImplement.into())
     }
 

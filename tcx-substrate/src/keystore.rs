@@ -276,7 +276,7 @@ mod test_super {
     #[test]
     fn test_export_from_sertcet_key() {
         let prv_key = hex::decode("00ea01b0116da6ca425c477521fd49cc763988ac403ab560f4022936a18a4341016e7df1f5020068c9b150e0722fea65a264d5fbb342d4af4ddf2f1cdbddf1fd").unwrap();
-        let coin_info = coin_info_from_param("KUSAMA", "", "").unwrap();
+        let coin_info = coin_info_from_param("KUSAMA", "", "", "").unwrap();
         let keystore = encode_substrate_keystore(&TEST_PASSWORD, &prv_key, &coin_info).unwrap();
         assert_eq!(
             keystore.address,
