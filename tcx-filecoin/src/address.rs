@@ -40,7 +40,7 @@ impl Address for FilecoinAddress {
         match public_key {
             TypedPublicKey::Secp256k1(pk) => {
                 protocol = Protocol::Secp256k1;
-                payload = Self::address_hash(&pk.to_bytes());
+                payload = Self::address_hash(&pk.to_uncompressed());
 
                 cksm = Self::checksum(&[vec![protocol as u8], payload.clone().to_vec()].concat());
             }
@@ -76,8 +76,8 @@ impl Address for FilecoinAddress {
 #[cfg(test)]
 mod tests {
     use crate::address::FilecoinAddress;
-    use tcx_chain::Address;
-    use tcx_constants::{CoinInfo, CurveType};
+    use tcx_chain::{Address, Keystore, Metadata};
+    use tcx_constants::{coin_info_from_param, CoinInfo, CurveType};
     use tcx_primitive::TypedPublicKey;
 
     #[test]
@@ -123,6 +123,27 @@ mod tests {
             let address = FilecoinAddress::from_public_key(&pk, &coin_info).unwrap();
             assert_eq!(address, expected);
         }
+    }
+
+    #[test]
+    fn test_bip44_secp256k1() {
+        let mut coin_info = coin_info_from_param("FILECOIN", "MAINNET", "", "SECP256k1")
+            .unwrap()
+            .clone();
+
+        let mut ks = Keystore::from_mnemonic(
+            "equip will roof matter pink blind book anxiety banner elbow sun young",
+            "Password",
+            Metadata::default(),
+        )
+        .unwrap();
+
+        coin_info.derivation_path = "m/44'/461'/0/0/0".to_string();
+
+        ks.unlock_by_password("Password").unwrap();
+
+        let account = ks.derive_coin::<FilecoinAddress>(&coin_info).unwrap();
+        assert_eq!(account.address, "f1d2xrzcslx7xlbbylc5c3d5lvandqw4iwl6epxba");
     }
 
     #[test]
