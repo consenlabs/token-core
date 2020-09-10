@@ -11,7 +11,7 @@ members = [
     "tcx-ckb",
     "tcx-substrate",
     "tcx",
-
+    "tcx-tezos",
     "tcx-tester",
 ]
 
