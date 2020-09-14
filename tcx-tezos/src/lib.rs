@@ -1,4 +1,5 @@
-#[cfg(test)]
+pub mod address;
+
 mod tests {
     #[test]
     fn it_works() {
