@@ -10,6 +10,7 @@ mod rand;
 mod secp256k1;
 mod sr25519;
 mod subkey;
+mod bls_derive;
 
 use core::result;
 

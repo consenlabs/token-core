@@ -5,10 +5,10 @@ use crate::{
 };
 
 use crate::bls::{BLSPrivateKey, BLSPublicKey};
-use crate::ecc::TypedDeterministicPrivateKey::{Bip32Sepc256k1, SubSr25519};
 use crate::sr25519::{Sr25519PrivateKey, Sr25519PublicKey};
 use sp_core::Pair;
 use tcx_constants::CurveType;
+use crate::bls_derive::BLSDeterministicPrivateKey;
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum KeyError {
@@ -255,6 +255,7 @@ impl Derive for TypedDeterministicPublicKey {
 pub enum TypedDeterministicPrivateKey {
     Bip32Sepc256k1(Bip32DeterministicPrivateKey),
     SubSr25519(Sr25519PrivateKey),
+    BLS(BLSDeterministicPrivateKey),
 }
 
 impl TypedDeterministicPrivateKey {
@@ -262,6 +263,7 @@ impl TypedDeterministicPrivateKey {
         match self {
             TypedDeterministicPrivateKey::Bip32Sepc256k1(_) => CurveType::SECP256k1,
             TypedDeterministicPrivateKey::SubSr25519(_) => CurveType::SubSr25519,
+            TypedDeterministicPrivateKey::BLS(_) => CurveType::BLS,
         }
     }
 
@@ -270,10 +272,11 @@ impl TypedDeterministicPrivateKey {
         mnemonic: &str,
     ) -> Result<TypedDeterministicPrivateKey> {
         match curve_type {
-            CurveType::SECP256k1 => Ok(Bip32Sepc256k1(
+            CurveType::SECP256k1 => Ok(TypedDeterministicPrivateKey::Bip32Sepc256k1(
                 Bip32DeterministicPrivateKey::from_mnemonic(mnemonic)?,
             )),
-            CurveType::SubSr25519 => Ok(SubSr25519(Sr25519PrivateKey::from_mnemonic(mnemonic)?)),
+            CurveType::SubSr25519 => Ok(TypedDeterministicPrivateKey::SubSr25519(Sr25519PrivateKey::from_mnemonic(mnemonic)?)),
+            CurveType::BLS => Ok(TypedDeterministicPrivateKey::BLS(BLSDeterministicPrivateKey::from_mnemonic(mnemonic)?)),
             _ => Err(KeyError::InvalidCurveType.into()),
         }
     }
@@ -286,6 +289,9 @@ impl TypedDeterministicPrivateKey {
             TypedDeterministicPrivateKey::SubSr25519(dsk) => {
                 TypedPrivateKey::Sr25519(dsk.private_key())
             }
+            TypedDeterministicPrivateKey::BLS(dsk) => {
+                TypedPrivateKey::BLS(dsk.private_key())
+            }
         }
     }
 
@@ -297,6 +303,9 @@ impl TypedDeterministicPrivateKey {
             TypedDeterministicPrivateKey::SubSr25519(sk) => {
                 TypedDeterministicPublicKey::SubSr25519(sk.deterministic_public_key())
             }
+            TypedDeterministicPrivateKey::BLS(_) => {
+                panic!("not support")
+            }
         }
     }
 }
@@ -306,6 +315,7 @@ impl ToString for TypedDeterministicPrivateKey {
         match self {
             TypedDeterministicPrivateKey::Bip32Sepc256k1(sk) => sk.to_string(),
             TypedDeterministicPrivateKey::SubSr25519(sk) => hex::encode(sk.0.to_raw_vec()),
+            TypedDeterministicPrivateKey::BLS(sk) => hex::encode(sk.0.to_string()),
         }
     }
 }
@@ -341,6 +351,9 @@ impl Derive for TypedDeterministicPrivateKey {
             ),
             TypedDeterministicPrivateKey::SubSr25519(dsk) => {
                 Ok(TypedDeterministicPrivateKey::SubSr25519(dsk.derive(path)?))
+            }
+            TypedDeterministicPrivateKey::BLS(dsk) => {
+                Ok(TypedDeterministicPrivateKey::BLS(dsk.derive(path)?))
             }
         }
     }

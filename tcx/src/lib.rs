@@ -273,6 +273,19 @@ mod tests {
         WalletResult::decode(ret.as_slice()).unwrap()
     }
 
+    fn import_filecoin_pk_store() -> WalletResult {
+        let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+            private_key: "f15716d3b003b304b8055d9cc62e6b9c869d56cc930c3858d4d7c31f5f53f14a".to_string(),
+            password: TEST_PASSWORD.to_string(),
+            name: "import_filecoin_pk_store".to_string(),
+            password_hint: "".to_string(),
+            overwrite: true,
+        };
+
+        let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+        WalletResult::decode(ret.as_slice()).unwrap()
+    }
+
     fn import_and_derive(derivation: Derivation) -> WalletResult {
         let mut wallet = import_default_wallet();
 
@@ -610,6 +623,14 @@ mod tests {
                     chain_id: "".to_string(),
                     curve: "SECP256k1".to_string(),
                 },
+                Derivation {
+                    chain_type: "FILECOIN".to_string(),
+                    path: "m/12381/461/0/0".to_string(),
+                    network: "TESTNET".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                    curve: "BLS".to_string(),
+                },
             ];
 
             let param = KeystoreCommonDeriveParam {
@@ -620,7 +641,7 @@ mod tests {
             let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
             let derived_accounts: AccountsResponse =
                 AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
-            assert_eq!(8, derived_accounts.accounts.len());
+            assert_eq!(9, derived_accounts.accounts.len());
             assert_eq!(
                 "LQ3JqCohgLQ3x1CJXYERnJTy1ySaqr1E32",
                 derived_accounts.accounts[0].address
@@ -658,10 +679,13 @@ mod tests {
                 "13GVaZUS28zTCroTPq8dyppfm8F4cAvoJsSZ3yvmtyRYLSLJ",
                 derived_accounts.accounts[6].address
             );
-
             assert_eq!(
                 "t1k7yhkb42jhgrsx4nhr7rfkxfiahmkyxq5cw74ry",
                 derived_accounts.accounts[7].address
+            );
+            assert_eq!(
+                "t3vzsbupn72hyjlr5jjxakgiw54qgtmvya5rxbuzp7nd4w5j5iyqfyj5yul343q5ghg7jiv5kdgqi5kyfxvfpa",
+                derived_accounts.accounts[8].address
             );
 
             remove_created_wallet(&import_result.id);
@@ -1871,7 +1895,7 @@ mod tests {
     #[test]
     pub fn test_sign_filecoin_bls() {
         run_test(|| {
-            let import_result = import_default_pk_store();
+            let import_result = import_filecoin_pk_store();
 
             let derivation = Derivation {
                 chain_type: "FILECOIN".to_string(),

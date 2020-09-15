@@ -8,7 +8,10 @@ use bitcoin::util::key::PublicKey;
 
 use bitcoin::util::base58;
 use bitcoin::util::base58::Error::InvalidLength;
-use bitcoin::util::bip32::{ChainCode, ChildNumber, Error as Bip32Error, ExtendedPrivKey, ExtendedPubKey, Fingerprint, Error};
+use bitcoin::util::bip32::{
+    ChainCode, ChildNumber, Error as Bip32Error, ExtendedPrivKey, ExtendedPubKey,
+    Fingerprint,
+};
 use bitcoin::Network;
 use byteorder::BigEndian;
 use byteorder::ByteOrder;
@@ -35,8 +38,7 @@ impl From<Bip32Error> for KeyError {
 impl Bip32DeterministicPrivateKey {
     /// Construct a new master key from a seed value
     pub fn from_seed(seed: &[u8]) -> Result<Self> {
-        let epk =
-            ExtendedPrivKey::new_master(Network::Bitcoin, seed)?;
+        let epk = ExtendedPrivKey::new_master(Network::Bitcoin, seed)?;
         Ok(Bip32DeterministicPrivateKey(epk))
     }
 
@@ -57,7 +59,9 @@ impl Derive for Bip32DeterministicPrivateKey {
             parts.next();
         }
 
-        let children_nums = parts.map(str::parse).collect::<std::result::Result<Vec<ChildNumber>, Bip32Error>>()?;
+        let children_nums = parts
+            .map(str::parse)
+            .collect::<std::result::Result<Vec<ChildNumber>, Bip32Error>>()?;
         let child_key = extended_key.derive_priv(&SECP256K1_ENGINE, &children_nums)?;
 
         Ok(Bip32DeterministicPrivateKey(child_key))
@@ -73,7 +77,9 @@ impl Derive for Bip32DeterministicPublicKey {
             parts.next();
         }
 
-        let children_nums = parts.map(str::parse).collect::<std::result::Result<Vec<ChildNumber>, Bip32Error>>()?;
+        let children_nums = parts
+            .map(str::parse)
+            .collect::<std::result::Result<Vec<ChildNumber>, Bip32Error>>()?;
         let child_key = extended_key.derive_pub(&SECP256K1_ENGINE, &children_nums)?;
 
         Ok(Bip32DeterministicPublicKey(child_key))
@@ -85,8 +91,7 @@ impl DeterministicPrivateKey for Bip32DeterministicPrivateKey {
     type PrivateKey = Secp256k1PrivateKey;
 
     fn from_seed(seed: &[u8]) -> Result<Self> {
-        let esk =
-            ExtendedPrivKey::new_master(Network::Bitcoin, seed)?;
+        let esk = ExtendedPrivKey::new_master(Network::Bitcoin, seed)?;
         Ok(Bip32DeterministicPrivateKey(esk))
     }
 

@@ -13,8 +13,14 @@ message UnsignedMessage {
     string params = 9;
 }
 
+message Signature {
+    uint32  type = 1;
+    string  data = 2;
+}
+
 message SignedMessage {
-    string signature = 1;
+    string cid = 1;
     UnsignedMessage message = 2;
+    Signature signature = 3;
 }
 

@@ -1,4 +1,4 @@
-use crate::transaction::{SignedMessage, UnsignedMessage};
+use crate::transaction::{SignedMessage, UnsignedMessage, Signature};
 use crate::utils::message_digest;
 use crate::Error;
 use forest_address::Address;
@@ -57,7 +57,9 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
         let unsigned_message = forest_message::UnsignedMessage::try_from(tx)?;
 
         let cbor_buffer = to_vec(&unsigned_message)?;
+        let cid = message_digest(&cbor_buffer);
         let account = self.account(symbol, address);
+        let signature_type ;
 
         if account.is_none() {
             return Err(Error::CannotFoundAccount.into());
@@ -66,18 +68,20 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
         let signature;
         match account.unwrap().curve {
             CurveType::SECP256k1 => {
-                let cid_hashed = message_digest(&cbor_buffer);
-                signature = self.sign_recoverable_hash(&cid_hashed, symbol, address, None)?;
+                signature_type = 1;
+                signature = self.sign_recoverable_hash(&cid, symbol, address, None)?;
             }
             CurveType::BLS => {
+                signature_type = 2;
                 signature = self.sign_hash(&cbor_buffer, symbol, address, None)?;
             }
             _ => return Err(Error::InvalidCurveType.into()),
         }
 
         Ok(SignedMessage {
-            signature: hex::encode(&signature),
+            cid: base64::encode(&cid),
             message: Some(tx.clone()),
+            signature: Some(Signature{ r#type: signature_type, data: base64::encode(&signature) }),
         })
     }
 }
@@ -123,7 +127,10 @@ mod tests {
             .clone();
 
         let signed_message = ks.sign_transaction("FILECOIN", &account.address, &unsigned_message);
-        assert_eq!(signed_message.unwrap().signature, "693aadc785f99a3bf9dec815086f0546db7a8cd71b9e608d40bdbc987160468a1ad36e00452e8b9975e9f4f264d2a23012de765f3d4657dc9337e49549aa85d901");
+        let signature = signed_message.unwrap().signature.unwrap();
+
+        assert_eq!(signature.r#type,1);
+        assert_eq!(signature.data, "aTqtx4X5mjv53sgVCG8FRtt6jNcbnmCNQL28mHFgRooa024ARS6LmXXp9PJk0qIwEt52Xz1GV9yTN+SVSaqF2QE=");
     }
 
     #[test]
@@ -161,6 +168,9 @@ mod tests {
             .clone();
 
         let signed_message = ks.sign_transaction("FILECOIN", &account.address, &unsigned_message);
-        assert_eq!(signed_message.unwrap().signature, "a0e8380977d2ccc5dd4d5ebd823406ed22fde880a3bd0fa8426c16b34013c487c51107f5e2808031b680ff200aa16f770a12a82022cc0fd2a7b0302baacee87862fed11be087609d3b0daf90869558574e15b94b375a0f34bce9478e975bb02c");
+        let signature = signed_message.unwrap().signature.unwrap();
+
+        assert_eq!(signature.r#type,2);
+        assert_eq!(signature.data, "oOg4CXfSzMXdTV69gjQG7SL96ICjvQ+oQmwWs0ATxIfFEQf14oCAMbaA/yAKoW93ChKoICLMD9KnsDArqs7oeGL+0Rvgh2CdOw2vkIaVWFdOFblLN1oPNLzpR46XW7As");
     }
 }
