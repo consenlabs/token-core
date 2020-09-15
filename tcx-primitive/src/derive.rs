@@ -127,7 +127,6 @@ impl AsRef<[DeriveJunction]> for DerivePath {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::DerivePath;

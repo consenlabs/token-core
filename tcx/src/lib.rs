@@ -275,7 +275,8 @@ mod tests {
 
     fn import_filecoin_pk_store() -> WalletResult {
         let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
-            private_key: "f15716d3b003b304b8055d9cc62e6b9c869d56cc930c3858d4d7c31f5f53f14a".to_string(),
+            private_key: "f15716d3b003b304b8055d9cc62e6b9c869d56cc930c3858d4d7c31f5f53f14a"
+                .to_string(),
             password: TEST_PASSWORD.to_string(),
             name: "import_filecoin_pk_store".to_string(),
             password_hint: "".to_string(),

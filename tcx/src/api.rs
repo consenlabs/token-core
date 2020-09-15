@@ -5,17 +5,17 @@
 /// which cause the error.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TcxAction {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub method: std::string::String,
-    #[prost(message, optional, tag="2")]
+    #[prost(message, optional, tag = "2")]
     pub param: ::std::option::Option<::prost_types::Any>,
 }
 /// A common response when error occurred.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Response {
-    #[prost(bool, tag="1")]
+    #[prost(bool, tag = "1")]
     pub is_success: bool,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub error: std::string::String,
 }
 /// Initialization
@@ -25,13 +25,13 @@ pub struct Response {
 /// initialize tcx by passing keystore folder and xpub encryption params
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InitTokenCoreXParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub file_dir: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub xpub_common_key: std::string::String,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub xpub_common_iv: std::string::String,
-    #[prost(bool, tag="4")]
+    #[prost(bool, tag = "4")]
     pub is_debug: bool,
 }
 ///
@@ -40,17 +40,17 @@ pub struct InitTokenCoreXParam {
 ///// export the private key from a private key keystore or a hd keystore
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExportPrivateKeyParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub chain_type: std::string::String,
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub network: std::string::String,
-    #[prost(string, tag="5")]
+    #[prost(string, tag = "5")]
     pub main_address: std::string::String,
-    #[prost(string, tag="6")]
+    #[prost(string, tag = "6")]
     pub path: std::string::String,
 }
 ///
@@ -61,9 +61,9 @@ pub struct ExportPrivateKeyParam {
 ///// verify the password of the keystore
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct WalletKeyParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub password: std::string::String,
 }
 /// Hd Store
@@ -73,24 +73,24 @@ pub struct WalletKeyParam {
 /// create a new hd keystore
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HdStoreCreateParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub password: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub password_hint: std::string::String,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub name: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct WalletResult {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub name: std::string::String,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub source: std::string::String,
-    #[prost(message, repeated, tag="4")]
+    #[prost(message, repeated, tag = "4")]
     pub accounts: ::std::vec::Vec<AccountResponse>,
-    #[prost(int64, tag="5")]
+    #[prost(int64, tag = "5")]
     pub created_at: i64,
 }
 /// FUNCTION: hd_store_import(HdStoreImportParam): WalletResult
@@ -98,17 +98,17 @@ pub struct WalletResult {
 /// create a new hd keystore by mnemonic
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HdStoreImportParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub mnemonic: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub source: std::string::String,
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub name: std::string::String,
-    #[prost(string, tag="5")]
+    #[prost(string, tag = "5")]
     pub password_hint: std::string::String,
-    #[prost(bool, tag="6")]
+    #[prost(bool, tag = "6")]
     pub overwrite: bool,
 }
 /// FUNCTION: hd_store_derive(HdStoreDeriveParam): AccountsResponse
@@ -116,44 +116,44 @@ pub struct HdStoreImportParam {
 /// derive new accounts from a hd keystore
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeystoreCommonDeriveParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(message, repeated, tag="3")]
+    #[prost(message, repeated, tag = "3")]
     pub derivations: ::std::vec::Vec<keystore_common_derive_param::Derivation>,
 }
 pub mod keystore_common_derive_param {
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Derivation {
-        #[prost(string, tag="1")]
+        #[prost(string, tag = "1")]
         pub chain_type: std::string::String,
-        #[prost(string, tag="2")]
+        #[prost(string, tag = "2")]
         pub path: std::string::String,
-        #[prost(string, tag="3")]
+        #[prost(string, tag = "3")]
         pub network: std::string::String,
-        #[prost(string, tag="4")]
+        #[prost(string, tag = "4")]
         pub seg_wit: std::string::String,
-        #[prost(string, tag="5")]
+        #[prost(string, tag = "5")]
         pub chain_id: std::string::String,
-        #[prost(string, tag="6")]
+        #[prost(string, tag = "6")]
         pub curve: std::string::String,
     }
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AccountResponse {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub chain_type: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub address: std::string::String,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub path: std::string::String,
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub extended_xpub_key: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AccountsResponse {
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub accounts: ::std::vec::Vec<AccountResponse>,
 }
 /// FUNCTION: hd_store_export(KeystoreCommonExportResult): KeystoreCommonExistsResult
@@ -161,11 +161,11 @@ pub struct AccountsResponse {
 /// export the mnemonic from a hd keystore
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeystoreCommonExportResult {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(enumeration="KeyType", tag="2")]
+    #[prost(enumeration = "KeyType", tag = "2")]
     pub r#type: i32,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub value: std::string::String,
 }
 /// Private Key Store
@@ -175,15 +175,15 @@ pub struct KeystoreCommonExportResult {
 /// create a new private key keystore by a private key
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PrivateKeyStoreImportParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub private_key: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub name: std::string::String,
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub password_hint: std::string::String,
-    #[prost(bool, tag="5")]
+    #[prost(bool, tag = "5")]
     pub overwrite: bool,
 }
 /// FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult
@@ -191,13 +191,13 @@ pub struct PrivateKeyStoreImportParam {
 /// export the private key from a private key keystore
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PrivateKeyStoreExportParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub chain_type: std::string::String,
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub network: std::string::String,
 }
 /// Keystore Common
@@ -211,16 +211,16 @@ pub struct PrivateKeyStoreExportParam {
 /// Check is there a keystore was generate by the special privateKey or mnemonic
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeystoreCommonExistsParam {
-    #[prost(enumeration="KeyType", tag="1")]
+    #[prost(enumeration = "KeyType", tag = "1")]
     pub r#type: i32,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub value: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeystoreCommonExistsResult {
-    #[prost(bool, tag="1")]
+    #[prost(bool, tag = "1")]
     pub is_exists: bool,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub id: std::string::String,
 }
 /// FUNCTION: keystore_common_accounts(KeystoreCommonAccountsParam): AccountsResponse
@@ -228,7 +228,7 @@ pub struct KeystoreCommonExistsResult {
 /// List all accounts from the keystore
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeystoreCommonAccountsParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
 }
 /// Sign Transaction
@@ -239,23 +239,23 @@ pub struct KeystoreCommonAccountsParam {
 /// put it in the `input` field
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub chain_type: std::string::String,
-    #[prost(string, tag="5")]
+    #[prost(string, tag = "5")]
     pub address: std::string::String,
-    #[prost(message, optional, tag="6")]
+    #[prost(message, optional, tag = "6")]
     pub input: ::std::option::Option<::prost_types::Any>,
-    #[prost(oneof="sign_param::Key", tags="2, 3")]
+    #[prost(oneof = "sign_param::Key", tags = "2, 3")]
     pub key: ::std::option::Option<sign_param::Key>,
 }
 pub mod sign_param {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Key {
-        #[prost(string, tag="2")]
+        #[prost(string, tag = "2")]
         Password(std::string::String),
-        #[prost(string, tag="3")]
+        #[prost(string, tag = "3")]
         DerivedKey(std::string::String),
     }
 }
@@ -265,61 +265,61 @@ pub mod sign_param {
 /// btc-fork
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExternalAddressParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub chain_type: std::string::String,
-    #[prost(uint32, tag="3")]
+    #[prost(uint32, tag = "3")]
     pub external_idx: u32,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExternalAddressResult {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub address: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub derived_path: std::string::String,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub r#type: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExternalAddressExtra {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub enc_xpub: std::string::String,
-    #[prost(message, optional, tag="2")]
+    #[prost(message, optional, tag = "2")]
     pub external_address: ::std::option::Option<external_address_extra::ExternalAddress>,
 }
 pub mod external_address_extra {
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct ExternalAddress {
-        #[prost(string, tag="1")]
+        #[prost(string, tag = "1")]
         pub address: std::string::String,
-        #[prost(string, tag="2")]
+        #[prost(string, tag = "2")]
         pub derived_path: std::string::String,
-        #[prost(string, tag="3")]
+        #[prost(string, tag = "3")]
         pub r#type: std::string::String,
     }
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BtcForkDeriveExtraParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub network: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub seg_wit: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HdStoreExtendedPublicKeyParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub password: std::string::String,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub chain_type: std::string::String,
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub address: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HdStoreExtendedPublicKeyResponse {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub extended_public_key: std::string::String,
 }
 /// only support two types
@@ -331,36 +331,36 @@ pub enum KeyType {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VerifyDerivedKeyParam {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub derived_key: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DerivedKeyResult {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub derived_key: std::string::String,
 }
 /// Only used in Android or iOS
 
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CacheDerivedKeyResult {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
-    #[prost(bool, tag="2")]
+    #[prost(bool, tag = "2")]
     pub enable_derived_key: bool,
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub mode: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct WalletId {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub id: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BiometricModeResult {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub mode: std::string::String,
 }

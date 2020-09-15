@@ -1,4 +1,4 @@
-use crate::transaction::{SignedMessage, UnsignedMessage, Signature};
+use crate::transaction::{Signature, SignedMessage, UnsignedMessage};
 use crate::utils::message_digest;
 use crate::Error;
 use forest_address::Address;
@@ -59,7 +59,7 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
         let cbor_buffer = to_vec(&unsigned_message)?;
         let cid = message_digest(&cbor_buffer);
         let account = self.account(symbol, address);
-        let signature_type ;
+        let signature_type;
 
         if account.is_none() {
             return Err(Error::CannotFoundAccount.into());
@@ -81,7 +81,10 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
         Ok(SignedMessage {
             cid: base64::encode(&cid),
             message: Some(tx.clone()),
-            signature: Some(Signature{ r#type: signature_type, data: base64::encode(&signature) }),
+            signature: Some(Signature {
+                r#type: signature_type,
+                data: base64::encode(&signature),
+            }),
         })
     }
 }
@@ -129,7 +132,7 @@ mod tests {
         let signed_message = ks.sign_transaction("FILECOIN", &account.address, &unsigned_message);
         let signature = signed_message.unwrap().signature.unwrap();
 
-        assert_eq!(signature.r#type,1);
+        assert_eq!(signature.r#type, 1);
         assert_eq!(signature.data, "aTqtx4X5mjv53sgVCG8FRtt6jNcbnmCNQL28mHFgRooa024ARS6LmXXp9PJk0qIwEt52Xz1GV9yTN+SVSaqF2QE=");
     }
 
@@ -170,7 +173,7 @@ mod tests {
         let signed_message = ks.sign_transaction("FILECOIN", &account.address, &unsigned_message);
         let signature = signed_message.unwrap().signature.unwrap();
 
-        assert_eq!(signature.r#type,2);
+        assert_eq!(signature.r#type, 2);
         assert_eq!(signature.data, "oOg4CXfSzMXdTV69gjQG7SL96ICjvQ+oQmwWs0ATxIfFEQf14oCAMbaA/yAKoW93ChKoICLMD9KnsDArqs7oeGL+0Rvgh2CdOw2vkIaVWFdOFblLN1oPNLzpR46XW7As");
     }
 }

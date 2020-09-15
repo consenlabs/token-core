@@ -62,10 +62,12 @@ mod tests {
     #[test]
     fn test_bls_private_key() {
         let private_key = BLSPrivateKey::from_slice(
-            &hex::decode("0ef71710671a9f1cfc4bd441c017c9b6db68491929facc68ab072a9676e9e23c").unwrap()).unwrap();
+            &hex::decode("0ef71710671a9f1cfc4bd441c017c9b6db68491929facc68ab072a9676e9e23c")
+                .unwrap(),
+        )
+        .unwrap();
 
         assert_eq!(hex::encode(private_key.public_key().to_bytes()),
                    "b2be11dc8e54ee74dbc07569fd74fe03b5f52ad71cd49a8579b6c6387891f5a20ad980ec2747618c1b9ad35846a68a3e");
     }
-
 }

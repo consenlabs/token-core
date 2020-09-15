@@ -5,10 +5,10 @@ use crate::{
 };
 
 use crate::bls::{BLSPrivateKey, BLSPublicKey};
+use crate::bls_derive::BLSDeterministicPrivateKey;
 use crate::sr25519::{Sr25519PrivateKey, Sr25519PublicKey};
 use sp_core::Pair;
 use tcx_constants::CurveType;
-use crate::bls_derive::BLSDeterministicPrivateKey;
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum KeyError {
@@ -275,8 +275,12 @@ impl TypedDeterministicPrivateKey {
             CurveType::SECP256k1 => Ok(TypedDeterministicPrivateKey::Bip32Sepc256k1(
                 Bip32DeterministicPrivateKey::from_mnemonic(mnemonic)?,
             )),
-            CurveType::SubSr25519 => Ok(TypedDeterministicPrivateKey::SubSr25519(Sr25519PrivateKey::from_mnemonic(mnemonic)?)),
-            CurveType::BLS => Ok(TypedDeterministicPrivateKey::BLS(BLSDeterministicPrivateKey::from_mnemonic(mnemonic)?)),
+            CurveType::SubSr25519 => Ok(TypedDeterministicPrivateKey::SubSr25519(
+                Sr25519PrivateKey::from_mnemonic(mnemonic)?,
+            )),
+            CurveType::BLS => Ok(TypedDeterministicPrivateKey::BLS(
+                BLSDeterministicPrivateKey::from_mnemonic(mnemonic)?,
+            )),
             _ => Err(KeyError::InvalidCurveType.into()),
         }
     }
@@ -289,9 +293,7 @@ impl TypedDeterministicPrivateKey {
             TypedDeterministicPrivateKey::SubSr25519(dsk) => {
                 TypedPrivateKey::Sr25519(dsk.private_key())
             }
-            TypedDeterministicPrivateKey::BLS(dsk) => {
-                TypedPrivateKey::BLS(dsk.private_key())
-            }
+            TypedDeterministicPrivateKey::BLS(dsk) => TypedPrivateKey::BLS(dsk.private_key()),
         }
     }
 
@@ -303,9 +305,7 @@ impl TypedDeterministicPrivateKey {
             TypedDeterministicPrivateKey::SubSr25519(sk) => {
                 TypedDeterministicPublicKey::SubSr25519(sk.deterministic_public_key())
             }
-            TypedDeterministicPrivateKey::BLS(_) => {
-                panic!("not support")
-            }
+            TypedDeterministicPrivateKey::BLS(_) => panic!("not support"),
         }
     }
 }

@@ -3,6 +3,7 @@ extern crate failure;
 
 mod bip32;
 mod bls;
+mod bls_derive;
 mod constant;
 mod derive;
 mod ecc;
@@ -10,7 +11,6 @@ mod rand;
 mod secp256k1;
 mod sr25519;
 mod subkey;
-mod bls_derive;
 
 use core::result;
 

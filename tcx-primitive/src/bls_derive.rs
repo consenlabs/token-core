@@ -1,11 +1,11 @@
 use super::Result;
 use crate::ecc::KeyError;
-use crate::{Derive, DeterministicPrivateKey, DeterministicPublicKey, ToHex, FromHex, PrivateKey};
+use crate::{Derive, DeterministicPrivateKey, DeterministicPublicKey, FromHex, PrivateKey, ToHex};
 
-use num_bigint::BigUint;
-use bls_key_derivation::{derive_child, derive_master_sk};
 use crate::bls::{BLSPrivateKey, BLSPublicKey};
 use bip39::{Language, Mnemonic};
+use bls_key_derivation::{derive_child, derive_master_sk};
+use num_bigint::BigUint;
 
 #[derive(Clone)]
 pub struct BLSDeterministicPrivateKey(pub BigUint);
@@ -20,7 +20,7 @@ impl Derive for BLSDeterministicPrivateKey {
             parts.next();
         }
 
-        let result= parts
+        let result = parts
             .map(str::parse)
             .collect::<std::result::Result<Vec<BigUint>, _>>();
         if result.is_err() {
@@ -29,7 +29,7 @@ impl Derive for BLSDeterministicPrivateKey {
 
         let children_nums = result.unwrap();
 
-        let mut children_key= self.0.clone();
+        let mut children_key = self.0.clone();
         for index in children_nums {
             children_key = derive_child(children_key, index);
         }
@@ -47,9 +47,8 @@ impl DeterministicPrivateKey for BLSDeterministicPrivateKey {
         if master_sk.is_err() {
             return Err(failure::err_msg("invalid seed"));
         }
-        println!("{}", &master_sk.clone().unwrap());
 
-        Ok(BLSDeterministicPrivateKey(BigUint::from(20 as u64)))
+        Ok(BLSDeterministicPrivateKey(master_sk.unwrap()))
     }
 
     fn from_mnemonic(mnemonic: &str) -> Result<Self> {
@@ -67,9 +66,7 @@ impl DeterministicPrivateKey for BLSDeterministicPrivateKey {
     }
 }
 
-impl Derive for BLSDeterministicPublicKey {
-
-}
+impl Derive for BLSDeterministicPublicKey {}
 
 impl FromHex for BLSDeterministicPublicKey {
     fn from_hex(_: &str) -> Result<Self> {
@@ -94,15 +91,21 @@ impl DeterministicPublicKey for BLSDeterministicPublicKey {
 #[cfg(test)]
 mod tests {
     use crate::bls_derive::BLSDeterministicPrivateKey;
-    use crate::{Derive, PrivateKey, DeterministicPrivateKey};
+    use crate::{Derive, DeterministicPrivateKey, PrivateKey};
 
     #[test]
     fn test_bls_derive() {
         let dsk = BLSDeterministicPrivateKey::from_seed(
             &hex::decode("c55257c360c07c72029aebc1b53c05ed0362ada38ead3e3e9efa3708e53495531f09a6987599d18264c1e1c92f2cf141630c7a3c4ab7c81b2f001698e7463b04").unwrap()).unwrap();
 
-        assert_eq!(hex::encode(dsk.private_key().to_bytes()), "fbec74a665b4f52d36a1717c83b21e62051cd5cd90f1c81c4664a6f4bfcaef0b");
+        assert_eq!(
+            hex::encode(dsk.private_key().to_bytes()),
+            "41aaef9bc393b2aa2c9e082d1a75bef4c6428e7be7e35606485538aeba85aa1b"
+        );
 
-        assert_eq!(hex::encode(dsk.derive("m/0").unwrap().private_key().to_bytes()), "3a5542a9fef97a0f6b776fbe5e8edb0e087457be81223b1e1f40836834e31d1a");
+        assert_eq!(
+            hex::encode(dsk.derive("m/0").unwrap().private_key().to_bytes()),
+            "08c5678aa7be13f4a5693f3b230155307bf8cdf9c5c00d5654a21d3705506710"
+        );
     }
 }
