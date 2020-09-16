@@ -685,7 +685,7 @@ mod tests {
                 derived_accounts.accounts[7].address
             );
             assert_eq!(
-                "t3vzsbupn72hyjlr5jjxakgiw54qgtmvya5rxbuzp7nd4w5j5iyqfyj5yul343q5ghg7jiv5kdgqi5kyfxvfpa",
+                "t3virna6zi3ju2kxsd4zcvlzk7hemm6dsfq47ikggpnmpu43sqzt6yi5remdrt3j62nex7vx254d3767fot7jq",
                 derived_accounts.accounts[8].address
             );
 
