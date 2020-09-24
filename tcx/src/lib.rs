@@ -860,6 +860,67 @@ mod tests {
     }
 
     #[test]
+    pub fn test_filecoin_private_key_import() {
+        run_test(|| {
+            let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+                private_key: "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a22437544586b6b4b46773549656d55685a545173514369534e6d6a327062545052495439514f736c587846733d227d"
+                    .to_string(),
+                password: TEST_PASSWORD.to_string(),
+                name: "test_filecoin_private_key_store_import".to_string(),
+                password_hint: "".to_string(),
+                overwrite: true,
+            };
+
+            let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(ret.as_slice()).unwrap();
+
+            assert_eq!(0, import_result.accounts.len());
+
+            let derivations = vec![Derivation {
+                chain_type: "FILECOIN".to_string(),
+                path: "".to_string(),
+                network: "TESTNET".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+                curve: "SECP256k1".to_string(),
+            }];
+            let param = KeystoreCommonDeriveParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations,
+            };
+            let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
+            let derived_accounts: AccountsResponse =
+                AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
+            assert_eq!(1, derived_accounts.accounts.len());
+
+            assert_eq!(
+                "t1i2pdaamk4glchdqkqujyie5ep7wempey3xh35ji",
+                derived_accounts.accounts[0].address
+            );
+
+            let export_param = ExportPrivateKeyParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "FILECOIN".to_string(),
+                network: "".to_string(),
+                main_address: "t1i2pdaamk4glchdqkqujyie5ep7wempey3xh35ji".to_string(),
+                path: "".to_string(),
+            };
+
+            let export_pk_bytes = call_api("export_private_key", export_param).unwrap();
+            let export_pk: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(export_pk_bytes.as_slice()).unwrap();
+            assert_eq!(
+                export_pk.value,
+                "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a22437544586b6b4b46773549656d55685a545173514369534e6d6a327062545052495439514f736c587846733d227d"
+            );
+
+            remove_created_wallet(&import_result.id);
+        });
+    }
+
+    #[test]
     pub fn test_64bytes_private_key_store_import() {
         run_test(|| {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {

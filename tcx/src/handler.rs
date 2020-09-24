@@ -16,7 +16,7 @@ use tcx_chain::{key_hash_from_mnemonic, key_hash_from_private_key, Keystore, Key
 use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
 use tcx_ckb::{CkbAddress, CkbTxInput};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
-use tcx_filecoin::{FilecoinAddress, UnsignedMessage};
+use tcx_filecoin::{FilecoinAddress, KeyInfo, UnsignedMessage};
 use tcx_tron::TrxAddress;
 
 use crate::api::keystore_common_derive_param::Derivation;
@@ -312,7 +312,13 @@ pub(crate) fn export_mnemonic(data: &[u8]) -> Result<Vec<u8>> {
 fn key_data_from_any_format_pk(pk: &str) -> Result<Vec<u8>> {
     let decoded = hex::decode(pk.to_string());
     if decoded.is_ok() {
-        Ok(decoded.unwrap())
+        let bytes = decoded.unwrap();
+        if bytes.len() <= 64 {
+            Ok(bytes)
+        } else {
+            // import filecoin
+            Ok(KeyInfo::from_lotus(&bytes)?.decode_private_key()?)
+        }
     } else {
         private_key_without_version(pk)
     }
@@ -448,6 +454,11 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
     let value = if ["TRON", "POLKADOT", "KUSAMA"].contains(&param.chain_type.as_str()) {
         Ok(pk_hex.to_string())
+    } else if "FILECOIN".contains(&param.chain_type.as_str()) {
+        // TODO get account curve type
+        Ok(hex::encode(
+            KeyInfo::from_private_key(CurveType::SECP256k1, &hex::decode(pk_hex)?)?.to_json()?,
+        ))
     } else {
         let bytes = hex::decode(pk_hex.to_string())?;
         let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
