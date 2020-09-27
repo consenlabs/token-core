@@ -1,4 +1,5 @@
 pub mod address;
+pub mod transaction;
 
 mod tests {
     #[test]

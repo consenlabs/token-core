@@ -5,6 +5,8 @@ mod bip32;
 mod constant;
 mod derive;
 mod ecc;
+mod ed25519;
+mod ed25519_bip32;
 mod rand;
 mod secp256k1;
 mod sr25519;
