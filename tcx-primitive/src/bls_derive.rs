@@ -5,10 +5,10 @@ use super::Result;
 use crate::bls::{BLSPrivateKey, BLSPublicKey};
 use crate::ecc::KeyError;
 use crate::{Derive, DeterministicPrivateKey, DeterministicPublicKey, FromHex, PrivateKey, ToHex};
-use crypto::digest::Digest;
-use crypto::hkdf::{hkdf_expand, hkdf_extract};
-use crypto::sha2::Sha256;
+use hkdf::Hkdf;
 use num_traits::{FromPrimitive, Num, Pow};
+use sha2::digest::FixedOutput;
+use sha2::{Digest, Sha256};
 
 #[derive(Clone)]
 pub struct BLSDeterministicPrivateKey(pub BigUint);
@@ -98,10 +98,12 @@ const NUM_DIGESTS: usize = 255;
 const OUTPUT_SIZE: usize = DIGEST_SIZE * NUM_DIGESTS;
 
 fn hkdf(salt: &[u8], ikm: &[u8], info: &[u8], okm: &mut [u8]) {
-    let digest = Sha256::new();
-    let prk: &mut [u8] = &mut [0u8; DIGEST_SIZE];
-    hkdf_extract(digest, salt, ikm, prk);
-    hkdf_expand(digest, prk, info, okm);
+    let mut extractor = hkdf::HkdfExtract::<Sha256>::new(Some(salt));
+    extractor.input_ikm(ikm);
+
+    let (prk, _) = extractor.finalize();
+    let mut expander = hkdf::Hkdf::<Sha256>::from_prk(&prk).unwrap();
+    expander.expand(info, okm);
 }
 
 fn flip_bits(num: BigUint) -> BigUint {
@@ -133,20 +135,20 @@ fn parent_sk_to_lamport_pk(parent_sk: BigUint, index: BigUint) -> Vec<u8> {
     combined[..NUM_DIGESTS].clone_from_slice(&lamport_0[..NUM_DIGESTS]);
     combined[NUM_DIGESTS..NUM_DIGESTS * 2].clone_from_slice(&lamport_1[..NUM_DIGESTS]);
 
-    let mut sha256 = Sha256::new();
     let mut flattened_key = [0u8; OUTPUT_SIZE * 2];
     for i in 0..NUM_DIGESTS * 2 {
-        let sha_slice = &mut combined[i];
-        sha256.input(sha_slice);
-        sha256.result(sha_slice);
-        sha256.reset();
-        flattened_key[i * DIGEST_SIZE..(i + 1) * DIGEST_SIZE].clone_from_slice(sha_slice);
+        let mut sha256 = Sha256::new();
+        let need_to_hash = &mut combined[i];
+        sha256.update(&need_to_hash);
+        let hash_ret = &sha256.finalize_fixed();
+        flattened_key[i * DIGEST_SIZE..(i + 1) * DIGEST_SIZE].clone_from_slice(&hash_ret);
     }
 
-    sha256.input(&flattened_key);
-    let cmp_pk: &mut [u8] = &mut [0u8; DIGEST_SIZE];
-    sha256.result(cmp_pk);
-    cmp_pk.to_vec()
+    let mut sha256 = Sha256::new();
+    for i in 0..NUM_DIGESTS * 2 {
+        sha256.update(&flattened_key[i * DIGEST_SIZE..(i + 1) * DIGEST_SIZE])
+    }
+    sha256.finalize_fixed().to_vec()
 }
 
 fn hkdf_mod_r(ikm: &[u8]) -> BigUint {
@@ -235,7 +237,11 @@ mod tests {
                 .expect("invalid child key format");
 
             let derived_master_sk = derive_master_sk(seed.as_ref()).unwrap();
-            assert_eq!(derived_master_sk, master_sk);
+            assert_eq!(
+                derived_master_sk, master_sk,
+                "{}",
+                "derived_master_sk == master_sk"
+            );
             let pk = derive_child(master_sk, child_index);
             assert_eq!(child_sk, pk);
         }

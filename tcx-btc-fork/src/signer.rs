@@ -595,7 +595,10 @@ mod tests {
         let ret =
             keystore.sign_transaction("LITECOIN", "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN", &tran);
         assert!(ret.is_err());
-        assert_eq!(format!("{}", ret.err().unwrap()), "invalid_child_number");
+        assert_eq!(
+            format!("{}", ret.err().unwrap()),
+            "invalid child number format"
+        );
     }
 
     #[test]

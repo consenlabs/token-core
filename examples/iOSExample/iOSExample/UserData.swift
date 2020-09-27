@@ -99,7 +99,7 @@ final class UserData: ObservableObject  {
       "xpubCommonIv": "9C0C30889CBCC5E01AB5B2BB88715799"
     ]
     self.apiRequest = prettyPrintJSON(param);
-    init_token_core_x(prettyPrintJSON(param))
+//    init_token_core_x(prettyPrintJSON(param))
     
     self.apiResult = ""
   }
@@ -235,23 +235,23 @@ final class UserData: ObservableObject  {
   
   private func callTokenCoreXApi(_ data: inout Data) throws -> Data {
     var returnData = Data();
-        data.withUnsafeMutableBytes{  [ bytesLen = data.count ] (bytes: UnsafeMutablePointer<UInt8>) -> Void in
-             //Use `bytes` inside this closure
-          let buf = Buffer(data: bytes, len: UInt(bytesLen))
-          clear_err()
-          let retBuf = call_tcx_api(buf)
-          defer {
-            free_buf(retBuf)
-          }
-          let errBuf = get_last_err()
-
-          if errBuf.len > 0 {
-            returnData = Data(bytes: errBuf.data, count: Int(errBuf.len))
-            free_buf(errBuf)
-          } else {
-            returnData = Data(bytes: retBuf.data, count: Int(retBuf.len))
-        }
-        }
+//        data.withUnsafeMutableBytes{  [ bytesLen = data.count ] (bytes: UnsafeMutablePointer<UInt8>) -> Void in
+//             //Use `bytes` inside this closure
+//          let buf = Buffer(data: bytes, len: UInt(bytesLen))
+//          clear_err()
+//          let retBuf = call_tcx_api(buf)
+//          defer {
+//            free_buf(retBuf)
+//          }
+//          let errBuf = get_last_err()
+//
+//          if errBuf.len > 0 {
+//            returnData = Data(bytes: errBuf.data, count: Int(errBuf.len))
+//            free_buf(errBuf)
+//          } else {
+//            returnData = Data(bytes: retBuf.data, count: Int(retBuf.len))
+//        }
+//        }
     return returnData
     }
   
