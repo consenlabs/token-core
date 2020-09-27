@@ -105,7 +105,12 @@ impl DeterministicPrivateKey for Ed25519DeterministicPrivateKey {
         let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Bitcoin seed");
         hmac_engine.input(seed);
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
-        let master_key = XPrv::from_slice_verified(&hmac_result[..])?;
+        //        let master_key = XPrv::from_slice_verified(&hmac_result[..])?;
+        let mut hash_left = [0; 32];
+        hash_left.copy_from_slice(&hmac_result[..32]);
+        let mut hash_rigth = [0; 32];
+        hash_rigth.copy_from_slice(&hmac_result[32..]);
+        let master_key = XPrv::from_nonextended_force(&hash_left, &&hash_rigth);
         Ok(Ed25519DeterministicPrivateKey(master_key))
     }
 
@@ -116,7 +121,7 @@ impl DeterministicPrivateKey for Ed25519DeterministicPrivateKey {
     }
 
     fn private_key(&self) -> Self::PrivateKey {
-        Ed25519PrivateKey::from_slice(self.0.as_ref()).ok().unwrap()
+        Ed25519PrivateKey::from_slice(self.0.as_ref()).unwrap()
     }
 
     fn deterministic_public_key(&self) -> Self::DeterministicPublicKey {
@@ -128,7 +133,7 @@ impl DeterministicPublicKey for Ed25519DeterministicPublicKey {
     type PublicKey = Ed25519PublicKey;
 
     fn public_key(&self) -> Self::PublicKey {
-        Ed25519PublicKey::from_slice(self.0.as_ref()).ok().unwrap()
+        Ed25519PublicKey::from_slice(self.0.as_ref()).unwrap()
     }
 }
 

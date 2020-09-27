@@ -1,6 +1,6 @@
 use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
 use crate::{FromHex, Result, ToHex};
-use schnorrkel::SecretKey;
+use schnorrkel::{Keypair, SecretKey};
 use sp_core::ed25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};
 
@@ -26,9 +26,13 @@ impl TraitPrivateKey for Ed25519PrivateKey {
     type PublicKey = Ed25519PublicKey;
 
     fn from_slice(data: &[u8]) -> Result<Self> {
-        let mut temp_data: [u8; 32] = [0; 32];
-        temp_data.copy_from_slice(data);
-        let pair = Pair::from_seed_slice(&temp_data).unwrap();
+        //        let mut temp_data: [u8; 32] = [0; 32];
+        //        temp_data.copy_from_slice(data);
+        //        let pair = Pair::from_seed_slice(&temp_data).unwrap();
+        //        Ok(Ed25519PrivateKey(pair))
+
+        let sk = SecretKey::from_ed25519_bytes(data).map_err(|_| KeyError::InvalidSr25519Key)?;
+        let pair = Pair(sk.to_keypair());
         Ok(Ed25519PrivateKey(pair))
     }
 
@@ -41,7 +45,6 @@ impl TraitPrivateKey for Ed25519PrivateKey {
     }
 
     fn sign_recoverable(&self, data: &[u8]) -> Result<Vec<u8>> {
-        // https://www.deadalnix.me/2017/02/17/schnorr-signatures-for-not-so-dummies/
         self.sign(data)
     }
 
@@ -99,13 +102,13 @@ mod test {
     #[test]
     fn sign() {
         let pk_bytes: Vec<u8> =
-            hex::decode("1111111111111111111111111111111111111111111111111111111111111111")
+            hex::decode("2e8905819b8723fe2c1d161860e5ee1830318dbf49a83bd451cfb8440c28bd6f")
                 .unwrap();
         let sk_result = Ed25519PrivateKey::from_slice(&pk_bytes);
         assert!(sk_result.is_ok());
 
         let sk = sk_result.ok().unwrap();
-        let msg = "TokenCoreX";
+        let msg = "ffaa";
         let hash = bitcoin_hashes::sha256::Hash::hash(msg.as_bytes());
         let sign_result = sk.sign(&hash).unwrap();
         println!("sign result ： {}", hex::encode(sign_result));
