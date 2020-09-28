@@ -26,13 +26,9 @@ impl TraitPrivateKey for Ed25519PrivateKey {
     type PublicKey = Ed25519PublicKey;
 
     fn from_slice(data: &[u8]) -> Result<Self> {
-        //        let mut temp_data: [u8; 32] = [0; 32];
-        //        temp_data.copy_from_slice(data);
-        //        let pair = Pair::from_seed_slice(&temp_data).unwrap();
-        //        Ok(Ed25519PrivateKey(pair))
-
-        let sk = SecretKey::from_ed25519_bytes(data).map_err(|_| KeyError::InvalidSr25519Key)?;
-        let pair = Pair(sk.to_keypair());
+        let mut temp_data: [u8; 32] = [0; 32];
+        temp_data.copy_from_slice(data);
+        let pair = Pair::from_seed_slice(&temp_data).unwrap();
         Ok(Ed25519PrivateKey(pair))
     }
 
@@ -88,6 +84,7 @@ mod test {
     use crate::ed25519::Ed25519PrivateKey;
     use crate::PrivateKey;
     use bitcoin_hashes::Hash;
+    use blake2b_simd::{blake2b, Params};
     use hex;
     #[test]
     fn from_slice_test() {
@@ -95,7 +92,6 @@ mod test {
             hex::decode("1111111111111111111111111111111111111111111111111111111111111111")
                 .unwrap();
         let sk = Ed25519PrivateKey::from_slice(&pk_bytes);
-        //        println!("ed25519 private key : {}", hex::encode(sk.ok().unwrap().to_bytes()));
         assert!(sk.is_ok());
     }
 
@@ -108,9 +104,13 @@ mod test {
         assert!(sk_result.is_ok());
 
         let sk = sk_result.ok().unwrap();
-        let msg = "ffaa";
-        let hash = bitcoin_hashes::sha256::Hash::hash(msg.as_bytes());
-        let sign_result = sk.sign(&hash).unwrap();
-        println!("sign result ： {}", hex::encode(sign_result));
+        let msg = hex::decode("03ffaa").unwrap();
+        let mut params = Params::new();
+        params.hash_length(32);
+        let genericHash = params.hash(&msg[..]);
+        let sign_result = sk.sign(&genericHash.as_bytes()).unwrap();
+        //        println!("sign result ： {}", hex::encode(sign_result));
+        let expected_val = "eaab7f4066217b072b79609a9f76cdfadd93f8dde41763887e131c02324f18c8e41b1009e334baf87f9d2e917bf4c0e73165622e5522409a0c5817234a48cc02";
+        assert_eq!(hex::encode(sign_result), expected_val);
     }
 }

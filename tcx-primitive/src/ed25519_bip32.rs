@@ -29,7 +29,7 @@ fn transform_ed25519_bip32_error(err: Bip32Error) -> KeyError {
 
 impl Ed25519DeterministicPrivateKey {
     pub fn from_seed(seed: &[u8]) -> Result<Self> {
-        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Bitcoin seed");
+        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Tezos seed");
         hmac_engine.input(seed);
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
         let mut temp_byte: [u8; 32] = [0; 32];
@@ -38,8 +38,6 @@ impl Ed25519DeterministicPrivateKey {
         chain_code.copy_from_slice(&hmac_result[32..]);
         let master_key = XPrv::from_nonextended_force(&temp_byte, &chain_code);
         Ok(Ed25519DeterministicPrivateKey(master_key))
-        //        let master_key = XPrv::from_slice_verified(&hmac_result[..])?;
-        //        Ok(Ed25519DeterministicPrivateKey(master_key))
     }
 
     pub fn from_mnemonic(mnemonic: &str) -> Result<Self> {
@@ -105,7 +103,6 @@ impl DeterministicPrivateKey for Ed25519DeterministicPrivateKey {
         let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Bitcoin seed");
         hmac_engine.input(seed);
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
-        //        let master_key = XPrv::from_slice_verified(&hmac_result[..])?;
         let mut hash_left = [0; 32];
         hash_left.copy_from_slice(&hmac_result[..32]);
         let mut hash_rigth = [0; 32];
@@ -198,19 +195,28 @@ mod test {
         ];
 
         let esk = Ed25519DeterministicPrivateKey::from_seed(seed.as_bytes()).unwrap();
-        let ret_data = esk.derive("m/44'/0'/0'/0/0").unwrap();
-        println!("{}", ret_data.to_string());
-        //        let pub_keys = paths
-        //            .iter()
-        //            .map(|path| {
-        //                hex::encode(
-        //                    esk.derive(path)
-        //                        .unwrap()
-        //                        .private_key()
-        //                        .public_key()
-        //                        .to_bytes(),
-        //                )
-        //            }).collect::<Vec<String>>();
-        //        println!("result -> {}", pub_keys.get(0).unwrap());
+
+        let pub_keys = paths
+            .iter()
+            .map(|path| hex::encode(esk.derive(path).unwrap().0.public().as_ref()))
+            .collect::<Vec<String>>();
+        let expected_pub_keys = vec![
+            "67d938aa12c4a2b9674bf537e55e9a97473179e51e673b1d499f043610e1b79a8beadbe246cdd26dc6b8b52cb68c91e710587baf9e92f306cd2c542aff0ed541",
+            "c7bfafb77f7dc6d800c6e6aed1d87e76a645c81112cc35e057d9417380b0de8394126f5bfe3bff56a038db7527612630270a76151f91c98e4ae0447f5cd02c6c",
+            "5ffbb9f23edb48fc0c6dde8645cd169dae06f226fdd0e8c4cfdf1bd291fb3d6cf0aed085e3306991396a721b21ea4399fdc256abfec6c043fd00180a5b2083a2",
+            "ebaee91cce22f9163c9f06d6c268c76798da3868a87342856ebc978627f84da8c8ed8ce278f31238f2efb82f198e9151bdcd192d1a5065d354f7f5ed9d03278f",
+        ];
+        assert_eq!(pub_keys, expected_pub_keys);
+    }
+
+    #[test]
+    fn derive_key() {
+        let seed = default_seed();
+        let root = Ed25519DeterministicPrivateKey::from_seed(seed.as_bytes()).unwrap();
+        let dpk = root
+            .derive("m/44'/0'/0'")
+            .unwrap()
+            .deterministic_public_key();
+        assert_eq!(dpk.to_string(), "37491e84ade93e4456ee6cf923f0d148d8f32ffd0a988159b42e6f5a1b7c2d06db982cd0653d1173d6d8836a13fa77ad0050200911204815973d33ae1b4d6cf1")
     }
 }
