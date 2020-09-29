@@ -37,4 +37,8 @@ fn main() {
     //    for target in targets {
     //        println!("cargo:rustc-link-search=../../android/tokencore/build/intermediates/cmake/release/obj/{}/", target);
     //    }
+
+    //tcx-tezos
+    env::set_var("OUT_DIR", "../tcx-tezos/src");
+    prost_build::compile_protos(&["src/tezos.proto"], &["src/"]).unwrap();
 }

@@ -16,3 +16,7 @@ blake2b_simd = "0.5.10"
 hex = "0.3.1"
 bitcoin = "0.21.0"
 ring = "0.16.9"
+
+prost = "0.6.1"
+bytes = "0.5.4"
+prost-types = "0.6.1"

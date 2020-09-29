@@ -29,7 +29,7 @@ fn transform_ed25519_bip32_error(err: Bip32Error) -> KeyError {
 
 impl Ed25519DeterministicPrivateKey {
     pub fn from_seed(seed: &[u8]) -> Result<Self> {
-        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Tezos seed");
+        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Bitcoin seed");
         hmac_engine.input(seed);
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
         let mut temp_byte: [u8; 32] = [0; 32];
@@ -201,10 +201,10 @@ mod test {
             .map(|path| hex::encode(esk.derive(path).unwrap().0.public().as_ref()))
             .collect::<Vec<String>>();
         let expected_pub_keys = vec![
-            "67d938aa12c4a2b9674bf537e55e9a97473179e51e673b1d499f043610e1b79a8beadbe246cdd26dc6b8b52cb68c91e710587baf9e92f306cd2c542aff0ed541",
-            "c7bfafb77f7dc6d800c6e6aed1d87e76a645c81112cc35e057d9417380b0de8394126f5bfe3bff56a038db7527612630270a76151f91c98e4ae0447f5cd02c6c",
-            "5ffbb9f23edb48fc0c6dde8645cd169dae06f226fdd0e8c4cfdf1bd291fb3d6cf0aed085e3306991396a721b21ea4399fdc256abfec6c043fd00180a5b2083a2",
-            "ebaee91cce22f9163c9f06d6c268c76798da3868a87342856ebc978627f84da8c8ed8ce278f31238f2efb82f198e9151bdcd192d1a5065d354f7f5ed9d03278f",
+            "d0c5ee97112a8a6f192ec44ab10f6a51bbfa327f7736e8e8b30b9ec636bc533b4a5a79f69bacc08e3c546cf8cc912ab820eb933f18af0630eb9c5978c41c37e2",
+            "72cc175bb3cec0b14c145c60dfc8044857af20408d13bd27d37bb22131802650ca56b9788a0c4bfc220326eb1f03911fd504c180f988e69370dd1f3140193671",
+            "33b203d6231b7bd8a465799e210345c12446b1be99918e32392ce89c77c1d9fa371db326eba11ac066afa58f895d459272862957a5df8b48b6d81cadd5d36196",
+            "8cc4569d3ab5a83638b65072349075ad58126204c1085e64492fac932e8077c942c1fc372392916a4c28ffd37ae81653ac7ed82311ff4ac1a6d72a763da1ae81",
         ];
         assert_eq!(pub_keys, expected_pub_keys);
     }
