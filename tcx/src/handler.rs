@@ -450,16 +450,23 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
         )?
     };
 
-    // private_key prefix is only about chain type and network
-    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
     let value = if ["TRON", "POLKADOT", "KUSAMA"].contains(&param.chain_type.as_str()) {
         Ok(pk_hex.to_string())
     } else if "FILECOIN".contains(&param.chain_type.as_str()) {
-        // TODO get account curve type
-        Ok(hex::encode(
-            KeyInfo::from_private_key(CurveType::SECP256k1, &hex::decode(pk_hex)?)?.to_json()?,
-        ))
+        if let Some(account) = guard
+            .keystore_mut()
+            .account("FILECOIN", &param.main_address)
+        {
+            Ok(hex::encode(
+                KeyInfo::from_private_key(account.curve, &hex::decode(pk_hex)?)?.to_json()?,
+            ))
+        } else {
+            Err(format_err!("{}", "account_not_found"))
+        }
     } else {
+        // private_key prefix is only about chain type and network
+        let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
+
         let bytes = hex::decode(pk_hex.to_string())?;
         let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
         typed_pk.fmt(&coin_info)

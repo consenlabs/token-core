@@ -48,14 +48,15 @@ mod tests {
 
     #[test]
     fn test_import_and_export() {
-        let key_info = KeyInfo::from_lotus(&hex::decode("7b2254797065223a22736563703235366b31222c22507269766174654b6579223a22437544586b6b4b46773549656d55685a545173514369534e6d6a327062545052495439514f736c587846733d227d").unwrap()).unwrap();
+        let raw_private_key = "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a22437544586b6b4b46773549656d55685a545173514369534e6d6a327062545052495439514f736c587846733d227d";
+        let key_info = KeyInfo::from_lotus(&hex::decode(raw_private_key).unwrap()).unwrap();
         assert_eq!(key_info.r#type, "secp256k1");
         assert_eq!(
             hex::encode(key_info.decode_private_key().unwrap()),
             "0ae0d7924285c3921e9948594d0b100a248d9a3da96d33d1213f503ac957c45b"
         );
 
-        assert_eq!(hex::encode(key_info.to_json().unwrap()), "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a22437544586b6b4b46773549656d55685a545173514369534e6d6a327062545052495439514f736c587846733d227d");
+        assert_eq!(hex::encode(key_info.to_json().unwrap()), raw_private_key);
     }
 
     #[test]

@@ -5,7 +5,6 @@ use super::Result;
 use crate::bls::{BLSPrivateKey, BLSPublicKey};
 use crate::ecc::KeyError;
 use crate::{Derive, DeterministicPrivateKey, DeterministicPublicKey, FromHex, PrivateKey, ToHex};
-use hkdf::Hkdf;
 use num_traits::{FromPrimitive, Num, Pow};
 use sha2::digest::FixedOutput;
 use sha2::{Digest, Sha256};
@@ -102,8 +101,8 @@ fn hkdf(salt: &[u8], ikm: &[u8], info: &[u8], okm: &mut [u8]) {
     extractor.input_ikm(ikm);
 
     let (prk, _) = extractor.finalize();
-    let mut expander = hkdf::Hkdf::<Sha256>::from_prk(&prk).unwrap();
-    expander.expand(info, okm);
+    let expander = hkdf::Hkdf::<Sha256>::from_prk(&prk).unwrap();
+    expander.expand(info, okm).expect("invalid_hkdf");
 }
 
 fn flip_bits(num: BigUint) -> BigUint {

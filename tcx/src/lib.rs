@@ -863,7 +863,7 @@ mod tests {
     pub fn test_filecoin_private_key_import() {
         run_test(|| {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
-                private_key: "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a22437544586b6b4b46773549656d55685a545173514369534e6d6a327062545052495439514f736c587846733d227d"
+                private_key: "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a226f354a6754767776725a774c5061513758326d4b4c6a386e4478634e685a6b537667315564434a317866593d227d"
                     .to_string(),
                 password: TEST_PASSWORD.to_string(),
                 name: "test_filecoin_private_key_store_import".to_string(),
@@ -895,7 +895,7 @@ mod tests {
             assert_eq!(1, derived_accounts.accounts.len());
 
             assert_eq!(
-                "t1i2pdaamk4glchdqkqujyie5ep7wempey3xh35ji",
+                "t1zerdvi3fx2lrcslsqdewpadzzm2hefpn6ixew3i",
                 derived_accounts.accounts[0].address
             );
 
@@ -904,7 +904,7 @@ mod tests {
                 password: TEST_PASSWORD.to_string(),
                 chain_type: "FILECOIN".to_string(),
                 network: "".to_string(),
-                main_address: "t1i2pdaamk4glchdqkqujyie5ep7wempey3xh35ji".to_string(),
+                main_address: "t1zerdvi3fx2lrcslsqdewpadzzm2hefpn6ixew3i".to_string(),
                 path: "".to_string(),
             };
 
@@ -913,7 +913,7 @@ mod tests {
                 KeystoreCommonExportResult::decode(export_pk_bytes.as_slice()).unwrap();
             assert_eq!(
                 export_pk.value,
-                "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a22437544586b6b4b46773549656d55685a545173514369534e6d6a327062545052495439514f736c587846733d227d"
+                "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a226f354a6754767776725a774c5061513758326d4b4c6a386e4478634e685a6b537667315564434a317866593d227d"
             );
 
             remove_created_wallet(&import_result.id);
@@ -1060,14 +1060,23 @@ mod tests {
                     chain_id: "".to_string(),
                     curve: "".to_string(),
                 },
+                Derivation {
+                    chain_type: "FILECOIN".to_string(),
+                    path: "".to_string(),
+                    network: "TESTNET".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                    curve: "SECP256k1".to_string(),
+                },
             ];
             let pks = vec![
                 "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB",
                 "cT4fTJyLd5RmSZFHnkGmVCzXDKuJLbyTt7cy77ghTTCagzNdPH1j",
                 "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+                "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a226f354a6754767776725a774c5061513758326d4b4c6a386e4478634e685a6b537667315564434a317866593d227d",
             ];
 
-            for idx in 0..3 {
+            for idx in 0..4 {
                 let import_result: WalletResult = import_pk_and_derive(derivations[idx].clone());
                 let acc = import_result.accounts.first().unwrap().clone();
                 let param: ExportPrivateKeyParam = ExportPrivateKeyParam {
@@ -1139,6 +1148,14 @@ mod tests {
                     chain_id: "".to_string(),
                     curve: "".to_string(),
                 },
+                Derivation {
+                    chain_type: "FILECOIN".to_string(),
+                    path: "m/44'/461'/0'/0/0".to_string(),
+                    network: "TESTNET".to_string(),
+                    seg_wit: "".to_string(),
+                    chain_id: "".to_string(),
+                    curve: "SECP256k1".to_string(),
+                },
             ];
 
             let pks = vec![
@@ -1146,13 +1163,16 @@ mod tests {
                 "KyLGdagds7tY1vupT5Kf8C1Cc5wkzzWRK51e4vsh1svCSvYk4Abo",
                 "cN4b1V3cicEexrYXiEhaWEdURyhZiVX6PzAZNFSzZaWfSNZG2cJX",
                 "685634d212eabe016a1cb09d9f1ea1ea757ebe590b9a097d7b1c9379ad280171",
+                "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a222f5059574777574e577a58614d5675437a613958502b314b4a695a4474696f4c76777863754268783041553d227d",
             ];
             let export_paths = vec![
                 "m/44'/145'/0'/0/0",
                 "m/44'/145'/0'/0/1",
                 "m/44'/1'/0'/0/1",
                 "m/44'/195'/0'/0/1",
+                "m/44'/461'/0'/0/0",
             ];
+
             for idx in 0..derivations.len() {
                 let import_result: WalletResult = import_and_derive(derivations[idx].clone());
                 let acc = import_result.accounts.first().unwrap().clone();

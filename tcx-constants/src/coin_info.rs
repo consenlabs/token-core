@@ -140,7 +140,7 @@ lazy_static! {
         });
         coin_infos.push(CoinInfo {
             coin: "FILECOIN".to_string(),
-            derivation_path: "m/44'/461'/0'/0/0".to_string(),
+            derivation_path: "m/2334/461/0/0".to_string(),
             curve: CurveType::BLS,
             network: "MAINNET".to_string(),
             seg_wit: "".to_string(),
