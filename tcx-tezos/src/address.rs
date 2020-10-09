@@ -1,15 +1,14 @@
 use bitcoin::util::base58;
-use blake2b_simd::{blake2b, Params};
+use blake2b_simd::Params;
 use tcx_chain::Address;
 use tcx_chain::Result;
 use tcx_constants::CoinInfo;
-use tcx_crypto::hash::dsha256;
 use tcx_primitive::TypedPublicKey;
 
 pub struct TezosAddress();
 
 impl Address for TezosAddress {
-    fn from_public_key(public_key: &TypedPublicKey, coin: &CoinInfo) -> Result<String> {
+    fn from_public_key(public_key: &TypedPublicKey, _coin: &CoinInfo) -> Result<String> {
         let tz1_prefix = hex::decode("06A19F")?;
         //get public key
         let pubkey = public_key.to_bytes();
@@ -29,7 +28,7 @@ impl Address for TezosAddress {
         Ok(address)
     }
 
-    fn is_valid(address: &str, coin: &CoinInfo) -> bool {
+    fn is_valid(address: &str, _coin: &CoinInfo) -> bool {
         let decode_result = base58::from(address);
         if decode_result.is_err() {
             return false;
@@ -37,7 +36,7 @@ impl Address for TezosAddress {
 
         let decode_data = decode_result.unwrap();
         let hash_res = sha256_hash(&sha256_hash(&decode_data[..decode_data.len() - 4]));
-        for number in (0..4) {
+        for number in 0..4 {
             if hash_res[number] != decode_data[decode_data.len() - 4 + number] {
                 return false;
             }
