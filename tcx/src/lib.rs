@@ -182,6 +182,7 @@ mod tests {
     use sp_core::Public as TraitPublic;
     use sp_runtime::traits::Verify;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
+    use tcx_filecoin::{SignedMessage, UnsignedMessage};
     use tcx_substrate::{
         ExportSubstrateKeystoreResult, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
         SubstrateTxOut,
@@ -1996,26 +1997,35 @@ mod tests {
             let ret = call_api("keystore_common_derive", param).unwrap();
             let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
 
-            /*            let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
-                       let input = TronTxInput { raw_data };
-                       let tx = SignParam {
-                           id: import_result.id.to_string(),
-                           key: Some(Key::Password(TEST_PASSWORD.to_string())),
-                           chain_type: "FILECOIN".to_string(),
-                           address: rsp.accounts.first().unwrap().address.to_string(),
-                           input: Some(::prost_types::Any {
-                               type_url: "imtoken".to_string(),
-                               value: encode_message(input).unwrap(),
-                           }),
-                       };
+            let message = UnsignedMessage {
+                to: "t12i3bop43tprlnymx2c75u6uvlq7iur2rcd7qsey".to_string(),
+                from: "t3r52r4c7dxhzuhubdenjuxgfak5tbmb3pbcv35wngm6qgvo7bwmvbuuw274rwyhcp53ydtt3ugexjnltnk75q".to_string(),
+                nonce: 0,
+                value: "100000".to_string(),
+                gas_limit: 10000,
+                gas_fee_cap: "20000".to_string(),
+                gas_premium: "20000".to_string(),
+                method: 0,
+                params: "".to_string()
+            };
 
-                       let ret = call_api("sign_tx", tx).unwrap();
-                       let output: TronTxOutput = TronTxOutput::decode(ret.as_slice()).unwrap();
-                       let expected_sign = "7758c92df76d50774a67fdca6c90b922fc84be68c69164d4c7f500327bfa4b9655709b6b1f88e07e3bda266d7ca4b48c934557917692f63a31e301d79d7107d001";
-                       assert_eq!(expected_sign, output.signatures[0]);
-                       remove_created_wallet(&import_result.id);
+            let tx = SignParam {
+                id: import_result.id.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
+                chain_type: "FILECOIN".to_string(),
+                address: rsp.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(message).unwrap(),
+                }),
+            };
 
-            */
+            let ret = call_api("sign_tx", tx).unwrap();
+            let signed = SignedMessage::decode(ret.as_slice()).unwrap();
+            let expected_sign = "gdxxo9ReD+1teNwBxgh7o2Slg3lVSkmyQMEmYX+5egMqYb71Q8Yp6CCN9ewaSjJgFDlr2H18wUGNA3vNfiaJSG/DLmKzRVgWsPdFNOd5MVc4luMmtAGG5lQ+iiW6kkmq" ;
+            assert_eq!(expected_sign, signed.signature.unwrap().data);
+
+            remove_created_wallet(&import_result.id);
         })
     }
 
@@ -2041,26 +2051,35 @@ mod tests {
             let ret = call_api("keystore_common_derive", param).unwrap();
             let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
 
-            /*            let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
-                       let input = TronTxInput { raw_data };
-                       let tx = SignParam {
-                           id: import_result.id.to_string(),
-                           key: Some(Key::Password(TEST_PASSWORD.to_string())),
-                           chain_type: "FILECOIN".to_string(),
-                           address: rsp.accounts.first().unwrap().address.to_string(),
-                           input: Some(::prost_types::Any {
-                               type_url: "imtoken".to_string(),
-                               value: encode_message(input).unwrap(),
-                           }),
-                       };
+            let message = UnsignedMessage {
+                to: "t12i3bop43tprlnymx2c75u6uvlq7iur2rcd7qsey".to_string(),
+                from: "t1zerdvi3fx2lrcslsqdewpadzzm2hefpn6ixew3i".to_string(),
+                nonce: 0,
+                value: "100000".to_string(),
+                gas_limit: 10000,
+                gas_fee_cap: "20000".to_string(),
+                gas_premium: "20000".to_string(),
+                method: 0,
+                params: "".to_string(),
+            };
 
-                       let ret = call_api("sign_tx", tx).unwrap();
-                       let output: TronTxOutput = TronTxOutput::decode(ret.as_slice()).unwrap();
-                       let expected_sign = "7758c92df76d50774a67fdca6c90b922fc84be68c69164d4c7f500327bfa4b9655709b6b1f88e07e3bda266d7ca4b48c934557917692f63a31e301d79d7107d001";
-                       assert_eq!(expected_sign, output.signatures[0]);
-                       remove_created_wallet(&import_result.id);
+            let tx = SignParam {
+                id: import_result.id.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
+                chain_type: "FILECOIN".to_string(),
+                address: rsp.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(message).unwrap(),
+                }),
+            };
 
-            */
+            let ret = call_api("sign_tx", tx).unwrap();
+            let signed = SignedMessage::decode(ret.as_slice()).unwrap();
+            let expected_sign = "YJLfRrV7WovsWUY4nhKRp8Vs9AGC9J61zV8InwWM6IwxBVhtc20mJC7cxWdVMBQ45Mem2yS7bqQe7alkSxQvpwA=" ;
+            assert_eq!(expected_sign, signed.signature.unwrap().data);
+
+            remove_created_wallet(&import_result.id);
         })
     }
 
