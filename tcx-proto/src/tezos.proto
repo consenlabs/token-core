@@ -7,14 +7,3 @@ message TezosRawTxIn {
 message TezosTxOut {
   string signature = 1;
 }
-
-message TezosKeystoreParam {
-  string keystore = 1;
-  string password = 2;
-  string chainType = 3;
-  bool overwrite = 4;
-}
-
-message ExportTezosKeystoreResult {
-  string keystore = 1;
-}

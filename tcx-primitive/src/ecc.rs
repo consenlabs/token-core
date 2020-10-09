@@ -48,6 +48,10 @@ pub enum KeyError {
     InvalidSr25519Key,
     #[fail(display = "invalid_ed25519_key")]
     InvalidEd25519Key,
+    #[fail(display = "unsupport_ed25519_pubkey_derivation")]
+    UnsupportEd25519PubkeyDerivation,
+    #[fail(display = "unsupport_normal_derivation")]
+    UnsupportNormalDerivation,
 }
 
 pub trait PublicKey: Sized {

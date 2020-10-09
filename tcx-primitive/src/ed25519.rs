@@ -1,6 +1,5 @@
 use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
 use crate::{FromHex, Result, ToHex};
-use schnorrkel::{Keypair, SecretKey};
 use sp_core::ed25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};
 
@@ -28,7 +27,7 @@ impl TraitPrivateKey for Ed25519PrivateKey {
     fn from_slice(data: &[u8]) -> Result<Self> {
         let mut temp_data: [u8; 32] = [0; 32];
         temp_data.copy_from_slice(data);
-        let pair = Pair::from_seed_slice(&temp_data).unwrap();
+        let pair = Pair::from_seed_slice(&temp_data).map_err(|_| KeyError::InvalidEd25519Key)?;
         Ok(Ed25519PrivateKey(pair))
     }
 
