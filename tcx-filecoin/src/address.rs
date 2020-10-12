@@ -2,9 +2,12 @@ use tcx_chain::{Address, Result};
 use tcx_constants::CoinInfo;
 use tcx_primitive::{PublicKey, TypedPublicKey};
 
+use forest_address::Address as ForestAddress;
+
 use super::Error;
 use crate::utils::{digest, HashSize};
 use base32::Alphabet;
+use std::str::FromStr;
 
 const MAINNET_PREFIX: &'static str = "f";
 const TESTNET_PREFIX: &'static str = "t";
@@ -67,9 +70,17 @@ impl Address for FilecoinAddress {
         ))
     }
 
-    fn is_valid(_address: &str, _coin: &CoinInfo) -> bool {
-        // TODO validate the address
-        true
+    fn is_valid(address: &str, coin: &CoinInfo) -> bool {
+        let ntwk = match coin.network.as_str() {
+            "TESTNET" => TESTNET_PREFIX,
+            _ => MAINNET_PREFIX,
+        };
+
+        if !address.starts_with(ntwk) {
+            return false;
+        }
+
+        ForestAddress::from_str(address).is_ok()
     }
 }
 
@@ -79,6 +90,26 @@ mod tests {
     use tcx_chain::{Address, Keystore, Metadata};
     use tcx_constants::{coin_info_from_param, CoinInfo, CurveType};
     use tcx_primitive::TypedPublicKey;
+
+    #[test]
+    fn test_is_valid() {
+        let coin_info = coin_info_from_param("FILECOIN", "TESTNET", "", "").unwrap();
+        assert_eq!(
+            FilecoinAddress::is_valid("t12i3bop43tprlnymx2c75u6uvlq7iur2rcd7qsey", &coin_info),
+            true
+        );
+        assert_eq!(FilecoinAddress::is_valid("t3qdyntx5snnwgmjkp2ztd6tf6hhcmurxfj53zylrqyympwvzvbznx6vnvdqloate5eviphnzrkupno4wheesa",&coin_info), true);
+        assert_eq!(FilecoinAddress::is_valid("t3rynpyphoo6pxfzb4ljy3zmf224vjihlok4oewbpjii3uq2mgl7jgrpxsiddaowsxccnnbi2p4ei4sdmsxfaq",&coin_info), true);
+        assert_eq!(FilecoinAddress::is_valid("t3rynpyphoo6pxfzb4ljy3zmf224vjihlok4oewbpjii3uq2mgl7jgrpxsiddaowsxccnnbi2p4ei4sdmsxfaqt",&coin_info), false);
+
+        let coin_info = coin_info_from_param("FILECOIN", "MAINNET", "", "").unwrap();
+        assert_eq!(
+            FilecoinAddress::is_valid("t12i3bop43tprlnymx2c75u6uvlq7iur2rcd7qsey", &coin_info),
+            false
+        );
+        assert_eq!(FilecoinAddress::is_valid("t3qdyntx5snnwgmjkp2ztd6tf6hhcmurxfj53zylrqyympwvzvbznx6vnvdqloate5eviphnzrkupno4wheesa",&coin_info), false);
+        assert_eq!(FilecoinAddress::is_valid("t3rynpyphoo6pxfzb4ljy3zmf224vjihlok4oewbpjii3uq2mgl7jgrpxsiddaowsxccnnbi2p4ei4sdmsxfaq",&coin_info), false);
+    }
 
     #[test]
     fn test_bls_address() {
