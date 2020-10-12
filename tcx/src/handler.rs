@@ -443,7 +443,7 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
 
     // private_key prefix is only about chain type and network
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
-    let value = if ["TRON", "POLKADOT", "KUSAMA"].contains(&param.chain_type.as_str()) {
+    let value = if ["TRON", "POLKADOT", "KUSAMA", "TEZOS"].contains(&param.chain_type.as_str()) {
         Ok(pk_hex.to_string())
     } else {
         let bytes = hex::decode(pk_hex.to_string())?;
