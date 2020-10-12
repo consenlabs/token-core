@@ -1,11 +1,11 @@
 use crate::transaction::{Signature, SignedMessage, UnsignedMessage};
-use crate::utils::message_digest;
+use crate::utils::{digest, HashSize};
 use crate::Error;
 use forest_address::Address;
+use forest_encoding::Cbor;
 use forest_message::UnsignedMessage as ForestUnsignedMessage;
 use forest_vm::Serialized;
 use num_bigint_chainsafe::BigInt;
-use serde_cbor::to_vec;
 use std::convert::TryFrom;
 use std::str::FromStr;
 use tcx_chain::{ChainSigner, Keystore, Result, TransactionSigner};
@@ -55,9 +55,8 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
         tx: &UnsignedMessage,
     ) -> Result<SignedMessage> {
         let unsigned_message = forest_message::UnsignedMessage::try_from(tx)?;
+        let cid = unsigned_message.cid()?;
 
-        let cbor_buffer = to_vec(&unsigned_message)?;
-        let cid = message_digest(&cbor_buffer);
         let account = self.account(symbol, address);
         let signature_type;
 
@@ -69,17 +68,22 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
         match account.unwrap().curve {
             CurveType::SECP256k1 => {
                 signature_type = 1;
-                signature = self.sign_recoverable_hash(&cid, symbol, address, None)?;
+                signature = self.sign_recoverable_hash(
+                    &digest(&cid.to_bytes(), HashSize::Default),
+                    symbol,
+                    address,
+                    None,
+                )?;
             }
             CurveType::BLS => {
                 signature_type = 2;
-                signature = self.sign_hash(&cbor_buffer, symbol, address, None)?;
+                signature = self.sign_hash(&cid.to_bytes(), symbol, address, None)?;
             }
             _ => return Err(Error::InvalidCurveType.into()),
         }
 
         Ok(SignedMessage {
-            cid: base64::encode(&cid),
+            cid: cid.to_string(),
             message: Some(tx.clone()),
             signature: Some(Signature {
                 r#type: signature_type,
@@ -91,36 +95,37 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
 
 #[cfg(test)]
 mod tests {
-    use crate::{FilecoinAddress, UnsignedMessage};
+    use crate::{FilecoinAddress, KeyInfo, UnsignedMessage};
     use tcx_chain::{Keystore, Metadata, TransactionSigner};
     use tcx_constants::{CoinInfo, CurveType};
 
     #[test]
-    fn test_sign_secp256k1() {
+    fn test_sign_spec256k1() {
         let unsigned_message = UnsignedMessage {
-            to: "t17uoq6tp427uzv7fztkbsnn64iwotfrristwpryy".to_string(),
-            from: "t1d2xrzcslx7xlbbylc5c3d5lvandqw4iwl6epxba".to_string(),
+            to: "f1zlkjwo5pnm6petm4u4luj6gb6e64eecrw4t4stq".to_string(),
+            from: "f12i3bop43tprlnymx2c75u6uvlq7iur2rcd7qsey".to_string(),
             nonce: 1,
-            value: "100000".to_string(),
-            gas_limit: 1,
-            gas_fee_cap: "1".to_string(),
-            gas_premium: "1".to_string(),
+            value: "10000000000000000".to_string(),
+            gas_limit: 491585,
+            gas_fee_cap: "151367".to_string(),
+            gas_premium: "150313".to_string(),
             method: 0,
             params: "".to_string(),
         };
 
-        let mut ks = Keystore::from_private_key(
-            "f15716d3b003b304b8055d9cc62e6b9c869d56cc930c3858d4d7c31f5f53f14a",
-            "Password",
-            Metadata::default(),
-        );
+        let key_info =
+            KeyInfo::from_lotus(
+                &hex::decode("7b2254797065223a22736563703235366b31222c22507269766174654b6579223a222f5059574777574e577a58614d5675437a613958502b314b4a695a4474696f4c76777863754268783041553d227d").unwrap()).unwrap();
+        let private_key = key_info.decode_private_key().unwrap();
+        let mut ks =
+            Keystore::from_private_key(&hex::encode(private_key), "Password", Metadata::default());
         ks.unlock_by_password("Password").unwrap();
 
         let coin_info = CoinInfo {
             coin: "FILECOIN".to_string(),
             derivation_path: "".to_string(),
             curve: CurveType::SECP256k1,
-            network: "TESTNET".to_string(),
+            network: "MAINNET".to_string(),
             seg_wit: "".to_string(),
         };
 
@@ -129,39 +134,42 @@ mod tests {
             .unwrap()
             .clone();
 
-        let signed_message = ks.sign_transaction("FILECOIN", &account.address, &unsigned_message);
-        let signature = signed_message.unwrap().signature.unwrap();
+        let signed_message = ks
+            .sign_transaction("FILECOIN", &account.address, &unsigned_message)
+            .unwrap();
+        let signature = signed_message.signature.unwrap();
 
         assert_eq!(signature.r#type, 1);
-        assert_eq!(signature.data, "aTqtx4X5mjv53sgVCG8FRtt6jNcbnmCNQL28mHFgRooa024ARS6LmXXp9PJk0qIwEt52Xz1GV9yTN+SVSaqF2QE=");
+        assert_eq!(signature.data, "MCTI+WjYRozaU/7gYWAwSeOixkSmIHDWHwsU1NVPTrtH4IkXPUrgRcZh4DduJqvHLzoek31LYZxhWkGAzd0j9wA=");
     }
 
     #[test]
     fn test_sign_bls() {
         let unsigned_message = UnsignedMessage {
-            to: "t17uoq6tp427uzv7fztkbsnn64iwotfrristwpryy".to_string(),
-            from: "t3vxrizeiel2e2bxg3jhk62dlcutyc26fjnw6ua2sptu32dtjpwxbjawg666nqdngrkvvn45h7yb4qiya6ls7q".to_string(),
+            to: "f1zlkjwo5pnm6petm4u4luj6gb6e64eecrw4t4stq".to_string(),
+            from: "f3qdyntx5snnwgmjkp2ztd6tf6hhcmurxfj53zylrqyympwvzvbznx6vnvdqloate5eviphnzrkupno4wheesa".to_string(),
             nonce: 1,
-            value: "100000".to_string(),
-            gas_limit: 25000,
-            gas_fee_cap: "2500".to_string(),
-            gas_premium: "2500".to_string(),
+            value: "10000000000000000".to_string(),
+            gas_limit: 491585,
+            gas_fee_cap: "151367".to_string(),
+            gas_premium: "150313".to_string(),
             method: 0,
-            params: "".to_string(),
+            params: "".to_string()
         };
 
-        let mut ks = Keystore::from_private_key(
-            "d31ed8d06197f7631e58117d99c5ae4791183f17b6772eb4afc5c840e0f7d412",
-            "Password",
-            Metadata::default(),
-        );
+        let key_info =
+            KeyInfo::from_lotus(
+                &hex::decode("7b2254797065223a22626c73222c22507269766174654b6579223a2269376b4f2b7a78633651532b7637597967636d555968374d55595352657336616e6967694c684b463830383d227d").unwrap()).unwrap();
+        let private_key = key_info.decode_private_key().unwrap();
+        let mut ks =
+            Keystore::from_private_key(&hex::encode(private_key), "Password", Metadata::default());
         ks.unlock_by_password("Password").unwrap();
 
         let coin_info = CoinInfo {
             coin: "FILECOIN".to_string(),
             derivation_path: "".to_string(),
             curve: CurveType::BLS,
-            network: "TESTNET".to_string(),
+            network: "MAINNET".to_string(),
             seg_wit: "".to_string(),
         };
 
@@ -170,10 +178,16 @@ mod tests {
             .unwrap()
             .clone();
 
-        let signed_message = ks.sign_transaction("FILECOIN", &account.address, &unsigned_message);
-        let signature = signed_message.unwrap().signature.unwrap();
+        let signed_message = ks
+            .sign_transaction("FILECOIN", &account.address, &unsigned_message)
+            .unwrap();
+        let signature = signed_message.signature.unwrap();
 
         assert_eq!(signature.r#type, 2);
-        assert_eq!(signature.data, "oOg4CXfSzMXdTV69gjQG7SL96ICjvQ+oQmwWs0ATxIfFEQf14oCAMbaA/yAKoW93ChKoICLMD9KnsDArqs7oeGL+0Rvgh2CdOw2vkIaVWFdOFblLN1oPNLzpR46XW7As");
+        assert_eq!(
+            signed_message.cid,
+            "bafy2bzacedbxcjpwgqfkdub732bo5bmtlhudum4fgxdz5ku3e2rziybwm5x5a"
+        );
+        assert_eq!(signature.data, "tNRsgNdWO6UdY9IOh5tvzcL1Dwi7gljLt22aITKUgtF363lrP2gHxOX9oNGhnFD6BoM4/Y/HMzETlYF0r4+1aHZo1F8fV3XDwxwwz1HKxoDIreXBtPAjTiqBGlTiMwPX");
     }
 }

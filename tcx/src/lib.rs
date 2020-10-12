@@ -2083,7 +2083,7 @@ mod tests {
 
             let ret = call_api("sign_tx", tx).unwrap();
             let signed = SignedMessage::decode(ret.as_slice()).unwrap();
-            let expected_sign = "gdxxo9ReD+1teNwBxgh7o2Slg3lVSkmyQMEmYX+5egMqYb71Q8Yp6CCN9ewaSjJgFDlr2H18wUGNA3vNfiaJSG/DLmKzRVgWsPdFNOd5MVc4luMmtAGG5lQ+iiW6kkmq" ;
+            let expected_sign = "r+CN2nhRN7d23jTFDvescYjkqg6iFwlcb2yZugewBsLko96E+UEYuSuhheaSGu1SDU7gYx54tsxYC/Zq3Pk0gfTAHPC2Ui9P5oNE3hNtb0mHO7D4ZHID2I4RxKFTAY8N" ;
             assert_eq!(expected_sign, signed.signature.unwrap().data);
 
             remove_created_wallet(&import_result.id);
