@@ -82,7 +82,7 @@ impl FromHex for Ed25519PublicKey {
 #[cfg(test)]
 mod test {
     use crate::ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
-    use crate::{PrivateKey, PublicKey, ToHex, FromHex};
+    use crate::{FromHex, PrivateKey, PublicKey, ToHex};
     use bitcoin_hashes::Hash;
     use blake2b_simd::{blake2b, Params};
     use hex;
@@ -95,13 +95,19 @@ mod test {
         assert!(sk.is_ok());
 
         let pubkey_vec = sk.unwrap().public_key();
-        assert_eq!("d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737", hex::encode(pubkey_vec.to_bytes()));
-        assert_eq!("d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737", pubkey_vec.to_hex());
+        assert_eq!(
+            "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+            hex::encode(pubkey_vec.to_bytes())
+        );
+        assert_eq!(
+            "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+            pubkey_vec.to_hex()
+        );
 
-        let public_key_obj = Ed25519PublicKey::from_hex("d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737");
+        let public_key_obj = Ed25519PublicKey::from_hex(
+            "d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+        );
         assert!(public_key_obj.is_ok());
-
-
     }
 
     #[test]
