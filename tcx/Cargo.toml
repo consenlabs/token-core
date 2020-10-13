@@ -15,6 +15,7 @@ tcx-ckb = {path = "../tcx-ckb"}
 tcx-substrate = {path = "../tcx-substrate"}
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants"}
+tcx-tezos = {path = "../tcx-tezos"}
 
 prost = "0.6.1"
 bytes = "0.5.4"

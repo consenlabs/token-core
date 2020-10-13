@@ -769,6 +769,11 @@ mod tests {
                 derived_accounts.accounts[4].address
             );
 
+            //            assert_eq!(
+            //                "ckt1qyqpavderq5jjxh6qhxeks4t706kglffkyassx7h5z",
+            //                derived_accounts.accounts[5].address
+            //            );
+
             // pk rederive
             let derivations = vec![Derivation {
                 chain_type: "LITECOIN".to_string(),
@@ -799,6 +804,48 @@ mod tests {
             assert_eq!(5, ret.accounts.len());
 
             remove_created_wallet(&import_result.id);
+        })
+    }
+
+    #[test]
+    pub fn test_tezos_private_key_store_import() {
+        run_test(|| {
+            let import_result: WalletResult = import_default_pk_store();
+            assert_eq!(0, import_result.accounts.len());
+
+            let derivations = vec![Derivation {
+                chain_type: "TEZOS".to_string(),
+                path: "m/44'/1729'/0'/0'".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+            }];
+            let param = KeystoreCommonDeriveParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations,
+            };
+            let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
+            let derived_accounts: AccountsResponse =
+                AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
+            assert_eq!(
+                "tz1RTCY2tQdBCWYacqmV18UYy5YMBdCgcpL1",
+                derived_accounts.accounts[0].address
+            );
+
+            let param: PrivateKeyStoreExportParam = PrivateKeyStoreExportParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "TEZOS".to_string(),
+                network: "MAINNET".to_string(),
+            };
+            let ret_bytes = call_api("private_key_store_export", param).unwrap();
+            let export_result: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(ret_bytes.as_slice()).unwrap();
+            assert_eq!(
+                "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+                export_result.value
+            );
         })
     }
 

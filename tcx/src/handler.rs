@@ -44,6 +44,7 @@ use tcx_substrate::{
     decode_substrate_keystore, encode_substrate_keystore, ExportSubstrateKeystoreResult,
     SubstrateAddress, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
 };
+use tcx_tezos::address::TezosAddress;
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
@@ -69,6 +70,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
         "NERVOS" => keystore.derive_coin::<CkbAddress>(&coin_info),
         "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
+        "TEZOS" => keystore.derive_coin::<TezosAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -390,7 +392,7 @@ pub(crate) fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
 
     // private_key prefix is only about chain type and network
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
-    let value = if param.chain_type.as_str() == "TRON" {
+    let value = if param.chain_type.as_str() == "TRON" || param.chain_type.as_str() == "TEZOS" {
         Ok(pk_hex.to_string())
     } else {
         let bytes = hex::decode(pk_hex.to_string())?;

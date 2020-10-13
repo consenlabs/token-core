@@ -25,9 +25,10 @@ impl TraitPrivateKey for Ed25519PrivateKey {
     type PublicKey = Ed25519PublicKey;
 
     fn from_slice(data: &[u8]) -> Result<Self> {
-        let mut temp_data: [u8; 32] = [0; 32];
-        temp_data.copy_from_slice(data);
-        let pair = Pair::from_seed_slice(&temp_data).map_err(|_| KeyError::InvalidEd25519Key)?;
+        if data.len() != 32 {
+            return Err(KeyError::InvalidEd25519Key.into());
+        }
+        let pair = Pair::from_seed_slice(&data).map_err(|_| KeyError::InvalidEd25519Key)?;
         Ok(Ed25519PrivateKey(pair))
     }
 
