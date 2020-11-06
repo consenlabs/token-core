@@ -189,6 +189,7 @@ impl HdKeystore {
         // todo: ext_pub_key
         let ext_pub_key = match coin_info.curve {
             CurveType::SubSr25519 => "".to_owned(),
+            CurveType::ED25519 => "".to_owned(), //TODO
             _ => root
                 .derive(&get_account_path(&coin_info.derivation_path)?)?
                 .deterministic_public_key()
