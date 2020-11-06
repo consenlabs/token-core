@@ -2,9 +2,12 @@ use crate::signer::ScriptPubKeyComponent;
 use crate::Error;
 use crate::Result;
 
+use bitcoin::hash_types::PubkeyHash as PubkeyHashType;
+use bitcoin::hash_types::ScriptHash as ScriptHashType;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Error as BtcAddressError;
 use bitcoin::util::address::Payload;
+use bitcoin::util::address::Payload::PubkeyHash;
 use bitcoin::util::base58;
 use bitcoin::{Address as BtcAddress, Script};
 use bitcoin_hashes::hash160;
@@ -17,6 +20,7 @@ use tcx_constants::btc_fork_network::{network_form_hrp, network_from_coin, BtcFo
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CoinInfo;
 use tcx_primitive::{Ss58Codec, TypedPrivateKey, TypedPublicKey};
+// use bitcoin::hash_types::PubkeyHash;
 
 pub trait WifDisplay {
     fn fmt(&self, coin_info: &CoinInfo) -> Result<String>;
@@ -76,7 +80,7 @@ impl BtcForkAddress {
 
     pub fn p2shwpkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
         let pub_key = bitcoin::PublicKey::from_slice(&pub_key)?;
-        let addr = BtcAddress::p2shwpkh(&pub_key, Network::Bitcoin);
+        let addr = BtcAddress::p2shwpkh(&pub_key, Network::Bitcoin)?;
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
@@ -85,7 +89,7 @@ impl BtcForkAddress {
 
     pub fn p2wpkh(pub_key: &[u8], network: &BtcForkNetwork) -> Result<BtcForkAddress> {
         let pub_key = bitcoin::PublicKey::from_slice(&pub_key)?;
-        let addr = BtcAddress::p2wpkh(&pub_key, Network::Bitcoin);
+        let addr = BtcAddress::p2wpkh(&pub_key, Network::Bitcoin)?;
         Ok(BtcForkAddress {
             payload: addr.payload,
             network: network.clone(),
@@ -202,7 +206,7 @@ impl FromStr for BtcForkAddress {
                     .expect("BtcForkNetwork coin_info");
                 (
                     network_from_coin(&coin_info).expect("btc"),
-                    Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                    Payload::PubkeyHash(PubkeyHashType::from_slice(&data[1..]).unwrap()),
                 )
             }
             5 => {
@@ -210,7 +214,7 @@ impl FromStr for BtcForkAddress {
                     .expect("BITCOIN-P2WPKH coin_info");
                 (
                     network_from_coin(&coin_info).expect("btc"),
-                    Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                    Payload::ScriptHash(ScriptHashType::from_slice(&data[1..]).unwrap()),
                 )
             }
             0x30 => {
@@ -218,7 +222,7 @@ impl FromStr for BtcForkAddress {
                     .expect("LITECOIN coin_info");
                 (
                     network_from_coin(&coin_info).expect("ltc-L"),
-                    Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                    Payload::PubkeyHash(PubkeyHashType::from_slice(&data[1..]).unwrap()),
                 )
             }
             0x32 => {
@@ -226,7 +230,7 @@ impl FromStr for BtcForkAddress {
                     .expect("LITECOIN-P2WPKH coin_info");
                 (
                     network_from_coin(&coin_info).expect("ltc"),
-                    Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                    Payload::ScriptHash(ScriptHashType::from_slice(&data[1..]).unwrap()),
                 )
             }
             0x3a => {
@@ -234,7 +238,7 @@ impl FromStr for BtcForkAddress {
                     .expect("LITECOIN TESTNET P2WPKH coin_info");
                 (
                     network_from_coin(&coin_info).expect("ltc-testnet"),
-                    Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                    Payload::ScriptHash(ScriptHashType::from_slice(&data[1..]).unwrap()),
                 )
             }
             111 => {
@@ -242,7 +246,7 @@ impl FromStr for BtcForkAddress {
                     .expect("BITCOIN-TESTNET coin_info");
                 (
                     network_from_coin(&coin_info).expect("btc-testnet"),
-                    Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                    Payload::PubkeyHash(PubkeyHashType::from_slice(&data[1..]).unwrap()),
                 )
             }
             196 => {
@@ -250,7 +254,7 @@ impl FromStr for BtcForkAddress {
                     .expect("BITCOIN-TESTNET-P2WPKH coin_info");
                 (
                     network_from_coin(&coin_info).expect("btc-testnet"),
-                    Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                    Payload::ScriptHash(ScriptHashType::from_slice(&data[1..]).unwrap()),
                 )
             }
             x => {

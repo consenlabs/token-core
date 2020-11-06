@@ -14,7 +14,11 @@ const BCH_FORK_ID: u32 = 0x41;
 pub struct BchSignHasher {}
 
 impl SignHasher for BchSignHasher {
-    fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
+    fn sign_hash(
+        tx: &Transaction,
+        index: usize,
+        unspent: &Utxo,
+    ) -> Result<(bitcoin::hash_types::SigHash, u32)> {
         let addr = BchAddress::from_str(&unspent.address)?;
         let tx_in = &tx.input[index];
         let script = addr.script_pub_key();

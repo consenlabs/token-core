@@ -2511,10 +2511,12 @@ mod tests {
 
     // #[test]
     // fn decode_error() {
-    //     let err = "1211756e737570706f727465645f636861696e";
-    //     let error_bytes = hex::decode(err).unwrap();
-    //     let rsp: Response = Response::decode(error_bytes.as_slice()).unwrap();
-    //     assert_eq!("1", format!("{:?}", rsp))
+    //     let param_hex = "0a166b657973746f72655f636f6d6d6f6e5f646572697665127a0a1d6170692e4b657973746f7265436f6d6d6f6e446572697665506172616d12590a2432303766353663652d306363302d343239352d626165632d353931366434653639353933120831323334313233341a270a0554455a4f5312116d2f3434272f31373239272f30272f30271a074d41494e4e455422002a00";
+    //     let param_bytes = hex::decode(param_hex).unwrap();
+    //     let action: TcxAction = TcxAction::decode(param_bytes.as_slice()).unwrap();
+    //     let param: KeystoreCommonDeriveParam =
+    //         KeystoreCommonDeriveParam::decode(action.param.unwrap().value.as_slice()).unwrap();
+    //     assert_eq!("1", format!("{:?}", param))
     // }
 
     #[test]

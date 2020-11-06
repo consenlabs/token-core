@@ -156,7 +156,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         for unspent in &self.tx_input.unspents {
             tx_inputs.push(TxIn {
                 previous_output: OutPoint {
-                    txid: Hash256::from_hex(&unspent.tx_hash).expect("tx_hash"),
+                    txid: bitcoin::hash_types::Txid::from_hex(&unspent.tx_hash).expect("tx_hash"),
                     vout: unspent.vout as u32,
                 },
                 script_sig: Script::new(),
@@ -197,7 +197,7 @@ pub trait BitcoinTransactionSignComponent {
         unspents: &[Utxo],
         keys: &[impl PrivateKey],
     ) -> Result<Transaction>;
-    fn tx_version() -> u32;
+    fn tx_version() -> i32;
 
     fn sign_hash_and_pub_key(
         pri_key: &impl PrivateKey,
@@ -276,7 +276,7 @@ impl BitcoinTransactionSignComponent for SegWitTransactionSignComponent {
         })
     }
 
-    fn tx_version() -> u32 {
+    fn tx_version() -> i32 {
         2
     }
 }
@@ -286,13 +286,21 @@ pub struct LegacyTransactionSignComponent<H: SignHasher> {
 }
 
 pub trait SignHasher {
-    fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)>;
+    fn sign_hash(
+        tx: &Transaction,
+        index: usize,
+        unspent: &Utxo,
+    ) -> Result<(bitcoin::hash_types::SigHash, u32)>;
 }
 
 pub struct LegacySignHasher {}
 
 impl SignHasher for LegacySignHasher {
-    fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
+    fn sign_hash(
+        tx: &Transaction,
+        index: usize,
+        unspent: &Utxo,
+    ) -> Result<(bitcoin::hash_types::SigHash, u32)> {
         let addr = BtcForkAddress::from_str(&unspent.address)?;
         let script = addr.script_pubkey();
         let hash = tx.signature_hash(index, &script, u32::from(SIGHASH_ALL));
@@ -349,7 +357,7 @@ impl<H: SignHasher> BitcoinTransactionSignComponent for LegacyTransactionSignCom
         })
     }
 
-    fn tx_version() -> u32 {
+    fn tx_version() -> i32 {
         1
     }
 }

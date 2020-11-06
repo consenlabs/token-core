@@ -117,7 +117,6 @@ impl ScriptPubKeyComponent for BchAddress {
 #[cfg(test)]
 mod tests {
     use crate::address::{remove_bch_prefix, BchAddress};
-    use bitcoin::util::misc::hex_bytes;
 
     use tcx_btc_fork::WifDisplay;
     use tcx_chain::Address;
@@ -145,7 +144,7 @@ mod tests {
         let addr = BchAddress::from_public_key(
             &TypedPublicKey::from_slice(
                 CurveType::SECP256k1,
-                &hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
+                &hex::decode("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
                     .unwrap(),
             )
             .unwrap(),
@@ -161,7 +160,7 @@ mod tests {
         let addr = BchAddress::from_public_key(
             &TypedPublicKey::from_slice(
                 CurveType::SECP256k1,
-                &hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
+                &hex::decode("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
                     .unwrap(),
             )
             .unwrap(),
