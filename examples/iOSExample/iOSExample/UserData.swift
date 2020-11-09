@@ -10,6 +10,7 @@
 import SwiftUI
 import Combine
 import SwiftProtobuf
+import TokenCoreX
 
 final class UserData: ObservableObject  {
   @Published var operations = [

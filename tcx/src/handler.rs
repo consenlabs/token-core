@@ -16,6 +16,7 @@ use tcx_chain::{key_hash_from_mnemonic, key_hash_from_private_key, Keystore, Key
 use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
 use tcx_ckb::{CkbAddress, CkbTxInput};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
+use tcx_filecoin::{FilecoinAddress, KeyInfo, UnsignedMessage};
 use tcx_tron::TrxAddress;
 
 use crate::api::keystore_common_derive_param::Derivation;
@@ -61,6 +62,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         &derivation.chain_type,
         &derivation.network,
         &derivation.seg_wit,
+        &derivation.curve,
     )?;
     coin_info.derivation_path = derivation.path.to_owned();
 
@@ -71,6 +73,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "NERVOS" => keystore.derive_coin::<CkbAddress>(&coin_info),
         "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
         "TEZOS" => keystore.derive_coin::<TezosAddress>(&coin_info),
+        "FILECOIN" => keystore.derive_coin::<FilecoinAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -311,7 +314,13 @@ pub(crate) fn export_mnemonic(data: &[u8]) -> Result<Vec<u8>> {
 fn key_data_from_any_format_pk(pk: &str) -> Result<Vec<u8>> {
     let decoded = hex::decode(pk.to_string());
     if decoded.is_ok() {
-        Ok(decoded.unwrap())
+        let bytes = decoded.unwrap();
+        if bytes.len() <= 64 {
+            Ok(bytes)
+        } else {
+            // import filecoin
+            Ok(KeyInfo::from_lotus(&bytes)?.decode_private_key()?)
+        }
     } else {
         private_key_without_version(pk)
     }
@@ -391,7 +400,7 @@ pub(crate) fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let pk_hex = guard.keystore().export()?;
 
     // private_key prefix is only about chain type and network
-    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
+    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
     let value = if param.chain_type.as_str() == "TRON" || param.chain_type.as_str() == "TEZOS" {
         Ok(pk_hex.to_string())
     } else {
@@ -444,10 +453,24 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
     };
 
     // private_key prefix is only about chain type and network
-    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
+    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
     let value = if ["TRON", "POLKADOT", "KUSAMA", "TEZOS"].contains(&param.chain_type.as_str()) {
         Ok(pk_hex.to_string())
+    } else if "FILECOIN".contains(&param.chain_type.as_str()) {
+        if let Some(account) = guard
+            .keystore_mut()
+            .account("FILECOIN", &param.main_address)
+        {
+            Ok(hex::encode(
+                KeyInfo::from_private_key(account.curve, &hex::decode(pk_hex)?)?.to_json()?,
+            ))
+        } else {
+            Err(format_err!("{}", "account_not_found"))
+        }
     } else {
+        // private_key prefix is only about chain type and network
+        let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
+
         let bytes = hex::decode(pk_hex.to_string())?;
         let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
         typed_pk.fmt(&coin_info)
@@ -583,8 +606,25 @@ pub(crate) fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         "TRON" => sign_tron_tx(&param, guard.keystore_mut()),
         "NERVOS" => sign_nervos_ckb(&param, guard.keystore_mut()),
         "POLKADOT" | "KUSAMA" => sign_substrate_tx_raw(&param, guard.keystore_mut()),
+        "FILECOIN" => sign_filecoin_tx(&param, guard.keystore_mut()),
         _ => Err(format_err!("unsupported_chain")),
     }
+}
+
+pub(crate) fn sign_filecoin_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: UnsignedMessage = UnsignedMessage::decode(
+        param
+            .input
+            .as_ref()
+            .expect("invalid_message")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("FilecoinTxIn");
+
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
 }
 
 pub(crate) fn sign_btc_fork_transaction(
@@ -601,7 +641,7 @@ pub(crate) fn sign_btc_fork_transaction(
             .as_slice(),
     )
     .expect("BitcoinForkTransactionInput");
-    let coin = coin_info_from_param(&param.chain_type, &input.network, &input.seg_wit)?;
+    let coin = coin_info_from_param(&param.chain_type, &input.network, &input.seg_wit, "")?;
 
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
         if !BchAddress::is_valid(&input.to, &coin) {
@@ -759,7 +799,7 @@ pub(crate) fn export_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
         KeystoreCommonExportResult::decode(ret.as_slice())?;
     let pk = export_result.value;
     let pk_bytes = hex::decode(pk)?;
-    let coin = coin_info_from_param(&param.chain_type, &param.network, "")?;
+    let coin = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
 
     let mut substrate_ks = encode_substrate_keystore(&param.password, &pk_bytes, &coin)?;
 

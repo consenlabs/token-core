@@ -156,7 +156,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         for unspent in &self.tx_input.unspents {
             tx_inputs.push(TxIn {
                 previous_output: OutPoint {
-                    txid: Hash256::from_hex(&unspent.tx_hash).expect("tx_hash"),
+                    txid: bitcoin::hash_types::Txid::from_hex(&unspent.tx_hash).expect("tx_hash"),
                     vout: unspent.vout as u32,
                 },
                 script_sig: Script::new(),
@@ -197,7 +197,7 @@ pub trait BitcoinTransactionSignComponent {
         unspents: &[Utxo],
         keys: &[impl PrivateKey],
     ) -> Result<Transaction>;
-    fn tx_version() -> u32;
+    fn tx_version() -> i32;
 
     fn sign_hash_and_pub_key(
         pri_key: &impl PrivateKey,
@@ -276,7 +276,7 @@ impl BitcoinTransactionSignComponent for SegWitTransactionSignComponent {
         })
     }
 
-    fn tx_version() -> u32 {
+    fn tx_version() -> i32 {
         2
     }
 }
@@ -286,13 +286,21 @@ pub struct LegacyTransactionSignComponent<H: SignHasher> {
 }
 
 pub trait SignHasher {
-    fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)>;
+    fn sign_hash(
+        tx: &Transaction,
+        index: usize,
+        unspent: &Utxo,
+    ) -> Result<(bitcoin::hash_types::SigHash, u32)>;
 }
 
 pub struct LegacySignHasher {}
 
 impl SignHasher for LegacySignHasher {
-    fn sign_hash(tx: &Transaction, index: usize, unspent: &Utxo) -> Result<(sha256d::Hash, u32)> {
+    fn sign_hash(
+        tx: &Transaction,
+        index: usize,
+        unspent: &Utxo,
+    ) -> Result<(bitcoin::hash_types::SigHash, u32)> {
         let addr = BtcForkAddress::from_str(&unspent.address)?;
         let script = addr.script_pubkey();
         let hash = tx.signature_hash(index, &script, u32::from(SIGHASH_ALL));
@@ -349,7 +357,7 @@ impl<H: SignHasher> BitcoinTransactionSignComponent for LegacyTransactionSignCom
         })
     }
 
-    fn tx_version() -> u32 {
+    fn tx_version() -> i32 {
         1
     }
 }
@@ -390,7 +398,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -433,7 +441,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -491,7 +499,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -536,7 +544,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -581,7 +589,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -595,7 +603,10 @@ mod tests {
         let ret =
             keystore.sign_transaction("LITECOIN", "mkeNU5nVnozJiaACDELLCsVUc8Wxoh1rQN", &tran);
         assert!(ret.is_err());
-        assert_eq!(format!("{}", ret.err().unwrap()), "invalid_child_number");
+        assert_eq!(
+            format!("{}", ret.err().unwrap()),
+            "invalid child number format"
+        );
     }
 
     #[test]
@@ -622,7 +633,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -650,7 +661,7 @@ mod tests {
             derived_path: "0/0".to_string(),
             sequence: 0,
         }];
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tx_input = BtcForkTxInput {
             to: "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc".to_string(),
             amount: 1500000,
@@ -693,7 +704,7 @@ mod tests {
             derived_path: "0/0".to_string(),
             sequence: 0,
         }];
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tx_input = BtcForkTxInput {
             to: "mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc".to_string(),
             amount: 545,
@@ -738,7 +749,7 @@ mod tests {
                 derived_path: "0/0".to_string(),
                 sequence: 0,
             }];
-            let coin_info = coin_info_from_param(chain_type, "TESTNET", "NONE").unwrap();
+            let coin_info = coin_info_from_param(chain_type, "TESTNET", "NONE", "").unwrap();
             let tx_input = BtcForkTxInput {
                 to: "address_invalid".to_string(),
                 amount: 500000,
@@ -791,7 +802,7 @@ mod tests {
             network: "TESTNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap();
         let tran =
             BitcoinForkSinger::<BtcForkAddress, LegacyTransactionSignComponent<LegacySignHasher>> {
                 tx_input,
@@ -831,7 +842,7 @@ mod tests {
             network: "".to_string(),
             seg_wit: "".to_string(),
         };
-        let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE", "").unwrap();
         let tran = BitcoinForkSinger::<BtcForkAddress, SegWitTransactionSignComponent> {
             tx_input,
             coin_info,

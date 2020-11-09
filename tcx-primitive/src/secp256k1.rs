@@ -248,7 +248,7 @@ mod tests {
 
     #[test]
     fn verify_wif_test() {
-        let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("LITECOIN", "MAINNET", "NONE", "").unwrap();
         let ret = verify_private_key(
             "6v3S2CrndTdGH8QS1Fw9cWZKJWfee52KytmiB687HPbPBdobUX9",
             &coin_info,

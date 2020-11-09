@@ -100,8 +100,6 @@ mod tests {
     use super::*;
     use crate::address::Address;
 
-    use bitcoin::util::misc::hex_bytes;
-
     use tcx_chain::{HdKeystore, Keystore, KeystoreGuard, Metadata};
     use tcx_constants::{CoinInfo, TEST_PASSWORD};
     use tcx_constants::{CurveType, TEST_MNEMONIC};
@@ -171,7 +169,8 @@ mod tests {
             Secp256k1PrivateKey::from_wif("L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB")
                 .unwrap();
         let message =
-            hex_bytes("645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76").unwrap();
+            hex::decode("645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76")
+                .unwrap();
         let header = "\x19TRON Signed Message:\n32".as_bytes();
         let to_signed = [header.to_vec(), message].concat();
 

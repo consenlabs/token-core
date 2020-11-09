@@ -18,10 +18,10 @@ block-modes = "0.3.3"
 aes-ctr = "0.3.0"
 aes-soft = "0.3.3"
 pbkdf2 = "0.3.0"
-bitcoin_hashes = "0.7"
+bitcoin_hashes = "0.9.3"
 crypto-mac = "0.7.0"
 failure = "0.1.5"
-secp256k1 = {version ="0.15", features = ["recovery"] }
+secp256k1 = {version ="0.19.0", features = ["rand", "recovery"] }
 hex = "0.4.0"
 lazy_static = "1.4.0"
 

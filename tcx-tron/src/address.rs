@@ -60,7 +60,7 @@ mod tests {
 
     #[test]
     fn tron_address_validation() {
-        let coin_info = coin_info_from_param("TRON", "", "").unwrap();
+        let coin_info = coin_info_from_param("TRON", "", "", "").unwrap();
         assert!(Address::is_valid(
             "THfuSDVRvSsjNDPFdGjMU19Ha4Kf7acotq",
             &coin_info
