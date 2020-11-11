@@ -268,6 +268,7 @@ mod tests {
             name: "import_default_pk_store".to_string(),
             password_hint: "".to_string(),
             overwrite: true,
+            encoding: "".to_string(),
         };
 
         let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
@@ -282,6 +283,7 @@ mod tests {
             name: "import_filecoin_pk_store".to_string(),
             password_hint: "".to_string(),
             overwrite: true,
+            encoding: "".to_string(),
         };
 
         let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
@@ -866,9 +868,19 @@ mod tests {
     }
 
     #[test]
-    pub fn test_tezos_private_key_store_import() {
+    pub fn test_tezos_private_key_store_import_export() {
         run_test(|| {
-            let import_result: WalletResult = import_default_pk_store();
+            let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+                private_key: "edskRoRrqsGXLTjMwAtzLSx8G7s9ipibZQh6ponFhZYSReSwxwPo7qJCkPJoRjdUhz8Hj7uZhZaFp7F5yftHUYBpJwF2ZY6vAc".to_string(),
+                password: TEST_PASSWORD.to_string(),
+                name: "test_tezos_private_key_store_import_export".to_string(),
+                password_hint: "".to_string(),
+                overwrite: true,
+                encoding: "TEZOS".to_string(),
+            };
+
+            let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+            let import_result: WalletResult = WalletResult::decode(ret.as_slice()).unwrap();
             assert_eq!(0, import_result.accounts.len());
 
             let derivations = vec![Derivation {
@@ -888,7 +900,7 @@ mod tests {
             let derived_accounts: AccountsResponse =
                 AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
             assert_eq!(
-                "tz1RTCY2tQdBCWYacqmV18UYy5YMBdCgcpL1",
+                "tz1fmr4eccz29gvLco7ZhjsnpVqqCq1R58sg",
                 derived_accounts.accounts[0].address
             );
 
@@ -902,7 +914,7 @@ mod tests {
             let export_result: KeystoreCommonExportResult =
                 KeystoreCommonExportResult::decode(ret_bytes.as_slice()).unwrap();
             assert_eq!(
-                "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
+                "edskRoRrqsGXLTjMwAtzLSx8G7s9ipibZQh6ponFhZYSReSwxwPo7qJCkPJoRjdUhz8Hj7uZhZaFp7F5yftHUYBpJwF2ZY6vAc",
                 export_result.value
             );
         })
@@ -917,6 +929,7 @@ mod tests {
                 name: "test_filecoin_private_key_store_import".to_string(),
                 password_hint: "".to_string(),
                 overwrite: true,
+                encoding: "".to_string(),
             };
 
             let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
@@ -979,6 +992,7 @@ mod tests {
                 name: "test_filecoin_private_key_store_import".to_string(),
                 password_hint: "".to_string(),
                 overwrite: true,
+                encoding: "".to_string(),
             };
 
             let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
@@ -1040,6 +1054,7 @@ mod tests {
                 name: "test_64bytes_private_key_store_import".to_string(),
                 password_hint: "".to_string(),
                 overwrite: true,
+                encoding: "".to_string(),
             };
 
             let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
@@ -1329,6 +1344,7 @@ mod tests {
                 name: "test_import_to_pk_which_from_hd".to_string(),
                 password_hint: "".to_string(),
                 overwrite: true,
+                encoding: "".to_string(),
             };
 
             let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
@@ -1393,6 +1409,7 @@ mod tests {
                 name: "test_keystore_common_delete".to_string(),
                 password_hint: "".to_string(),
                 overwrite: true,
+                encoding: "".to_string(),
             };
 
             let ret_bytes = private_key_store_import(&encode_message(param).unwrap()).unwrap();
@@ -1419,6 +1436,7 @@ mod tests {
             let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
                 r#type: KeyType::PrivateKey as i32,
                 value: "5JZc7wGRUr4J1RHDcM9ySWKLfQ2xjRUEo612qC4RLJ3G7jzJ4qx".to_string(),
+                encoding: "".to_string(),
             };
 
             let ret_bytes = call_api("keystore_common_exists", param).unwrap();
@@ -1436,6 +1454,7 @@ mod tests {
             let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
                 r#type: KeyType::Mnemonic as i32,
                 value: format!("{}", TEST_MNEMONIC).to_string(),
+                encoding: "".to_string(),
             };
 
             let ret_bytes = call_api("keystore_common_exists", param).unwrap();
@@ -1448,6 +1467,7 @@ mod tests {
             let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
                 r#type: KeyType::PrivateKey as i32,
                 value: "L2hfzPyVC1jWH7n2QLTe7tVTb6btg9smp5UVzhEBxLYaSFF7sCZB".to_string(),
+                encoding: "".to_string(),
             };
 
             let ret_bytes = call_api("keystore_common_exists", param).unwrap();
@@ -1460,6 +1480,20 @@ mod tests {
                 r#type: KeyType::PrivateKey as i32,
                 value: "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6"
                     .to_string(),
+                encoding: "".to_string(),
+            };
+
+            let ret_bytes = call_api("keystore_common_exists", param).unwrap();
+            let result: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
+            assert!(result.is_exists);
+            assert_eq!(result.id, wallet.id);
+
+            let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
+                r#type: KeyType::PrivateKey as i32,
+                value: "edskRoRrqsGXLTjMwAtzLSx8G7s9ipibZQh6ponFhZYSReSwxwPo7qJCkPJoRjdUhz8Hj7uZhZaFp7F5yftHUYBpJwF2ZY6vAc"
+                    .to_string(),
+                encoding: "TEZOS".to_string(),
             };
 
             let ret_bytes = call_api("keystore_common_exists", param).unwrap();

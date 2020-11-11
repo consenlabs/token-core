@@ -25,6 +25,8 @@ pub use crate::ecc::{
     TypedDeterministicPrivateKey, TypedDeterministicPublicKey, TypedPrivateKey,
     TypedPrivateKeyDisplay, TypedPublicKey,
 };
+pub use crate::ed25519::ed25519_private_key_without_version;
+pub use crate::ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
 pub use crate::rand::generate_mnemonic;
 pub use crate::secp256k1::{
     private_key_without_version, verify_private_key, Secp256k1PrivateKey, Secp256k1PublicKey,

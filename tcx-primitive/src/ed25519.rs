@@ -1,5 +1,6 @@
 use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
-use crate::{FromHex, Result, ToHex};
+use crate::{FromHex, Result, Ss58Codec, ToHex};
+use bitcoin::util::base58;
 use sp_core::ed25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};
 
@@ -79,10 +80,27 @@ impl FromHex for Ed25519PublicKey {
     }
 }
 
+impl Ss58Codec for Ed25519PrivateKey {
+    fn from_ss58check_with_version(s: &str) -> Result<(Self, Vec<u8>)> {
+        let data = base58::from_check(s)?;
+        let pk = Ed25519PrivateKey::from_slice(&data[4..36])?;
+        Ok((pk, vec![data[0]]))
+    }
+
+    fn to_ss58check_with_version(&self, version: &[u8]) -> String {
+        unimplemented!()
+    }
+}
+
+pub fn ed25519_private_key_without_version(private_key: &str) -> Result<Vec<u8>> {
+    let (pk, _version) = Ed25519PrivateKey::from_ss58check_with_version(private_key)?;
+    Ok(pk.to_bytes())
+}
+
 #[cfg(test)]
 mod test {
     use crate::ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
-    use crate::{FromHex, PrivateKey, PublicKey, ToHex};
+    use crate::{FromHex, PrivateKey, PublicKey, Ss58Codec, ToHex};
     use bitcoin_hashes::Hash;
     use blake2b_simd::{blake2b, Params};
     use hex;
@@ -127,5 +145,18 @@ mod test {
         //        println!("sign result ： {}", hex::encode(sign_result));
         let expected_val = "eaab7f4066217b072b79609a9f76cdfadd93f8dde41763887e131c02324f18c8e41b1009e334baf87f9d2e917bf4c0e73165622e5522409a0c5817234a48cc02";
         assert_eq!(hex::encode(sign_result), expected_val);
+    }
+
+    #[test]
+    fn tezos_test() {
+        //        let s = "edskRoRrqsGXLTjMwAtzLSx8G7s9ipibZQh6ponFhZYSReSwxwPo7qJCkPJoRjdUhz8Hj7uZhZaFp7F5yftHUYBpJwF2ZY6vAc";
+        //        Ed25519PrivateKey::from_ss58check_with_version(s);
+        //2bf64e07 5740dedadb610333de66ef2db2d91fd648fcbe419dff766f921ae97d536f94ce 4e26dfbb48117c6f3b3cab5049eee4d68cbef0fc0a8176e7ebb36123a28bda84
+        let pk_bytes: Vec<u8> =
+            hex::decode("5740dedadb610333de66ef2db2d91fd648fcbe419dff766f921ae97d536f94ce")
+                .unwrap();
+        let sk_result = Ed25519PrivateKey::from_slice(&pk_bytes).unwrap();
+        let pk = sk_result.public_key().to_hex();
+        println!("{}", pk);
     }
 }

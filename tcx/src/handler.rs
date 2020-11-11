@@ -5,7 +5,10 @@ use std::path::Path;
 use bytes::BytesMut;
 use prost::Message;
 use serde_json::Value;
-use tcx_primitive::{get_account_path, private_key_without_version, FromHex, TypedPrivateKey};
+use tcx_primitive::{
+    ed25519_private_key_without_version, get_account_path, private_key_without_version, FromHex,
+    TypedPrivateKey,
+};
 
 use tcx_bch::{BchAddress, BchTransaction};
 use tcx_btc_fork::{
@@ -46,6 +49,7 @@ use tcx_substrate::{
     SubstrateAddress, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
 };
 use tcx_tezos::address::TezosAddress;
+use tcx_tezos::build_tezos_base58_private_key;
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
@@ -331,13 +335,24 @@ fn key_hash_from_any_format_pk(pk: &str) -> Result<String> {
     Ok(key_hash_from_private_key(&key_data))
 }
 
+fn key_hash_from_tezos_format_pk(pk: &str) -> Result<String> {
+    let key_data = ed25519_private_key_without_version(pk)?;
+    Ok(key_hash_from_private_key(&key_data))
+}
+
 pub(crate) fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let param: PrivateKeyStoreImportParam =
         PrivateKeyStoreImportParam::decode(data).expect("private_key_store_import");
 
     let mut founded_id: Option<String> = None;
     {
-        let key_hash = key_hash_from_any_format_pk(&param.private_key)?;
+        let key_hash: String;
+        if param.encoding.eq("TEZOS") {
+            key_hash = key_hash_from_tezos_format_pk(&param.private_key)?;
+        } else {
+            key_hash = key_hash_from_any_format_pk(&param.private_key)?;
+        }
+        //        let key_hash = key_hash_from_any_format_pk(&param.private_key)?;
         let map = KEYSTORE_MAP.read();
         if let Some(founded) = map
             .values()
@@ -351,7 +366,13 @@ pub(crate) fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
         return Err(format_err!("{}", "address_already_exist"));
     }
 
-    let pk_bytes = key_data_from_any_format_pk(&param.private_key)?;
+    let pk_bytes: Vec<u8>;
+    if param.encoding.eq("TEZOS") {
+        pk_bytes = ed25519_private_key_without_version(&param.private_key)?;
+    } else {
+        pk_bytes = key_data_from_any_format_pk(&param.private_key)?;
+    }
+    let temp = hex::encode(pk_bytes.clone());
     let private_key = hex::encode(pk_bytes);
     let meta = Metadata {
         name: param.name,
@@ -401,8 +422,10 @@ pub(crate) fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
 
     // private_key prefix is only about chain type and network
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
-    let value = if param.chain_type.as_str() == "TRON" || param.chain_type.as_str() == "TEZOS" {
+    let value = if param.chain_type.as_str() == "TRON" {
         Ok(pk_hex.to_string())
+    } else if param.chain_type.as_str() == "TEZOS" {
+        Ok(build_tezos_base58_private_key(pk_hex.as_str())?)
     } else {
         let bytes = hex::decode(pk_hex.to_string())?;
         let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
@@ -533,7 +556,11 @@ pub(crate) fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
     if param.r#type == KeyType::Mnemonic as i32 {
         key_hash = key_hash_from_mnemonic(&param.value)?;
     } else {
-        key_hash = key_hash_from_any_format_pk(&param.value)?;
+        if param.encoding.eq("TEZOS") {
+            key_hash = key_hash_from_tezos_format_pk(&param.value)?;
+        } else {
+            key_hash = key_hash_from_any_format_pk(&param.value)?;
+        }
     }
     let map = &mut KEYSTORE_MAP.write();
 
@@ -770,6 +797,7 @@ pub(crate) fn import_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
         name: ks.meta.name,
         password_hint: "".to_string(),
         overwrite: param.overwrite,
+        encoding: "".to_string(),
     };
     let param_bytes = encode_message(pk_import_param)?;
     private_key_store_import(&param_bytes)
@@ -822,6 +850,7 @@ pub(crate) fn substrate_keystore_exists(data: &[u8]) -> Result<Vec<u8>> {
     let exists_param = KeystoreCommonExistsParam {
         r#type: KeyType::PrivateKey as i32,
         value: pk_hex,
+        encoding: "".to_string(),
     };
     let exists_param_bytes = encode_message(exists_param)?;
     keystore_common_exists(&exists_param_bytes)
