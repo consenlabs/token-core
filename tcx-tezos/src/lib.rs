@@ -6,13 +6,17 @@ use tcx_chain::Result;
 use tcx_primitive::{Ed25519PrivateKey, PrivateKey, PublicKey};
 
 pub fn build_tezos_base58_private_key(sk: &str) -> Result<String> {
-    let edsk_prefix = [43 as u8, 246 as u8, 78 as u8, 7 as u8];
+    //tezos private key prefix
+    let edsk_prefix : [u8; 4] = [43 , 246, 78, 7];
+
+    //prefix + public key + public key
     let mut prefixed_sec_key_vec = vec![];
     prefixed_sec_key_vec.extend(&edsk_prefix);
     let ed25519_private_key =
         Ed25519PrivateKey::from_slice(hex::decode(sk).unwrap().as_slice()).unwrap();
     prefixed_sec_key_vec.extend(&ed25519_private_key.to_bytes());
     prefixed_sec_key_vec.extend(&ed25519_private_key.public_key().to_bytes());
+
     Ok(base58::check_encode_slice(prefixed_sec_key_vec.as_slice()))
 }
 
