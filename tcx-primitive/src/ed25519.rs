@@ -1,6 +1,5 @@
 use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
-use crate::{FromHex, Result, Ss58Codec, ToHex};
-use bitcoin::util::base58;
+use crate::{FromHex, Result, ToHex};
 use sp_core::ed25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};
 
@@ -78,23 +77,6 @@ impl FromHex for Ed25519PublicKey {
         let pk = Ed25519PublicKey::from_slice(bytes.as_slice())?;
         Ok(pk)
     }
-}
-
-impl Ss58Codec for Ed25519PrivateKey {
-    fn from_ss58check_with_version(s: &str) -> Result<(Self, Vec<u8>)> {
-        let data = base58::from_check(s)?;
-        let pk = Ed25519PrivateKey::from_slice(&data[4..36])?;
-        Ok((pk, vec![data[0]]))
-    }
-
-    fn to_ss58check_with_version(&self, version: &[u8]) -> String {
-        unimplemented!()
-    }
-}
-
-pub fn ed25519_private_key_without_version(private_key: &str) -> Result<Vec<u8>> {
-    let (pk, _version) = Ed25519PrivateKey::from_ss58check_with_version(private_key)?;
-    Ok(pk.to_bytes())
 }
 
 #[cfg(test)]
