@@ -46,9 +46,9 @@ use tcx_substrate::{
     SubstrateAddress, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
 };
 use tcx_tezos::address::TezosAddress;
+use tcx_tezos::transaction::TezosRawTxIn;
 use tcx_tezos::{build_tezos_base58_private_key, pars_tezos_private_key};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
-use tcx_tezos::transaction::TezosRawTxIn;
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
     if *IS_DEBUG.read() {
@@ -876,7 +876,7 @@ pub(crate) fn sign_tezos_tx_raw(param: &SignParam, keystore: &mut Keystore) -> R
             .clone()
             .as_slice(),
     )
-        .expect("TezosRawTxIn");
+    .expect("TezosRawTxIn");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
 }
