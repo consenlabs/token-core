@@ -48,6 +48,7 @@ use tcx_substrate::{
 use tcx_tezos::address::TezosAddress;
 use tcx_tezos::{build_tezos_base58_private_key, pars_tezos_private_key};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
+use tcx_tezos::transaction::TezosRawTxIn;
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
     if *IS_DEBUG.read() {
@@ -630,6 +631,7 @@ pub(crate) fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         "NERVOS" => sign_nervos_ckb(&param, guard.keystore_mut()),
         "POLKADOT" | "KUSAMA" => sign_substrate_tx_raw(&param, guard.keystore_mut()),
         "FILECOIN" => sign_filecoin_tx(&param, guard.keystore_mut()),
+        "TEZOS" => sign_tezos_tx_raw(&param, guard.keystore_mut()),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -862,4 +864,19 @@ pub(crate) fn unlock_then_crash(data: &[u8]) -> Result<Vec<u8>> {
 
     let _guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
     panic!("test_unlock_then_crash");
+}
+
+pub(crate) fn sign_tezos_tx_raw(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: TezosRawTxIn = TezosRawTxIn::decode(
+        param
+            .input
+            .as_ref()
+            .expect("raw_tx_input")
+            .value
+            .clone()
+            .as_slice(),
+    )
+        .expect("TezosRawTxIn");
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
 }

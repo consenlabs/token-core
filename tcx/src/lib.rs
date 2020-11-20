@@ -188,6 +188,7 @@ mod tests {
         SubstrateTxOut,
     };
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
+    use tcx_tezos::transaction::{TezosTxOut, TezosRawTxIn};
 
     static OTHER_MNEMONIC: &'static str =
         "calm release clay imitate top extend close draw quiz refuse shuffle injury";
@@ -2625,5 +2626,72 @@ mod tests {
         let full_file_path = format!("{}/{}.json", "/tmp/imtoken/wallets", wid);
         let p = Path::new(&full_file_path);
         remove_file(p).expect("should remove file");
+    }
+
+    #[test]
+    pub fn test_sign_tezos_tx() {
+        run_test(|| {
+            let derivation = Derivation {
+                chain_type: "TEZOS".to_string(),
+                path: "m/44'/1729'/0'/0'".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+                curve: "".to_string(),
+            };
+
+            let wallet = import_and_derive(derivation);
+
+            let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
+            let input = TezosRawTxIn { raw_data };
+            let input_value = encode_message(input).unwrap();
+            let tx = SignParam {
+                id: wallet.id.to_string(),
+                key: Some(Key::Password("WRONG PASSWORD".to_string())),
+                chain_type: "TEZOS".to_string(),
+                address: wallet.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: input_value.clone(),
+                }),
+            };
+
+            let ret = call_api("sign_tx", tx);
+            assert!(ret.is_err());
+            assert_eq!(format!("{}", ret.err().unwrap()), "password_incorrect");
+
+            let tx = SignParam {
+                id: wallet.id.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
+                chain_type: "TEZOS1".to_string(),
+                address: wallet.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: input_value.clone(),
+                }),
+            };
+
+            let ret = call_api("sign_tx", tx);
+            assert!(ret.is_err());
+            assert_eq!(format!("{}", ret.err().unwrap()), "unsupported_chain");
+
+            let tx = SignParam {
+                id: wallet.id.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
+                chain_type: "TEZOS".to_string(),
+                address: wallet.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: input_value,
+                }),
+            };
+
+            let ret = call_api("sign_tx", tx).unwrap();
+
+            let output: TezosTxOut = TezosTxOut::decode(ret.as_slice()).unwrap();
+            let expected_sign = "8766ce73f64a520fb169986775987febbf4092f57b2b5b00fb604bc1eed2c2f6d4d72a1f40ed8cad559c5186b02b9d2f39da435ceaf33995bcd64d43c3361406";
+            assert_eq!(expected_sign, output.signature.as_str());
+            remove_created_wallet(&wallet.id);
+        })
     }
 }

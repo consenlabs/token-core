@@ -19,7 +19,7 @@ impl TraitTransactionSigner<TezosRawTxIn, TezosTxOut> for Keystore {
             self.sign_recoverable_hash(raw_data_bytes.as_slice(), symbol, address, None)?;
 
         let tx_out = TezosTxOut {
-            signature: format!("0x{}", hex::encode(sign_result)),
+            signature: hex::encode(sign_result),
         };
         Ok(tx_out)
     }
