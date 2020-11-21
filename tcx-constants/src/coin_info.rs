@@ -124,12 +124,45 @@ lazy_static! {
             network: "".to_string(),
             seg_wit: "".to_string(),
         });
+        coin_infos.push(CoinInfo {
+            coin: "FILECOIN".to_string(),
+            derivation_path: "m/44'/461'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "MAINNET".to_string(),
+            seg_wit: "".to_string(),
+        });
+        coin_infos.push(CoinInfo {
+            coin: "FILECOIN".to_string(),
+            derivation_path: "m/44'/461'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "TESTNET".to_string(),
+            seg_wit: "".to_string(),
+        });
+        coin_infos.push(CoinInfo {
+            coin: "FILECOIN".to_string(),
+            derivation_path: "m/2334/461/0/0".to_string(),
+            curve: CurveType::BLS,
+            network: "MAINNET".to_string(),
+            seg_wit: "".to_string(),
+        });
+        coin_infos.push(CoinInfo {
+            coin: "FILECOIN".to_string(),
+            derivation_path: "m/2334/461/0/0".to_string(),
+            curve: CurveType::BLS,
+            network: "TESTNET".to_string(),
+            seg_wit: "".to_string(),
+        });
 
         RwLock::new(coin_infos)
     };
 }
 
-pub fn coin_info_from_param(chain_type: &str, network: &str, seg_wit: &str) -> Result<CoinInfo> {
+pub fn coin_info_from_param(
+    chain_type: &str,
+    network: &str,
+    seg_wit: &str,
+    curve: &str,
+) -> Result<CoinInfo> {
     let coin_infos = COIN_INFOS.read();
     let mut coins = coin_infos
         .iter()
@@ -137,9 +170,11 @@ pub fn coin_info_from_param(chain_type: &str, network: &str, seg_wit: &str) -> R
             x.coin.as_str() == chain_type
                 && (x.network.as_str() == network || network.is_empty())
                 && (x.seg_wit.as_str() == seg_wit || seg_wit.is_empty())
+                && (x.curve.as_str() == curve || curve.is_empty())
         })
         .map(|x| x.clone())
         .collect::<Vec<CoinInfo>>();
+
     if coins.is_empty() {
         Err(format_err!("unsupported_chain"))
     } else {

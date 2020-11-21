@@ -46,6 +46,7 @@ message KeystoreCommonDeriveParam {
         string network = 3;
         string segWit = 4;
         string chainId = 5;
+        string curve = 6;
     }
     repeated Derivation derivations= 3;
 }

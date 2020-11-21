@@ -1,0 +1,26 @@
+syntax = "proto3";
+package transaction;
+
+message UnsignedMessage {
+    string to = 1;
+    string from = 2;
+    uint64 nonce = 3;
+    string value = 4;
+    int64 gasLimit = 5;
+    string gasFeeCap = 6;
+    string gasPremium = 7;
+    uint64 method = 8;
+    string params = 9;
+}
+
+message Signature {
+    uint32  type = 1;
+    string  data = 2;
+}
+
+message SignedMessage {
+    string cid = 1;
+    UnsignedMessage message = 2;
+    Signature signature = 3;
+}
+

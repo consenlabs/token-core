@@ -4,7 +4,8 @@ use crate::{
     Secp256k1PrivateKey, Secp256k1PublicKey, ToHex,
 };
 
-use crate::ecc::TypedDeterministicPrivateKey::{Bip32Sepc256k1, SubSr25519};
+use crate::bls::{BLSPrivateKey, BLSPublicKey};
+use crate::bls_derive::BLSDeterministicPrivateKey;
 use crate::sr25519::{Sr25519PrivateKey, Sr25519PublicKey};
 use sp_core::Pair;
 use tcx_constants::CurveType;
@@ -44,6 +45,8 @@ pub enum KeyError {
     InvalidCurveType,
     #[fail(display = "invalid_sr25519_key")]
     InvalidSr25519Key,
+    #[fail(display = "not_implement")]
+    NotImplement,
 }
 
 pub trait PublicKey: Sized {
@@ -92,6 +95,7 @@ pub trait TypedPrivateKeyDisplay {
 pub enum TypedPrivateKey {
     Secp256k1(Secp256k1PrivateKey),
     Sr25519(Sr25519PrivateKey),
+    BLS(BLSPrivateKey),
 }
 
 impl TypedPrivateKey {
@@ -99,6 +103,7 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(_) => CurveType::SECP256k1,
             TypedPrivateKey::Sr25519(_) => CurveType::SubSr25519,
+            TypedPrivateKey::BLS(_) => CurveType::BLS,
         }
     }
 
@@ -110,6 +115,7 @@ impl TypedPrivateKey {
             CurveType::SubSr25519 => Ok(TypedPrivateKey::Sr25519(Sr25519PrivateKey::from_slice(
                 data,
             )?)),
+            CurveType::BLS => Ok(TypedPrivateKey::BLS(BLSPrivateKey::from_slice(data)?)),
             _ => Err(KeyError::InvalidCurveType.into()),
         }
     }
@@ -125,6 +131,7 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(sk) => sk.to_bytes(),
             TypedPrivateKey::Sr25519(sk) => sk.to_bytes(),
+            TypedPrivateKey::BLS(sk) => sk.to_bytes(),
         }
     }
 
@@ -132,6 +139,7 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(sk) => TypedPublicKey::Secp256k1(sk.public_key()),
             TypedPrivateKey::Sr25519(sk) => TypedPublicKey::Sr25519(sk.public_key()),
+            TypedPrivateKey::BLS(sk) => TypedPublicKey::BLS(sk.public_key()),
         }
     }
 
@@ -139,6 +147,7 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(sk) => sk.sign(data),
             TypedPrivateKey::Sr25519(sk) => sk.sign(data),
+            TypedPrivateKey::BLS(sk) => sk.sign(data),
         }
     }
 
@@ -146,6 +155,7 @@ impl TypedPrivateKey {
         match self {
             TypedPrivateKey::Secp256k1(sk) => sk.sign_recoverable(data),
             TypedPrivateKey::Sr25519(sk) => sk.sign_recoverable(data),
+            TypedPrivateKey::BLS(sk) => sk.sign_recoverable(data),
         }
     }
 }
@@ -153,6 +163,7 @@ impl TypedPrivateKey {
 pub enum TypedPublicKey {
     Secp256k1(Secp256k1PublicKey),
     Sr25519(Sr25519PublicKey),
+    BLS(BLSPublicKey),
 }
 
 impl TypedPublicKey {
@@ -160,6 +171,7 @@ impl TypedPublicKey {
         match self {
             TypedPublicKey::Secp256k1(_) => CurveType::SECP256k1,
             TypedPublicKey::Sr25519(_) => CurveType::SubSr25519,
+            TypedPublicKey::BLS(_) => CurveType::BLS,
         }
     }
 
@@ -171,6 +183,7 @@ impl TypedPublicKey {
             CurveType::SubSr25519 => {
                 Ok(TypedPublicKey::Sr25519(Sr25519PublicKey::from_slice(data)?))
             }
+            CurveType::BLS => Ok(TypedPublicKey::BLS(BLSPublicKey::from_slice(data)?)),
 
             _ => Err(KeyError::InvalidCurveType.into()),
         }
@@ -180,6 +193,7 @@ impl TypedPublicKey {
         match self {
             TypedPublicKey::Secp256k1(pk) => pk.to_bytes(),
             TypedPublicKey::Sr25519(pk) => pk.to_bytes(),
+            TypedPublicKey::BLS(pk) => pk.to_bytes(),
         }
     }
 
@@ -241,6 +255,7 @@ impl Derive for TypedDeterministicPublicKey {
 pub enum TypedDeterministicPrivateKey {
     Bip32Sepc256k1(Bip32DeterministicPrivateKey),
     SubSr25519(Sr25519PrivateKey),
+    BLS(BLSDeterministicPrivateKey),
 }
 
 impl TypedDeterministicPrivateKey {
@@ -248,6 +263,7 @@ impl TypedDeterministicPrivateKey {
         match self {
             TypedDeterministicPrivateKey::Bip32Sepc256k1(_) => CurveType::SECP256k1,
             TypedDeterministicPrivateKey::SubSr25519(_) => CurveType::SubSr25519,
+            TypedDeterministicPrivateKey::BLS(_) => CurveType::BLS,
         }
     }
 
@@ -256,10 +272,15 @@ impl TypedDeterministicPrivateKey {
         mnemonic: &str,
     ) -> Result<TypedDeterministicPrivateKey> {
         match curve_type {
-            CurveType::SECP256k1 => Ok(Bip32Sepc256k1(
+            CurveType::SECP256k1 => Ok(TypedDeterministicPrivateKey::Bip32Sepc256k1(
                 Bip32DeterministicPrivateKey::from_mnemonic(mnemonic)?,
             )),
-            CurveType::SubSr25519 => Ok(SubSr25519(Sr25519PrivateKey::from_mnemonic(mnemonic)?)),
+            CurveType::SubSr25519 => Ok(TypedDeterministicPrivateKey::SubSr25519(
+                Sr25519PrivateKey::from_mnemonic(mnemonic)?,
+            )),
+            CurveType::BLS => Ok(TypedDeterministicPrivateKey::BLS(
+                BLSDeterministicPrivateKey::from_mnemonic(mnemonic)?,
+            )),
             _ => Err(KeyError::InvalidCurveType.into()),
         }
     }
@@ -272,6 +293,7 @@ impl TypedDeterministicPrivateKey {
             TypedDeterministicPrivateKey::SubSr25519(dsk) => {
                 TypedPrivateKey::Sr25519(dsk.private_key())
             }
+            TypedDeterministicPrivateKey::BLS(dsk) => TypedPrivateKey::BLS(dsk.private_key()),
         }
     }
 
@@ -283,6 +305,7 @@ impl TypedDeterministicPrivateKey {
             TypedDeterministicPrivateKey::SubSr25519(sk) => {
                 TypedDeterministicPublicKey::SubSr25519(sk.deterministic_public_key())
             }
+            TypedDeterministicPrivateKey::BLS(_) => panic!("not support"),
         }
     }
 }
@@ -292,6 +315,7 @@ impl ToString for TypedDeterministicPrivateKey {
         match self {
             TypedDeterministicPrivateKey::Bip32Sepc256k1(sk) => sk.to_string(),
             TypedDeterministicPrivateKey::SubSr25519(sk) => hex::encode(sk.0.to_raw_vec()),
+            TypedDeterministicPrivateKey::BLS(sk) => hex::encode(sk.0.to_string()),
         }
     }
 }
@@ -327,6 +351,9 @@ impl Derive for TypedDeterministicPrivateKey {
             ),
             TypedDeterministicPrivateKey::SubSr25519(dsk) => {
                 Ok(TypedDeterministicPrivateKey::SubSr25519(dsk.derive(path)?))
+            }
+            TypedDeterministicPrivateKey::BLS(dsk) => {
+                Ok(TypedDeterministicPrivateKey::BLS(dsk.derive(path)?))
             }
         }
     }

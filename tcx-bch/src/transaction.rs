@@ -60,7 +60,7 @@ mod tests {
             network: "MAINNET".to_string(),
             seg_wit: "NONE".to_string(),
         };
-        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE", "").unwrap();
         let tran = BitcoinForkSinger::<BchAddress, LegacyTransactionSignComponent<BchSignHasher>> {
             tx_input: input,
             coin_info,

@@ -188,7 +188,7 @@ impl HdKeystore {
         let address = A::from_public_key(&public_key, coin_info)?;
         // todo: ext_pub_key
         let ext_pub_key = match coin_info.curve {
-            CurveType::SubSr25519 => "".to_owned(),
+            CurveType::SubSr25519 | CurveType::BLS => "".to_owned(),
             _ => root
                 .derive(&get_account_path(&coin_info.derivation_path)?)?
                 .deterministic_public_key()

@@ -2,6 +2,8 @@
 extern crate failure;
 
 mod bip32;
+mod bls;
+mod bls_derive;
 mod constant;
 mod derive;
 mod ecc;
