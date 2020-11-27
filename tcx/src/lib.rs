@@ -2642,7 +2642,7 @@ mod tests {
 
             let wallet = import_and_derive(derivation);
 
-            let raw_data = "0a0202a22208e216e254e43ee10840c8cbe4e3df2d5a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a15415c68cc82c87446f602f019e5fd797437f5b79cc212154156a6076cd1537fa317c2606e4edfa4acd3e8e92e18a08d06709084e1e3df2d".to_string();
+            let raw_data = "d3bdafa2e36f872e24f1ccd68dbdca4356b193823d0a6a54886d7641e532a2a26c00dedf1a2f428e5e85edf105cb3600949f3d0e8837c70cacb4e803e8528102c0843d0000dcdcf88d0cfb769e33b1888d6bdc351ee3277ea700".to_string();
             let input = TezosRawTxIn { raw_data };
             let input_value = encode_message(input).unwrap();
             let tx = SignParam {
@@ -2689,7 +2689,7 @@ mod tests {
             let ret = call_api("sign_tx", tx).unwrap();
 
             let output: TezosTxOut = TezosTxOut::decode(ret.as_slice()).unwrap();
-            let expected_sign = "8766ce73f64a520fb169986775987febbf4092f57b2b5b00fb604bc1eed2c2f6d4d72a1f40ed8cad559c5186b02b9d2f39da435ceaf33995bcd64d43c3361406";
+            let expected_sign = "0df020458bdcfe24546488dd81e1bd7e2cb05379dc7c72ad626646ae22df5d3a652fdc4ffd2383dd5823a98fe158780928da07a3f0a234e23b759ce7b3a39a0c";
             assert_eq!(expected_sign, output.signature.as_str());
             remove_created_wallet(&wallet.id);
         })
