@@ -24,7 +24,7 @@ use crate::handler::{
 mod filemanager;
 
 use crate::handler::{
-    export_substrate_keystore, import_substrate_keystore, substrate_keystore_exists,
+    export_substrate_keystore, get_public_key, import_substrate_keystore, substrate_keystore_exists,
 };
 use parking_lot::RwLock;
 
@@ -95,6 +95,7 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         }
 
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
+        "get_public_key" => landingpad(|| get_public_key(&action.param.unwrap().value)),
 
         "tron_sign_msg" => landingpad(|| tron_sign_message(&action.param.unwrap().value)),
 
@@ -165,8 +166,8 @@ mod tests {
         AccountsResponse, DerivedKeyResult, ExportPrivateKeyParam, HdStoreCreateParam,
         InitTokenCoreXParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
         KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
-        PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response, SignParam,
-        WalletKeyParam,
+        PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, PublicKeyParam, PublicKeyResult,
+        Response, SignParam, WalletKeyParam,
     };
     use crate::api::{HdStoreImportParam, WalletResult};
     use crate::handler::hd_store_import;
@@ -872,7 +873,7 @@ mod tests {
     pub fn test_tezos_private_key_store_import_export() {
         run_test(|| {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
-                private_key: "edskRoRrqsGXLTjMwAtzLSx8G7s9ipibZQh6ponFhZYSReSwxwPo7qJCkPJoRjdUhz8Hj7uZhZaFp7F5yftHUYBpJwF2ZY6vAc".to_string(),
+                private_key: "edskRgu8wHxjwayvnmpLDDijzD3VZDoAH7ZLqJWuG4zg7LbxmSWZWhtkSyM5Uby41rGfsBGk4iPKWHSDniFyCRv3j7YFCknyHH".to_string(),
                 password: TEST_PASSWORD.to_string(),
                 name: "test_tezos_private_key_store_import_export".to_string(),
                 password_hint: "".to_string(),
@@ -901,7 +902,7 @@ mod tests {
             let derived_accounts: AccountsResponse =
                 AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
             assert_eq!(
-                "tz1fmr4eccz29gvLco7ZhjsnpVqqCq1R58sg",
+                "tz1QSHaKpTFhgHLbqinyYRjxD5sLcbfbzhxy",
                 derived_accounts.accounts[0].address
             );
 
@@ -915,9 +916,23 @@ mod tests {
             let export_result: KeystoreCommonExportResult =
                 KeystoreCommonExportResult::decode(ret_bytes.as_slice()).unwrap();
             assert_eq!(
-                "edskRoRrqsGXLTjMwAtzLSx8G7s9ipibZQh6ponFhZYSReSwxwPo7qJCkPJoRjdUhz8Hj7uZhZaFp7F5yftHUYBpJwF2ZY6vAc",
+                "edskRgu8wHxjwayvnmpLDDijzD3VZDoAH7ZLqJWuG4zg7LbxmSWZWhtkSyM5Uby41rGfsBGk4iPKWHSDniFyCRv3j7YFCknyHH",
                 export_result.value
             );
+
+            let param: PublicKeyParam = PublicKeyParam {
+                id: import_result.id.to_string(),
+                chain_type: "TEZOS".to_string(),
+                address: "tz1QSHaKpTFhgHLbqinyYRjxD5sLcbfbzhxy".to_string(),
+            };
+            let ret_bytes = call_api("get_public_key", param).unwrap();
+            let public_key_result: PublicKeyResult =
+                PublicKeyResult::decode(ret_bytes.as_slice()).unwrap();
+            assert_eq!(
+                "edpkvQtuhdZQmjdjVfaY9Kf4hHfrRJYugaJErkCGvV3ER1S7XWsrrj",
+                public_key_result.public_key
+            );
+            remove_created_wallet(&import_result.id);
         })
     }
 

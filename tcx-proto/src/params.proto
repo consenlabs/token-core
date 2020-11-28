@@ -187,3 +187,15 @@ message HdStoreExtendedPublicKeyResponse {
     string extendedPublicKey = 1;
 }
 
+message PublicKeyParam {
+    string id = 1;
+    string chainType = 2;
+    string address = 3;
+}
+
+message PublicKeyResult {
+    string id = 1;
+    string chainType = 2;
+    string address = 3;
+    string publicKey = 4;
+}

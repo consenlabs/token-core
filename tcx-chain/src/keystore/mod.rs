@@ -74,6 +74,7 @@ pub struct Account {
     pub network: String,
     pub seg_wit: String,
     pub ext_pub_key: String,
+    pub public_key: String,
 }
 
 /// Chain address interface, for encapsulate derivation

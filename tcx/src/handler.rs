@@ -25,7 +25,8 @@ use crate::api::{
     AccountResponse, AccountsResponse, DerivedKeyResult, ExportPrivateKeyParam, HdStoreCreateParam,
     HdStoreImportParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
     KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
-    PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
+    PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, PublicKeyParam, PublicKeyResult,
+    Response, WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
@@ -33,12 +34,14 @@ use crate::filemanager::{cache_keystore, clean_keystore, flush_keystore, WALLET_
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 
 use crate::IS_DEBUG;
+use base58::ToBase58;
 use tcx_chain::tcx_ensure;
 use tcx_chain::Address;
 use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
+use tcx_crypto::hash::dsha256;
 use tcx_crypto::KDF_ROUNDS;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_substrate::{
@@ -632,6 +635,40 @@ pub(crate) fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         "POLKADOT" | "KUSAMA" => sign_substrate_tx_raw(&param, guard.keystore_mut()),
         "FILECOIN" => sign_filecoin_tx(&param, guard.keystore_mut()),
         "TEZOS" => sign_tezos_tx_raw(&param, guard.keystore_mut()),
+        _ => Err(format_err!("unsupported_chain")),
+    }
+}
+
+pub(crate) fn get_public_key(data: &[u8]) -> Result<Vec<u8>> {
+    let param: PublicKeyParam = PublicKeyParam::decode(data).expect("PublicKeyParam");
+
+    let mut map = KEYSTORE_MAP.write();
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let edpk_prefix: Vec<u8> = vec![0x0D, 0x0F, 0x25, 0xD9];
+    match param.chain_type.to_uppercase().as_str() {
+        "TEZOS" => {
+            let account = keystore.account(&param.chain_type, &param.address);
+            if let Some(acc) = account {
+                let pub_key = hex::decode(acc.public_key.clone())?;
+                let to_hash = [edpk_prefix, pub_key].concat();
+                let hashed = dsha256(&to_hash);
+                let hash_with_checksum = [to_hash, hashed[0..4].to_vec()].concat();
+                let edpk = hash_with_checksum.to_base58();
+                let ret = PublicKeyResult {
+                    id: param.id.to_string(),
+                    chain_type: param.chain_type.to_string(),
+                    address: param.address.to_string(),
+                    public_key: edpk,
+                };
+                encode_message(ret)
+            } else {
+                Err(format_err!("account_not_found"))
+            }
+        }
         _ => Err(format_err!("unsupported_chain")),
     }
 }

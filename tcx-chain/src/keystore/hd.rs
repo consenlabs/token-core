@@ -207,6 +207,7 @@ impl HdKeystore {
             network: coin_info.network.to_string(),
             ext_pub_key,
             seg_wit: coin_info.seg_wit.to_string(),
+            public_key: hex::encode(public_key.to_bytes()),
         };
 
         if let Some(_) = self
@@ -327,6 +328,7 @@ mod tests {
             seg_wit: "NONE".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOIN".to_string(),
+            public_key: "".to_string()
         };
 
         assert_eq!(acc, expected);
@@ -401,6 +403,7 @@ mod tests {
             seg_wit: "NONE".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOIN".to_string(),
+            public_key: "".to_string()
         };
 
         assert_eq!(acc, expected);
