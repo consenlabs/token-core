@@ -2,6 +2,7 @@ use crate::transaction::{Signature, SignedMessage, UnsignedMessage};
 use crate::utils::{digest, HashSize};
 use crate::Error;
 use forest_address::Address;
+use forest_cid::Cid;
 use forest_encoding::Cbor;
 use forest_message::UnsignedMessage as ForestUnsignedMessage;
 use forest_vm::Serialized;
@@ -55,7 +56,6 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
         tx: &UnsignedMessage,
     ) -> Result<SignedMessage> {
         let unsigned_message = forest_message::UnsignedMessage::try_from(tx)?;
-        let cid = unsigned_message.cid()?;
 
         let account = self.account(symbol, address);
         let signature_type;
@@ -65,6 +65,7 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
         }
 
         let signature;
+        let mut cid: Cid = unsigned_message.cid()?;
         match account.unwrap().curve {
             CurveType::SECP256k1 => {
                 signature_type = 1;
@@ -74,10 +75,20 @@ impl TransactionSigner<UnsignedMessage, SignedMessage> for Keystore {
                     address,
                     None,
                 )?;
+
+                let forest_sig = forest_crypto::Signature::new_secp256k1(signature.clone());
+                let forest_signed_msg = forest_message::SignedMessage {
+                    message: unsigned_message,
+                    signature: forest_sig,
+                };
+                cid = forest_signed_msg
+                    .cid()
+                    .map_err(|_e| format_err!("{}", "forest_message cid error"))?;
             }
             CurveType::BLS => {
                 signature_type = 2;
                 signature = self.sign_hash(&cid.to_bytes(), symbol, address, None)?;
+                cid = unsigned_message.cid()?;
             }
             _ => return Err(Error::InvalidCurveType.into()),
         }
@@ -139,6 +150,10 @@ mod tests {
             .unwrap();
         let signature = signed_message.signature.unwrap();
 
+        assert_eq!(
+            "bafy2bzacec6nqhpi35nwfmdc2two6gs6khs3cgxe7ao2ks6xdwz53qvp2boyu",
+            signed_message.cid
+        );
         assert_eq!(signature.r#type, 1);
         assert_eq!(signature.data, "MCTI+WjYRozaU/7gYWAwSeOixkSmIHDWHwsU1NVPTrtH4IkXPUrgRcZh4DduJqvHLzoek31LYZxhWkGAzd0j9wA=");
     }

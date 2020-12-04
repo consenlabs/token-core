@@ -9,6 +9,8 @@ mod utils;
 pub use crate::address::FilecoinAddress;
 pub use crate::key_info::KeyInfo;
 pub use crate::transaction::{SignedMessage, UnsignedMessage};
+#[macro_use]
+extern crate failure;
 
 #[derive(Fail, Debug, PartialEq)]
 pub enum Error {
