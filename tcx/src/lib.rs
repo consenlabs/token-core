@@ -936,6 +936,55 @@ mod tests {
         })
     }
 
+    #[test]
+    pub fn test_tezos_hd_private_key_import_export() {
+        run_test(|| {
+            let import_result: WalletResult = import_default_pk_store();
+
+            assert_eq!(0, import_result.accounts.len());
+
+            let derivations = vec![Derivation {
+                chain_type: "TEZOS".to_string(),
+                path: "m/44'/1729'/0'/0'".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+                curve: "".to_string(),
+            }];
+            let param = KeystoreCommonDeriveParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations,
+            };
+            let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
+            let derived_accounts: AccountsResponse =
+                AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
+            assert_eq!(
+                "tz1RTCY2tQdBCWYacqmV18UYy5YMBdCgcpL1",
+                derived_accounts.accounts[0].address
+            );
+
+            let export_param = ExportPrivateKeyParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "TEZOS".to_string(),
+                network: "".to_string(),
+                main_address: derived_accounts.accounts[0].address.to_string(),
+                path: "m/44'/1729'/0'/0'".to_string(),
+            };
+
+            let export_pk_bytes = call_api("export_private_key", export_param).unwrap();
+            let export_pk: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(export_pk_bytes.as_slice()).unwrap();
+            println!("{:#?}", export_pk.value);
+            // assert_eq!(
+            //     export_pk.value,
+            //     "7b2254797065223a22736563703235366b31222c22507269766174654b6579223a226f354a6754767776725a774c5061513758326d4b4c6a386e4478634e685a6b537667315564434a317866593d227d"
+            // );
+            remove_created_wallet(&import_result.id);
+        })
+    }
+
     pub fn test_filecoin_private_key_secp256k1_import() {
         run_test(|| {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {

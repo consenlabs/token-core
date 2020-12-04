@@ -477,7 +477,7 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
 
     // private_key prefix is only about chain type and network
     let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
-    let value = if ["TRON", "POLKADOT", "KUSAMA", "TEZOS"].contains(&param.chain_type.as_str()) {
+    let value = if ["TRON", "POLKADOT", "KUSAMA"].contains(&param.chain_type.as_str()) {
         Ok(pk_hex.to_string())
     } else if "FILECOIN".contains(&param.chain_type.as_str()) {
         if let Some(account) = guard
@@ -490,6 +490,8 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
         } else {
             Err(format_err!("{}", "account_not_found"))
         }
+    } else if "TEZOS".contains(&param.chain_type.as_str()) {
+        Ok(build_tezos_base58_private_key(pk_hex.as_str())?)
     } else {
         // private_key prefix is only about chain type and network
         let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
