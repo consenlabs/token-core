@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Step1. compile rust
 
 LIBS=examples/TokenCoreX/TokenCoreX
