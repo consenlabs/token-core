@@ -655,7 +655,11 @@ pub(crate) fn get_public_key(data: &[u8]) -> Result<Vec<u8>> {
         "TEZOS" => {
             let account = keystore.account(&param.chain_type, &param.address);
             if let Some(acc) = account {
-                let pub_key = hex::decode(acc.public_key.clone())?;
+                tcx_ensure!(
+                    acc.public_key.is_some(),
+                    format_err!("account_not_contains_public_key")
+                );
+                let pub_key = hex::decode(acc.public_key.clone().unwrap())?;
                 let to_hash = [edpk_prefix, pub_key].concat();
                 let hashed = dsha256(&to_hash);
                 let hash_with_checksum = [to_hash, hashed[0..4].to_vec()].concat();
