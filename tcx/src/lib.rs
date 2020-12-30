@@ -906,6 +906,19 @@ mod tests {
                 derived_accounts.accounts[0].address
             );
 
+            let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
+                r#type: KeyType::PrivateKey as i32,
+                value: "edskRgu8wHxjwayvnmpLDDijzD3VZDoAH7ZLqJWuG4zg7LbxmSWZWhtkSyM5Uby41rGfsBGk4iPKWHSDniFyCRv3j7YFCknyHH"
+                    .to_string(),
+                encoding: "TEZOS".to_string(),
+            };
+
+            let ret_bytes = call_api("keystore_common_exists", param).unwrap();
+            let result: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
+            assert!(result.is_exists);
+            assert_eq!(result.id, import_result.id);
+
             let param: PrivateKeyStoreExportParam = PrivateKeyStoreExportParam {
                 id: import_result.id.to_string(),
                 password: TEST_PASSWORD.to_string(),
@@ -1554,18 +1567,6 @@ mod tests {
             assert!(result.is_exists);
             assert_eq!(result.id, wallet.id);
 
-            let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
-                r#type: KeyType::PrivateKey as i32,
-                value: "edskRoRrqsGXLTjMwAtzLSx8G7s9ipibZQh6ponFhZYSReSwxwPo7qJCkPJoRjdUhz8Hj7uZhZaFp7F5yftHUYBpJwF2ZY6vAc"
-                    .to_string(),
-                encoding: "TEZOS".to_string(),
-            };
-
-            let ret_bytes = call_api("keystore_common_exists", param).unwrap();
-            let result: KeystoreCommonExistsResult =
-                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
-            assert!(result.is_exists);
-            assert_eq!(result.id, wallet.id);
             remove_created_wallet(&wallet.id);
         })
     }
