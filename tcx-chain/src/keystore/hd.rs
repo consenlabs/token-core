@@ -328,7 +328,7 @@ mod tests {
             seg_wit: "NONE".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOIN".to_string(),
-            public_key: None
+            public_key: Some("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868".to_string())
         };
 
         assert_eq!(acc, expected);
@@ -403,7 +403,7 @@ mod tests {
             seg_wit: "NONE".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOIN".to_string(),
-            public_key: None
+            public_key: Some("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868".to_string())
         };
 
         assert_eq!(acc, expected);

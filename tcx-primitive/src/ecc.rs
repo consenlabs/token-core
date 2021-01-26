@@ -435,7 +435,7 @@ mod tests {
     #[test]
     fn typed_private_key() {
         let ret = TypedPrivateKey::from_slice(CurveType::ED25519, &default_private_key());
-        assert!(ret.is_err());
+        assert!(ret.is_ok());
 
         let sk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &default_private_key()).unwrap();
 
@@ -477,8 +477,6 @@ mod tests {
     #[test]
     fn test_typed_public_key() {
         let pub_key = hex::decode(PUB_KEY_HEX).unwrap();
-        let ret = TypedPublicKey::from_slice(CurveType::ED25519, &pub_key);
-        assert!(ret.is_err());
 
         let pk = TypedPublicKey::from_slice(CurveType::SECP256k1, &pub_key).unwrap();
 
