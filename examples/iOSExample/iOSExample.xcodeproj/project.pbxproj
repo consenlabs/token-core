@@ -20,11 +20,12 @@
 		706E244B23603B7B0083E861 /* FuncResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 706E244A23603B7B0083E861 /* FuncResultView.swift */; };
 		706E244D23603CD10083E861 /* UserData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 706E244C23603CD10083E861 /* UserData.swift */; };
 		706E244F236153480083E861 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 706E244E236153480083E861 /* Utils.swift */; };
-		706E245F236184E30083E861 /* libtcx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 706E245E236184E20083E861 /* libtcx.a */; };
 		706E24622361887C0083E861 /* tcx.h in Sources */ = {isa = PBXBuildFile; fileRef = 706E245C236184E20083E861 /* tcx.h */; };
 		706E24632361887C0083E861 /* iOSExample-Bridging-Header.h in Sources */ = {isa = PBXBuildFile; fileRef = 706E2461236187BF0083E861 /* iOSExample-Bridging-Header.h */; };
 		70A05E0B239BE14B00DC3A93 /* btc_fork.proto in Sources */ = {isa = PBXBuildFile; fileRef = 70A05E09239BE14B00DC3A93 /* btc_fork.proto */; };
 		70A05E0C239BE14B00DC3A93 /* btc_fork.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70A05E0A239BE14B00DC3A93 /* btc_fork.pb.swift */; };
+		70E494FE25209FE60035163E /* TokenCoreX.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70E494F925209FDC0035163E /* TokenCoreX.framework */; };
+		70E494FF25209FE60035163E /* TokenCoreX.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 70E494F925209FDC0035163E /* TokenCoreX.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		70F81966239BD8A300A738A9 /* api.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70F81962239BD8A300A738A9 /* api.pb.swift */; };
 		70F81967239BD8A300A738A9 /* api_params.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70F81963239BD8A300A738A9 /* api_params.pb.swift */; };
 		70F81968239BD8A300A738A9 /* api.proto in Sources */ = {isa = PBXBuildFile; fileRef = 70F81964239BD8A300A738A9 /* api.proto */; };
@@ -48,6 +49,20 @@
 			remoteInfo = iOSExample;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		70E4950025209FE60035163E /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				70E494FF25209FE60035163E /* TokenCoreX.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		05E19BEBA45C4F42AE40A436 /* Pods_iOSExample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_iOSExample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -76,6 +91,7 @@
 		706E2461236187BF0083E861 /* iOSExample-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iOSExample-Bridging-Header.h"; sourceTree = "<group>"; };
 		70A05E09239BE14B00DC3A93 /* btc_fork.proto */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.protobuf; path = btc_fork.proto; sourceTree = "<group>"; };
 		70A05E0A239BE14B00DC3A93 /* btc_fork.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = btc_fork.pb.swift; sourceTree = "<group>"; };
+		70E494F925209FDC0035163E /* TokenCoreX.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = TokenCoreX.framework; sourceTree = SOURCE_ROOT; };
 		70F81962239BD8A300A738A9 /* api.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = api.pb.swift; sourceTree = "<group>"; };
 		70F81963239BD8A300A738A9 /* api_params.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = api_params.pb.swift; sourceTree = "<group>"; };
 		70F81964239BD8A300A738A9 /* api.proto */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.protobuf; path = api.proto; sourceTree = "<group>"; };
@@ -92,7 +108,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				706E245F236184E30083E861 /* libtcx.a in Frameworks */,
+				70E494FE25209FE60035163E /* TokenCoreX.framework in Frameworks */,
 				0821AB3B3F5EDEFFC6B3FA83 /* Pods_iOSExample.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -154,6 +170,7 @@
 		706E241923602B7B0083E861 /* iOSExample */ = {
 			isa = PBXGroup;
 			children = (
+				70E494F925209FDC0035163E /* TokenCoreX.framework */,
 				70F81961239BD8A300A738A9 /* Proto */,
 				706E245A236184E20083E861 /* TokenCoreX */,
 				706E241A23602B7B0083E861 /* AppDelegate.swift */,
@@ -257,6 +274,7 @@
 				706E241423602B7B0083E861 /* Frameworks */,
 				706E241523602B7B0083E861 /* Resources */,
 				C291D3AF4245B955E705955E /* [CP] Embed Pods Frameworks */,
+				70E4950025209FE60035163E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -665,9 +683,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iOSExample/Preview Content\"";
-				DEVELOPMENT_TEAM = 8Z7NF6BL8X;
+				DEVELOPMENT_TEAM = XH9M86NXW3;
 				ENABLE_BITCODE = NO;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = iOSExample/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -693,9 +715,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iOSExample/Preview Content\"";
-				DEVELOPMENT_TEAM = 8Z7NF6BL8X;
+				DEVELOPMENT_TEAM = XH9M86NXW3;
 				ENABLE_BITCODE = NO;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = iOSExample/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.1;
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -136,6 +136,8 @@ pub mod keystore_common_derive_param {
         pub seg_wit: std::string::String,
         #[prost(string, tag = "5")]
         pub chain_id: std::string::String,
+        #[prost(string, tag = "6")]
+        pub curve: std::string::String,
     }
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -183,6 +185,8 @@ pub struct PrivateKeyStoreImportParam {
     pub password_hint: std::string::String,
     #[prost(bool, tag = "5")]
     pub overwrite: bool,
+    #[prost(string, tag = "6")]
+    pub encoding: std::string::String,
 }
 /// FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult
 ///
@@ -213,6 +217,8 @@ pub struct KeystoreCommonExistsParam {
     pub r#type: i32,
     #[prost(string, tag = "2")]
     pub value: std::string::String,
+    #[prost(string, tag = "3")]
+    pub encoding: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeystoreCommonExistsResult {
@@ -319,6 +325,26 @@ pub struct HdStoreExtendedPublicKeyParam {
 pub struct HdStoreExtendedPublicKeyResponse {
     #[prost(string, tag = "1")]
     pub extended_public_key: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PublicKeyParam {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(string, tag = "2")]
+    pub chain_type: std::string::String,
+    #[prost(string, tag = "3")]
+    pub address: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PublicKeyResult {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(string, tag = "2")]
+    pub chain_type: std::string::String,
+    #[prost(string, tag = "3")]
+    pub address: std::string::String,
+    #[prost(string, tag = "4")]
+    pub public_key: std::string::String,
 }
 /// only support two types
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]

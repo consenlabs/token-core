@@ -9,7 +9,7 @@ use std::io::Cursor;
 /// sufficient (in conjunction with a private key) to sign the transaction
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct SighashComponentsWithForkId {
-    tx_version: u32,
+    tx_version: i32,
     tx_locktime: u32,
     /// Hash of all the previous outputs
     pub hash_prevouts: sha256d::Hash,
@@ -66,7 +66,7 @@ impl SighashComponentsWithForkId {
         witness_script: &Script,
         value: u64,
         fork_id: u32,
-    ) -> sha256d::Hash {
+    ) -> bitcoin::hash_types::SigHash {
         let mut enc = sha256d::Hash::engine();
         let mut encoder: Cursor<Vec<u8>> = Cursor::new(vec![]);
         self.tx_version.consensus_encode(&mut enc).unwrap();
@@ -90,6 +90,6 @@ impl SighashComponentsWithForkId {
         self.tx_locktime.consensus_encode(&mut encoder).unwrap();
         fork_id.consensus_encode(&mut enc).unwrap(); // hashtype
         fork_id.consensus_encode(&mut encoder).unwrap(); // hashtype
-        sha256d::Hash::hash(&encoder.into_inner())
+        bitcoin::hash_types::SigHash::hash(&encoder.into_inner())
     }
 }

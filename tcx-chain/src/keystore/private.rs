@@ -137,7 +137,8 @@ impl PrivateKeystore {
         private_key: &[u8],
     ) -> Result<Account> {
         let tsk = TypedPrivateKey::from_slice(coin.curve, private_key)?;
-        let addr = A::from_public_key(&tsk.public_key(), coin)?;
+        let pub_key = tsk.public_key();
+        let addr = A::from_public_key(&pub_key, coin)?;
 
         let acc = Account {
             address: addr,
@@ -147,6 +148,7 @@ impl PrivateKeystore {
             network: coin.network.to_string(),
             seg_wit: coin.seg_wit.to_string(),
             ext_pub_key: "".to_string(),
+            public_key: Some(hex::encode(pub_key.to_bytes())),
         };
 
         Ok(acc)

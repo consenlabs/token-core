@@ -1,0 +1,11 @@
+syntax = "proto3";
+package transaction;
+message TezosRawTxIn {
+  string rawData = 1;
+}
+
+message TezosTxOut {
+  string signature = 1;
+  string edsig = 2;
+  string sbytes = 3;
+}

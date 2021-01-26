@@ -10,8 +10,9 @@ members = [
     "tcx-bch",
     "tcx-ckb",
     "tcx-substrate",
+    "tcx-filecoin",
     "tcx",
-
+    "tcx-tezos",
     "tcx-tester",
 ]
 

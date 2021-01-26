@@ -16,6 +16,7 @@ use tcx_chain::{key_hash_from_mnemonic, key_hash_from_private_key, Keystore, Key
 use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
 use tcx_ckb::{CkbAddress, CkbTxInput};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
+use tcx_filecoin::{FilecoinAddress, KeyInfo, UnsignedMessage};
 use tcx_tron::TrxAddress;
 
 use crate::api::keystore_common_derive_param::Derivation;
@@ -24,7 +25,8 @@ use crate::api::{
     AccountResponse, AccountsResponse, DerivedKeyResult, ExportPrivateKeyParam, HdStoreCreateParam,
     HdStoreImportParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
     KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
-    PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, Response, WalletKeyParam, WalletResult,
+    PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, PublicKeyParam, PublicKeyResult,
+    Response, WalletKeyParam, WalletResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
@@ -32,18 +34,23 @@ use crate::filemanager::{cache_keystore, clean_keystore, flush_keystore, WALLET_
 use crate::filemanager::{delete_keystore_file, KEYSTORE_MAP};
 
 use crate::IS_DEBUG;
+use base58::ToBase58;
 use tcx_chain::tcx_ensure;
 use tcx_chain::Address;
 use tcx_chain::{MessageSigner, TransactionSigner};
 use tcx_constants::coin_info::coin_info_from_param;
 use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
+use tcx_crypto::hash::dsha256;
 use tcx_crypto::KDF_ROUNDS;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_substrate::{
     decode_substrate_keystore, encode_substrate_keystore, ExportSubstrateKeystoreResult,
     SubstrateAddress, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
 };
+use tcx_tezos::address::TezosAddress;
+use tcx_tezos::transaction::TezosRawTxIn;
+use tcx_tezos::{build_tezos_base58_private_key, pars_tezos_private_key};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
@@ -60,6 +67,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         &derivation.chain_type,
         &derivation.network,
         &derivation.seg_wit,
+        &derivation.curve,
     )?;
     coin_info.derivation_path = derivation.path.to_owned();
 
@@ -69,6 +77,8 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
         "NERVOS" => keystore.derive_coin::<CkbAddress>(&coin_info),
         "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
+        "TEZOS" => keystore.derive_coin::<TezosAddress>(&coin_info),
+        "FILECOIN" => keystore.derive_coin::<FilecoinAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -309,7 +319,13 @@ pub(crate) fn export_mnemonic(data: &[u8]) -> Result<Vec<u8>> {
 fn key_data_from_any_format_pk(pk: &str) -> Result<Vec<u8>> {
     let decoded = hex::decode(pk.to_string());
     if decoded.is_ok() {
-        Ok(decoded.unwrap())
+        let bytes = decoded.unwrap();
+        if bytes.len() <= 64 {
+            Ok(bytes)
+        } else {
+            // import filecoin
+            Ok(KeyInfo::from_lotus(&bytes)?.decode_private_key()?)
+        }
     } else {
         private_key_without_version(pk)
     }
@@ -320,13 +336,24 @@ fn key_hash_from_any_format_pk(pk: &str) -> Result<String> {
     Ok(key_hash_from_private_key(&key_data))
 }
 
+fn key_hash_from_tezos_format_pk(pk: &str) -> Result<String> {
+    let key_data = pars_tezos_private_key(pk)?;
+    Ok(key_hash_from_private_key(&key_data))
+}
+
 pub(crate) fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
     let param: PrivateKeyStoreImportParam =
         PrivateKeyStoreImportParam::decode(data).expect("private_key_store_import");
 
     let mut founded_id: Option<String> = None;
     {
-        let key_hash = key_hash_from_any_format_pk(&param.private_key)?;
+        let key_hash: String;
+        if param.encoding.eq("TEZOS") {
+            key_hash = key_hash_from_tezos_format_pk(&param.private_key)?;
+        } else {
+            key_hash = key_hash_from_any_format_pk(&param.private_key)?;
+        }
+        //        let key_hash = key_hash_from_any_format_pk(&param.private_key)?;
         let map = KEYSTORE_MAP.read();
         if let Some(founded) = map
             .values()
@@ -340,7 +367,12 @@ pub(crate) fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
         return Err(format_err!("{}", "address_already_exist"));
     }
 
-    let pk_bytes = key_data_from_any_format_pk(&param.private_key)?;
+    let pk_bytes: Vec<u8>;
+    if param.encoding.eq("TEZOS") {
+        pk_bytes = pars_tezos_private_key(&param.private_key)?;
+    } else {
+        pk_bytes = key_data_from_any_format_pk(&param.private_key)?;
+    }
     let private_key = hex::encode(pk_bytes);
     let meta = Metadata {
         name: param.name,
@@ -389,9 +421,11 @@ pub(crate) fn private_key_store_export(data: &[u8]) -> Result<Vec<u8>> {
     let pk_hex = guard.keystore().export()?;
 
     // private_key prefix is only about chain type and network
-    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
+    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
     let value = if param.chain_type.as_str() == "TRON" {
         Ok(pk_hex.to_string())
+    } else if param.chain_type.as_str() == "TEZOS" {
+        Ok(build_tezos_base58_private_key(pk_hex.as_str())?)
     } else {
         let bytes = hex::decode(pk_hex.to_string())?;
         let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
@@ -442,10 +476,26 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
     };
 
     // private_key prefix is only about chain type and network
-    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "")?;
+    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
     let value = if ["TRON", "POLKADOT", "KUSAMA"].contains(&param.chain_type.as_str()) {
         Ok(pk_hex.to_string())
+    } else if "FILECOIN".contains(&param.chain_type.as_str()) {
+        if let Some(account) = guard
+            .keystore_mut()
+            .account("FILECOIN", &param.main_address)
+        {
+            Ok(hex::encode(
+                KeyInfo::from_private_key(account.curve, &hex::decode(pk_hex)?)?.to_json()?,
+            ))
+        } else {
+            Err(format_err!("{}", "account_not_found"))
+        }
+    } else if "TEZOS".contains(&param.chain_type.as_str()) {
+        Ok(build_tezos_base58_private_key(pk_hex.as_str())?)
     } else {
+        // private_key prefix is only about chain type and network
+        let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
+
         let bytes = hex::decode(pk_hex.to_string())?;
         let typed_pk = TypedPrivateKey::from_slice(CurveType::SECP256k1, &bytes)?;
         typed_pk.fmt(&coin_info)
@@ -508,7 +558,11 @@ pub(crate) fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
     if param.r#type == KeyType::Mnemonic as i32 {
         key_hash = key_hash_from_mnemonic(&param.value)?;
     } else {
-        key_hash = key_hash_from_any_format_pk(&param.value)?;
+        if param.encoding.eq("TEZOS") {
+            key_hash = key_hash_from_tezos_format_pk(&param.value)?;
+        } else {
+            key_hash = key_hash_from_any_format_pk(&param.value)?;
+        }
     }
     let map = &mut KEYSTORE_MAP.write();
 
@@ -581,8 +635,64 @@ pub(crate) fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         "TRON" => sign_tron_tx(&param, guard.keystore_mut()),
         "NERVOS" => sign_nervos_ckb(&param, guard.keystore_mut()),
         "POLKADOT" | "KUSAMA" => sign_substrate_tx_raw(&param, guard.keystore_mut()),
+        "FILECOIN" => sign_filecoin_tx(&param, guard.keystore_mut()),
+        "TEZOS" => sign_tezos_tx_raw(&param, guard.keystore_mut()),
         _ => Err(format_err!("unsupported_chain")),
     }
+}
+
+pub(crate) fn get_public_key(data: &[u8]) -> Result<Vec<u8>> {
+    let param: PublicKeyParam = PublicKeyParam::decode(data).expect("PublicKeyParam");
+
+    let mut map = KEYSTORE_MAP.write();
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let edpk_prefix: Vec<u8> = vec![0x0D, 0x0F, 0x25, 0xD9];
+    match param.chain_type.to_uppercase().as_str() {
+        "TEZOS" => {
+            let account = keystore.account(&param.chain_type, &param.address);
+            if let Some(acc) = account {
+                tcx_ensure!(
+                    acc.public_key.is_some(),
+                    format_err!("account_not_contains_public_key")
+                );
+                let pub_key = hex::decode(acc.public_key.clone().unwrap())?;
+                let to_hash = [edpk_prefix, pub_key].concat();
+                let hashed = dsha256(&to_hash);
+                let hash_with_checksum = [to_hash, hashed[0..4].to_vec()].concat();
+                let edpk = hash_with_checksum.to_base58();
+                let ret = PublicKeyResult {
+                    id: param.id.to_string(),
+                    chain_type: param.chain_type.to_string(),
+                    address: param.address.to_string(),
+                    public_key: edpk,
+                };
+                encode_message(ret)
+            } else {
+                Err(format_err!("account_not_found"))
+            }
+        }
+        _ => Err(format_err!("unsupported_chain")),
+    }
+}
+
+pub(crate) fn sign_filecoin_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: UnsignedMessage = UnsignedMessage::decode(
+        param
+            .input
+            .as_ref()
+            .expect("invalid_message")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("FilecoinTxIn");
+
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
 }
 
 pub(crate) fn sign_btc_fork_transaction(
@@ -599,7 +709,7 @@ pub(crate) fn sign_btc_fork_transaction(
             .as_slice(),
     )
     .expect("BitcoinForkTransactionInput");
-    let coin = coin_info_from_param(&param.chain_type, &input.network, &input.seg_wit)?;
+    let coin = coin_info_from_param(&param.chain_type, &input.network, &input.seg_wit, "")?;
 
     let signed_tx: BtcForkSignedTxOutput = if param.chain_type.as_str() == "BITCOINCASH" {
         if !BchAddress::is_valid(&input.to, &coin) {
@@ -728,6 +838,7 @@ pub(crate) fn import_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
         name: ks.meta.name,
         password_hint: "".to_string(),
         overwrite: param.overwrite,
+        encoding: "".to_string(),
     };
     let param_bytes = encode_message(pk_import_param)?;
     private_key_store_import(&param_bytes)
@@ -757,7 +868,7 @@ pub(crate) fn export_substrate_keystore(data: &[u8]) -> Result<Vec<u8>> {
         KeystoreCommonExportResult::decode(ret.as_slice())?;
     let pk = export_result.value;
     let pk_bytes = hex::decode(pk)?;
-    let coin = coin_info_from_param(&param.chain_type, &param.network, "")?;
+    let coin = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
 
     let mut substrate_ks = encode_substrate_keystore(&param.password, &pk_bytes, &coin)?;
 
@@ -780,6 +891,7 @@ pub(crate) fn substrate_keystore_exists(data: &[u8]) -> Result<Vec<u8>> {
     let exists_param = KeystoreCommonExistsParam {
         r#type: KeyType::PrivateKey as i32,
         value: pk_hex,
+        encoding: "".to_string(),
     };
     let exists_param_bytes = encode_message(exists_param)?;
     keystore_common_exists(&exists_param_bytes)
@@ -795,4 +907,19 @@ pub(crate) fn unlock_then_crash(data: &[u8]) -> Result<Vec<u8>> {
 
     let _guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
     panic!("test_unlock_then_crash");
+}
+
+pub(crate) fn sign_tezos_tx_raw(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: TezosRawTxIn = TezosRawTxIn::decode(
+        param
+            .input
+            .as_ref()
+            .expect("raw_tx_input")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("TezosRawTxIn");
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
 }

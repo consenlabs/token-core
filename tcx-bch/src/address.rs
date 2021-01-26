@@ -117,7 +117,6 @@ impl ScriptPubKeyComponent for BchAddress {
 #[cfg(test)]
 mod tests {
     use crate::address::{remove_bch_prefix, BchAddress};
-    use bitcoin::util::misc::hex_bytes;
 
     use tcx_btc_fork::WifDisplay;
     use tcx_chain::Address;
@@ -141,11 +140,11 @@ mod tests {
 
     #[test]
     pub fn test_from_pub_key() {
-        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE", "").unwrap();
         let addr = BchAddress::from_public_key(
             &TypedPublicKey::from_slice(
                 CurveType::SECP256k1,
-                &hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
+                &hex::decode("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
                     .unwrap(),
             )
             .unwrap(),
@@ -157,11 +156,11 @@ mod tests {
             "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy"
         );
 
-        let coin_info = coin_info_from_param("BITCOINCASH", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("BITCOINCASH", "TESTNET", "NONE", "").unwrap();
         let addr = BchAddress::from_public_key(
             &TypedPublicKey::from_slice(
                 CurveType::SECP256k1,
-                &hex_bytes("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
+                &hex::decode("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868")
                     .unwrap(),
             )
             .unwrap(),
@@ -173,7 +172,7 @@ mod tests {
             "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuqfkeunuc"
         );
 
-        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE", "").unwrap();
         let sk =
             Secp256k1PrivateKey::from_wif("L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy")
                 .unwrap();
@@ -185,7 +184,7 @@ mod tests {
             "qprcvtlpvhnpyxhcp4wau8ktg78dzuzktvetlc7g9s"
         );
 
-        let coin_info = coin_info_from_param("BITCOINCASH", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("BITCOINCASH", "TESTNET", "NONE", "").unwrap();
         let sk =
             Secp256k1PrivateKey::from_wif("cSdkPxkAjA4HDr5VHgsebAPDEh9Gyub4HK8UJr2DFGGqKKy4K5sG")
                 .unwrap();
@@ -231,12 +230,12 @@ mod tests {
 
     #[test]
     pub fn address_valid_test() {
-        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE", "").unwrap();
         assert!(BchAddress::is_valid(
             "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ymy",
             &coin_info
         ));
-        let coin_info = coin_info_from_param("BITCOINCASH", "TESTNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("BITCOINCASH", "TESTNET", "NONE", "").unwrap();
         assert!(BchAddress::is_valid(
             "bchtest:qq9j7zsvxxl7qsrtpnxp8q0ahcc3j3k6mss7mnlrj8",
             &coin_info
@@ -246,7 +245,7 @@ mod tests {
             &coin_info
         ));
 
-        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE").unwrap();
+        let coin_info = coin_info_from_param("BITCOINCASH", "MAINNET", "NONE", "").unwrap();
         assert!(!BchAddress::is_valid(
             "qq2ug6v04ht22n0daxxzl0rzlvsmzwcdwuymj77ym",
             &coin_info
@@ -262,19 +261,19 @@ mod tests {
         let typed_private_key = TypedPrivateKey::Secp256k1(sk);
         let coin_infos = vec![
             (
-                coin_info_from_param("LITECOIN", "MAINNET", "NONE").unwrap(),
+                coin_info_from_param("LITECOIN", "MAINNET", "NONE", "").unwrap(),
                 "T7kFQq8eJeq6JhQjRZENW33NT1Pdhwpuw95SyJVeMXPckupR26ch",
             ),
             (
-                coin_info_from_param("LITECOIN", "TESTNET", "NONE").unwrap(),
+                coin_info_from_param("LITECOIN", "TESTNET", "NONE", "").unwrap(),
                 "cSGyRzqKLLYkhJF8GL6df1148P3jJJuiByKfDvKcHfsTVmFfuwaS",
             ),
             (
-                coin_info_from_param("BITCOINCASH", "MAINNET", "NONE").unwrap(),
+                coin_info_from_param("BITCOINCASH", "MAINNET", "NONE", "").unwrap(),
                 "L1uyy5qTuGrVXrmrsvHWHgVzW9kKdrp27wBC7Vs6nZDTF2BRUVwy",
             ),
             (
-                coin_info_from_param("BITCOINCASH", "TESTNET", "NONE").unwrap(),
+                coin_info_from_param("BITCOINCASH", "TESTNET", "NONE", "").unwrap(),
                 "cSGyRzqKLLYkhJF8GL6df1148P3jJJuiByKfDvKcHfsTVmFfuwaS",
             ),
         ];

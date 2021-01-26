@@ -21,31 +21,30 @@ pub struct Bip32DeterministicPrivateKey(ExtendedPrivKey);
 
 pub struct Bip32DeterministicPublicKey(ExtendedPubKey);
 
-#[cfg_attr(tarpaulin, skip)]
-fn transform_bip32_error(err: Bip32Error) -> KeyError {
-    match err {
-        Bip32Error::Ecdsa(_) => KeyError::InvalidEcdsa,
-        Bip32Error::RngError(_) => KeyError::OverflowChildNumber,
-        Bip32Error::CannotDeriveFromHardenedKey => KeyError::CannotDeriveFromHardenedKey,
-        Bip32Error::InvalidChildNumber(_) => KeyError::InvalidChildNumber,
-        Bip32Error::InvalidChildNumberFormat => KeyError::InvalidChildNumber,
-        Bip32Error::InvalidDerivationPathFormat => KeyError::InvalidDerivationPathFormat,
+impl From<Bip32Error> for KeyError {
+    fn from(err: Bip32Error) -> Self {
+        match err {
+            Bip32Error::Ecdsa(_) => KeyError::InvalidEcdsa,
+            Bip32Error::RngError(_) => KeyError::OverflowChildNumber,
+            Bip32Error::CannotDeriveFromHardenedKey => KeyError::CannotDeriveFromHardenedKey,
+            Bip32Error::InvalidChildNumber(_) => KeyError::InvalidChildNumber,
+            Bip32Error::InvalidChildNumberFormat => KeyError::InvalidChildNumber,
+            Bip32Error::InvalidDerivationPathFormat => KeyError::InvalidDerivationPathFormat,
+        }
     }
 }
 
 impl Bip32DeterministicPrivateKey {
     /// Construct a new master key from a seed value
     pub fn from_seed(seed: &[u8]) -> Result<Self> {
-        let epk =
-            ExtendedPrivKey::new_master(Network::Bitcoin, seed).map_err(transform_bip32_error)?;
+        let epk = ExtendedPrivKey::new_master(Network::Bitcoin, seed)?;
         Ok(Bip32DeterministicPrivateKey(epk))
     }
 
     pub fn from_mnemonic(mnemonic: &str) -> Result<Self> {
         let mn = Mnemonic::from_phrase(mnemonic, Language::English)?;
         let seed = bip39::Seed::new(&mn, "");
-        let epk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_ref())
-            .map_err(transform_bip32_error)?;
+        let epk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_ref())?;
         Ok(Bip32DeterministicPrivateKey(epk))
     }
 }
@@ -59,11 +58,11 @@ impl Derive for Bip32DeterministicPrivateKey {
             parts.next();
         }
 
-        let ret: std::result::Result<Vec<ChildNumber>, bitcoin::util::bip32::Error> =
-            parts.map(str::parse).collect();
-        let children_nums = ret.map_err(transform_bip32_error)?;
-
+        let children_nums = parts
+            .map(str::parse)
+            .collect::<std::result::Result<Vec<ChildNumber>, Bip32Error>>()?;
         let child_key = extended_key.derive_priv(&SECP256K1_ENGINE, &children_nums)?;
+
         Ok(Bip32DeterministicPrivateKey(child_key))
     }
 }
@@ -77,11 +76,11 @@ impl Derive for Bip32DeterministicPublicKey {
             parts.next();
         }
 
-        let ret: std::result::Result<Vec<ChildNumber>, bitcoin::util::bip32::Error> =
-            parts.map(str::parse).collect();
-        let children_nums = ret.map_err(transform_bip32_error)?;
-
+        let children_nums = parts
+            .map(str::parse)
+            .collect::<std::result::Result<Vec<ChildNumber>, Bip32Error>>()?;
         let child_key = extended_key.derive_pub(&SECP256K1_ENGINE, &children_nums)?;
+
         Ok(Bip32DeterministicPublicKey(child_key))
     }
 }
@@ -91,16 +90,15 @@ impl DeterministicPrivateKey for Bip32DeterministicPrivateKey {
     type PrivateKey = Secp256k1PrivateKey;
 
     fn from_seed(seed: &[u8]) -> Result<Self> {
-        let esk =
-            ExtendedPrivKey::new_master(Network::Bitcoin, seed).map_err(transform_bip32_error)?;
+        let esk = ExtendedPrivKey::new_master(Network::Bitcoin, seed)?;
         Ok(Bip32DeterministicPrivateKey(esk))
     }
 
     fn from_mnemonic(mnemonic: &str) -> Result<Self> {
         let mn = Mnemonic::from_phrase(mnemonic, Language::English)?;
         let seed = bip39::Seed::new(&mn, "");
-        let esk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())
-            .map_err(transform_bip32_error)?;
+        let esk = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())?;
+
         Ok(Bip32DeterministicPrivateKey(esk))
     }
 

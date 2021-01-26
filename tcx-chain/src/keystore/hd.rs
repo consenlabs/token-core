@@ -188,7 +188,7 @@ impl HdKeystore {
         let address = A::from_public_key(&public_key, coin_info)?;
         // todo: ext_pub_key
         let ext_pub_key = match coin_info.curve {
-            CurveType::SubSr25519 => "".to_owned(),
+            CurveType::SubSr25519 | CurveType::BLS | CurveType::ED25519 => "".to_owned(),
             _ => root
                 .derive(&get_account_path(&coin_info.derivation_path)?)?
                 .deterministic_public_key()
@@ -207,6 +207,7 @@ impl HdKeystore {
             network: coin_info.network.to_string(),
             ext_pub_key,
             seg_wit: coin_info.seg_wit.to_string(),
+            public_key: Some(hex::encode(public_key.to_bytes())),
         };
 
         if let Some(_) = self
@@ -327,6 +328,7 @@ mod tests {
             seg_wit: "NONE".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOIN".to_string(),
+            public_key: Some("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868".to_string())
         };
 
         assert_eq!(acc, expected);
@@ -401,6 +403,7 @@ mod tests {
             seg_wit: "NONE".to_string(),
             curve: CurveType::SECP256k1,
             coin: "BITCOIN".to_string(),
+            public_key: Some("026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868".to_string())
         };
 
         assert_eq!(acc, expected);

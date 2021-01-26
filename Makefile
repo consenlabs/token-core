@@ -38,8 +38,10 @@ internal-release-android:
 	./tools/android-token-v2-build.sh
     
 internal-release-ios: ##@build generate the Android RN compiled file
+	set -e
 	sh ./tools/ios-framework-build.sh
 	sh ./tools/ios-internal-release.sh $(VER)
+	git tag $(VER)
 
 e2e: ##@test run e2e test
 	(cd examples/RN && yarn)

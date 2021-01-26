@@ -46,6 +46,7 @@ message KeystoreCommonDeriveParam {
         string network = 3;
         string segWit = 4;
         string chainId = 5;
+        string curve = 6;
     }
     repeated Derivation derivations= 3;
 }
@@ -87,6 +88,7 @@ message PrivateKeyStoreImportParam {
     string name = 3;
     string passwordHint = 4;
     bool overwrite = 5;
+    string encoding = 6;
 }
 
 // FUNCTION: private_key_store_export(PrivateKeyStoreExportParam): KeystoreCommonExportResult
@@ -111,6 +113,7 @@ message PrivateKeyStoreExportParam {
 message KeystoreCommonExistsParam {
     KeyType type = 1;
     string value = 2;
+    string encoding = 3;
 }
 
 message KeystoreCommonExistsResult {
@@ -184,3 +187,15 @@ message HdStoreExtendedPublicKeyResponse {
     string extendedPublicKey = 1;
 }
 
+message PublicKeyParam {
+    string id = 1;
+    string chainType = 2;
+    string address = 3;
+}
+
+message PublicKeyResult {
+    string id = 1;
+    string chainType = 2;
+    string address = 3;
+    string publicKey = 4;
+}
