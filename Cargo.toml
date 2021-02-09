@@ -14,5 +14,6 @@ members = [
     "tcx",
     "tcx-tezos",
     "tcx-tester",
+    "tcx-eth2",
 ]
 

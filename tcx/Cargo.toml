@@ -17,6 +17,7 @@ tcx-substrate = {path = "../tcx-substrate"}
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants"}
 tcx-tezos = {path = "../tcx-tezos"}
+tcx-eth2 = {path = "../tcx-eth2"}
 
 prost = "0.6.1"
 bytes = "0.5.4"
