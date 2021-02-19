@@ -11,7 +11,7 @@ impl Address for Eth2Address {
         Ok(public_key_str)
     }
 
-    fn is_valid(address: &str, coin: &CoinInfo) -> bool {
+    fn is_valid(address: &str, _coin: &CoinInfo) -> bool {
         if address.is_empty() {
             return false;
         };
@@ -33,7 +33,6 @@ mod test {
     use crate::address::Eth2Address;
     use tcx_chain::Address;
     use tcx_constants::{CoinInfo, CurveType};
-    use tcx_primitive::TypedPublicKey;
 
     #[test]
     fn is_valid_test() {

@@ -82,9 +82,8 @@ impl FromHex for Ed25519PublicKey {
 #[cfg(test)]
 mod test {
     use crate::ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
-    use crate::{FromHex, PrivateKey, PublicKey, Ss58Codec, ToHex};
-    use bitcoin_hashes::Hash;
-    use blake2b_simd::{blake2b, Params};
+    use crate::{FromHex, PrivateKey, PublicKey, ToHex};
+    use blake2b_simd::Params;
     use hex;
     #[test]
     fn from_slice_test() {
@@ -122,8 +121,8 @@ mod test {
         let msg = hex::decode("03ffaa").unwrap();
         let mut params = Params::new();
         params.hash_length(32);
-        let genericHash = params.hash(&msg[..]);
-        let sign_result = sk.sign(&genericHash.as_bytes()).unwrap();
+        let generic_hash = params.hash(&msg[..]);
+        let sign_result = sk.sign(&generic_hash.as_bytes()).unwrap();
         //        println!("sign result ： {}", hex::encode(sign_result));
         let expected_val = "eaab7f4066217b072b79609a9f76cdfadd93f8dde41763887e131c02324f18c8e41b1009e334baf87f9d2e917bf4c0e73165622e5522409a0c5817234a48cc02";
         assert_eq!(hex::encode(sign_result), expected_val);

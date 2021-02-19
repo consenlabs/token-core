@@ -26,12 +26,10 @@ pub fn pars_tezos_private_key(private_key: &str) -> Result<Vec<u8>> {
     Ok(pk.to_bytes())
 }
 
+#[cfg(test)]
 mod tests {
+
     use crate::{build_tezos_base58_private_key, pars_tezos_private_key};
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
 
     #[test]
     fn test_build_tezos_private_key() {

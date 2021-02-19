@@ -1010,6 +1010,7 @@ mod tests {
         })
     }
 
+    #[test]
     pub fn test_filecoin_private_key_secp256k1_import() {
         run_test(|| {
             let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {

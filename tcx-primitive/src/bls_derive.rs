@@ -193,7 +193,6 @@ mod tests {
     use crate::{Derive, DeterministicPrivateKey, PrivateKey};
     use hex;
     use num_bigint::BigUint;
-    use num_traits::{FromPrimitive, Num};
 
     struct TestVector {
         seed: &'static str,
