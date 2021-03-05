@@ -638,7 +638,7 @@ mod tests {
                     curve: "BLS".to_string(),
                 },
                 Derivation {
-                    chain_type: "ETH2".to_string(),
+                    chain_type: "ETHEREUM2".to_string(),
                     path: "m/12381/3600/0/0".to_string(),
                     network: "MAINNET".to_string(),
                     seg_wit: "".to_string(),

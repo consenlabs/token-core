@@ -37,7 +37,7 @@ mod test {
     #[test]
     fn is_valid_test() {
         let coin_info = CoinInfo {
-            coin: "ETH2".to_string(),
+            coin: "ETHEREUM2".to_string(),
             derivation_path: "".to_string(),
             curve: CurveType::BLS,
             network: "MAINNET".to_string(),

@@ -80,7 +80,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
         "TEZOS" => keystore.derive_coin::<TezosAddress>(&coin_info),
         "FILECOIN" => keystore.derive_coin::<FilecoinAddress>(&coin_info),
-        "ETH2" => keystore.derive_coin::<Eth2Address>(&coin_info),
+        "ETHEREUM2" => keystore.derive_coin::<Eth2Address>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
