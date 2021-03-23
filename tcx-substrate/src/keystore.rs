@@ -7,7 +7,7 @@ use tcx_chain::Address;
 use byteorder::LittleEndian;
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use regex::Regex;
-use serde::export::{fmt, PhantomData};
+use std::{fmt, marker::PhantomData};
 use std::io::Cursor;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tcx_constants::{CoinInfo, Result};
