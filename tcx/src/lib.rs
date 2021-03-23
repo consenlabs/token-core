@@ -11,9 +11,9 @@ use crate::api::{Response, TcxAction};
 pub mod error_handling;
 pub mod handler;
 
-use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
+pub use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
 #[allow(deprecated)]
-use crate::handler::{
+pub use crate::handler::{
     encode_message, export_mnemonic, export_private_key, get_derived_key, hd_store_create,
     hd_store_export, hd_store_import, keystore_common_accounts, keystore_common_delete,
     keystore_common_derive, keystore_common_exists, keystore_common_verify,
@@ -23,10 +23,10 @@ use crate::handler::{
 
 mod filemanager;
 
-use crate::handler::{
+pub use crate::handler::{
     export_substrate_keystore, get_public_key, import_substrate_keystore, substrate_keystore_exists,
 };
-use parking_lot::RwLock;
+pub use parking_lot::RwLock;
 
 extern crate serde_json;
 
