@@ -1,6 +1,9 @@
 use std::fs;
 use std::io::Read;
 use std::path::Path;
+use failure::Error;
+use log::Level;
+use frusty_logger::{Config,FilterBuilder};
 
 use bytes::BytesMut;
 use prost::Message;
@@ -83,7 +86,14 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
     }
 }
 
-pub fn init_token_core_x(data: &[u8]) -> Result<()> {
+pub fn init_token_core_x(data: &[u8]) -> Result<Vec<u8>> {
+    frusty_logger::include_ffi!(
+        with_config: Config::new(
+            Level::Info,
+            FilterBuilder::new()
+            .build()
+        )
+    );
     let InitTokenCoreXParam {
         file_dir,
         xpub_common_key,
@@ -102,14 +112,17 @@ pub fn init_token_core_x(data: &[u8]) -> Result<()> {
     }
     scan_keystores()?;
 
-    Ok(())
+    Ok(vec![])
 }
 
-pub fn scan_keystores() -> Result<()> {
+pub fn scan_keystores() -> Result<Vec<u8>> {
     clean_keystore();
     let file_dir = WALLET_FILE_DIR.read();
     let p = Path::new(file_dir.as_str());
-    let walk_dir = std::fs::read_dir(p).expect("read dir");
+    let walk_dir = match std::fs::read_dir(p) {
+        Ok(r) => r,
+        Err(e) => return Err(Error::from_boxed_compat(Box::new(e)))
+    };
     for entry in walk_dir {
         let entry = entry.expect("DirEntry");
         let fp = entry.path();
@@ -137,7 +150,7 @@ pub fn scan_keystores() -> Result<()> {
             cache_keystore(keystore);
         }
     }
-    Ok(())
+    Ok(vec![])
 }
 
 pub fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
