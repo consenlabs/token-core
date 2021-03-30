@@ -17,6 +17,7 @@ message TcxAction {
 message Response {
     bool isSuccess = 1;
     string error = 2;
+    google.protobuf.Any value = 3;
 }
 
 /// Initialization

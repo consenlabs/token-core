@@ -2,8 +2,6 @@ use std::fs;
 use std::io::Read;
 use std::path::Path;
 use failure::Error;
-use log::Level;
-use frusty_logger::{Config,FilterBuilder};
 
 use bytes::BytesMut;
 use prost::Message;
@@ -87,13 +85,6 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
 }
 
 pub fn init_token_core_x(data: &[u8]) -> Result<Vec<u8>> {
-    frusty_logger::include_ffi!(
-        with_config: Config::new(
-            Level::Info,
-            FilterBuilder::new()
-            .build()
-        )
-    );
     let InitTokenCoreXParam {
         file_dir,
         xpub_common_key,
@@ -535,6 +526,7 @@ pub fn keystore_common_verify(data: &[u8]) -> Result<Vec<u8>> {
         let rsp = Response {
             is_success: true,
             error: "".to_owned(),
+            value: None
         };
         encode_message(rsp)
     } else {
@@ -557,6 +549,7 @@ pub fn keystore_common_delete(data: &[u8]) -> Result<Vec<u8>> {
         let rsp = Response {
             is_success: true,
             error: "".to_owned(),
+            value: None
         };
         encode_message(rsp)
     } else {

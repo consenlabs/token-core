@@ -11,7 +11,7 @@ use crate::api::{Response, TcxAction};
 pub mod error_handling;
 pub mod handler;
 
-pub use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
+pub use crate::error_handling::landingpad;
 #[allow(deprecated)]
 pub use crate::handler::{
     encode_message, export_mnemonic, export_private_key, get_derived_key, hd_store_create,
@@ -122,32 +122,32 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
     CString::new(ret_str).unwrap().into_raw()
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn clear_err() {
-    LAST_ERROR.with(|e| {
-        *e.borrow_mut() = None;
-    });
-    LAST_BACKTRACE.with(|e| {
-        *e.borrow_mut() = None;
-    });
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
-    LAST_ERROR.with(|e| {
-        if let Some(ref err) = *e.borrow() {
-            let rsp = Response {
-                is_success: false,
-                error: err.to_string(),
-            };
-            let rsp_bytes = encode_message(rsp).expect("encode error");
-            let ret_str = hex::encode(rsp_bytes);
-            CString::new(ret_str).unwrap().into_raw()
-        } else {
-            CString::new("").unwrap().into_raw()
-        }
-    })
-}
+// #[no_mangle]
+// pub unsafe extern "C" fn clear_err() {
+//     LAST_ERROR.with(|e| {
+//         *e.borrow_mut() = None;
+//     });
+//     LAST_BACKTRACE.with(|e| {
+//         *e.borrow_mut() = None;
+//     });
+// }
+//
+// #[no_mangle]
+// pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
+//     LAST_ERROR.with(|e| {
+//         if let Some(ref err) = *e.borrow() {
+//             let rsp = Response {
+//                 is_success: false,
+//                 error: err.to_string(),
+//             };
+//             let rsp_bytes = encode_message(rsp).expect("encode error");
+//             let ret_str = hex::encode(rsp_bytes);
+//             CString::new(ret_str).unwrap().into_raw()
+//         } else {
+//             CString::new("").unwrap().into_raw()
+//         }
+//     })
+// }
 
 #[cfg(test)]
 mod tests {

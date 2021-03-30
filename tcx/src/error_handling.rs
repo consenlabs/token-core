@@ -1,28 +1,11 @@
 use crate::filemanager::KEYSTORE_MAP;
 use core::result;
-use failure::{Backtrace, Error};
+use failure::Error;
 use std::{cell::RefCell, panic};
 pub type Result<T> = result::Result<T, Error>;
 use log::error;
-
-thread_local! {
-    pub static LAST_ERROR: RefCell<Option<Error>> = RefCell::new(None);
-    pub static LAST_BACKTRACE: RefCell<Option<(Option<String>, Backtrace)>> = RefCell::new(None);
-}
-
-#[cfg_attr(tarpaulin, skip)]
-#[allow(irrefutable_let_patterns)]
-fn notify_err(err: Error) {
-    error!("error!: {}", err.to_string());
-    if let _backtrace = err.backtrace() {
-        LAST_BACKTRACE.with(|e| {
-            *e.borrow_mut() = Some((None, Backtrace::new()));
-        });
-    }
-    LAST_ERROR.with(|e| {
-        *e.borrow_mut() = Some(err);
-    });
-}
+use crate::api::Response;
+use crate::encode_message;
 
 fn lock_all_keystore() {
     let mut map = KEYSTORE_MAP.write();
@@ -38,7 +21,28 @@ pub unsafe fn landingpad<F: FnOnce() -> Result<Vec<u8>> + panic::UnwindSafe>(f: 
     match panic::catch_unwind(f) {
         Ok(rv) => {
             lock_all_keystore();
-            rv.map_err(notify_err).unwrap_or_else(|_| vec![])
+            match rv {
+                Ok(v) => {
+                    let res = Response {
+                        is_success: true,
+                        error: "".to_string(),
+                        value: Some(::prost_types::Any {
+                            type_url: "bool_wallet".to_string(),
+                            value: v
+                        })
+                    };
+                    encode_message(res).unwrap()
+                },
+                Err(e) => {
+                    let err_msg = format!("Error: {}", e.to_string());
+                    let res = Response {
+                        is_success: false,
+                        error: err_msg,
+                        value: None
+                    };
+                    encode_message(res).unwrap()
+                }
+            }
         }
         Err(err) => {
             lock_all_keystore();
@@ -51,8 +55,13 @@ pub unsafe fn landingpad<F: FnOnce() -> Result<Vec<u8>> + panic::UnwindSafe>(f: 
                     None => "Box<Any>",
                 },
             };
-            notify_err(format_err!("{}", msg));
-            vec![]
+            let msg = format!("Error: {}", msg);
+            let res = Response {
+                is_success: false,
+                error: msg,
+                value: None
+            };
+            encode_message(res).unwrap()
         }
     }
 }

@@ -17,6 +17,8 @@ pub struct Response {
     pub is_success: bool,
     #[prost(string, tag = "2")]
     pub error: std::string::String,
+    #[prost(message, optional, tag= "3")]
+    pub value: ::std::option::Option<::prost_types::Any>,
 }
 /// Initialization
 
