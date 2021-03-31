@@ -198,8 +198,7 @@ where
         let derived_key = crypto
             .generate_derived_key(password)
             .expect("new crypto generate_derived_key");
-
-        let ciphertext = crypto.encrypt(password, origin);
+        let ciphertext = crypto.encrypt(password, origin, &derived_key);
         crypto.ciphertext = ciphertext.to_hex();
         let mac = Self::generate_mac(&derived_key, &ciphertext);
         crypto.mac = mac.to_hex();
@@ -226,10 +225,7 @@ where
         self.decrypt_data(key, &encrypted, &iv)
     }
 
-    fn encrypt(&self, password: &str, origin: &[u8]) -> Vec<u8> {
-        let derived_key = self
-            .generate_derived_key(password)
-            .expect("crypto::encrypt must no error");
+    fn encrypt(&self, password: &str, origin: &[u8], derived_key: &Vec<u8>) -> Vec<u8> {
         let key = &derived_key[0..16];
         let iv: Vec<u8> = FromHex::from_hex(&self.cipherparams.iv).unwrap();
         super::aes::ctr::encrypt_nopadding(origin, key, &iv)
