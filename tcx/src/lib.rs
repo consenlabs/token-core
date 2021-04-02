@@ -11,7 +11,7 @@ use crate::api::{Response, TcxAction};
 pub mod error_handling;
 pub mod handler;
 
-pub use crate::error_handling::landingpad;
+pub use crate::error_handling::{landingpad, LAST_ERROR, LAST_BACKTRACE};
 #[allow(deprecated)]
 pub use crate::handler::{
     encode_message, export_mnemonic, export_private_key, get_derived_key, hd_store_create,
@@ -122,32 +122,33 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
     CString::new(ret_str).unwrap().into_raw()
 }
 
-// #[no_mangle]
-// pub unsafe extern "C" fn clear_err() {
-//     LAST_ERROR.with(|e| {
-//         *e.borrow_mut() = None;
-//     });
-//     LAST_BACKTRACE.with(|e| {
-//         *e.borrow_mut() = None;
-//     });
-// }
-//
-// #[no_mangle]
-// pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
-//     LAST_ERROR.with(|e| {
-//         if let Some(ref err) = *e.borrow() {
-//             let rsp = Response {
-//                 is_success: false,
-//                 error: err.to_string(),
-//             };
-//             let rsp_bytes = encode_message(rsp).expect("encode error");
-//             let ret_str = hex::encode(rsp_bytes);
-//             CString::new(ret_str).unwrap().into_raw()
-//         } else {
-//             CString::new("").unwrap().into_raw()
-//         }
-//     })
-// }
+#[no_mangle]
+pub unsafe extern "C" fn clear_err() {
+    LAST_ERROR.with(|e| {
+        *e.borrow_mut() = None;
+    });
+    LAST_BACKTRACE.with(|e| {
+        *e.borrow_mut() = None;
+    });
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
+    LAST_ERROR.with(|e| {
+        if let Some(ref err) = *e.borrow() {
+            let rsp = Response {
+                is_success: false,
+                error: err.to_string(),
+                value: None
+            };
+            let rsp_bytes = encode_message(rsp).expect("encode error");
+            let ret_str = hex::encode(rsp_bytes);
+            CString::new(ret_str).unwrap().into_raw()
+        } else {
+            CString::new("").unwrap().into_raw()
+        }
+    })
+}
 
 #[cfg(test)]
 mod tests {
@@ -190,6 +191,7 @@ mod tests {
     };
     use tcx_tezos::transaction::{TezosRawTxIn, TezosTxOut};
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
+    use tcx_btc_fork::BtcForkSignedTxOutput;
 
     static OTHER_MNEMONIC: &'static str =
         "calm release clay imitate top extend close draw quiz refuse shuffle injury";
@@ -540,7 +542,7 @@ mod tests {
                 id: wallet.id.to_string(),
                 password: TEST_PASSWORD.to_string(),
             };
-            unsafe { clear_err() };
+            // unsafe { clear_err() };
             let ret = call_api("export_mnemonic", param);
             assert!(ret.is_err());
             assert_eq!(
@@ -1598,6 +1600,7 @@ mod tests {
                 derivations,
             };
             let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
+            // let derived_accounts_bytes: Vec<u8> = vec![10, 218, 1, 10, 8, 76, 73, 84, 69, 67, 79, 73, 78, 18, 34, 76, 100, 102, 100, 101, 103, 120, 51, 104, 74, 121, 103, 68, 117, 70, 68, 85, 65, 55, 82, 107, 122, 106, 106, 120, 56, 103, 102, 70, 104, 80, 57, 68, 80, 26, 15, 109, 47, 52, 52, 39, 47, 50, 39, 47, 48, 39, 47, 48, 47, 48, 34, 152, 1, 77, 119, 68, 77, 70, 88, 86, 87, 68, 69, 117, 87, 118, 66, 111, 103, 101, 87, 49, 118, 47, 77, 79, 77, 70, 68, 110, 71, 110, 110, 102, 108, 109, 50, 74, 65, 80, 118, 74, 97, 74, 90, 79, 52, 72, 88, 112, 56, 102, 67, 115, 87, 69, 84, 65, 55, 117, 56, 77, 122, 79, 87, 51, 75, 97, 80, 107, 115, 103, 108, 112, 85, 72, 76, 78, 51, 120, 107, 68, 114, 50, 81, 87, 77, 69, 81, 113, 48, 84, 101, 119, 70, 90, 111, 90, 51, 75, 115, 106, 109, 76, 87, 48, 75, 71, 77, 82, 78, 55, 88, 81, 75, 113, 111, 47, 111, 109, 107, 83, 69, 115, 80, 102, 97, 108, 86, 110, 112, 57, 90, 120, 109, 50, 108, 112, 120, 86, 109, 73, 97, 99, 113, 118, 108, 101, 114, 110, 86, 83, 103, 61, 61];
             let derived_accounts: AccountsResponse =
                 AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
             assert_eq!(1, derived_accounts.accounts.len());
@@ -2757,6 +2760,76 @@ mod tests {
             let expected_sign = "0df020458bdcfe24546488dd81e1bd7e2cb05379dc7c72ad626646ae22df5d3a652fdc4ffd2383dd5823a98fe158780928da07a3f0a234e23b759ce7b3a39a0c";
             assert_eq!(expected_sign, output.signature.as_str());
             remove_created_wallet(&wallet.id);
+        })
+    }
+
+    #[test]
+    pub fn test_sign_btc_tx() {
+        run_test(|| {
+            let chain_types = vec!["BITCOIN"];
+
+            let import_result: WalletResult = import_default_wallet();
+
+            for chain_type in chain_types {
+                let derivation = Derivation {
+                    chain_type: chain_type.to_string(),
+                    path: "m/44'/0'/0'/0/0".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                    chain_id: "".to_string(),
+                    curve: "".to_string(),
+                };
+                let param = KeystoreCommonDeriveParam {
+                    id: import_result.id.to_string(),
+                    password: TEST_PASSWORD.to_string(),
+                    derivations: vec![derivation],
+                };
+
+                let ret = call_api("keystore_common_derive", param).unwrap();
+                let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
+
+                let unspents = vec![Utxo {
+                    tx_hash: "a477af6b2667c29670467e4e0728b685ee07b240235771862318e29ddbe58458"
+                        .to_string(),
+                    vout: 0,
+                    amount: 1000000,
+                    address: "mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1".to_string(),
+                    script_pub_key: "76a91488d9931ea73d60eaf7e5671efc0552b912911f2a88ac"
+                        .to_string(),
+                    derived_path: "0/0".to_string(),
+                    sequence: 0,
+                }];
+                let tx_input = BtcForkTxInput {
+                    to: rsp.accounts.first().unwrap().address.to_string(),
+                    amount: 500000,
+                    unspents,
+                    fee: 100000,
+                    change_address_index: 1u32,
+                    change_address: "".to_string(),
+                    network: "MAINNET".to_string(),
+                    seg_wit: "NONE".to_string(),
+                };
+                let input_value = encode_message(tx_input).unwrap();
+                let tx = SignParam {
+                    id: import_result.id.to_string(),
+                    key: Some(Key::Password(TEST_PASSWORD.to_string())),
+                    chain_type: chain_type.to_string(),
+                    address: rsp.accounts.first().unwrap().address.to_string(),
+                    input: Some(::prost_types::Any {
+                        type_url: "imtoken".to_string(),
+                        value: input_value.clone(),
+                    }),
+                };
+
+                let ret = call_api("sign_tx", tx);
+                let rsp: BtcForkSignedTxOutput = BtcForkSignedTxOutput::decode(ret.unwrap().as_slice()).unwrap();
+                assert_eq!(rsp.signature,
+                "01000000015884e5db9de218238671572340b207ee85b628074e7e467096c267266baf77a4000000006b483045022100b1f6443eed90df9f1c18a2bca4d641c963a6413f80d8941ca6bc9eecbaa72b99022046d80ae0652266299ada797f176289166b0599de1918817786931dede181a9230121026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868ffffffff0220a10700000000001976a91415c4698fadd6a54dede98c2fbc62fb21b13b0d7788ac801a0600000000001976a914a6381e76634d662f9f66a1d0f43cc058102e98c588ac00000000"
+                );
+                assert_eq!(rsp.tx_hash, "737f9d57b8d1c6f7eb112e6b21fbdf1eaf286c43234d48a36716e8147cac0500");
+            }
+
+            remove_created_wallet(&import_result.id);
         })
     }
 }

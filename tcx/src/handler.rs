@@ -74,7 +74,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
 
     match derivation.chain_type.as_str() {
         "BITCOINCASH" => keystore.derive_coin::<BchAddress>(&coin_info),
-        "LITECOIN" => keystore.derive_coin::<BtcForkAddress>(&coin_info),
+        "LITECOIN" | "BITCOIN" => keystore.derive_coin::<BtcForkAddress>(&coin_info),
         "TRON" => keystore.derive_coin::<TrxAddress>(&coin_info),
         "NERVOS" => keystore.derive_coin::<CkbAddress>(&coin_info),
         "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
@@ -637,7 +637,7 @@ pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
     };
 
     match param.chain_type.as_str() {
-        "BITCOINCASH" | "LITECOIN" => sign_btc_fork_transaction(&param, guard.keystore_mut()),
+        "BITCOINCASH" | "LITECOIN" | "BITCOIN" => sign_btc_fork_transaction(&param, guard.keystore_mut()),
         "TRON" => sign_tron_tx(&param, guard.keystore_mut()),
         "NERVOS" => sign_nervos_ckb(&param, guard.keystore_mut()),
         "POLKADOT" | "KUSAMA" => sign_substrate_tx_raw(&param, guard.keystore_mut()),
