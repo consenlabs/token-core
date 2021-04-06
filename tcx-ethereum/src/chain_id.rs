@@ -8,7 +8,7 @@ pub type Result<T> = std::result::Result<T, failure::Error>;
 pub struct ChainInfo {
     pub network: String,
     pub network_id: i32,
-    pub chain_id: u64
+    pub chain_id: u64,
 }
 
 lazy_static! {
@@ -17,27 +17,27 @@ lazy_static! {
         chain_infos.push(ChainInfo {
             network: "MAINNET".to_string(),
             network_id: 1,
-            chain_id: 1
+            chain_id: 1,
         });
         chain_infos.push(ChainInfo {
             network: "ROPSTEN".to_string(),
             network_id: 3,
-            chain_id: 3
+            chain_id: 3,
         });
         chain_infos.push(ChainInfo {
             network: "RINKEBY".to_string(),
             network_id: 4,
-            chain_id: 4
+            chain_id: 4,
         });
         chain_infos.push(ChainInfo {
             network: "GOERLI".to_string(),
             network_id: 5,
-            chain_id: 5
+            chain_id: 5,
         });
         chain_infos.push(ChainInfo {
             network: "KOVAN".to_string(),
             network_id: 42,
-            chain_id: 42
+            chain_id: 42,
         });
 
         RwLock::new(chain_infos)

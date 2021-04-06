@@ -1,7 +1,7 @@
-use ethereum_types::{H160, H256, U256};
-use ethereum_tx_sign::RawTransaction;
-use crate::{Error, chain_id_from_network};
 use crate::transaction::{EthereumTxIn, EthereumTxOut};
+use crate::{chain_id_from_network, Error};
+use ethereum_tx_sign::RawTransaction;
+use ethereum_types::{H160, H256, U256};
 use std::convert::TryFrom;
 use std::str::FromStr;
 
@@ -18,7 +18,8 @@ impl TryFrom<&EthereumTxIn> for RawTransaction {
             None
         };
         let value = U256::from_str(input.value.as_str()).map_err(|_| Error::InvalidValue)?;
-        let gas_price = U256::from_str(input.gas_price.as_str()).map_err(|_| Error::InvalidGasPrice)?;
+        let gas_price =
+            U256::from_str(input.gas_price.as_str()).map_err(|_| Error::InvalidGasPrice)?;
         let gas = U256::from_str(input.gas.as_str()).map_err(|_| Error::InvalidGas)?;
         let data = hex::decode(input.data.clone()).map_err(|_| Error::InvalidData)?;
 
@@ -28,7 +29,7 @@ impl TryFrom<&EthereumTxIn> for RawTransaction {
             value,
             gas_price,
             gas,
-            data
+            data,
         })
     }
 }
@@ -48,7 +49,9 @@ impl TransactionSigner<EthereumTxIn, EthereumTxOut> for Keystore {
             return Err(Error::CannotFoundAccount.into());
         }
 
-        let private_key = self.find_private_key(&symbol, &address).map_err(|_| Error::CannotGetPrivateKey)?;
+        let private_key = self
+            .find_private_key(&symbol, &address)
+            .map_err(|_| Error::CannotGetPrivateKey)?;
 
         let private_key = H256::from_slice(private_key.to_bytes().as_slice());
 
@@ -56,9 +59,7 @@ impl TransactionSigner<EthereumTxIn, EthereumTxOut> for Keystore {
 
         let signature = hex::encode(unsigned_tx.sign(&private_key, &chain_id));
 
-        Ok(EthereumTxOut {
-            signature
-        })
+        Ok(EthereumTxOut { signature })
     }
 }
 
@@ -70,15 +71,16 @@ fn test_sign() {
         value: U256::zero().to_string(),
         gas_price: "1000".to_string(),
         gas: "21240".to_string(),
-        data: "7f7465737432000000000000000000000000000000000000000000000000000000600057".to_string(),
-        network: "ROPSTEN".to_string()
+        data: "7f7465737432000000000000000000000000000000000000000000000000000000600057"
+            .to_string(),
+        network: "ROPSTEN".to_string(),
     };
 
     let raw_tx = RawTransaction::try_from(&input).unwrap();
     let mut data: [u8; 32] = Default::default();
-    data.copy_from_slice(&hex::decode(
-        "2a3526dd05ad2ebba87673f711ef8c336115254ef8fcd38c4d8166db9a8120e4"
-    ).unwrap());
+    data.copy_from_slice(
+        &hex::decode("2a3526dd05ad2ebba87673f711ef8c336115254ef8fcd38c4d8166db9a8120e4").unwrap(),
+    );
     let private_key = H256::from_slice(&data);
     let chain_id = chain_id_from_network(input.network.as_str()).unwrap();
     let raw_rlp_bytes = raw_tx.sign(&private_key, &chain_id);

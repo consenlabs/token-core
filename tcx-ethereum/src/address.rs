@@ -1,9 +1,9 @@
 // https://www.freecodecamp.org/news/how-to-create-an-ethereum-wallet-address-from-a-private-key-ae72b0eee27b/
-use tcx_chain::Address;
-use tcx_constants::{CoinInfo, Result, CurveType};
-use tcx_primitive::{PublicKey, Sr25519PublicKey, TypedPublicKey};
+use crypto::{digest::Digest as cDigest, sha3::Sha3};
 use sha3::Digest;
-use crypto::{sha3::Sha3, digest::Digest as cDigest};
+use tcx_chain::Address;
+use tcx_constants::{CoinInfo, CurveType, Result};
+use tcx_primitive::{PublicKey, Sr25519PublicKey, TypedPublicKey};
 pub struct EthereumAddress();
 
 impl Address for EthereumAddress {
@@ -71,7 +71,10 @@ fn test_change() {
     };
     let res = EthereumAddress::from_public_key(
         &TypedPublicKey::from_slice(CurveType::SECP256k1, &bytes).unwrap(),
-        &coin_info
+        &coin_info,
     );
-    assert_eq!(res.unwrap(), String::from("0x547b45770EE4401494c9157e8263E7a133cbD88d"));
+    assert_eq!(
+        res.unwrap(),
+        String::from("0x547b45770EE4401494c9157e8263E7a133cbD88d")
+    );
 }

@@ -11,7 +11,7 @@ use crate::api::{Response, TcxAction};
 pub mod error_handling;
 pub mod handler;
 
-pub use crate::error_handling::{landingpad, LAST_ERROR, LAST_BACKTRACE};
+pub use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
 #[allow(deprecated)]
 pub use crate::handler::{
     encode_message, export_mnemonic, export_private_key, get_derived_key, hd_store_create,
@@ -139,7 +139,7 @@ pub unsafe extern "C" fn get_last_err_message() -> *const c_char {
             let rsp = Response {
                 is_success: false,
                 error: err.to_string(),
-                value: None
+                value: None,
             };
             let rsp_bytes = encode_message(rsp).expect("encode error");
             let ret_str = hex::encode(rsp_bytes);
@@ -181,9 +181,12 @@ mod tests {
     use tcx_btc_fork::transaction::BtcForkTxInput;
     use tcx_btc_fork::transaction::Utxo;
 
+    use ethereum_types::U256;
     use sp_core::Public as TraitPublic;
     use sp_runtime::traits::Verify;
+    use tcx_btc_fork::BtcForkSignedTxOutput;
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
+    use tcx_ethereum::{EthereumTxIn, EthereumTxOut};
     use tcx_filecoin::{SignedMessage, UnsignedMessage};
     use tcx_substrate::{
         ExportSubstrateKeystoreResult, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
@@ -191,9 +194,6 @@ mod tests {
     };
     use tcx_tezos::transaction::{TezosRawTxIn, TezosTxOut};
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
-    use tcx_btc_fork::BtcForkSignedTxOutput;
-    use tcx_ethereum::{EthereumTxIn, EthereumTxOut};
-    use ethereum_types::U256;
 
     static OTHER_MNEMONIC: &'static str =
         "calm release clay imitate top extend close draw quiz refuse shuffle injury";
@@ -2824,11 +2824,15 @@ mod tests {
                 };
 
                 let ret = call_api("sign_tx", tx);
-                let rsp: BtcForkSignedTxOutput = BtcForkSignedTxOutput::decode(ret.unwrap().as_slice()).unwrap();
+                let rsp: BtcForkSignedTxOutput =
+                    BtcForkSignedTxOutput::decode(ret.unwrap().as_slice()).unwrap();
                 assert_eq!(rsp.signature,
                 "01000000015884e5db9de218238671572340b207ee85b628074e7e467096c267266baf77a4000000006b483045022100b1f6443eed90df9f1c18a2bca4d641c963a6413f80d8941ca6bc9eecbaa72b99022046d80ae0652266299ada797f176289166b0599de1918817786931dede181a9230121026b5b6a9d041bc5187e0b34f9e496436c7bff261c6c1b5f3c06b433c61394b868ffffffff0220a10700000000001976a91415c4698fadd6a54dede98c2fbc62fb21b13b0d7788ac801a0600000000001976a914a6381e76634d662f9f66a1d0f43cc058102e98c588ac00000000"
                 );
-                assert_eq!(rsp.tx_hash, "737f9d57b8d1c6f7eb112e6b21fbdf1eaf286c43234d48a36716e8147cac0500");
+                assert_eq!(
+                    rsp.tx_hash,
+                    "737f9d57b8d1c6f7eb112e6b21fbdf1eaf286c43234d48a36716e8147cac0500"
+                );
             }
 
             remove_created_wallet(&import_result.id);
@@ -2849,15 +2853,15 @@ mod tests {
 
             let wallet = import_and_derive(derivation);
 
-
             let input = EthereumTxIn {
                 nonce: "0".to_string(),
                 to: "132D1eA7EF895b6834D25911656a434d7167091C".to_string(),
                 value: U256::zero().to_string(),
                 gas_price: "1000".to_string(),
                 gas: "21240".to_string(),
-                data: "7f7465737432000000000000000000000000000000000000000000000000000000600057".to_string(),
-                network: "MAINNET".to_string()
+                data: "7f7465737432000000000000000000000000000000000000000000000000000000600057"
+                    .to_string(),
+                network: "MAINNET".to_string(),
             };
 
             let tx = SignParam {
