@@ -192,6 +192,8 @@ mod tests {
     use tcx_tezos::transaction::{TezosRawTxIn, TezosTxOut};
     use tcx_tron::transaction::{TronMessageInput, TronMessageOutput, TronTxInput, TronTxOutput};
     use tcx_btc_fork::BtcForkSignedTxOutput;
+    use tcx_ethereum::{EthereumTxIn, EthereumTxOut};
+    use ethereum_types::U256;
 
     static OTHER_MNEMONIC: &'static str =
         "calm release clay imitate top extend close draw quiz refuse shuffle injury";
@@ -2830,6 +2832,49 @@ mod tests {
             }
 
             remove_created_wallet(&import_result.id);
+        })
+    }
+
+    #[test]
+    pub fn test_sign_eth_tx() {
+        run_test(|| {
+            let derivation = Derivation {
+                chain_type: "ETHEREUM".to_string(),
+                path: "m/44'/60'/0'/0/0".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+                curve: "".to_string(),
+            };
+
+            let wallet = import_and_derive(derivation);
+
+
+            let input = EthereumTxIn {
+                nonce: "0".to_string(),
+                to: "132D1eA7EF895b6834D25911656a434d7167091C".to_string(),
+                value: U256::zero().to_string(),
+                gas_price: "1000".to_string(),
+                gas: "21240".to_string(),
+                data: "7f7465737432000000000000000000000000000000000000000000000000000000600057".to_string(),
+                network: "MAINNET".to_string()
+            };
+
+            let tx = SignParam {
+                id: wallet.id.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
+                chain_type: "ETHEREUM".to_string(),
+                address: wallet.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(input).unwrap(),
+                }),
+            };
+
+            let ret = call_api("sign_tx", tx).unwrap();
+            let output: EthereumTxOut = EthereumTxOut::decode(ret.as_slice()).unwrap();
+            assert_eq!(output.signature.as_str(), "f886808210008302124094132d1ea7ef895b6834d25911656a434d7167091c80a47f746573743200000000000000000000000000000000000000000000000000000060005725a07ca809897592f90ed7104a4984ae96ed67c8ce26f95ff7571084ca55e6af05b7a073e3a82301169d171a2590cdfd59075afd0e4ee20e5398ad32838f3061747b6b");
+            remove_created_wallet(&wallet.id);
         })
     }
 }

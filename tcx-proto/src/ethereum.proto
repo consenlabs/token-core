@@ -1,0 +1,15 @@
+syntax = "proto3";
+package transaction;
+
+message EthereumTxIn {
+  string nonce = 1;
+  string to = 2;
+  string value = 3;
+  string gas_price = 4;
+  string gas = 5;
+  string data = 6;
+}
+
+message EthereumTxOut {
+  string signature = 1;
+}

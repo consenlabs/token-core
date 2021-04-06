@@ -53,6 +53,7 @@ use tcx_tezos::address::TezosAddress;
 use tcx_tezos::transaction::TezosRawTxIn;
 use tcx_tezos::{build_tezos_base58_private_key, pars_tezos_private_key};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
+use tcx_ethereum::{EthereumAddress, EthereumTxOut, EthereumTxIn};
 
 pub fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
     if *IS_DEBUG.read() {
@@ -80,6 +81,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
         "TEZOS" => keystore.derive_coin::<TezosAddress>(&coin_info),
         "FILECOIN" => keystore.derive_coin::<FilecoinAddress>(&coin_info),
+        "ETHEREUM" => keystore.derive_coin::<EthereumAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -643,6 +645,7 @@ pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         "POLKADOT" | "KUSAMA" => sign_substrate_tx_raw(&param, guard.keystore_mut()),
         "FILECOIN" => sign_filecoin_tx(&param, guard.keystore_mut()),
         "TEZOS" => sign_tezos_tx_raw(&param, guard.keystore_mut()),
+        "ETHEREUM" => sign_ethereum_tx_raw(&param, guard.keystore_mut()),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -926,6 +929,21 @@ pub fn sign_tezos_tx_raw(param: &SignParam, keystore: &mut Keystore) -> Result<V
             .as_slice(),
     )
     .expect("TezosRawTxIn");
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
+}
+
+pub fn sign_ethereum_tx_raw(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: EthereumTxIn = EthereumTxIn::decode(
+        param
+            .input
+            .as_ref()
+            .expect("raw_tx_input")
+            .value
+            .clone()
+            .as_slice(),
+    )
+        .expect("EthereumTxIn");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
 }

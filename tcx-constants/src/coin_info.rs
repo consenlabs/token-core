@@ -159,6 +159,41 @@ lazy_static! {
             network: "TESTNET".to_string(),
             seg_wit: "".to_string(),
         });
+        coin_infos.push(CoinInfo {
+            coin: "ETHEREUM".to_string(),
+            derivation_path: "m/44'/60'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "MAINNET".to_string(),
+            seg_wit: "NONE".to_string(),
+        });
+        coin_infos.push(CoinInfo {
+            coin: "ETHEREUM".to_string(),
+            derivation_path: "m/44'/60'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "ROPSTEN".to_string(),
+            seg_wit: "NONE".to_string(),
+        });
+        coin_infos.push(CoinInfo {
+            coin: "ETHEREUM".to_string(),
+            derivation_path: "m/44'/60'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "RINKEBY".to_string(),
+            seg_wit: "NONE".to_string(),
+        });
+        coin_infos.push(CoinInfo {
+            coin: "ETHEREUM".to_string(),
+            derivation_path: "m/44'/60'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "GOERLI".to_string(),
+            seg_wit: "NONE".to_string(),
+        });
+        coin_infos.push(CoinInfo {
+            coin: "ETHEREUM".to_string(),
+            derivation_path: "m/44'/60'/0'/0/0".to_string(),
+            curve: CurveType::SECP256k1,
+            network: "KOVAN".to_string(),
+            seg_wit: "NONE".to_string(),
+        });
 
         RwLock::new(coin_infos)
     };
