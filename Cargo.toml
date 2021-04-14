@@ -15,5 +15,6 @@ members = [
     "tcx-tezos",
     "tcx-tester",
     "tcx-eth2",
+    "zksync-crypto",
 ]
 

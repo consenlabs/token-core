@@ -26,7 +26,9 @@ use crate::api::{
     HdStoreImportParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
     KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
     PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, PublicKeyParam, PublicKeyResult,
-    Response, WalletKeyParam, WalletResult,
+    Response, WalletKeyParam, WalletResult, ZksyncPrivateKeyFromSeedParam,
+    ZksyncPrivateKeyFromSeedResult, ZksyncPrivateKeyToPubkeyHashParam,
+    ZksyncPrivateKeyToPubkeyHashResult, ZksyncSignMusigParam, ZksyncSignMusigResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
@@ -53,6 +55,7 @@ use tcx_tezos::address::TezosAddress;
 use tcx_tezos::transaction::TezosRawTxIn;
 use tcx_tezos::{build_tezos_base58_private_key, pars_tezos_private_key};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
+use zksync_crypto::{private_key_from_seed, private_key_to_pubkey_hash, sign_musig};
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
     if *IS_DEBUG.read() {
@@ -924,4 +927,38 @@ pub(crate) fn sign_tezos_tx_raw(param: &SignParam, keystore: &mut Keystore) -> R
     .expect("TezosRawTxIn");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
+}
+
+pub(crate) fn zksync_private_key_from_seed(data: &[u8]) -> Result<Vec<u8>> {
+    let param: ZksyncPrivateKeyFromSeedParam = ZksyncPrivateKeyFromSeedParam::decode(data).unwrap();
+
+    let result = private_key_from_seed(hex::decode(param.seed).unwrap().as_slice())?;
+
+    let ret = ZksyncPrivateKeyFromSeedResult {
+        priv_key: hex::encode(result),
+    };
+    encode_message(ret)
+}
+
+pub(crate) fn zksync_sign_musig(data: &[u8]) -> Result<Vec<u8>> {
+    let param: ZksyncSignMusigParam = ZksyncSignMusigParam::decode(data).unwrap();
+
+    let sign_result = sign_musig(
+        hex::decode(param.priv_key).unwrap().as_slice(),
+        hex::decode(param.bytes).unwrap().as_slice(),
+    )?;
+    let ret = ZksyncSignMusigResult {
+        signature: hex::encode(sign_result),
+    };
+    encode_message(ret)
+}
+
+pub(crate) fn zksync_private_key_to_pubkey_hash(data: &[u8]) -> Result<Vec<u8>> {
+    let param: ZksyncPrivateKeyToPubkeyHashParam =
+        ZksyncPrivateKeyToPubkeyHashParam::decode(data).unwrap();
+    let pub_key_hash = private_key_to_pubkey_hash(hex::decode(param.priv_key).unwrap().as_slice())?;
+    let ret = ZksyncPrivateKeyToPubkeyHashResult {
+        pub_key_hash: hex::encode(pub_key_hash),
+    };
+    encode_message(ret)
 }

@@ -18,7 +18,8 @@ use crate::handler::{
     hd_store_export, hd_store_import, keystore_common_accounts, keystore_common_delete,
     keystore_common_derive, keystore_common_exists, keystore_common_verify,
     private_key_store_export, private_key_store_import, sign_tx, tron_sign_message,
-    unlock_then_crash,
+    unlock_then_crash, zksync_private_key_from_seed, zksync_private_key_to_pubkey_hash,
+    zksync_sign_musig,
 };
 
 mod filemanager;
@@ -115,6 +116,13 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         "get_derived_key" => landingpad(|| get_derived_key(&action.param.unwrap().value)),
         // !!! WARNING !!! used for test only
         "unlock_then_crash" => landingpad(|| unlock_then_crash(&action.param.unwrap().value)),
+        "zksync_private_key_from_seed" => {
+            landingpad(|| zksync_private_key_from_seed(&action.param.unwrap().value))
+        }
+        "zksync_sign_musig" => landingpad(|| zksync_sign_musig(&action.param.unwrap().value)),
+        "zksync_private_key_to_pubkey_hash" => {
+            landingpad(|| zksync_private_key_to_pubkey_hash(&action.param.unwrap().value))
+        }
         _ => landingpad(|| Err(format_err!("unsupported_method"))),
     };
 
@@ -2772,4 +2780,7 @@ mod tests {
             remove_created_wallet(&wallet.id);
         })
     }
+
+    #[test]
+    fn test_private_key_from_seed() {}
 }

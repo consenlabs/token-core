@@ -18,6 +18,8 @@ tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants"}
 tcx-tezos = {path = "../tcx-tezos"}
 tcx-eth2 = {path = "../tcx-eth2"}
+zksync-crypto = {path = "../zksync-crypto"}
+#zksync-crypto = { git="https://github.com/consenlabs/zksync", branch="hotfix/compatible_with_tcx" }
 
 prost = "0.6.1"
 bytes = "0.5.4"
