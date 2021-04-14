@@ -175,7 +175,9 @@ mod tests {
         InitTokenCoreXParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
         KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
         PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, PublicKeyParam, PublicKeyResult,
-        Response, SignParam, WalletKeyParam,
+        Response, SignParam, WalletKeyParam, ZksyncPrivateKeyFromSeedParam,
+        ZksyncPrivateKeyFromSeedResult, ZksyncPrivateKeyToPubkeyHashParam,
+        ZksyncPrivateKeyToPubkeyHashResult, ZksyncSignMusigParam, ZksyncSignMusigResult,
     };
     use crate::api::{HdStoreImportParam, WalletResult};
     use crate::handler::hd_store_import;
@@ -2782,5 +2784,36 @@ mod tests {
     }
 
     #[test]
-    fn test_private_key_from_seed() {}
+    fn test_zksync_api() {
+        let input = ZksyncPrivateKeyFromSeedParam{
+            seed: "9883e3c6e2558f8dc7ab8ad227059d5e59bd1933487372d8bb6c0039246760363762f694a5e43309d7b3a60abd4ac73bc493f899448d28ef29a4a2798e4edc4e1b".to_string(),
+        };
+        let ret = call_api("zksync_private_key_from_seed", input).unwrap();
+        let output: ZksyncPrivateKeyFromSeedResult =
+            ZksyncPrivateKeyFromSeedResult::decode(ret.as_slice()).unwrap();
+        assert_eq!(
+            output.priv_key,
+            "052b33b8567fb0482aa42393daf76a8c9dd3da301358989e47ec26f60a68f37c".to_string()
+        );
+
+        let input = ZksyncSignMusigParam{
+            priv_key: "052b33b8567fb0482aa42393daf76a8c9dd3da301358989e47ec26f60a68f37c".to_string(),
+            bytes: "05000525e8da9bf8e3e67882ba59e291b6897e3db114cf6bdeda9bf8e3e67882ba59e291b6897e3db114cf6bde00289502f90005292e0000001a000000000000000000000000ffffffff".to_string()
+        };
+        let ret = call_api("zksync_sign_musig", input).unwrap();
+        let output: ZksyncSignMusigResult = ZksyncSignMusigResult::decode(ret.as_slice()).unwrap();
+        assert_eq!(output.signature, "c5cd3d01ed5ea20dd16732958c4e02d6c1c5f22544f20a459e609cb7bd6b002f1fbd87f2d94398756ffe7f63e462521ee852479163340c0f9ba0d6f0814eef2e50fd50d7e2314fa4be4590069fe73a8f94c93e81aaba6fd89329dda76f074501".to_string());
+
+        let input = ZksyncPrivateKeyToPubkeyHashParam {
+            priv_key: "052b33b8567fb0482aa42393daf76a8c9dd3da301358989e47ec26f60a68f37c"
+                .to_string(),
+        };
+        let ret = call_api("zksync_private_key_to_pubkey_hash", input).unwrap();
+        let output: ZksyncPrivateKeyToPubkeyHashResult =
+            ZksyncPrivateKeyToPubkeyHashResult::decode(ret.as_slice()).unwrap();
+        assert_eq!(
+            output.pub_key_hash,
+            "90bfd58db4742ce7803ed158f30266ac17b8a0b4".to_string()
+        );
+    }
 }
