@@ -12,9 +12,9 @@ keywords = ["blockchain", "zksync"]
 categories = ["cryptography"]
 publish = false # This library is not published stand-alone, it is bundled with `zksync.js`.
 
-[lib]
-crate-type = ["cdylib"]
-
+#[lib]
+#crate-type = ["cdylib"]
+#
 [features]
 default = ["console_error_panic_hook"]
 
