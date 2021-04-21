@@ -930,9 +930,10 @@ pub(crate) fn sign_tezos_tx_raw(param: &SignParam, keystore: &mut Keystore) -> R
 }
 
 pub(crate) fn zksync_private_key_from_seed(data: &[u8]) -> Result<Vec<u8>> {
-    let param: ZksyncPrivateKeyFromSeedParam = ZksyncPrivateKeyFromSeedParam::decode(data).unwrap();
+    let param: ZksyncPrivateKeyFromSeedParam = ZksyncPrivateKeyFromSeedParam::decode(data)?;
 
-    let result = private_key_from_seed(hex::decode(param.seed).unwrap().as_slice()).unwrap();
+    let result = private_key_from_seed(hex::decode(param.seed)?.as_slice())
+        .expect("zksync_private_key_from_seed_error");
 
     let ret = ZksyncPrivateKeyFromSeedResult {
         priv_key: hex::encode(result),
@@ -941,13 +942,13 @@ pub(crate) fn zksync_private_key_from_seed(data: &[u8]) -> Result<Vec<u8>> {
 }
 
 pub(crate) fn zksync_sign_musig(data: &[u8]) -> Result<Vec<u8>> {
-    let param: ZksyncSignMusigParam = ZksyncSignMusigParam::decode(data).unwrap();
+    let param: ZksyncSignMusigParam = ZksyncSignMusigParam::decode(data)?;
 
     let sign_result = sign_musig(
-        hex::decode(param.priv_key).unwrap().as_slice(),
-        hex::decode(param.bytes).unwrap().as_slice(),
+        hex::decode(param.priv_key)?.as_slice(),
+        hex::decode(param.bytes)?.as_slice(),
     )
-    .unwrap();
+    .expect("zksync_sign_musig_error");
     let ret = ZksyncSignMusigResult {
         signature: hex::encode(sign_result),
     };
@@ -955,10 +956,9 @@ pub(crate) fn zksync_sign_musig(data: &[u8]) -> Result<Vec<u8>> {
 }
 
 pub(crate) fn zksync_private_key_to_pubkey_hash(data: &[u8]) -> Result<Vec<u8>> {
-    let param: ZksyncPrivateKeyToPubkeyHashParam =
-        ZksyncPrivateKeyToPubkeyHashParam::decode(data).unwrap();
-    let pub_key_hash =
-        private_key_to_pubkey_hash(hex::decode(param.priv_key).unwrap().as_slice()).unwrap();
+    let param: ZksyncPrivateKeyToPubkeyHashParam = ZksyncPrivateKeyToPubkeyHashParam::decode(data)?;
+    let pub_key_hash = private_key_to_pubkey_hash(hex::decode(param.priv_key)?.as_slice())
+        .expect("zksync_private_key_to_pubkey_hash_error");
     let ret = ZksyncPrivateKeyToPubkeyHashResult {
         pub_key_hash: hex::encode(pub_key_hash),
     };

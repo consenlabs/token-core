@@ -1,3 +1,6 @@
+//tests.rs文件里引用了一些除了zksync-crypto之外其他的zksync官方的库，但是TCX引入这些库会导致
+//编译错误，为了简单起见先把tests.rs文件里的所有数据都注掉，这样就能解决编译的错误。而且这个文件里面的内容是TCX里用不到的。
+
 //! Compare crypto primitives to those that we use in our `zksync_types` crate;
 
 // use super::{private_key_to_pubkey_hash, read_signing_key, sign_musig};
