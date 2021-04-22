@@ -24,7 +24,15 @@ impl TraitPrivateKey for BLSPrivateKey {
     type PublicKey = BLSPublicKey;
 
     fn from_slice(data: &[u8]) -> Result<Self> {
-        Ok(BLSPrivateKey(PrivateKey::from_bytes(data)?))
+        match data.len() {
+            31 => {
+                let mut temp_data = vec![];
+                temp_data.extend(data);
+                temp_data.push(0x00 as u8);
+                Ok(BLSPrivateKey(PrivateKey::from_bytes(temp_data.as_ref())?))
+            }
+            _ => Ok(BLSPrivateKey(PrivateKey::from_bytes(data.as_ref())?)),
+        }
     }
 
     fn public_key(&self) -> Self::PublicKey {

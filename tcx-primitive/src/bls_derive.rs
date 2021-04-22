@@ -287,5 +287,19 @@ mod tests {
             child_sk,
             "ba87c3a478ee2a5a26c48918cc99be88bc648bee3d38c2d5faad41872a9e0d06"
         );
+
+        let dsk = BLSDeterministicPrivateKey::from_seed(
+            &hex::decode("ed93db74a05f1a93b607ac20b447152aedfeb1f541c75abbb415c068eacdd9cd4f46f97b4ee0bbe99255016e3121ff7d283c5ab9a5d235829870b76e6e070061").unwrap()).unwrap();
+
+        let child_sk = hex::encode(
+            dsk.derive("m/12381/3600/0/0/0")
+                .unwrap()
+                .private_key()
+                .to_bytes(),
+        );
+        assert_eq!(
+            child_sk,
+            "46c50b0327f01e713b27c976fcc893cf19cff729e75b70dc5caa8b3d8c1df700"
+        );
     }
 }
