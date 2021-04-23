@@ -25,12 +25,15 @@ impl TraitPrivateKey for BLSPrivateKey {
 
     fn from_slice(data: &[u8]) -> Result<Self> {
         match data.len() {
-            31 => {
+            len if len < 32 => {
                 let mut temp_data = vec![];
                 temp_data.extend(data);
-                temp_data.push(0x00 as u8);
+                while temp_data.len() < 32 {
+                    temp_data.push(0x00 as u8);
+                }
                 Ok(BLSPrivateKey(PrivateKey::from_bytes(temp_data.as_ref())?))
             }
+            len if len > 32 => Err(failure::err_msg("wrong data length")),
             _ => Ok(BLSPrivateKey(PrivateKey::from_bytes(data.as_ref())?)),
         }
     }
