@@ -6,7 +6,6 @@ use crate::bls::{BLSPrivateKey, BLSPublicKey};
 use crate::ecc::KeyError;
 use crate::{Derive, DeterministicPrivateKey, DeterministicPublicKey, FromHex, PrivateKey, ToHex};
 use num_traits::{FromPrimitive, Num, Pow};
-use ring::digest;
 use sha2::digest::FixedOutput;
 use sha2::{Digest, Sha256};
 
@@ -160,8 +159,15 @@ fn hkdf_mod_r(ikm: &[u8]) -> BigUint {
     let mut tmp = ikm.to_vec();
     tmp.extend(b"\x00");
 
-    let digest_obj = digest::digest(&digest::SHA256, b"BLS-SIG-KEYGEN-SALT-");
-    hkdf(digest_obj.as_ref(), &tmp, b"\x00\x30", &mut okm); // L=48, info=I2OSP(L,2)
+    // let digest_obj = digest::digest(&digest::SHA256, b"BLS-SIG-KEYGEN-SALT-");
+    let mut sha256 = Sha256::new();
+    sha256.update(b"BLS-SIG-KEYGEN-SALT-");
+    hkdf(
+        &sha256.finalize_fixed().to_vec(),
+        &tmp,
+        b"\x00\x30",
+        &mut okm,
+    ); // L=48, info=I2OSP(L,2)
     let r = BigUint::from_str_radix(
         "73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001",
         16,
