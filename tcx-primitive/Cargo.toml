@@ -33,4 +33,3 @@ hkdf = "0.9.0"
 sp-core = "2.0.0-rc3"
 regex = { version = "1.3.1"}
 schnorrkel = "0.9.1"
-ring = "0.16.9"

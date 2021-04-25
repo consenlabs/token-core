@@ -1,10 +1,8 @@
-/*
-tests.rs文件里引用了一些除了zksync-crypto之外其他的zksync官方的库，但是TCX引入这些库会导致
-编译错误，为了简单起见先把tests.rs文件里的所有数据都注掉，这样就能解决编译的错误。而且这个文件里面的内容是TCX里用不到的。
-*/
+//tests.rs文件里引用了一些除了zksync-crypto之外其他的zksync官方的库，但是TCX引入这些库会导致
+//编译错误，为了简单起见先把tests.rs文件里的所有数据都注掉，这样就能解决编译的错误。而且这个文件里面的内容是TCX里用不到的。
 
-// //! Compare crypto primitives to those that we use in our `zksync_types` crate;
-//
+//! Compare crypto primitives to those that we use in our `zksync_types` crate;
+
 // use super::{private_key_to_pubkey_hash, read_signing_key, sign_musig};
 //
 // use crypto_lib::{public_key_from_private, Engine};
@@ -12,7 +10,7 @@ tests.rs文件里引用了一些除了zksync-crypto之外其他的zksync官方�
 // use franklin_crypto::eddsa::PrivateKey;
 // use rand::{Rng, SeedableRng, XorShiftRng};
 // use zksync_types::{tx::TxSignature, PubKeyHash};
-//
+
 // fn gen_private_key_and_its_be_bytes() -> (PrivateKey<Engine>, Vec<u8>) {
 //     let mut rng = XorShiftRng::from_seed([1, 2, 3, 4]);
 //
@@ -23,7 +21,7 @@ tests.rs文件里引用了一些除了zksync-crypto之外其他的zksync官方�
 //         .expect("private key write");
 //     (pk, serialized_key)
 // }
-//
+
 // #[test]
 // fn test_private_key_read() {
 //     let (zksync_types_pk, serialized_pk) = gen_private_key_and_its_be_bytes();
@@ -31,7 +29,7 @@ tests.rs文件里引用了一些除了zksync-crypto之外其他的zksync官方�
 //     let wasm_pk = read_signing_key(&serialized_pk).unwrap();
 //     assert_eq!(ff::to_hex(&wasm_pk.0), ff::to_hex(&zksync_types_pk.0));
 // }
-//
+
 // #[test]
 // fn test_pubkey_hash() {
 //     let (pk, serialized_pk) = gen_private_key_and_its_be_bytes();
@@ -40,7 +38,7 @@ tests.rs文件里引用了一些除了zksync-crypto之外其他的zksync官方�
 //     let zksync_types_pubkey_hash = PubKeyHash::from_privkey(&pk).data.to_vec();
 //     assert_eq!(wasm_pubkey_hash, zksync_types_pubkey_hash);
 // }
-//
+
 // #[test]
 // fn test_signature() {
 //     let mut rng = XorShiftRng::from_seed([1, 2, 3, 4]);
