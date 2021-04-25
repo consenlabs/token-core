@@ -96,9 +96,9 @@ mod test {
     #[test]
     fn is_valid_test() {
         let coin_info = CoinInfo {
-            coin: "NERVOS".to_string(),
+            coin: "TEZOS".to_string(),
             derivation_path: "".to_string(),
-            curve: CurveType::SECP256k1,
+            curve: CurveType::ED25519,
             network: "MAINNET".to_string(),
             seg_wit: "".to_string(),
         };

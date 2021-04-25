@@ -3430,6 +3430,7 @@ dependencies = [
  "tcx-ckb",
  "tcx-constants",
  "tcx-crypto",
+ "tcx-eth2",
  "tcx-filecoin",
  "tcx-primitive",
  "tcx-proto",
@@ -3565,6 +3566,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tcx-eth2"
+version = "0.1.0"
+dependencies = [
+ "hex 0.3.2",
+ "tcx-chain",
+ "tcx-constants",
+ "tcx-crypto",
+ "tcx-primitive",
+]
+
+[[package]]
 name = "tcx-filecoin"
 version = "0.1.0"
 dependencies = [
@@ -3613,6 +3625,7 @@ dependencies = [
  "num-bigint 0.2.6",
  "num-traits",
  "regex",
+ "ring",
  "schnorrkel",
  "secp256k1",
  "serde",

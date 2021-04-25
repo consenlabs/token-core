@@ -54,5 +54,30 @@ message WalletKeyParam {
     string password = 2;
 }
 
+message ZksyncPrivateKeyFromSeedParam {
+    string seed = 1;
+}
+
+message ZksyncPrivateKeyFromSeedResult {
+    string privKey = 1;
+}
+
+message ZksyncSignMusigParam{
+    string privKey = 1;
+    string bytes = 2;
+}
+
+message ZksyncSignMusigResult{
+    string signature = 1;
+}
+
+message ZksyncPrivateKeyToPubkeyHashParam{
+    string privKey = 1;
+}
+
+message ZksyncPrivateKeyToPubkeyHashResult{
+    string pubKeyHash = 1;
+}
+
 
 
