@@ -2816,4 +2816,55 @@ mod tests {
             "90bfd58db4742ce7803ed158f30266ac17b8a0b4".to_string()
         );
     }
+
+    #[test]
+    pub fn test_ethereum2_get_pubkey() {
+        run_test(|| {
+            let param = HdStoreImportParam {
+                mnemonic: OTHER_MNEMONIC.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                source: "MNEMONIC".to_string(),
+                name: "test-wallet".to_string(),
+                password_hint: "imtoken".to_string(),
+                overwrite: true,
+            };
+            let ret = call_api("hd_store_import", param).unwrap();
+            let import_result: WalletResult = WalletResult::decode(ret.as_slice()).unwrap();
+
+            let derivations = vec![Derivation {
+                chain_type: "ETHEREUM2".to_string(),
+                path: "m/12381/3600/0/0/0".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+                curve: "BLS".to_string(),
+            }];
+
+            let param = KeystoreCommonDeriveParam {
+                id: import_result.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations,
+            };
+            let derived_accounts_bytes = call_api("keystore_common_derive", param).unwrap();
+            let derived_accounts: AccountsResponse =
+                AccountsResponse::decode(derived_accounts_bytes.as_slice()).unwrap();
+            assert_eq!(
+                "941c2ab3d28b0fe37fde727e3178738a475696aed7335c7f4c2d91d06a1540acadb8042f119fb5f8029e7765de21fac2",
+                derived_accounts.accounts[0].address
+            );
+            let param: PublicKeyParam = PublicKeyParam {
+                id: import_result.id.to_string(),
+                chain_type: "ETHEREUM2".to_string(),
+                address: "941c2ab3d28b0fe37fde727e3178738a475696aed7335c7f4c2d91d06a1540acadb8042f119fb5f8029e7765de21fac2".to_string(),
+            };
+            let ret_bytes = call_api("get_public_key", param).unwrap();
+            let public_key_result: PublicKeyResult =
+                PublicKeyResult::decode(ret_bytes.as_slice()).unwrap();
+            assert_eq!(
+                "941c2ab3d28b0fe37fde727e3178738a475696aed7335c7f4c2d91d06a1540acadb8042f119fb5f8029e7765de21fac2",
+                public_key_result.public_key
+            );
+            remove_created_wallet(&import_result.id);
+        })
+    }
 }

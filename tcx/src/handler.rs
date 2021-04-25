@@ -655,30 +655,37 @@ pub(crate) fn get_public_key(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
+    let account = keystore.account(&param.chain_type, &param.address);
+    let mut pub_key = vec![];
+    if let Some(acc) = account {
+        tcx_ensure!(
+            acc.public_key.is_some(),
+            format_err!("account_not_contains_public_key")
+        );
+        pub_key = hex::decode(acc.public_key.clone().unwrap())?;
+    } else {
+        return Err(format_err!("account_not_found"));
+    }
+    let mut ret = PublicKeyResult {
+        id: param.id.to_string(),
+        chain_type: param.chain_type.to_string(),
+        address: param.address.to_string(),
+        public_key: String::new(),
+    };
+    //https://www.rubydoc.info/gems/tezos_client/0.2.1/TezosClient/Crypto
     let edpk_prefix: Vec<u8> = vec![0x0D, 0x0F, 0x25, 0xD9];
     match param.chain_type.to_uppercase().as_str() {
         "TEZOS" => {
-            let account = keystore.account(&param.chain_type, &param.address);
-            if let Some(acc) = account {
-                tcx_ensure!(
-                    acc.public_key.is_some(),
-                    format_err!("account_not_contains_public_key")
-                );
-                let pub_key = hex::decode(acc.public_key.clone().unwrap())?;
-                let to_hash = [edpk_prefix, pub_key].concat();
-                let hashed = dsha256(&to_hash);
-                let hash_with_checksum = [to_hash, hashed[0..4].to_vec()].concat();
-                let edpk = hash_with_checksum.to_base58();
-                let ret = PublicKeyResult {
-                    id: param.id.to_string(),
-                    chain_type: param.chain_type.to_string(),
-                    address: param.address.to_string(),
-                    public_key: edpk,
-                };
-                encode_message(ret)
-            } else {
-                Err(format_err!("account_not_found"))
-            }
+            let to_hash = [edpk_prefix, pub_key].concat();
+            let hashed = dsha256(&to_hash);
+            let hash_with_checksum = [to_hash, hashed[0..4].to_vec()].concat();
+            let edpk = hash_with_checksum.to_base58();
+            ret.public_key = edpk;
+            encode_message(ret)
+        }
+        "ETHEREUM2" => {
+            ret.public_key = hex::encode(pub_key);
+            encode_message(ret)
         }
         _ => Err(format_err!("unsupported_chain")),
     }
