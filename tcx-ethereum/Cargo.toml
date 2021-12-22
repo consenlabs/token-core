@@ -1,0 +1,26 @@
+[package]
+name = "tcx-ethereum"
+version = "0.1.0"
+authors = ["Turntogamer <574658087a@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tcx-crypto = { path = "../tcx-crypto" }
+tcx-chain = { path = "../tcx-chain" }
+tcx-primitive = { path = "../tcx-primitive" }
+tcx-constants = { path = "../tcx-constants" }
+
+prost = "0.6.1"
+bytes = "0.5.4"
+failure = "0.1.5"
+sha3 = "0.8.2"
+digest = "0.8.1"
+rust-crypto = "0.2.36"
+ethereum-tx-sign = "3.0.4"
+hex = "0.3.1"
+rlp = "0.4"
+ethereum-types = "0.9"
+lazy_static = "1.4.0"
+parking_lot = "0.10"

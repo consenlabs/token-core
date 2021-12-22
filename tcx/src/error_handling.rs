@@ -1,11 +1,11 @@
 use crate::filemanager::KEYSTORE_MAP;
 use core::result;
 use failure::{Backtrace, Error};
-use std::{cell::RefCell, panic, mem};
+use std::{cell::RefCell, mem, panic};
 pub type Result<T> = result::Result<T, Error>;
-use log::error;
 use crate::api::Response;
 use crate::encode_message;
+use log::error;
 
 thread_local! {
     pub static LAST_ERROR: RefCell<Option<Error>> = RefCell::new(None);
@@ -70,17 +70,17 @@ pub unsafe fn landingpad_b<F: FnOnce() -> Result<Vec<u8>> + panic::UnwindSafe>(f
                         error: "".to_string(),
                         value: Some(::prost_types::Any {
                             type_url: "bool_wallet".to_string(),
-                            value: v
-                        })
+                            value: v,
+                        }),
                     };
                     encode_message(res).unwrap()
-                },
+                }
                 Err(e) => {
                     let err_msg = format!("Error: {}", e.to_string());
                     let res = Response {
                         is_success: false,
                         error: err_msg,
-                        value: None
+                        value: None,
                     };
                     encode_message(res).unwrap()
                 }
@@ -101,7 +101,7 @@ pub unsafe fn landingpad_b<F: FnOnce() -> Result<Vec<u8>> + panic::UnwindSafe>(f
             let res = Response {
                 is_success: false,
                 error: msg,
-                value: None
+                value: None,
             };
             encode_message(res).unwrap()
         }

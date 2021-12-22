@@ -1,7 +1,7 @@
+use failure::Error;
 use std::fs;
 use std::io::Read;
 use std::path::Path;
-use failure::Error;
 
 use bytes::BytesMut;
 use prost::Message;
@@ -44,6 +44,7 @@ use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::hash::dsha256;
 use tcx_crypto::KDF_ROUNDS;
+use tcx_ethereum::{EthereumAddress, EthereumTxIn, EthereumTxOut};
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_substrate::{
     decode_substrate_keystore, encode_substrate_keystore, ExportSubstrateKeystoreResult,
@@ -80,6 +81,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
         "TEZOS" => keystore.derive_coin::<TezosAddress>(&coin_info),
         "FILECOIN" => keystore.derive_coin::<FilecoinAddress>(&coin_info),
+        "ETHEREUM" => keystore.derive_coin::<EthereumAddress>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -112,7 +114,7 @@ pub fn scan_keystores() -> Result<Vec<u8>> {
     let p = Path::new(file_dir.as_str());
     let walk_dir = match std::fs::read_dir(p) {
         Ok(r) => r,
-        Err(e) => return Err(Error::from_boxed_compat(Box::new(e)))
+        Err(e) => return Err(Error::from_boxed_compat(Box::new(e))),
     };
     for entry in walk_dir {
         let entry = entry.expect("DirEntry");
@@ -526,7 +528,7 @@ pub fn keystore_common_verify(data: &[u8]) -> Result<Vec<u8>> {
         let rsp = Response {
             is_success: true,
             error: "".to_owned(),
-            value: None
+            value: None,
         };
         encode_message(rsp)
     } else {
@@ -549,7 +551,7 @@ pub fn keystore_common_delete(data: &[u8]) -> Result<Vec<u8>> {
         let rsp = Response {
             is_success: true,
             error: "".to_owned(),
-            value: None
+            value: None,
         };
         encode_message(rsp)
     } else {
@@ -637,12 +639,15 @@ pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
     };
 
     match param.chain_type.as_str() {
-        "BITCOINCASH" | "LITECOIN" | "BITCOIN" => sign_btc_fork_transaction(&param, guard.keystore_mut()),
+        "BITCOINCASH" | "LITECOIN" | "BITCOIN" => {
+            sign_btc_fork_transaction(&param, guard.keystore_mut())
+        }
         "TRON" => sign_tron_tx(&param, guard.keystore_mut()),
         "NERVOS" => sign_nervos_ckb(&param, guard.keystore_mut()),
         "POLKADOT" | "KUSAMA" => sign_substrate_tx_raw(&param, guard.keystore_mut()),
         "FILECOIN" => sign_filecoin_tx(&param, guard.keystore_mut()),
         "TEZOS" => sign_tezos_tx_raw(&param, guard.keystore_mut()),
+        "ETHEREUM" => sign_ethereum_tx_raw(&param, guard.keystore_mut()),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -701,10 +706,7 @@ pub fn sign_filecoin_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Ve
     encode_message(signed_tx)
 }
 
-pub fn sign_btc_fork_transaction(
-    param: &SignParam,
-    keystore: &mut Keystore,
-) -> Result<Vec<u8>> {
+pub fn sign_btc_fork_transaction(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
     let input: BtcForkTxInput = BtcForkTxInput::decode(
         param
             .input
@@ -926,6 +928,21 @@ pub fn sign_tezos_tx_raw(param: &SignParam, keystore: &mut Keystore) -> Result<V
             .as_slice(),
     )
     .expect("TezosRawTxIn");
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
+}
+
+pub fn sign_ethereum_tx_raw(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: EthereumTxIn = EthereumTxIn::decode(
+        param
+            .input
+            .as_ref()
+            .expect("raw_tx_input")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("EthereumTxIn");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
 }

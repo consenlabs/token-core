@@ -4,6 +4,7 @@ members = [
     "tcx-constants",
     "tcx-primitive",
     "tcx-crypto",
+    "tcx-ethereum",
     "tcx-chain",
     "tcx-tron",
     "tcx-btc-fork",

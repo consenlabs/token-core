@@ -7,9 +7,9 @@ use tcx_chain::Address;
 use byteorder::LittleEndian;
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use regex::Regex;
-use std::{fmt, marker::PhantomData};
 use std::io::Cursor;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{fmt, marker::PhantomData};
 use tcx_constants::{CoinInfo, Result};
 use tcx_crypto::numberic_util::random_iv;
 use tcx_primitive::{
