@@ -390,12 +390,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0a5e3906bcbf133e33c1d4d95afc664ad37fbdb9f6568d8043e7ea8c27d93d3"
 
 [[package]]
-name = "byte-slice-cast"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65c1bf4a04a88c54f589125563643d773f3254b5c38571395e2b591c693bbc81"
-
-[[package]]
 name = "byte-tools"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1483,7 +1477,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1be51a921b067b0eaca2fad532d9400041561aa922221cc65f95a85641c6bf53"
 dependencies = [
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
 ]
 
 [[package]]
@@ -1983,20 +1977,9 @@ checksum = "a4b26b16c7687c3075982af47719e481815df30bc544f7a6690763a25ca16e9d"
 dependencies = [
  "arrayvec 0.5.2",
  "bitvec",
- "byte-slice-cast 0.3.5",
- "parity-scale-codec-derive 1.2.3",
+ "byte-slice-cast",
+ "parity-scale-codec-derive",
  "serde",
-]
-
-[[package]]
-name = "parity-scale-codec"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cd3dab59b5cf4bc81069ade0fc470341a1ef3ad5fa73e5a8943bed2ec12b2e8"
-dependencies = [
- "arrayvec 0.5.2",
- "byte-slice-cast 1.0.0",
- "parity-scale-codec-derive 2.0.1",
 ]
 
 [[package]]
@@ -2004,18 +1987,6 @@ name = "parity-scale-codec-derive"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c41512944b1faff334a5f1b9447611bf4ef40638ccb6328173dacefb338e878c"
-dependencies = [
- "proc-macro-crate",
- "proc-macro2 1.0.24",
- "quote 1.0.9",
- "syn 1.0.66",
-]
-
-[[package]]
-name = "parity-scale-codec-derive"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa04976a81fde04924b40cc4036c4d12841e8bb04325a5cf2ada75731a150a7d"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2 1.0.24",
@@ -3150,7 +3121,7 @@ version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eda2660cca492b58328d6a057bf5ba6c8a58e9f6e079a2f603b623d030300841"
 dependencies = [
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "serde",
  "sp-core",
  "sp-io",
@@ -3165,7 +3136,7 @@ checksum = "9c4d204b1cf8e1d4826804ffbd2edd2c4df385ee3046fa4581f09bc18977ea89"
 dependencies = [
  "integer-sqrt",
  "num-traits",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "serde",
  "sp-debug-derive",
  "sp-std",
@@ -3193,7 +3164,7 @@ dependencies = [
  "log",
  "merlin",
  "num-traits",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.10.2",
  "primitive-types",
@@ -3234,7 +3205,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "144c39acb7affd7a9ce478e289157b9a6c225e3f08a7d4d2f4fee85cc3899684"
 dependencies = [
  "environmental",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "sp-std",
  "sp-storage",
 ]
@@ -3246,7 +3217,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ebcf5925a850392cb044af9b8da20dc0610e613ff15607b3b96bed6461f9193"
 dependencies = [
  "derive_more",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "parking_lot 0.10.2",
  "sp-core",
  "sp-std",
@@ -3262,7 +3233,7 @@ dependencies = [
  "hash-db",
  "libsecp256k1",
  "log",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "parking_lot 0.10.2",
  "sp-core",
  "sp-externalities",
@@ -3308,7 +3279,7 @@ dependencies = [
  "hash256-std-hasher",
  "impl-trait-for-tuples",
  "log",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "parity-util-mem",
  "paste",
  "rand 0.7.3",
@@ -3327,7 +3298,7 @@ version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8fb6574401a7b5c89111b417efecbc9f0c3d38c2c539ce3a964b8393769c3e15"
 dependencies = [
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "primitive-types",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
@@ -3360,7 +3331,7 @@ dependencies = [
  "hash-db",
  "log",
  "num-traits",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "parking_lot 0.10.2",
  "rand 0.7.3",
  "smallvec 1.6.1",
@@ -3386,7 +3357,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "781cc04c8d61c7bb1c269ca68d5d001fcaafbca8a21af46f87bf2e79a749c295"
 dependencies = [
  "impl-serde",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "ref-cast",
  "serde",
  "sp-debug-derive",
@@ -3400,7 +3371,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c574a06ac032f3c6fc29ae61ae1292546499342219c256098914f6110312f6f4"
 dependencies = [
  "log",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "sp-std",
  "tracing",
  "tracing-core",
@@ -3415,7 +3386,7 @@ checksum = "311f320e1a1d6d961664af519d343d7a0493d9fe2f81dc3de488841e4fbaaa46"
 dependencies = [
  "hash-db",
  "memory-db",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "sp-core",
  "sp-std",
  "trie-db",
@@ -3429,7 +3400,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "554daa08d61bb3bf2d81ac79b7ae089733339fc8fdc129dc21d074195f1219be"
 dependencies = [
  "impl-trait-for-tuples",
- "parity-scale-codec 1.3.7",
+ "parity-scale-codec",
  "sp-std",
  "wasmi",
 ]
@@ -3552,7 +3523,7 @@ dependencies = [
 
 [[package]]
 name = "tcx"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base58",
  "base64 0.10.1",
@@ -3588,7 +3559,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-bch"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bch_addr",
  "bitcoin",
@@ -3607,7 +3578,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-btc-fork"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base64 0.10.1",
  "bech32 0.7.3",
@@ -3636,7 +3607,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-chain"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitcoin",
  "bitcoin_hashes",
@@ -3659,7 +3630,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-ckb"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bech32 0.7.3",
  "blake2b-rs",
@@ -3677,7 +3648,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-constants"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "failure",
  "lazy_static",
@@ -3688,7 +3659,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-crypto"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "aes-ctr",
  "aes-soft",
@@ -3714,7 +3685,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-ethereum"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bytes 0.5.6",
  "digest 0.8.1",
@@ -3736,7 +3707,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-filecoin"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base32",
  "base64 0.12.3",
@@ -3765,7 +3736,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-primitive"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitcoin",
  "bitcoin_hashes",
@@ -3795,7 +3766,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-proto"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bytes 0.5.6",
  "prost 0.6.1",
@@ -3805,7 +3776,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-substrate"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base58",
  "base64 0.10.1",
@@ -3814,7 +3785,7 @@ dependencies = [
  "bytes 0.5.6",
  "failure",
  "hex 0.4.3",
- "parity-scale-codec 2.0.1",
+ "parity-scale-codec",
  "prost 0.6.1",
  "prost-types 0.6.1",
  "rand 0.6.5",
@@ -3834,7 +3805,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-tester"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bytes 0.5.6",
  "hex 0.4.3",
@@ -3844,7 +3815,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-tezos"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitcoin",
  "blake2b_simd",
@@ -3861,7 +3832,7 @@ dependencies = [
 
 [[package]]
 name = "tcx-tron"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitcoin",
  "bitcoin_hashes",
