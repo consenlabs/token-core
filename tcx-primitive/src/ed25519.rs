@@ -82,9 +82,8 @@ impl FromHex for Ed25519PublicKey {
 #[cfg(test)]
 mod test {
     use crate::ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
-    use crate::{FromHex, PrivateKey, PublicKey, Ss58Codec, ToHex};
-    use bitcoin_hashes::Hash;
-    use blake2b_simd::{blake2b, Params};
+    use crate::{FromHex, PrivateKey, PublicKey, ToHex};
+    use blake2b_simd::Params;
     use hex;
     #[test]
     fn from_slice_test() {
@@ -111,6 +110,7 @@ mod test {
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn sign() {
         let pk_bytes: Vec<u8> =
             hex::decode("2e8905819b8723fe2c1d161860e5ee1830318dbf49a83bd451cfb8440c28bd6f")

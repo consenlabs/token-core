@@ -44,7 +44,7 @@ use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::hash::dsha256;
 use tcx_crypto::KDF_ROUNDS;
-use tcx_ethereum::{EthereumAddress, EthereumTxIn, EthereumTxOut};
+use tcx_ethereum::{EthereumAddress, EthereumTxIn};
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_substrate::{
     decode_substrate_keystore, encode_substrate_keystore, ExportSubstrateKeystoreResult,
@@ -82,7 +82,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "TEZOS" => keystore.derive_coin::<TezosAddress>(&coin_info),
         "FILECOIN" => keystore.derive_coin::<FilecoinAddress>(&coin_info),
         "ETHEREUM" => keystore.derive_coin::<EthereumAddress>(&coin_info),
-        _ => Err(format_err!("unsupported_chain")),
+        _ => Err(format_err!("derive_account unsupported_chain")),
     }
 }
 
@@ -455,7 +455,6 @@ pub fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
         Some(keystore) => Ok(keystore),
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
-
     let mut guard = KeystoreGuard::unlock_by_password(keystore, &param.password)?;
 
     let pk_hex = if param.path.is_empty() {
@@ -482,8 +481,8 @@ pub fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
     };
 
     // private_key prefix is only about chain type and network
-    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
-    let value = if ["TRON", "POLKADOT", "KUSAMA"].contains(&param.chain_type.as_str()) {
+    let _ = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
+    let value = if ["TRON", "POLKADOT", "KUSAMA", "ETHEREUM"].contains(&param.chain_type.as_str()) {
         Ok(pk_hex.to_string())
     } else if "FILECOIN".contains(&param.chain_type.as_str()) {
         if let Some(account) = guard
@@ -648,7 +647,7 @@ pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         "FILECOIN" => sign_filecoin_tx(&param, guard.keystore_mut()),
         "TEZOS" => sign_tezos_tx_raw(&param, guard.keystore_mut()),
         "ETHEREUM" => sign_ethereum_tx_raw(&param, guard.keystore_mut()),
-        _ => Err(format_err!("unsupported_chain")),
+        _ => Err(format_err!("sign_tx unsupported_chain")),
     }
 }
 
@@ -686,7 +685,7 @@ pub fn get_public_key(data: &[u8]) -> Result<Vec<u8>> {
                 Err(format_err!("account_not_found"))
             }
         }
-        _ => Err(format_err!("unsupported_chain")),
+        _ => Err(format_err!("get_public_key unsupported_chain")),
     }
 }
 

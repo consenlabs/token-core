@@ -218,7 +218,7 @@ pub fn coin_info_from_param(
         .collect::<Vec<CoinInfo>>();
 
     if coins.is_empty() {
-        Err(format_err!("unsupported_chain"))
+        Err(format_err!("coin_info unsupported_chain"))
     } else {
         Ok(coins.pop().expect("coin_info_from_param"))
     }
