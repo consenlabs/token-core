@@ -1,7 +1,6 @@
 use crate::address::BchAddress;
 use crate::Result;
 use bitcoin::Transaction;
-use bitcoin_hashes::sha256d;
 use std::str::FromStr;
 use tcx_btc_fork::bip143_with_forkid::SighashComponentsWithForkId;
 use tcx_btc_fork::signer::{LegacyTransactionSignComponent, SignHasher};

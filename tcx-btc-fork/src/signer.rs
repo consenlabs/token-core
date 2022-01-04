@@ -1,8 +1,8 @@
+#![allow(deprecated)]
 use tcx_chain::{Keystore, TransactionSigner};
 
 use bitcoin::{OutPoint, Script, Transaction, TxIn, TxOut};
-use bitcoin_hashes::sha256d::Hash as Hash256;
-use bitcoin_hashes::{sha256d, Hash};
+use bitcoin_hashes::Hash;
 
 use crate::Result;
 use bitcoin::blockdata::script::Builder;
