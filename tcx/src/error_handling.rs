@@ -5,7 +5,6 @@ use std::{cell::RefCell, mem, panic};
 pub type Result<T> = result::Result<T, Error>;
 use crate::api::Response;
 use crate::encode_message;
-use log::error;
 
 thread_local! {
     pub static LAST_ERROR: RefCell<Option<Error>> = RefCell::new(None);

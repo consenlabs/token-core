@@ -27,6 +27,7 @@ pub fn pars_tezos_private_key(private_key: &str) -> Result<Vec<u8>> {
 }
 
 mod tests {
+    #[allow(unused_imports)]
     use crate::{build_tezos_base58_private_key, pars_tezos_private_key};
     #[test]
     fn it_works() {

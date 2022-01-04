@@ -2,8 +2,8 @@
 use crypto::{digest::Digest as cDigest, sha3::Sha3};
 use sha3::Digest;
 use tcx_chain::Address;
-use tcx_constants::{CoinInfo, CurveType, Result};
-use tcx_primitive::{PublicKey, Sr25519PublicKey, TypedPublicKey};
+use tcx_constants::{CoinInfo, Result};
+use tcx_primitive::TypedPublicKey;
 pub struct EthereumAddress();
 
 impl Address for EthereumAddress {
@@ -61,6 +61,7 @@ fn to_checksum(address: &str) -> String {
 
 #[test]
 fn test_change() {
+    use tcx_constants::CurveType;
     let bytes = hex::decode("04DAAC763B1B3492720E404C53D323BAF29391996F7DD5FA27EF0D12F7D50D694700684A32AD97FF4C09BF9CF0B9D0AC7F0091D9C6CB8BE9BB6A1106DA557285D8").unwrap();
     let coin_info = CoinInfo {
         coin: "".to_string(),
