@@ -39,6 +39,16 @@ lazy_static! {
             network_id: 42,
             chain_id: 42,
         });
+        chain_infos.push(ChainInfo {
+            network: "BSC".to_string(),
+            network_id: 56,
+            chain_id: 56,
+        });
+        chain_infos.push(ChainInfo {
+            network: "BSC_TESTNET".to_string(),
+            network_id: 97,
+            chain_id: 97,
+        });
 
         RwLock::new(chain_infos)
     };
