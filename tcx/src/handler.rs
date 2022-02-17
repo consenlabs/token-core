@@ -819,7 +819,7 @@ pub fn eth_sign_message(data: &[u8]) -> Result<Vec<u8>> {
     };
 
     let input: EthereumMsgIn =
-        EthereumMsgIn::decode(param.input.expect("EtherrumMsgIn").value.clone().as_slice())
+        EthereumMsgIn::decode(param.input.expect("EthereumMsgIn").value.clone().as_slice())
             .expect("EthereumMsgIn");
     let signed_tx = guard
         .keystore_mut()
