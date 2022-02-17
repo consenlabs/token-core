@@ -14,9 +14,9 @@ pub mod handler;
 pub use crate::error_handling::{landingpad, LAST_BACKTRACE, LAST_ERROR};
 #[allow(deprecated)]
 pub use crate::handler::{
-    encode_message, export_mnemonic, export_private_key, get_derived_key, hd_store_create,
-    hd_store_export, hd_store_import, keystore_common_accounts, keystore_common_delete,
-    keystore_common_derive, keystore_common_exists, keystore_common_verify,
+    encode_message, eth_sign_message, export_mnemonic, export_private_key, get_derived_key,
+    hd_store_create, hd_store_export, hd_store_import, keystore_common_accounts,
+    keystore_common_delete, keystore_common_derive, keystore_common_exists, keystore_common_verify,
     private_key_store_export, private_key_store_import, sign_tx, tron_sign_message,
     unlock_then_crash,
 };
@@ -95,6 +95,7 @@ pub unsafe extern "C" fn call_tcx_api(hex_str: *const c_char) -> *const c_char {
         }
 
         "sign_tx" => landingpad(|| sign_tx(&action.param.unwrap().value)),
+        "eth_sign_msg" => landingpad(|| eth_sign_message(&action.param.unwrap().value)),
         "get_public_key" => landingpad(|| get_public_key(&action.param.unwrap().value)),
 
         "tron_sign_msg" => landingpad(|| tron_sign_message(&action.param.unwrap().value)),

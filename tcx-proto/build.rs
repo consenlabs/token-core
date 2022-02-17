@@ -22,6 +22,10 @@ fn main() {
     env::set_var("OUT_DIR", "../tcx-tron/src");
     prost_build::compile_protos(&["src/tron.proto"], &["src/"]).unwrap();
 
+    // tcx-ethereum
+    env::set_var("OUT_DIR", "../tcx-ethereum/src");
+    prost_build::compile_protos(&["src/ethereum.proto"], &["src/"]).unwrap();
+
     // tcx-btc-fork
     env::set_var("OUT_DIR", "../tcx-btc-fork/src");
     prost_build::compile_protos(&["src/btc_fork.proto"], &["src/"]).unwrap();

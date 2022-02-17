@@ -5,7 +5,8 @@ mod transaction;
 
 pub use crate::address::EthereumAddress;
 pub use crate::chain_id::{chain_id_from_network, ChainInfo};
-pub use crate::transaction::{EthereumTxIn, EthereumTxOut};
+pub use crate::transaction::{EthereumMsgIn, EthereumMsgOut, EthereumTxIn, EthereumTxOut};
+use digest::Digest;
 
 #[macro_use]
 extern crate failure;
@@ -38,4 +39,10 @@ pub enum Error {
 
     #[fail(display = "invalid_data")]
     InvalidData,
+}
+
+pub fn keccak(bytes: &[u8]) -> Vec<u8> {
+    let mut keccak = sha3::Keccak256::new();
+    keccak.input(bytes);
+    keccak.result().to_vec()
 }
