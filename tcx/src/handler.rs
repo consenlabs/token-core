@@ -44,7 +44,7 @@ use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::hash::dsha256;
 use tcx_crypto::KDF_ROUNDS;
-use tcx_ethereum::{EthereumAddress, EthereumTxIn};
+use tcx_ethereum::{EthereumAddress, EthereumMsgIn, EthereumTxIn};
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_substrate::{
     decode_substrate_keystore, encode_substrate_keystore, ExportSubstrateKeystoreResult,
@@ -796,6 +796,31 @@ pub fn tron_sign_message(data: &[u8]) -> Result<Vec<u8>> {
             .as_slice(),
     )
     .expect("TronMessageInput");
+    let signed_tx = guard
+        .keystore_mut()
+        .sign_message(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
+}
+
+pub fn eth_sign_message(data: &[u8]) -> Result<Vec<u8>> {
+    let param: SignParam = SignParam::decode(data).expect("SignParam");
+
+    let mut map = KEYSTORE_MAP.write();
+    let keystore: &mut Keystore = match map.get_mut(&param.id) {
+        Some(keystore) => Ok(keystore),
+        _ => Err(format_err!("{}", "wallet_not_found")),
+    }?;
+
+    let mut guard = match param.key.unwrap() {
+        Key::Password(password) => KeystoreGuard::unlock_by_password(keystore, &password)?,
+        Key::DerivedKey(derived_key) => {
+            KeystoreGuard::unlock_by_derived_key(keystore, &derived_key)?
+        }
+    };
+
+    let input: EthereumMsgIn =
+        EthereumMsgIn::decode(param.input.expect("EtherrumMsgIn").value.clone().as_slice())
+            .expect("EthereumMsgIn");
     let signed_tx = guard
         .keystore_mut()
         .sign_message(&param.chain_type, &param.address, &input)?;

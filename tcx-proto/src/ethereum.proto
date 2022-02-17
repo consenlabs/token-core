@@ -8,8 +8,17 @@ message EthereumTxIn {
   string gas_price = 4;
   string gas = 5;
   string data = 6;
+  string network = 7;
 }
 
 message EthereumTxOut {
+  string signature = 1;
+}
+
+message EthereumMsgIn {
+  string value = 1;
+}
+
+message EthereumMsgOut {
   string signature = 1;
 }

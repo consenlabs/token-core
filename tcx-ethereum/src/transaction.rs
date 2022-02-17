@@ -15,9 +15,18 @@ pub struct EthereumTxIn {
     #[prost(string, tag = "7")]
     pub network: std::string::String,
 }
-
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EthereumTxOut {
+    #[prost(string, tag = "1")]
+    pub signature: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EthereumMsgIn {
+    #[prost(string, tag = "1")]
+    pub value: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EthereumMsgOut {
     #[prost(string, tag = "1")]
     pub signature: std::string::String,
 }
