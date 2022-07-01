@@ -49,6 +49,16 @@ lazy_static! {
             network_id: 97,
             chain_id: 97,
         });
+        chain_infos.push(ChainInfo {
+            network: "POLYGON".to_string(),
+            network_id: 137,
+            chain_id: 137,
+        });
+        chain_infos.push(ChainInfo {
+            network: "MUMBAI".to_string(),
+            network_id: 80001,
+            chain_id: 80001,
+        });
 
         RwLock::new(chain_infos)
     };
