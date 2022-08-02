@@ -556,7 +556,12 @@ pub(crate) fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
         KeystoreCommonExistsParam::decode(data).expect("keystore_common_exists params");
     let key_hash: String;
     if param.r#type == KeyType::Mnemonic as i32 {
-        key_hash = key_hash_from_mnemonic(&param.value)?;
+        let mnemonic: &str = &param
+            .value
+            .split_whitespace()
+            .collect::<Vec<&str>>()
+            .join(" ");
+        key_hash = key_hash_from_mnemonic(mnemonic)?;
     } else {
         if param.encoding.eq("TEZOS") {
             key_hash = key_hash_from_tezos_format_pk(&param.value)?;
