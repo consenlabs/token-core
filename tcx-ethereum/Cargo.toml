@@ -12,15 +12,18 @@ tcx-chain = { path = "../tcx-chain" }
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants" }
 
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 prost = "0.6.1"
 bytes = "0.5.4"
 failure = "0.1.5"
 sha3 = "0.8.2"
 digest = "0.8.1"
 rust-crypto = "0.2.36"
-ethereum-tx-sign = "3.0.4"
 hex = "0.3.1"
 rlp = "0.4"
 ethereum-types = "0.9"
 lazy_static = "1.4.0"
 parking_lot = "0.10"
+secp256k1 = { version = "0.19", features = ["recovery"] }
+tiny-keccak = { version = "2.0", features = ["keccak"]}

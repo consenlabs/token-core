@@ -4,7 +4,7 @@ use sha3::Digest;
 use tcx_chain::Address;
 use tcx_constants::{CoinInfo, Result};
 use tcx_primitive::TypedPublicKey;
-pub struct EthereumAddress();
+pub struct EthereumAddress;
 
 impl Address for EthereumAddress {
     fn from_public_key(public_key: &TypedPublicKey, _coin: &CoinInfo) -> Result<String> {

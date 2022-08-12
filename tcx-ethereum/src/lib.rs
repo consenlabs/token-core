@@ -1,11 +1,12 @@
 mod address;
 mod chain_id;
+pub mod signature;
 mod signer;
-mod transaction;
+mod transactions;
 
 pub use crate::address::EthereumAddress;
 pub use crate::chain_id::{chain_id_from_network, ChainInfo};
-pub use crate::transaction::{EthereumMsgIn, EthereumMsgOut, EthereumTxIn, EthereumTxOut};
+pub use crate::transactions::{EthereumMsgIn, EthereumMsgOut, EthereumTxIn, EthereumTxOut};
 use digest::Digest;
 
 #[macro_use]
@@ -39,6 +40,15 @@ pub enum Error {
 
     #[fail(display = "invalid_data")]
     InvalidData,
+
+    #[fail(display = "invalid_transaction_type")]
+    InvalidTransactionType,
+
+    #[fail(display = "invalid_access_list")]
+    InvalidAccessList,
+
+    #[fail(display = "invalid_max_priority_fee_per_gas")]
+    InvalidMaxPriorityFeePerGas,
 }
 
 pub fn keccak(bytes: &[u8]) -> Vec<u8> {

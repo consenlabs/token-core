@@ -1,16 +1,15 @@
 use crate::keccak;
-use crate::transaction::{EthereumMsgIn, EthereumMsgOut, EthereumTxIn, EthereumTxOut};
+use crate::transactions::transaction::Transaction;
+use crate::transactions::{EthereumMsgIn, EthereumMsgOut, EthereumTxIn, EthereumTxOut};
 use crate::{chain_id_from_network, Error};
-use ethereum_tx_sign::RawTransaction;
-use ethereum_types::{H160, H256, U256};
-use std::convert::TryFrom;
-use std::str::FromStr;
-use tcx_primitive::{PrivateKey, Secp256k1PrivateKey};
+use core::convert::TryFrom;
+use core::str::FromStr;
+use ethereum_types::{H160, H256, U256, U64};
 
 use tcx_chain::{ChainSigner, Keystore, MessageSigner, Result, TransactionSigner};
 
-impl TryFrom<&EthereumTxIn> for RawTransaction {
-    type Error = crate::Error;
+impl TryFrom<&EthereumTxIn> for Transaction {
+    type Error = Error;
 
     fn try_from(input: &EthereumTxIn) -> core::result::Result<Self, Self::Error> {
         let nonce = U256::from_str(input.nonce.as_str()).map_err(|_| Error::InvalidNonce)?;
@@ -24,14 +23,33 @@ impl TryFrom<&EthereumTxIn> for RawTransaction {
             U256::from_str(input.gas_price.as_str()).map_err(|_| Error::InvalidGasPrice)?;
         let gas = U256::from_str(input.gas.as_str()).map_err(|_| Error::InvalidGas)?;
         let data = hex::decode(input.data.clone()).map_err(|_| Error::InvalidData)?;
+        let transaction_type = if input.transaction_type.len() > 0 {
+            Some(U64::from_str(input.transaction_type.as_str()).map_err(|_| Error::InvalidTo)?)
+        } else {
+            None
+        };
 
-        Ok(RawTransaction {
+        let mut access_list = Vec::new();
+        let mut max_priority_fee_per_gas = U256::zero();
+        if let Some(t) = transaction_type {
+            access_list =
+                serde_json::from_str(&input.access_list).map_err(|_| Error::InvalidAccessList)?;
+            if t.as_u64() == 2 {
+                max_priority_fee_per_gas = U256::from_str(input.max_priority_fee_per_gas.as_str())
+                    .map_err(|_| Error::InvalidGas)?;
+            }
+        }
+
+        Ok(Transaction {
             nonce,
             to,
             value,
             gas_price,
             gas,
             data,
+            transaction_type,
+            access_list,
+            max_priority_fee_per_gas,
         })
     }
 }
@@ -43,7 +61,7 @@ impl TransactionSigner<EthereumTxIn, EthereumTxOut> for Keystore {
         address: &str,
         tx: &EthereumTxIn,
     ) -> Result<EthereumTxOut> {
-        let unsigned_tx = RawTransaction::try_from(tx)?;
+        let unsigned_tx = Transaction::try_from(tx)?;
 
         let account = self.account(symbol, address);
 
@@ -59,7 +77,7 @@ impl TransactionSigner<EthereumTxIn, EthereumTxOut> for Keystore {
 
         let chain_id = chain_id_from_network(tx.network.as_str())?;
 
-        let signature = hex::encode(unsigned_tx.sign(&private_key, &chain_id));
+        let signature = hex::encode(unsigned_tx.sign(&private_key, chain_id));
         Ok(EthereumTxOut { signature })
     }
 }
@@ -97,22 +115,26 @@ fn test_sign() {
         data: "7f7465737432000000000000000000000000000000000000000000000000000000600057"
             .to_string(),
         network: "ROPSTEN".to_string(),
+        access_list: "[]".to_string(),
+        max_priority_fee_per_gas: "100000".to_string(),
+        transaction_type: "2".to_string(),
     };
 
-    let raw_tx = RawTransaction::try_from(&input).unwrap();
+    let raw_tx = Transaction::try_from(&input).unwrap();
     let mut data: [u8; 32] = Default::default();
     data.copy_from_slice(
         &hex::decode("2a3526dd05ad2ebba87673f711ef8c336115254ef8fcd38c4d8166db9a8120e4").unwrap(),
     );
     let private_key = H256::from_slice(&data);
     let chain_id = chain_id_from_network(input.network.as_str()).unwrap();
-    let raw_rlp_bytes = raw_tx.sign(&private_key, &chain_id);
-    let result = "f886808210008302124094132d1ea7ef895b6834d25911656f434d7167093c80a47f746573743200000000000000000000000000000000000000000000000000000060005729a00bba7863888f7a29098458d405f95c95ce30d9b36d259af54d064776a10a283ba0076cddae3a17c3dae4ab09454331b3b6218085d1542e4afeadbc0e8986b4d62e";
+    let raw_rlp_bytes = raw_tx.sign(&private_key, chain_id);
+    let result = "02f88c0380831000008210008302124094132d1ea7ef895b6834d25911656f434d7167093c80a47f7465737432000000000000000000000000000000000000000000000000000000600057c01ba0b784075e869131e6cc4e166d1e321ff0bfe376e04bd11dc3f3bf111ef68b5842a020048924b040c692444e0260cc9153df8954cd34c5ccfec4ac5bac5edf9683b1";
     assert_eq!(result, hex::encode(raw_rlp_bytes));
 }
 
 #[test]
 fn sign_message() {
+    use tcx_primitive::{PrivateKey, Secp256k1PrivateKey};
     let mut data: [u8; 32] = Default::default();
     data.copy_from_slice(
         &hex::decode("2ff20a205fad14100db5eedf95903a9a32995dca282f96df2dbb24c8c1bc8586").unwrap(),

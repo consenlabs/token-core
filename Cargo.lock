@@ -877,22 +877,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ethereum-tx-sign"
-version = "3.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdcbb5f48282fa71ba2864818a442d0ee0ca04ebc9ef9eb1837c48298c3b8cbf"
-dependencies = [
- "ethereum-types",
- "num-traits",
- "rlp",
- "secp256k1",
- "serde",
- "serde_derive",
- "serde_json",
- "tiny-keccak 2.0.2",
-]
-
-[[package]]
 name = "ethereum-types"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3689,7 +3673,6 @@ version = "0.1.1"
 dependencies = [
  "bytes 0.5.6",
  "digest 0.8.1",
- "ethereum-tx-sign",
  "ethereum-types",
  "failure",
  "hex 0.3.2",
@@ -3698,11 +3681,15 @@ dependencies = [
  "prost 0.6.1",
  "rlp",
  "rust-crypto",
+ "secp256k1",
+ "serde",
+ "serde_json",
  "sha3",
  "tcx-chain",
  "tcx-constants",
  "tcx-crypto",
  "tcx-primitive",
+ "tiny-keccak 2.0.2",
 ]
 
 [[package]]
