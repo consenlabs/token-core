@@ -115,11 +115,10 @@ fn test_sign() {
         data: "7f7465737432000000000000000000000000000000000000000000000000000000600057"
             .to_string(),
         network: "ROPSTEN".to_string(),
-        access_list: "[]".to_string(),
+        access_list: r#"[{"address":"0xf29ecc54d44d421fa436c000302569e0643b9949","storageKeys":["0xcc436b251d63b3937e4999fdf731044fe93c6caf765005da0ce2cc30467c5a56"]}]"#.to_string(),
         max_priority_fee_per_gas: "100000".to_string(),
         transaction_type: "2".to_string(),
     };
-
     let raw_tx = Transaction::try_from(&input).unwrap();
     let mut data: [u8; 32] = Default::default();
     data.copy_from_slice(
@@ -128,7 +127,7 @@ fn test_sign() {
     let private_key = H256::from_slice(&data);
     let chain_id = chain_id_from_network(input.network.as_str()).unwrap();
     let raw_rlp_bytes = raw_tx.sign(&private_key, chain_id);
-    let result = "02f88c0380831000008210008302124094132d1ea7ef895b6834d25911656f434d7167093c80a47f7465737432000000000000000000000000000000000000000000000000000000600057c01ba0b784075e869131e6cc4e166d1e321ff0bfe376e04bd11dc3f3bf111ef68b5842a020048924b040c692444e0260cc9153df8954cd34c5ccfec4ac5bac5edf9683b1";
+    let result = "02f8c50380831000008210008302124094132d1ea7ef895b6834d25911656f434d7167093c80a47f7465737432000000000000000000000000000000000000000000000000000000600057f838f794f29ecc54d44d421fa436c000302569e0643b9949e1a0cc436b251d63b3937e4999fdf731044fe93c6caf765005da0ce2cc30467c5a561ca071516332413d2f7e2ff94a035ab92857b928330310c76dbb7d6ac4c5b5d9238ba035f1823863f85b76b2c95f4ccc4771d58e1d085b926f3abf0e4cd18386b5d128";
     assert_eq!(result, hex::encode(raw_rlp_bytes));
 }
 
