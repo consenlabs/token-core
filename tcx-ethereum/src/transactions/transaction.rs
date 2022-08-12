@@ -56,7 +56,7 @@ impl Transaction {
         self.rlp_append_legacy(&mut stream);
 
         if let Some(signature) = signature {
-            self.rlp_append_signature(&mut stream, signature);
+            self.rlp_append_signature(&mut stream, signature, chain_id);
         } else {
             stream.append(&chain_id);
             stream.append(&0u8);
@@ -79,7 +79,7 @@ impl Transaction {
         self.rlp_append_access_list(&mut stream);
 
         if let Some(signature) = signature {
-            self.rlp_append_signature(&mut stream, signature);
+            self.rlp_append_signature(&mut stream, signature, chain_id);
         }
 
         stream
@@ -87,7 +87,6 @@ impl Transaction {
 
     fn encode_eip1559_payload(&self, chain_id: u64, signature: Option<&Signature>) -> RlpStream {
         let mut stream = RlpStream::new();
-
         let list_size = if signature.is_some() { 12 } else { 9 };
         stream.begin_list(list_size);
 
@@ -109,16 +108,31 @@ impl Transaction {
         self.rlp_append_access_list(&mut stream);
 
         if let Some(signature) = signature {
-            self.rlp_append_signature(&mut stream, signature);
+            self.rlp_append_signature(&mut stream, signature, chain_id);
         }
 
         stream
     }
 
-    fn rlp_append_signature(&self, stream: &mut RlpStream, signature: &Signature) -> () {
-        stream.append(&signature.v);
-        stream.append(&U256::from_big_endian(&signature.r));
-        stream.append(&U256::from_big_endian(&signature.s));
+    fn rlp_append_signature(
+        &self,
+        stream: &mut RlpStream,
+        signature: &Signature,
+        chain_id: u64,
+    ) -> () {
+        let adjust_v_value = match self.transaction_type.map(|t| t.as_u64()) {
+            Some(LEGACY_TX_ID) | None => true,
+            _ => false,
+        };
+        let v = if adjust_v_value {
+            // When signing with a chain ID, add chain replay protection.
+            signature.v + 35 + chain_id * 2
+        } else {
+            signature.v
+        };
+        stream.append(&v);
+        stream.append(&U256::from_big_endian(signature.r.as_bytes()));
+        stream.append(&U256::from_big_endian(signature.s.as_bytes()));
     }
 
     fn rlp_append_access_list(&self, stream: &mut RlpStream) -> () {
@@ -166,13 +180,12 @@ impl Transaction {
         };
 
         let encoded = self.encode(chain_id, None);
-
         let hash = keccak256_hash(&encoded);
 
         let signature = if adjust_v_value {
-            ecdsa_sign(&hash, &private_key.0, Some(chain_id))
+            ecdsa_sign(&hash, &private_key.0)
         } else {
-            ecdsa_sign(&hash, &private_key.0, None)
+            ecdsa_sign(&hash, &private_key.0)
         };
 
         self.encode(chain_id, Some(&signature))
