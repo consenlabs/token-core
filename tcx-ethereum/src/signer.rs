@@ -3,7 +3,6 @@ use crate::transactions::transaction::Transaction;
 use crate::transactions::{EthereumMsgIn, EthereumMsgOut, EthereumTxIn, EthereumTxOut};
 use crate::{chain_id_from_network, Error};
 use core::convert::TryFrom;
-use core::str::FromStr;
 use ethereum_types::{H160, H256, U256, U64};
 
 use tcx_chain::{ChainSigner, Keystore, MessageSigner, Result, TransactionSigner};
@@ -12,19 +11,21 @@ impl TryFrom<&EthereumTxIn> for Transaction {
     type Error = Error;
 
     fn try_from(input: &EthereumTxIn) -> core::result::Result<Self, Self::Error> {
-        let nonce = U256::from_str(input.nonce.as_str()).map_err(|_| Error::InvalidNonce)?;
+        let nonce = U256::from_dec_str(input.nonce.as_str()).map_err(|_| Error::InvalidNonce)?;
         let to = if input.to.len() > 0 {
-            Some(H160::from_str(input.to.as_str()).map_err(|_| Error::InvalidTo)?)
+            Some(H160::from_slice(
+                &hex::decode(input.to.as_str()).map_err(|_| Error::InvalidTo)?,
+            ))
         } else {
             None
         };
-        let value = U256::from_str(input.value.as_str()).map_err(|_| Error::InvalidValue)?;
+        let value = U256::from_dec_str(input.value.as_str()).map_err(|_| Error::InvalidValue)?;
         let gas_price =
-            U256::from_str(input.gas_price.as_str()).map_err(|_| Error::InvalidGasPrice)?;
-        let gas = U256::from_str(input.gas.as_str()).map_err(|_| Error::InvalidGas)?;
+            U256::from_dec_str(input.gas_price.as_str()).map_err(|_| Error::InvalidGasPrice)?;
+        let gas = U256::from_dec_str(input.gas.as_str()).map_err(|_| Error::InvalidGas)?;
         let data = hex::decode(input.data.clone()).map_err(|_| Error::InvalidData)?;
         let transaction_type = if input.transaction_type.len() > 0 {
-            Some(U64::from_str(input.transaction_type.as_str()).map_err(|_| Error::InvalidTo)?)
+            Some(U64::from_dec_str(input.transaction_type.as_str()).map_err(|_| Error::InvalidTo)?)
         } else {
             None
         };
@@ -35,8 +36,9 @@ impl TryFrom<&EthereumTxIn> for Transaction {
             access_list =
                 serde_json::from_str(&input.access_list).map_err(|_| Error::InvalidAccessList)?;
             if t.as_u64() == 2 {
-                max_priority_fee_per_gas = U256::from_str(input.max_priority_fee_per_gas.as_str())
-                    .map_err(|_| Error::InvalidGas)?;
+                max_priority_fee_per_gas =
+                    U256::from_dec_str(input.max_priority_fee_per_gas.as_str())
+                        .map_err(|_| Error::InvalidGas)?;
             }
         }
 
@@ -108,15 +110,14 @@ impl MessageSigner<EthereumMsgIn, EthereumMsgOut> for Keystore {
 fn test_sign() {
     let input = EthereumTxIn {
         nonce: "0".to_string(),
-        to: "132D1eA7EF895b6834D25911656f434d7167093C".to_string(),
-        value: U256::zero().to_string(),
-        gas_price: "1000".to_string(),
-        gas: "21240".to_string(),
-        data: "7f7465737432000000000000000000000000000000000000000000000000000000600057"
-            .to_string(),
-        network: "ROPSTEN".to_string(),
-        access_list: r#"[{"address":"0xf29ecc54d44d421fa436c000302569e0643b9949","storageKeys":["0xcc436b251d63b3937e4999fdf731044fe93c6caf765005da0ce2cc30467c5a56"]}]"#.to_string(),
-        max_priority_fee_per_gas: "100000".to_string(),
+        to: "355972B9007c736515523417c96561F63db4e7bC".to_string(),
+        value: "1000000000000000".to_string(),
+        gas_price: "1000000010".to_string(),
+        gas: "100000".to_string(),
+        data: "".to_string(),
+        network: "RINKEBY".to_string(),
+        access_list: "[]".to_string(),
+        max_priority_fee_per_gas: "1000000010".to_string(),
         transaction_type: "2".to_string(),
     };
     let raw_tx = Transaction::try_from(&input).unwrap();
@@ -127,7 +128,7 @@ fn test_sign() {
     let private_key = H256::from_slice(&data);
     let chain_id = chain_id_from_network(input.network.as_str()).unwrap();
     let raw_rlp_bytes = raw_tx.sign(&private_key, chain_id);
-    let result = "02f8c50380831000008210008302124094132d1ea7ef895b6834d25911656f434d7167093c80a47f7465737432000000000000000000000000000000000000000000000000000000600057f838f794f29ecc54d44d421fa436c000302569e0643b9949e1a0cc436b251d63b3937e4999fdf731044fe93c6caf765005da0ce2cc30467c5a561ca071516332413d2f7e2ff94a035ab92857b928330310c76dbb7d6ac4c5b5d9238ba035f1823863f85b76b2c95f4ccc4771d58e1d085b926f3abf0e4cd18386b5d128";
+    let result = "02f8720480843b9aca0a843b9aca0a830186a094355972b9007c736515523417c96561f63db4e7bc87038d7ea4c6800080c01ca0b88af67e8d892c55539eb6bec47704db4b17173b8a8d8bd3a0c59c87319e150aa00baf8b065dde5601cef06f1b7ddf4ebd125c5abad2250315d092a00cc2c4a4c4";
     assert_eq!(result, hex::encode(raw_rlp_bytes));
 }
 
