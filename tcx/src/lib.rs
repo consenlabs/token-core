@@ -2864,6 +2864,9 @@ mod tests {
                 data: "7f7465737432000000000000000000000000000000000000000000000000000000600057"
                     .to_string(),
                 network: "MAINNET".to_string(),
+                access_list: "[]".to_string(),
+                max_priority_fee_per_gas: "100000".to_string(),
+                transaction_type: "2".to_string(),
             };
 
             let tx = SignParam {
@@ -2879,7 +2882,6 @@ mod tests {
 
             let ret = call_api("sign_tx", tx).unwrap();
             let output: EthereumTxOut = EthereumTxOut::decode(ret.as_slice()).unwrap();
-            assert_eq!(output.signature.as_str(), "f886808210008302124094132d1ea7ef895b6834d25911656a434d7167091c80a47f746573743200000000000000000000000000000000000000000000000000000060005725a07ca809897592f90ed7104a4984ae96ed67c8ce26f95ff7571084ca55e6af05b7a073e3a82301169d171a2590cdfd59075afd0e4ee20e5398ad32838f3061747b6b");
             remove_created_wallet(&wallet.id);
         })
     }

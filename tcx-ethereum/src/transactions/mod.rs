@@ -1,3 +1,5 @@
+pub mod transaction;
+
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EthereumTxIn {
     #[prost(string, tag = "1")]
@@ -14,17 +16,26 @@ pub struct EthereumTxIn {
     pub data: std::string::String,
     #[prost(string, tag = "7")]
     pub network: std::string::String,
+    #[prost(string, tag = "8")]
+    pub access_list: std::string::String,
+    #[prost(string, tag = "9")]
+    pub max_priority_fee_per_gas: std::string::String,
+    #[prost(string, tag = "10")]
+    pub transaction_type: std::string::String,
 }
+
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EthereumTxOut {
     #[prost(string, tag = "1")]
     pub signature: std::string::String,
 }
+
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EthereumMsgIn {
     #[prost(string, tag = "1")]
     pub value: std::string::String,
 }
+
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EthereumMsgOut {
     #[prost(string, tag = "1")]
