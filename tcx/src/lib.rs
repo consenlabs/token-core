@@ -1567,6 +1567,19 @@ mod tests {
             assert!(result.is_exists);
             assert_eq!(result.id, wallet.id);
 
+            let wallet = import_default_wallet();
+            let param: KeystoreCommonExistsParam = KeystoreCommonExistsParam {
+                r#type: KeyType::Mnemonic as i32,
+                value: format!("{}", " inject  kidney  empty canal shadow  pact comfort  wife crush horse wife sketch  ").to_string(),//Badly formatted mnemonic
+                encoding: "".to_string(),
+            };
+
+            let ret_bytes = call_api("keystore_common_exists", param).unwrap();
+            let result: KeystoreCommonExistsResult =
+                KeystoreCommonExistsResult::decode(ret_bytes.as_slice()).unwrap();
+            assert!(result.is_exists);
+            assert_eq!(result.id, wallet.id);
+
             remove_created_wallet(&wallet.id);
         })
     }
