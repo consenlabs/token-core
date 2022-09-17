@@ -121,7 +121,10 @@ fn ikm_to_lamport_sk(ikm: &[u8], salt: &[u8], split_bytes: &mut [[u8; DIGEST_SIZ
 }
 
 fn parent_sk_to_lamport_pk(parent_sk: BigUint, index: BigUint) -> Vec<u8> {
-    let salt = index.to_bytes_be();
+    let mut salt = index.to_bytes_be();
+    while salt.len() < 4 {
+        salt.insert(0, 0x00);
+    }
     let ikm = parent_sk.to_bytes_be();
     let mut lamport_0 = [[0u8; DIGEST_SIZE]; NUM_DIGESTS];
     ikm_to_lamport_sk(ikm.as_slice(), salt.as_slice(), &mut lamport_0);
@@ -156,7 +159,15 @@ fn hkdf_mod_r(ikm: &[u8]) -> BigUint {
     let mut tmp = ikm.to_vec();
     tmp.extend(b"\x00");
 
-    hkdf(b"BLS-SIG-KEYGEN-SALT-", &tmp, b"\x00\x30", &mut okm); // L=48, info=I2OSP(L,2)
+    // let digest_obj = digest::digest(&digest::SHA256, b"BLS-SIG-KEYGEN-SALT-");
+    let mut sha256 = Sha256::new();
+    sha256.update(b"BLS-SIG-KEYGEN-SALT-");
+    hkdf(
+        &sha256.finalize_fixed().to_vec(),
+        &tmp,
+        b"\x00\x30",
+        &mut okm,
+    ); // L=48, info=I2OSP(L,2)
     let r = BigUint::from_str_radix(
         "73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001",
         16,
@@ -188,7 +199,6 @@ mod tests {
     use crate::{Derive, DeterministicPrivateKey, PrivateKey};
     use hex;
     use num_bigint::BigUint;
-    use num_traits::{FromPrimitive, Num};
 
     struct TestVector {
         seed: &'static str,
@@ -202,21 +212,21 @@ mod tests {
         let test_vectors = vec!(
             TestVector{
                 seed : "c55257c360c07c72029aebc1b53c05ed0362ada38ead3e3e9efa3708e53495531f09a6987599d18264c1e1c92f2cf141630c7a3c4ab7c81b2f001698e7463b04",
-                master_sk : "5399117110774477986698372024995405256382522670366369834617409486544348441851",
+                master_sk : "6083874454709270928345386274498605044986640685124978867557563392430687146096",
                 child_index : "0",
-                child_sk : "11812940737387919040225825939013910852517748782307378293770044673328955938106",
+                child_sk : "20397789859736650942317412262472558107875392172444076792671091975210932703118",
             },
             TestVector{
                 seed: "3141592653589793238462643383279502884197169399375105820974944592",
-                master_sk: "36167147331491996618072159372207345412841461318189449162487002442599770291484",
+                master_sk: "29757020647961307431480504535336562678282505419141012933316116377660817309383",
                 child_index: "3141592653",
-                child_sk: "41787458189896526028601807066547832426569899195138584349427756863968330588237",
+                child_sk: "25457201688850691947727629385191704516744796114925897962676248250929345014287",
             },
             TestVector{
                 seed: "0099FF991111002299DD7744EE3355BBDD8844115566CC55663355668888CC00",
-                master_sk: "13904094584487173309420026178174172335998687531503061311232927109397516192843",
+                master_sk: "27580842291869792442942448775674722299803720648445448686099262467207037398656",
                 child_index: "4294967295",
-                child_sk: "12482522899285304316694838079579801944734479969002030150864436005368716366140",
+                child_sk: "29358610794459428860402234341874281240803786294062035874021252734817515685787",
             }
         );
 
@@ -253,12 +263,49 @@ mod tests {
 
         assert_eq!(
             hex::encode(dsk.private_key().to_bytes()),
-            "fbec74a665b4f52d36a1717c83b21e62051cd5cd90f1c81c4664a6f4bfcaef0b"
+            "7050b4223168ae407dee804d461fc3dbfe53f5dc5218debb8fab6379d559730d"
         );
 
         assert_eq!(
             hex::encode(dsk.derive("m/0").unwrap().private_key().to_bytes()),
-            "3a5542a9fef97a0f6b776fbe5e8edb0e087457be81223b1e1f40836834e31d1a"
+            "8e0fe539158c9d590a771420cc033baedaf3749b5c08b5f85bd1e6146cbd182d"
+        );
+    }
+
+    #[test]
+    fn eth2_withdrawal_address_test() {
+        let dsk = BLSDeterministicPrivateKey::from_seed(
+            &hex::decode("ee3fce3ccf05a2b58c851e321077a63ee2113235112a16fc783dc16279ff818a549ff735ac4406c624235db2d37108e34c6cbe853cbe09eb9e2369e6dd1c5aaa").unwrap()).unwrap();
+        assert_eq!(
+            dsk.0,
+            "18563599344197674528480235454076968403807977642577320252460493386276600523197"
+                .parse::<BigUint>()
+                .expect("invalid master key format")
+        );
+
+        let child_sk = hex::encode(
+            dsk.derive("m/12381/3600/1/0/0")
+                .unwrap()
+                .private_key()
+                .to_bytes(),
+        );
+        assert_eq!(
+            child_sk,
+            "ba87c3a478ee2a5a26c48918cc99be88bc648bee3d38c2d5faad41872a9e0d06"
+        );
+
+        let dsk = BLSDeterministicPrivateKey::from_seed(
+            &hex::decode("ed93db74a05f1a93b607ac20b447152aedfeb1f541c75abbb415c068eacdd9cd4f46f97b4ee0bbe99255016e3121ff7d283c5ab9a5d235829870b76e6e070061").unwrap()).unwrap();
+
+        let child_sk = hex::encode(
+            dsk.derive("m/12381/3600/0/0/0")
+                .unwrap()
+                .private_key()
+                .to_bytes(),
+        );
+        assert_eq!(
+            child_sk,
+            "46c50b0327f01e713b27c976fcc893cf19cff729e75b70dc5caa8b3d8c1df700"
         );
     }
 }

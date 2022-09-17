@@ -66,6 +66,38 @@ pub struct WalletKeyParam {
     #[prost(string, tag = "2")]
     pub password: std::string::String,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ZksyncPrivateKeyFromSeedParam {
+    #[prost(string, tag = "1")]
+    pub seed: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ZksyncPrivateKeyFromSeedResult {
+    #[prost(string, tag = "1")]
+    pub priv_key: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ZksyncSignMusigParam {
+    #[prost(string, tag = "1")]
+    pub priv_key: std::string::String,
+    #[prost(string, tag = "2")]
+    pub bytes: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ZksyncSignMusigResult {
+    #[prost(string, tag = "1")]
+    pub signature: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ZksyncPrivateKeyToPubkeyHashParam {
+    #[prost(string, tag = "1")]
+    pub priv_key: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ZksyncPrivateKeyToPubkeyHashResult {
+    #[prost(string, tag = "1")]
+    pub pub_key_hash: std::string::String,
+}
 /// Hd Store
 
 /// FUNCTION: hd_store_create(HdStoreCreateParam): WalletResult

@@ -26,7 +26,9 @@ use crate::api::{
     HdStoreImportParam, KeyType, KeystoreCommonAccountsParam, KeystoreCommonDeriveParam,
     KeystoreCommonExistsParam, KeystoreCommonExistsResult, KeystoreCommonExportResult,
     PrivateKeyStoreExportParam, PrivateKeyStoreImportParam, PublicKeyParam, PublicKeyResult,
-    Response, WalletKeyParam, WalletResult,
+    Response, WalletKeyParam, WalletResult, ZksyncPrivateKeyFromSeedParam,
+    ZksyncPrivateKeyFromSeedResult, ZksyncPrivateKeyToPubkeyHashParam,
+    ZksyncPrivateKeyToPubkeyHashResult, ZksyncSignMusigParam, ZksyncSignMusigResult,
 };
 use crate::api::{InitTokenCoreXParam, SignParam};
 use crate::error_handling::Result;
@@ -43,6 +45,7 @@ use tcx_constants::CurveType;
 use tcx_crypto::aes::cbc::encrypt_pkcs7;
 use tcx_crypto::hash::dsha256;
 use tcx_crypto::KDF_ROUNDS;
+use tcx_eth2::address::Eth2Address;
 use tcx_primitive::{Bip32DeterministicPublicKey, Ss58Codec};
 use tcx_substrate::{
     decode_substrate_keystore, encode_substrate_keystore, ExportSubstrateKeystoreResult,
@@ -52,6 +55,7 @@ use tcx_tezos::address::TezosAddress;
 use tcx_tezos::transaction::TezosRawTxIn;
 use tcx_tezos::{build_tezos_base58_private_key, pars_tezos_private_key};
 use tcx_tron::transaction::{TronMessageInput, TronTxInput};
+use zksync_crypto::{private_key_from_seed, private_key_to_pubkey_hash, sign_musig};
 
 pub(crate) fn encode_message(msg: impl Message) -> Result<Vec<u8>> {
     if *IS_DEBUG.read() {
@@ -79,6 +83,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "POLKADOT" | "KUSAMA" => keystore.derive_coin::<SubstrateAddress>(&coin_info),
         "TEZOS" => keystore.derive_coin::<TezosAddress>(&coin_info),
         "FILECOIN" => keystore.derive_coin::<FilecoinAddress>(&coin_info),
+        "ETHEREUM2" => keystore.derive_coin::<Eth2Address>(&coin_info),
         _ => Err(format_err!("unsupported_chain")),
     }
 }
@@ -476,7 +481,7 @@ pub(crate) fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
     };
 
     // private_key prefix is only about chain type and network
-    let coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
+    let _coin_info = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
     let value = if ["TRON", "POLKADOT", "KUSAMA"].contains(&param.chain_type.as_str()) {
         Ok(pk_hex.to_string())
     } else if "FILECOIN".contains(&param.chain_type.as_str()) {
@@ -655,30 +660,37 @@ pub(crate) fn get_public_key(data: &[u8]) -> Result<Vec<u8>> {
         _ => Err(format_err!("{}", "wallet_not_found")),
     }?;
 
+    let account = keystore.account(&param.chain_type, &param.address);
+    let mut pub_key = vec![];
+    if let Some(acc) = account {
+        tcx_ensure!(
+            acc.public_key.is_some(),
+            format_err!("account_not_contains_public_key")
+        );
+        pub_key = hex::decode(acc.public_key.clone().unwrap())?;
+    } else {
+        return Err(format_err!("account_not_found"));
+    }
+    let mut ret = PublicKeyResult {
+        id: param.id.to_string(),
+        chain_type: param.chain_type.to_string(),
+        address: param.address.to_string(),
+        public_key: String::new(),
+    };
+    //https://www.rubydoc.info/gems/tezos_client/0.2.1/TezosClient/Crypto
     let edpk_prefix: Vec<u8> = vec![0x0D, 0x0F, 0x25, 0xD9];
     match param.chain_type.to_uppercase().as_str() {
         "TEZOS" => {
-            let account = keystore.account(&param.chain_type, &param.address);
-            if let Some(acc) = account {
-                tcx_ensure!(
-                    acc.public_key.is_some(),
-                    format_err!("account_not_contains_public_key")
-                );
-                let pub_key = hex::decode(acc.public_key.clone().unwrap())?;
-                let to_hash = [edpk_prefix, pub_key].concat();
-                let hashed = dsha256(&to_hash);
-                let hash_with_checksum = [to_hash, hashed[0..4].to_vec()].concat();
-                let edpk = hash_with_checksum.to_base58();
-                let ret = PublicKeyResult {
-                    id: param.id.to_string(),
-                    chain_type: param.chain_type.to_string(),
-                    address: param.address.to_string(),
-                    public_key: edpk,
-                };
-                encode_message(ret)
-            } else {
-                Err(format_err!("account_not_found"))
-            }
+            let to_hash = [edpk_prefix, pub_key].concat();
+            let hashed = dsha256(&to_hash);
+            let hash_with_checksum = [to_hash, hashed[0..4].to_vec()].concat();
+            let edpk = hash_with_checksum.to_base58();
+            ret.public_key = edpk;
+            encode_message(ret)
+        }
+        "ETHEREUM2" => {
+            ret.public_key = hex::encode(pub_key);
+            encode_message(ret)
         }
         _ => Err(format_err!("unsupported_chain")),
     }
@@ -927,4 +939,40 @@ pub(crate) fn sign_tezos_tx_raw(param: &SignParam, keystore: &mut Keystore) -> R
     .expect("TezosRawTxIn");
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
+}
+
+pub(crate) fn zksync_private_key_from_seed(data: &[u8]) -> Result<Vec<u8>> {
+    let param: ZksyncPrivateKeyFromSeedParam = ZksyncPrivateKeyFromSeedParam::decode(data)?;
+
+    let result = private_key_from_seed(hex::decode(param.seed)?.as_slice())
+        .expect("zksync_private_key_from_seed_error");
+
+    let ret = ZksyncPrivateKeyFromSeedResult {
+        priv_key: hex::encode(result),
+    };
+    encode_message(ret)
+}
+
+pub(crate) fn zksync_sign_musig(data: &[u8]) -> Result<Vec<u8>> {
+    let param: ZksyncSignMusigParam = ZksyncSignMusigParam::decode(data)?;
+
+    let sign_result = sign_musig(
+        hex::decode(param.priv_key)?.as_slice(),
+        hex::decode(param.bytes)?.as_slice(),
+    )
+    .expect("zksync_sign_musig_error");
+    let ret = ZksyncSignMusigResult {
+        signature: hex::encode(sign_result),
+    };
+    encode_message(ret)
+}
+
+pub(crate) fn zksync_private_key_to_pubkey_hash(data: &[u8]) -> Result<Vec<u8>> {
+    let param: ZksyncPrivateKeyToPubkeyHashParam = ZksyncPrivateKeyToPubkeyHashParam::decode(data)?;
+    let pub_key_hash = private_key_to_pubkey_hash(hex::decode(param.priv_key)?.as_slice())
+        .expect("zksync_private_key_to_pubkey_hash_error");
+    let ret = ZksyncPrivateKeyToPubkeyHashResult {
+        pub_key_hash: hex::encode(pub_key_hash),
+    };
+    encode_message(ret)
 }
