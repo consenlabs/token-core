@@ -978,7 +978,8 @@ pub fn sign_solana_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<
     let input: SolanaTxIn = SolanaTxIn::decode(
         param
             .input
-            .as_ref()?
+            .as_ref()
+            .expect("raw_tx_input")
             .value
             .clone()
             .as_slice(),

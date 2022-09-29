@@ -232,7 +232,7 @@ impl From<Signature> for [u8; 64] {
 }
 
 fn position(keys: &Vec<Pubkey>, key: &Pubkey) -> u8 {
-    keys.iter().position(|k| k == key)? as u8
+    keys.iter().position(|k| k == key).unwrap() as u8
 }
 
 impl SolanaInstruction {
@@ -241,7 +241,7 @@ impl SolanaInstruction {
         data: &T,
         accounts: Vec<AccountMeta>,
     ) -> Self {
-        let data = serialize(data)?;
+        let data = serialize(data).expect("serialize error");
         Self {
             program_id,
             accounts,

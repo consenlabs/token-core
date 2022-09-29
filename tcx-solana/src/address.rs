@@ -18,4 +18,3 @@ impl Address for SolanaAddress {
         }
     }
 }
-

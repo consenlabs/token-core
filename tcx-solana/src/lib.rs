@@ -5,4 +5,3 @@ mod transaction;
 
 pub use crate::address::SolanaAddress;
 pub use crate::transaction::{SolanaTxIn, SolanaTxOut};
-
