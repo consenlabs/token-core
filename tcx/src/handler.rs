@@ -18,6 +18,7 @@ use tcx_chain::{Account, HdKeystore, Metadata, PrivateKeystore, Source};
 use tcx_ckb::{CkbAddress, CkbTxInput};
 use tcx_crypto::{XPUB_COMMON_IV, XPUB_COMMON_KEY_128};
 use tcx_filecoin::{FilecoinAddress, KeyInfo, UnsignedMessage};
+use tcx_solana::{SolanaAddress, SolanaTxIn, SolanaTxOut};
 use tcx_tron::TrxAddress;
 
 use crate::api::keystore_common_derive_param::Derivation;
@@ -82,6 +83,7 @@ fn derive_account<'a, 'b>(keystore: &mut Keystore, derivation: &Derivation) -> R
         "TEZOS" => keystore.derive_coin::<TezosAddress>(&coin_info),
         "FILECOIN" => keystore.derive_coin::<FilecoinAddress>(&coin_info),
         "ETHEREUM" => keystore.derive_coin::<EthereumAddress>(&coin_info),
+        "SOLANA" => keystore.derive_coin::<SolanaAddress>(&coin_info),
         _ => Err(format_err!("derive_account unsupported_chain")),
     }
 }
@@ -647,6 +649,7 @@ pub fn sign_tx(data: &[u8]) -> Result<Vec<u8>> {
         "FILECOIN" => sign_filecoin_tx(&param, guard.keystore_mut()),
         "TEZOS" => sign_tezos_tx_raw(&param, guard.keystore_mut()),
         "ETHEREUM" => sign_ethereum_tx_raw(&param, guard.keystore_mut()),
+        "SOLANA" => sign_solana_tx(&param, guard.keystore_mut()),
         _ => Err(format_err!("sign_tx unsupported_chain")),
     }
 }
@@ -967,6 +970,22 @@ pub fn sign_ethereum_tx_raw(param: &SignParam, keystore: &mut Keystore) -> Resul
             .as_slice(),
     )
     .expect("EthereumTxIn");
+    let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
+    encode_message(signed_tx)
+}
+
+pub fn sign_solana_tx(param: &SignParam, keystore: &mut Keystore) -> Result<Vec<u8>> {
+    let input: SolanaTxIn = SolanaTxIn::decode(
+        param
+            .input
+            .as_ref()
+            .expect("invalid_message")
+            .value
+            .clone()
+            .as_slice(),
+    )
+    .expect("SolanaTxIn");
+
     let signed_tx = keystore.sign_transaction(&param.chain_type, &param.address, &input)?;
     encode_message(signed_tx)
 }

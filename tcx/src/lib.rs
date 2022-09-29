@@ -189,6 +189,7 @@ mod tests {
     use tcx_ckb::{CachedCell, CellInput, CkbTxInput, CkbTxOutput, OutPoint, Script, Witness};
     use tcx_ethereum::{EthereumTxIn, EthereumTxOut};
     use tcx_filecoin::{SignedMessage, UnsignedMessage};
+    use tcx_solana::{SolanaTxIn, SolanaTxOut};
     use tcx_substrate::{
         ExportSubstrateKeystoreResult, SubstrateKeystore, SubstrateKeystoreParam, SubstrateRawTxIn,
         SubstrateTxOut,
@@ -2882,6 +2883,72 @@ mod tests {
 
             let ret = call_api("sign_tx", tx).unwrap();
             let output: EthereumTxOut = EthereumTxOut::decode(ret.as_slice()).unwrap();
+            remove_created_wallet(&wallet.id);
+        })
+    }
+
+    fn import_solana_pk_store() -> WalletResult {
+        let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
+            private_key: "8ab49b91779c96f21cb3fcbf379a4c9a48453f8b34e62369677f8a4d18315db3"
+                .to_string(),
+            password: TEST_PASSWORD.to_string(),
+            name: "import_solana_pk_store".to_string(),
+            password_hint: "".to_string(),
+            overwrite: true,
+            encoding: "".to_string(),
+        };
+
+        let ret = private_key_store_import(&encode_message(param).unwrap()).unwrap();
+        WalletResult::decode(ret.as_slice()).unwrap()
+    }
+
+    #[test]
+    pub fn test_sign_solana_tx() {
+        run_test(|| {
+            let wallet = import_solana_pk_store();
+            let derivation = Derivation {
+                chain_type: "SOLANA".to_string(),
+                path: "m/44'/501'/0'/0'".to_string(),
+                network: "MAINNET".to_string(),
+                seg_wit: "".to_string(),
+                chain_id: "".to_string(),
+                curve: "ED25519".to_string(),
+            };
+            let param = KeystoreCommonDeriveParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                derivations: vec![derivation],
+            };
+            let ret = call_api("keystore_common_derive", param).unwrap();
+            let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
+
+            let input = SolanaTxIn {
+                from: bs58::decode("yyM4UDq7f9WwsEB3xAQAmeTTFW5AiwzW3KdpzoEyXjz")
+                    .into_vec()
+                    .unwrap(),
+                to: bs58::decode("7KsGNyt3Aec8M1kARpn5C62bjX1VwxNwS2W9EusxyJAD")
+                    .into_vec()
+                    .unwrap(),
+                lamports: 1000000000,
+                recent_blockhash: bs58::decode("2weevVwLjgSGqFSjD61oEG9WiCT7m1qvCuxj9bavXezr")
+                    .into_vec()
+                    .unwrap(),
+            };
+
+            let tx = SignParam {
+                id: wallet.id.to_string(),
+                key: Some(Key::Password(TEST_PASSWORD.to_string())),
+                chain_type: "SOLANA".to_string(),
+                address: rsp.accounts.first().unwrap().address.to_string(),
+                input: Some(::prost_types::Any {
+                    type_url: "imtoken".to_string(),
+                    value: encode_message(input).unwrap(),
+                }),
+            };
+
+            let ret = call_api("sign_tx", tx).unwrap();
+            let output: SolanaTxOut = SolanaTxOut::decode(ret.as_slice()).unwrap();
+            println!("solana out:{:?}", output);
             remove_created_wallet(&wallet.id);
         })
     }
