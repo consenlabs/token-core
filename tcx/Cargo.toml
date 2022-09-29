@@ -18,6 +18,7 @@ tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants"}
 tcx-tezos = {path = "../tcx-tezos"}
 tcx-ethereum = { path = "../tcx-ethereum" }
+tcx-solana = { path = "../tcx-solana" }
 
 prost = "0.6.1"
 bytes = "0.5.4"
@@ -45,3 +46,4 @@ prost-build = "0.5.0"
 [dev-dependencies]
 sp-core = "2.0.0-rc3"
 sp-runtime = "2.0.0-rc3"
+bs58 = "0.4.0"

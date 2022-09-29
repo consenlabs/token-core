@@ -1,0 +1,12 @@
+syntax = "proto3";
+package transaction;
+
+message SolanaTxIn {
+  bytes to = 1;
+  uint64 lamports = 2;
+  bytes recent_blockhash = 3;
+}
+
+message SolanaTxOut {
+  string Tx = 1;
+}

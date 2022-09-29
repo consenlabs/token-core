@@ -1,0 +1,20 @@
+[package]
+name = "tcx-solana"
+version = "0.1.0"
+authors = ["CodyLeo <codyleo@foxmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tcx-chain = { path = "../tcx-chain" }
+tcx-constants = { path = "../tcx-constants" }
+tcx-primitive = { path = "../tcx-primitive" }
+sp-core = "2.0.0-rc3"
+prost = "0.6.1"
+prost-types = "0.6.1"
+bincode ="1.3.3"
+generic-array = "0.14.5"
+serde = "1.0.136"
+solana-program = "1.10.11"
+bs58 = "0.4.0"

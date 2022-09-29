@@ -49,4 +49,7 @@ fn main() {
     //tcx-tezos
     env::set_var("OUT_DIR", "../tcx-tezos/src");
     prost_build::compile_protos(&["src/tezos.proto"], &["src/"]).unwrap();
+
+    env::set_var("OUT_DIR", "../tcx-solana/src");
+    prost_build::compile_protos(&["src/solana.proto"], &["src/"]).unwrap();
 }
