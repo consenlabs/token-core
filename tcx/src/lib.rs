@@ -2945,7 +2945,7 @@ mod tests {
 
             let ret = call_api("sign_tx", tx).unwrap();
             let output: SolanaTxOut = SolanaTxOut::decode(ret.as_slice()).unwrap();
-            println!("solana out:{:?}", output);
+            assert_eq!(output.tx,"5aYTkY1Hmrch6GYeoV1c4pLZBK5WxKYLMmEnAHbWCbtrmLgzUQQrsDBdbrSpsf2J9PhPMdMsKP4fcNrh8DCxDb2CnZCu3p97Q4qPRswEqVcu8x7i3WM6PRF3Bkc8MuHL3vmrHpXdEzvtHfTydtFKkSz2bCzwVjpDbjDueQHNX1FdXb4aaLyu7QE5GYoKoR4U6V6DLMe3Uymx1QcuZpgLm1jhaqtwLEuQ1NTLB4qJk73wMwvokkfd2DwhSgmBcgu5yMgF7ewwJmZzvsV8QkMDZUhApYGUbpJJdDvvB");
             remove_created_wallet(&wallet.id);
         })
     }
