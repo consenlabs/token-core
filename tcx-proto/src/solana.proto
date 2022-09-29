@@ -2,10 +2,9 @@ syntax = "proto3";
 package transaction;
 
 message SolanaTxIn {
-  bytes from = 1;
-  bytes to = 2;
-  uint64 lamports = 3;
-  bytes recent_blockhash = 4;
+  bytes to = 1;
+  uint64 lamports = 2;
+  bytes recent_blockhash = 3;
 }
 
 message SolanaTxOut {

@@ -2889,7 +2889,7 @@ mod tests {
 
     fn import_solana_pk_store() -> WalletResult {
         let param: PrivateKeyStoreImportParam = PrivateKeyStoreImportParam {
-            private_key: "8ab49b91779c96f21cb3fcbf379a4c9a48453f8b34e62369677f8a4d18315db3"
+            private_key: "f3f7c4290567ce10c0672bef4953cb4d8e416ba7f5b6b5c0a978e76860dae5b7"
                 .to_string(),
             password: TEST_PASSWORD.to_string(),
             name: "import_solana_pk_store".to_string(),
@@ -2923,14 +2923,11 @@ mod tests {
             let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
 
             let input = SolanaTxIn {
-                from: bs58::decode("yyM4UDq7f9WwsEB3xAQAmeTTFW5AiwzW3KdpzoEyXjz")
-                    .into_vec()
-                    .unwrap(),
-                to: bs58::decode("7KsGNyt3Aec8M1kARpn5C62bjX1VwxNwS2W9EusxyJAD")
+                to: bs58::decode("iTEogtMikvMr9vuevBFqwaCV72UAEaSvctGtrzgqTW1")
                     .into_vec()
                     .unwrap(),
                 lamports: 1000000000,
-                recent_blockhash: bs58::decode("2weevVwLjgSGqFSjD61oEG9WiCT7m1qvCuxj9bavXezr")
+                recent_blockhash: bs58::decode("Hn33taMvEMPyGDZ3numAbt4mg3TJTe7YpnjaFkztErMW")
                     .into_vec()
                     .unwrap(),
             };
