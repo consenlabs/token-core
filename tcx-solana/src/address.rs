@@ -12,9 +12,9 @@ impl Address for SolanaAddress {
     }
 
     fn is_valid(address: &str, coin: &CoinInfo) -> bool {
-       match Ed25519PublicKey::from_slice(address.as_bytes()){
-            Ok(..)=>true,
-            _ =>false
+        match Ed25519PublicKey::from_slice(address.as_bytes()) {
+            Ok(..) => true,
+            _ => false,
         }
     }
 }
@@ -23,7 +23,6 @@ impl Address for SolanaAddress {
 mod tests {
     #[test]
     fn is_valid() {
-
         assert_eq!(2 + 2, 4);
     }
 }

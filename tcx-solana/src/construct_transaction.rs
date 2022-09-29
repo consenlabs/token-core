@@ -1,8 +1,8 @@
 use bincode::serialize;
 use generic_array::{typenum::U64, GenericArray};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 use solana_program::short_vec;
+use std::collections::BTreeMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum SystemInstruction {
@@ -235,7 +235,7 @@ fn position(keys: &Vec<Pubkey>, key: &Pubkey) -> u8 {
     keys.iter().position(|k| k == key).unwrap() as u8
 }
 
-impl SolanaInstruction{
+impl SolanaInstruction {
     pub fn new_with_bincode<T: Serialize>(
         program_id: Pubkey,
         data: &T,
@@ -250,19 +250,34 @@ impl SolanaInstruction{
     }
 }
 
-pub fn transfer_instruction(from_pubkey: &Pubkey, to_pubkey: &Pubkey, lamports: u64) -> SolanaInstruction {
+pub fn transfer_instruction(
+    from_pubkey: &Pubkey,
+    to_pubkey: &Pubkey,
+    lamports: u64,
+) -> SolanaInstruction {
     let account_metas = vec![
-        AccountMeta { pubkey: from_pubkey.clone(), is_signer: true, is_writable: true },
-        AccountMeta { pubkey: to_pubkey.clone(), is_signer: false, is_writable: true },
+        AccountMeta {
+            pubkey: from_pubkey.clone(),
+            is_signer: true,
+            is_writable: true,
+        },
+        AccountMeta {
+            pubkey: to_pubkey.clone(),
+            is_signer: false,
+            is_writable: true,
+        },
     ];
     SolanaInstruction::new_with_bincode(
-        Pubkey([0u8;32]),
+        Pubkey([0u8; 32]),
         &SystemInstruction::Transfer { lamports },
         account_metas,
     )
 }
 
-pub fn transfer_many_instructions(from_pubkey: &Pubkey, to_lamports: &[(Pubkey, u64)]) -> Vec<SolanaInstruction> {
+pub fn transfer_many_instructions(
+    from_pubkey: &Pubkey,
+    to_lamports: &[(Pubkey, u64)],
+) -> Vec<SolanaInstruction> {
     to_lamports
         .iter()
         .map(|(to_pubkey, lamports)| transfer_instruction(from_pubkey, to_pubkey, *lamports))

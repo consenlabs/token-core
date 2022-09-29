@@ -1,10 +1,10 @@
 mod address;
+mod construct_transaction;
 mod signer;
 mod transaction;
-mod construct_transaction;
 
 pub use crate::address::SolanaAddress;
-pub use crate::transaction::{SolanaTxIn,SolanaTxOut};
+pub use crate::transaction::{SolanaTxIn, SolanaTxOut};
 
 #[cfg(test)]
 mod tests {
