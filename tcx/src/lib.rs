@@ -2946,6 +2946,21 @@ mod tests {
             let ret = call_api("sign_tx", tx).unwrap();
             let output: SolanaTxOut = SolanaTxOut::decode(ret.as_slice()).unwrap();
             assert_eq!(output.tx,"5aYTkY1Hmrch6GYeoV1c4pLZBK5WxKYLMmEnAHbWCbtrmLgzUQQrsDBdbrSpsf2J9PhPMdMsKP4fcNrh8DCxDb2CnZCu3p97Q4qPRswEqVcu8x7i3WM6PRF3Bkc8MuHL3vmrHpXdEzvtHfTydtFKkSz2bCzwVjpDbjDueQHNX1FdXb4aaLyu7QE5GYoKoR4U6V6DLMe3Uymx1QcuZpgLm1jhaqtwLEuQ1NTLB4qJk73wMwvokkfd2DwhSgmBcgu5yMgF7ewwJmZzvsV8QkMDZUhApYGUbpJJdDvvB");
+            let export_param = ExportPrivateKeyParam {
+                id: wallet.id.to_string(),
+                password: TEST_PASSWORD.to_string(),
+                chain_type: "SOLANA".to_string(),
+                network: "MAINNET".to_string(),
+                main_address: rsp.accounts.first().unwrap().address.to_string(),
+                path: "m/44'/501'/0'/0'".to_string(),
+            };
+            let export_pk_bytes = call_api("export_private_key", export_param).unwrap();
+            let export_pk: KeystoreCommonExportResult =
+                KeystoreCommonExportResult::decode(export_pk_bytes.as_slice()).unwrap();
+            assert_eq!(
+                export_pk.value,
+                "f3f7c4290567ce10c0672bef4953cb4d8e416ba7f5b6b5c0a978e76860dae5b7"
+            );
             remove_created_wallet(&wallet.id);
         })
     }
