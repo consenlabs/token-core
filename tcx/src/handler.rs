@@ -484,7 +484,9 @@ pub fn export_private_key(data: &[u8]) -> Result<Vec<u8>> {
 
     // private_key prefix is only about chain type and network
     let _ = coin_info_from_param(&param.chain_type, &param.network, "", "")?;
-    let value = if ["TRON", "POLKADOT", "KUSAMA", "ETHEREUM"].contains(&param.chain_type.as_str()) {
+    let value = if ["TRON", "POLKADOT", "KUSAMA", "ETHEREUM", "SOLANA"]
+        .contains(&param.chain_type.as_str())
+    {
         Ok(pk_hex.to_string())
     } else if "FILECOIN".contains(&param.chain_type.as_str()) {
         if let Some(account) = guard
