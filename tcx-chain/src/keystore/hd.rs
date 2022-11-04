@@ -152,16 +152,16 @@ impl HdKeystore {
         Ok(esk.derive(relative_path)?.private_key())
     }
 
-    pub fn new(password: &str, meta: Metadata) -> HdKeystore {
+    pub fn new(password: &str, meta: Metadata, encoding: &str) -> HdKeystore {
         let mnemonic = generate_mnemonic();
 
-        Self::from_mnemonic(&mnemonic, password, meta).unwrap()
+        Self::from_mnemonic(&mnemonic, password, meta, encoding).unwrap()
     }
 
-    pub fn from_mnemonic(mnemonic: &str, password: &str, meta: Metadata) -> Result<HdKeystore> {
+    pub fn from_mnemonic(mnemonic: &str, password: &str, meta: Metadata, encoding: &str) -> Result<HdKeystore> {
         let mnemonic: &str = &mnemonic.split_whitespace().collect::<Vec<&str>>().join(" ");
 
-        let key_hash = key_hash_from_mnemonic(mnemonic, &meta.encoding)?;
+        let key_hash = key_hash_from_mnemonic(mnemonic, &encoding)?;
 
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         Ok(HdKeystore {
@@ -263,7 +263,6 @@ mod tests {
             password_hint: String::new(),
             timestamp: metadata_default_time(),
             source: Source::Mnemonic,
-            encoding: "".to_string(),
         };
 
         assert_eq!(meta.name, expected.name);
@@ -300,7 +299,7 @@ mod tests {
             (INVALID_MNEMONIC_LEN, "mnemonic_length_invalid"),
         ];
         for (mn, err) in invalid_mnemonic {
-            let ks = HdKeystore::from_mnemonic(mn, TEST_PASSWORD, Metadata::default());
+            let ks = HdKeystore::from_mnemonic(mn, TEST_PASSWORD, Metadata::default(), "");
             assert!(ks.is_err());
             assert_eq!(err, format!("{}", ks.err().unwrap()));
         }
@@ -309,7 +308,7 @@ mod tests {
     #[test]
     pub fn from_blank_space_mnemonic() {
         let mut keystore =
-            HdKeystore::from_mnemonic(MNEMONIC_WITH_WHITESPACE, TEST_PASSWORD, Metadata::default())
+            HdKeystore::from_mnemonic(MNEMONIC_WITH_WHITESPACE, TEST_PASSWORD, Metadata::default(), "")
                 .unwrap();
         let coin_info = CoinInfo {
             coin: "BITCOIN".to_string(),
@@ -343,7 +342,7 @@ mod tests {
     #[test]
     pub fn from_mnemonic() {
         let mut keystore =
-            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default()).unwrap();
+            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default(), "").unwrap();
         assert_eq!(keystore.store.version, 11000);
         assert_ne!(keystore.store.id, "");
         let decrypted_bytes = keystore
@@ -385,7 +384,7 @@ mod tests {
     #[test]
     pub fn derive_key_at_paths() {
         let mut keystore =
-            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default()).unwrap();
+            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default(), "").unwrap();
         let coin_info = CoinInfo {
             coin: "BITCOIN".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),

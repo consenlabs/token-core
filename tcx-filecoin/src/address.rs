@@ -166,6 +166,7 @@ mod tests {
             "equip will roof matter pink blind book anxiety banner elbow sun young",
             "Password",
             Metadata::default(),
+            "",
         )
         .unwrap();
 

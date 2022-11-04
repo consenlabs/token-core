@@ -156,9 +156,8 @@ pub fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
     meta.name = param.name.to_owned();
     meta.password_hint = param.password_hint.to_owned();
     meta.source = Source::Mnemonic;
-    meta.encoding = param.encoding;
 
-    let ks = HdKeystore::new(&param.password, meta);
+    let ks = HdKeystore::new(&param.password, meta, &param.encoding);
 
     let keystore = Keystore::Hd(ks);
     flush_keystore(&keystore)?;
@@ -201,7 +200,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     meta.password_hint = param.password_hint.to_owned();
     meta.source = Source::Mnemonic;
 
-    let ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta)?;
+    let ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta, &param.encoding)?;
 
     let mut keystore = Keystore::Hd(ks);
 
@@ -389,10 +388,9 @@ pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
         name: param.name,
         password_hint: param.password_hint,
         source: Source::Private,
-        encoding: param.encoding,
         ..Metadata::default()
     };
-    let pk_store = PrivateKeystore::from_private_key(&private_key, &param.password, meta);
+    let pk_store = PrivateKeystore::from_private_key(&private_key, &param.password, meta, &param.encoding);
 
     let mut keystore = Keystore::PrivateKey(pk_store);
 

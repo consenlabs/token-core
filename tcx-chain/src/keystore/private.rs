@@ -111,8 +111,8 @@ impl PrivateKeystore {
         self.store.crypto.verify_password(password)
     }
 
-    pub fn from_private_key(private_key: &str, password: &str, meta: Metadata) -> PrivateKeystore {
-        let mut data = meta.encoding.as_bytes().to_vec();
+    pub fn from_private_key(private_key: &str, password: &str, meta: Metadata, encoding: &str) -> PrivateKeystore {
+        let mut data = encoding.as_bytes().to_vec();
         let key_data: Vec<u8> = hex::decode(private_key).expect("hex can't decode");
         data.extend_from_slice(&key_data);
         let key_hash = key_hash_from_private_key(&data);
@@ -183,6 +183,7 @@ mod tests {
             "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
             TEST_PASSWORD,
             meta,
+            "".into(),
         );
         assert_eq!(keystore.store.version, 11001);
         assert_ne!(keystore.store.id, "");
