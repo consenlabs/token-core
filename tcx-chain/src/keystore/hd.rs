@@ -29,13 +29,14 @@ pub struct HdKeystore {
     cache: Option<Cache>,
 }
 
-pub fn key_hash_from_mnemonic(mnemonic: &str) -> Result<String> {
+pub fn key_hash_from_mnemonic(mnemonic: &str, encoding: &str) -> Result<String> {
     let mn =
         Mnemonic::from_phrase(mnemonic, Language::English).map_err(transform_mnemonic_error)?;
 
     let seed = Seed::new(&mn, "");
-
-    let bytes = dsha256(seed.as_bytes())[..20].to_vec();
+    let mut data = encoding.as_bytes().to_vec();
+    data.extend_from_slice(seed.as_bytes());
+    let bytes = dsha256(&data)[..20].to_vec();
     Ok(hex::encode(bytes))
 }
 
@@ -160,7 +161,7 @@ impl HdKeystore {
     pub fn from_mnemonic(mnemonic: &str, password: &str, meta: Metadata) -> Result<HdKeystore> {
         let mnemonic: &str = &mnemonic.split_whitespace().collect::<Vec<&str>>().join(" ");
 
-        let key_hash = key_hash_from_mnemonic(mnemonic)?;
+        let key_hash = key_hash_from_mnemonic(mnemonic, &meta.encoding)?;
 
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, mnemonic.as_bytes());
         Ok(HdKeystore {
@@ -262,6 +263,7 @@ mod tests {
             password_hint: String::new(),
             timestamp: metadata_default_time(),
             source: Source::Mnemonic,
+            encoding: "".to_string(),
         };
 
         assert_eq!(meta.name, expected.name);

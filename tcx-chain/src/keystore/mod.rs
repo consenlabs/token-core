@@ -109,6 +109,7 @@ pub struct Metadata {
     pub timestamp: i64,
     #[serde(default = "metadata_default_source")]
     pub source: Source,
+    pub encoding: String,
 }
 
 fn metadata_default_time() -> i64 {
@@ -128,6 +129,7 @@ impl Default for Metadata {
             password_hint: String::new(),
             timestamp: metadata_default_time(),
             source: Source::Mnemonic,
+            encoding: "".to_string(),
         }
     }
 }

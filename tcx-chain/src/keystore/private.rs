@@ -112,8 +112,10 @@ impl PrivateKeystore {
     }
 
     pub fn from_private_key(private_key: &str, password: &str, meta: Metadata) -> PrivateKeystore {
+        let mut data = meta.encoding.as_bytes().to_vec();
         let key_data: Vec<u8> = hex::decode(private_key).expect("hex can't decode");
-        let key_hash = key_hash_from_private_key(&key_data);
+        data.extend_from_slice(&key_data);
+        let key_hash = key_hash_from_private_key(&data);
         //        let pk_bytes = hex::decode(private_key).expect("valid private_key");
         let crypto: Crypto<Pbkdf2Params> = Crypto::new(password, &key_data);
 
