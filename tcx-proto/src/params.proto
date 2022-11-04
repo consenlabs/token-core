@@ -12,6 +12,7 @@ message HdStoreCreateParam {
     string password = 1;
     string passwordHint = 2;
     string name = 3;
+    string encoding = 4;
 }
 
 message WalletResult {
@@ -32,6 +33,7 @@ message HdStoreImportParam {
     string name = 4;
     string passwordHint = 5;
     bool overwrite = 6;
+    string encoding = 7;
 }
 
 // FUNCTION: hd_store_derive(HdStoreDeriveParam): AccountsResponse
