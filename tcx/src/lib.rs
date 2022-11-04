@@ -264,6 +264,7 @@ mod tests {
             name: "test-wallet".to_string(),
             password_hint: "imtoken".to_string(),
             overwrite: true,
+            encoding: "".to_string(),
         };
         let ret = hd_store_import(&encode_message(param).unwrap()).unwrap();
         WalletResult::decode(ret.as_slice()).unwrap()
@@ -364,6 +365,7 @@ mod tests {
                 name: "call_tcx_api".to_string(),
                 password_hint: "".to_string(),
                 overwrite: true,
+                encoding: "".to_string(),
             };
             // let ret_bytes = call_api("hd_store_import", import_param).unwrap();
             let ret_bytes = hex::decode("0a2434656239623136392d323237392d343439332d616535342d62396233643761303630323512036161611a084d4e454d4f4e494328e9a1a2f305").unwrap();
@@ -409,6 +411,7 @@ mod tests {
                 password: TEST_PASSWORD.to_string(),
                 password_hint: "".to_string(),
                 name: "aaa".to_string(),
+                encoding: "".to_string(),
             };
 
             let ret = call_api("hd_store_create", param).unwrap();
@@ -467,6 +470,7 @@ mod tests {
                     name: "test-wallet".to_string(),
                     password_hint: "imtoken".to_string(),
                     overwrite: true,
+                    encoding: "".to_string(),
                 };
 
                 let ret = call_api("hd_store_import", param);
@@ -566,6 +570,7 @@ mod tests {
                 name: "test-wallet".to_string(),
                 password_hint: "imtoken".to_string(),
                 overwrite: true,
+                encoding: "".to_string(),
             };
             let ret = call_api("hd_store_import", param).unwrap();
             let import_result: WalletResult = WalletResult::decode(ret.as_slice()).unwrap();

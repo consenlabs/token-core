@@ -157,7 +157,7 @@ pub fn hd_store_create(data: &[u8]) -> Result<Vec<u8>> {
     meta.password_hint = param.password_hint.to_owned();
     meta.source = Source::Mnemonic;
 
-    let ks = HdKeystore::new(&param.password, meta);
+    let ks = HdKeystore::new(&param.password, meta, &param.encoding);
 
     let keystore = Keystore::Hd(ks);
     flush_keystore(&keystore)?;
@@ -181,7 +181,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
 
     let mut founded_id: Option<String> = None;
     {
-        let key_hash = key_hash_from_mnemonic(&param.mnemonic)?;
+        let key_hash = key_hash_from_mnemonic(&param.mnemonic, &param.encoding)?;
         let map = KEYSTORE_MAP.read();
         if let Some(founded) = map
             .values()
@@ -200,7 +200,7 @@ pub fn hd_store_import(data: &[u8]) -> Result<Vec<u8>> {
     meta.password_hint = param.password_hint.to_owned();
     meta.source = Source::Mnemonic;
 
-    let ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta)?;
+    let ks = HdKeystore::from_mnemonic(&param.mnemonic, &param.password, meta, &param.encoding)?;
 
     let mut keystore = Keystore::Hd(ks);
 
@@ -339,9 +339,11 @@ fn key_data_from_any_format_pk(pk: &str) -> Result<Vec<u8>> {
     }
 }
 
-fn key_hash_from_any_format_pk(pk: &str) -> Result<String> {
+fn key_hash_from_any_format_pk(pk: &str, encoding: &str) -> Result<String> {
+    let mut data = encoding.as_bytes().to_vec();
     let key_data = key_data_from_any_format_pk(pk)?;
-    Ok(key_hash_from_private_key(&key_data))
+    data.extend_from_slice(&key_data);
+    Ok(key_hash_from_private_key(&data))
 }
 
 fn key_hash_from_tezos_format_pk(pk: &str) -> Result<String> {
@@ -359,7 +361,7 @@ pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
         if param.encoding.eq("TEZOS") {
             key_hash = key_hash_from_tezos_format_pk(&param.private_key)?;
         } else {
-            key_hash = key_hash_from_any_format_pk(&param.private_key)?;
+            key_hash = key_hash_from_any_format_pk(&param.private_key, &param.encoding)?;
         }
         //        let key_hash = key_hash_from_any_format_pk(&param.private_key)?;
         let map = KEYSTORE_MAP.read();
@@ -388,7 +390,7 @@ pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
         source: Source::Private,
         ..Metadata::default()
     };
-    let pk_store = PrivateKeystore::from_private_key(&private_key, &param.password, meta);
+    let pk_store = PrivateKeystore::from_private_key(&private_key, &param.password, meta, &param.encoding);
 
     let mut keystore = Keystore::PrivateKey(pk_store);
 
@@ -567,12 +569,12 @@ pub fn keystore_common_exists(data: &[u8]) -> Result<Vec<u8>> {
         KeystoreCommonExistsParam::decode(data).expect("keystore_common_exists params");
     let key_hash: String;
     if param.r#type == KeyType::Mnemonic as i32 {
-        key_hash = key_hash_from_mnemonic(&param.value)?;
+        key_hash = key_hash_from_mnemonic(&param.value, &param.encoding)?;
     } else {
         if param.encoding.eq("TEZOS") {
             key_hash = key_hash_from_tezos_format_pk(&param.value)?;
         } else {
-            key_hash = key_hash_from_any_format_pk(&param.value)?;
+            key_hash = key_hash_from_any_format_pk(&param.value, &param.encoding)?;
         }
     }
     let map = &mut KEYSTORE_MAP.write();
