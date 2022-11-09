@@ -2923,10 +2923,11 @@ mod tests {
             let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
 
             let input = SolanaTxIn {
+                from: Vec::new(),
                 to: bs58::decode("iTEogtMikvMr9vuevBFqwaCV72UAEaSvctGtrzgqTW1")
                     .into_vec()
                     .unwrap(),
-                lamports: 1000000000,
+                amount: 1000000000,
                 recent_blockhash: bs58::decode("Hn33taMvEMPyGDZ3numAbt4mg3TJTe7YpnjaFkztErMW")
                     .into_vec()
                     .unwrap(),
