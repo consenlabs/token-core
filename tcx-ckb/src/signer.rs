@@ -304,6 +304,7 @@ mod tests {
             "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
             "Password",
             Metadata::default(),
+            "",
         )
         .unwrap();
 
@@ -418,6 +419,7 @@ mod tests {
             "dcec27d0d975b0378471183a03f7071dea8532aaf968be796719ecd20af6988f",
             "Password",
             Metadata::default(),
+            "",
         );
         ks.unlock_by_password("Password").unwrap();
 

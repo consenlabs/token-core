@@ -74,8 +74,9 @@ mod tests {
         let mut meta = Metadata::default();
         meta.name = "RecoverTest".to_string();
 
-        let mut keystore =
-            Keystore::Hd(HdKeystore::from_mnemonic(&TEST_MNEMONIC, &TEST_PASSWORD, meta).unwrap());
+        let mut keystore = Keystore::Hd(
+            HdKeystore::from_mnemonic(&TEST_MNEMONIC, &TEST_PASSWORD, meta, "").unwrap(),
+        );
 
         let bch_coin = CoinInfo {
             coin: "BITCOINCASH".to_string(),

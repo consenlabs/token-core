@@ -81,6 +81,8 @@ pub struct HdStoreCreateParam {
     pub password_hint: std::string::String,
     #[prost(string, tag = "3")]
     pub name: std::string::String,
+    #[prost(string, tag = "4")]
+    pub encoding: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct WalletResult {
@@ -112,6 +114,8 @@ pub struct HdStoreImportParam {
     pub password_hint: std::string::String,
     #[prost(bool, tag = "6")]
     pub overwrite: bool,
+    #[prost(string, tag = "7")]
+    pub encoding: std::string::String,
 }
 /// FUNCTION: hd_store_derive(HdStoreDeriveParam): AccountsResponse
 ///
