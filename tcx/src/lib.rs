@@ -2923,7 +2923,6 @@ mod tests {
             let rsp: AccountsResponse = AccountsResponse::decode(ret.as_slice()).unwrap();
 
             let input = SolanaTxIn {
-                from: Vec::new(),
                 to: bs58::decode("iTEogtMikvMr9vuevBFqwaCV72UAEaSvctGtrzgqTW1")
                     .into_vec()
                     .unwrap(),
@@ -2931,6 +2930,7 @@ mod tests {
                 recent_blockhash: bs58::decode("Hn33taMvEMPyGDZ3numAbt4mg3TJTe7YpnjaFkztErMW")
                     .into_vec()
                     .unwrap(),
+                token_from: Vec::new(),
             };
 
             let tx = SignParam {

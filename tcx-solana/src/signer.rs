@@ -17,8 +17,8 @@ impl TransactionSigner<SolanaTxIn, SolanaTxOut> for Keystore {
     ) -> Result<SolanaTxOut> {
         let payer_pubkey = Pubkey(<[u8; 32]>::try_from(from_hex(address)?.as_slice())?);
         let to_pubkey = Pubkey(<[u8; 32]>::try_from(tx.to.as_slice())?);
-        let instruction = if let Ok(from) = <[u8; 32]>::try_from(tx.from.as_slice()) {
-            let from_pubkey = Pubkey(from);
+        let instruction = if !tx.token_from.is_empty() {
+            let from_pubkey = Pubkey(<[u8; 32]>::try_from(tx.token_from.as_slice())?);
             transfer_token_instruction(&from_pubkey, &to_pubkey, &payer_pubkey, tx.amount)
         } else {
             transfer_instruction(&payer_pubkey, &to_pubkey, tx.amount)
