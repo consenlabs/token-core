@@ -304,19 +304,19 @@ pub fn transfer_instruction(
 }
 
 pub fn transfer_token_instruction(
-    from_pubkey: &Pubkey,
-    to_pubkey: &Pubkey,
+    source: &Pubkey,
+    destination: &Pubkey,
     owner: &Pubkey,
     amount: u64,
 ) -> SolanaInstruction {
     let account_metas = vec![
         AccountMeta {
-            pubkey: from_pubkey.clone(),
+            pubkey: source.clone(),
             is_signer: false,
             is_writable: true,
         },
         AccountMeta {
-            pubkey: to_pubkey.clone(),
+            pubkey: destination.clone(),
             is_signer: false,
             is_writable: true,
         },
