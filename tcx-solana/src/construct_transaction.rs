@@ -1,9 +1,14 @@
 use bincode::serialize;
 use generic_array::{typenum::U64, GenericArray};
 use serde::{Deserialize, Serialize};
+use solana_program::pubkey::ParsePubkeyError;
 use solana_program::short_vec;
 use std::collections::BTreeMap;
+use std::convert::TryFrom;
+use std::mem;
+use std::str::FromStr;
 
+const MAX_BASE58_LEN: usize = 44;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum SystemInstruction {
     /// Create a new account
@@ -217,7 +222,31 @@ struct CompiledKeyMeta {
 }
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, PartialOrd, Eq, Ord)]
 pub struct Pubkey(pub [u8; 32]);
+impl Pubkey {
+    pub fn new(pubkey_vec: &[u8]) -> Self {
+        Self(
+            <[u8; 32]>::try_from(<&[u8]>::clone(&pubkey_vec))
+                .expect("Slice must be the same length as a Pubkey"),
+        )
+    }
+}
+impl FromStr for Pubkey {
+    type Err = ParsePubkeyError;
 
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() > MAX_BASE58_LEN {
+            return Err(ParsePubkeyError::WrongSize);
+        }
+        let pubkey_vec = bs58::decode(s)
+            .into_vec()
+            .map_err(|_| ParsePubkeyError::Invalid)?;
+        if pubkey_vec.len() != mem::size_of::<Pubkey>() {
+            Err(ParsePubkeyError::WrongSize)
+        } else {
+            Ok(Pubkey::new(&pubkey_vec))
+        }
+    }
+}
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub struct Signature(GenericArray<u8, U64>);
 impl Signature {
@@ -272,6 +301,43 @@ pub fn transfer_instruction(
         &SystemInstruction::Transfer { lamports },
         account_metas,
     )
+}
+
+pub fn transfer_token_instruction(
+    source: &Pubkey,
+    destination: &Pubkey,
+    owner: &Pubkey,
+    amount: u64,
+) -> SolanaInstruction {
+    let account_metas = vec![
+        AccountMeta {
+            pubkey: source.clone(),
+            is_signer: false,
+            is_writable: true,
+        },
+        AccountMeta {
+            pubkey: destination.clone(),
+            is_signer: false,
+            is_writable: true,
+        },
+        AccountMeta {
+            pubkey: owner.clone(),
+            is_signer: true,
+            is_writable: false,
+        },
+    ];
+    SolanaInstruction {
+        program_id: Pubkey::from_str("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA").unwrap(),
+        accounts: account_metas,
+        data: pack_token_transfer(amount),
+    }
+}
+
+fn pack_token_transfer(amount: u64) -> Vec<u8> {
+    let mut buf = Vec::new();
+    buf.push(3);
+    buf.extend_from_slice(&amount.to_le_bytes());
+    buf
 }
 
 pub fn transfer_many_instructions(
@@ -382,3 +448,13 @@ pub fn message_from_instructions(
 //         message,
 //     }
 // }
+#[cfg(test)]
+mod test {
+    use crate::construct_transaction::pack_token_transfer;
+    #[test]
+    fn test_pack() {
+        let expect = Vec::from([3u8, 1, 0, 0, 0, 0, 0, 0, 0]);
+        let packed = pack_token_transfer(1);
+        assert_eq!(packed, expect);
+    }
+}

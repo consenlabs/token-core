@@ -158,7 +158,12 @@ impl HdKeystore {
         Self::from_mnemonic(&mnemonic, password, meta, encoding).unwrap()
     }
 
-    pub fn from_mnemonic(mnemonic: &str, password: &str, meta: Metadata, encoding: &str) -> Result<HdKeystore> {
+    pub fn from_mnemonic(
+        mnemonic: &str,
+        password: &str,
+        meta: Metadata,
+        encoding: &str,
+    ) -> Result<HdKeystore> {
         let mnemonic: &str = &mnemonic.split_whitespace().collect::<Vec<&str>>().join(" ");
 
         let key_hash = key_hash_from_mnemonic(mnemonic, &encoding)?;
@@ -307,9 +312,13 @@ mod tests {
 
     #[test]
     pub fn from_blank_space_mnemonic() {
-        let mut keystore =
-            HdKeystore::from_mnemonic(MNEMONIC_WITH_WHITESPACE, TEST_PASSWORD, Metadata::default(), "")
-                .unwrap();
+        let mut keystore = HdKeystore::from_mnemonic(
+            MNEMONIC_WITH_WHITESPACE,
+            TEST_PASSWORD,
+            Metadata::default(),
+            "",
+        )
+        .unwrap();
         let coin_info = CoinInfo {
             coin: "BITCOIN".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),
@@ -342,7 +351,8 @@ mod tests {
     #[test]
     pub fn from_mnemonic() {
         let mut keystore =
-            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default(), "").unwrap();
+            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default(), "")
+                .unwrap();
         assert_eq!(keystore.store.version, 11000);
         assert_ne!(keystore.store.id, "");
         let decrypted_bytes = keystore
@@ -384,7 +394,8 @@ mod tests {
     #[test]
     pub fn derive_key_at_paths() {
         let mut keystore =
-            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default(), "").unwrap();
+            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default(), "")
+                .unwrap();
         let coin_info = CoinInfo {
             coin: "BITCOIN".to_string(),
             derivation_path: "m/44'/0'/0'/0/0".to_string(),

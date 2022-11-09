@@ -390,7 +390,8 @@ pub fn private_key_store_import(data: &[u8]) -> Result<Vec<u8>> {
         source: Source::Private,
         ..Metadata::default()
     };
-    let pk_store = PrivateKeystore::from_private_key(&private_key, &param.password, meta, &param.encoding);
+    let pk_store =
+        PrivateKeystore::from_private_key(&private_key, &param.password, meta, &param.encoding);
 
     let mut keystore = Keystore::PrivateKey(pk_store);
 

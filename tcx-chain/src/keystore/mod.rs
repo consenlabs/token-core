@@ -138,7 +138,12 @@ pub enum Keystore {
 }
 
 impl Keystore {
-    pub fn from_private_key(private_key: &str, password: &str, meta: Metadata, encoding: &str) -> Keystore {
+    pub fn from_private_key(
+        private_key: &str,
+        password: &str,
+        meta: Metadata,
+        encoding: &str,
+    ) -> Keystore {
         Keystore::PrivateKey(PrivateKeystore::from_private_key(
             private_key,
             password,
@@ -147,7 +152,12 @@ impl Keystore {
         ))
     }
 
-    pub fn from_mnemonic(mnemonic: &str, password: &str, metadata: Metadata, encoding: &str) -> Result<Keystore> {
+    pub fn from_mnemonic(
+        mnemonic: &str,
+        password: &str,
+        metadata: Metadata,
+        encoding: &str,
+    ) -> Result<Keystore> {
         Ok(Keystore::Hd(HdKeystore::from_mnemonic(
             mnemonic, password, metadata, encoding,
         )?))
@@ -678,7 +688,8 @@ mod tests {
         assert!(keystore.determinable());
 
         let hd_store =
-            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default(), "").unwrap();
+            HdKeystore::from_mnemonic(TEST_MNEMONIC, TEST_PASSWORD, Metadata::default(), "")
+                .unwrap();
         let keystore = Hd(hd_store);
         assert_eq!(0, keystore.accounts().len());
         assert!(keystore.determinable());
@@ -697,7 +708,7 @@ mod tests {
             "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6",
             TEST_PASSWORD,
             meta,
-            "".into()
+            "".into(),
         );
         let keystore = PrivateKey(pk_store);
         assert_eq!(0, keystore.accounts().len());

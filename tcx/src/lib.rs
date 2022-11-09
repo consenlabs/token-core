@@ -2931,10 +2931,11 @@ mod tests {
                 to: bs58::decode("iTEogtMikvMr9vuevBFqwaCV72UAEaSvctGtrzgqTW1")
                     .into_vec()
                     .unwrap(),
-                lamports: 1000000000,
+                amount: 1000000000,
                 recent_blockhash: bs58::decode("Hn33taMvEMPyGDZ3numAbt4mg3TJTe7YpnjaFkztErMW")
                     .into_vec()
                     .unwrap(),
+                token_from: Vec::new(),
             };
 
             let tx = SignParam {

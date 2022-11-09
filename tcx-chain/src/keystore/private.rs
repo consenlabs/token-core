@@ -111,7 +111,12 @@ impl PrivateKeystore {
         self.store.crypto.verify_password(password)
     }
 
-    pub fn from_private_key(private_key: &str, password: &str, meta: Metadata, encoding: &str) -> PrivateKeystore {
+    pub fn from_private_key(
+        private_key: &str,
+        password: &str,
+        meta: Metadata,
+        encoding: &str,
+    ) -> PrivateKeystore {
         let mut data = encoding.as_bytes().to_vec();
         let key_data: Vec<u8> = hex::decode(private_key).expect("hex can't decode");
         data.extend_from_slice(&key_data);

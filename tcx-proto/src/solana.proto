@@ -3,8 +3,9 @@ package transaction;
 
 message SolanaTxIn {
   bytes to = 1;
-  uint64 lamports = 2;
+  uint64 amount = 2;
   bytes recent_blockhash = 3;
+  bytes token_from = 4;
 }
 
 message SolanaTxOut {
