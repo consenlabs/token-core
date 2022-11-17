@@ -59,7 +59,16 @@ lazy_static! {
             network_id: 80001,
             chain_id: 80001,
         });
-
+        chain_infos.push(ChainInfo {
+            network: "BOOL".to_string(),
+            network_id: 47,
+            chain_id: 47,
+        });
+        chain_infos.push(ChainInfo {
+            network: "BOOL_TESTNET".to_string(),
+            network_id: 477,
+            chain_id: 477,
+        });
         RwLock::new(chain_infos)
     };
 }
