@@ -2,8 +2,8 @@ pub mod ctr {
     use aes_ctr::Aes128Ctr;
 
     use crate::{Error, Result};
-    use aes_ctr::stream_cipher::generic_array::GenericArray;
-    use aes_ctr::stream_cipher::{NewStreamCipher, SyncStreamCipher};
+    use aes_ctr::cipher::generic_array::GenericArray;
+    use aes_ctr::cipher::{NewStreamCipher, SyncStreamCipher};
 
     pub fn encrypt_nopadding(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>> {
         if key.len() != 16 || iv.len() != 16 {
