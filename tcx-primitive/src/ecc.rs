@@ -56,6 +56,16 @@ pub enum KeyError {
     UnsupportNormalDerivation,
     #[fail(display = "not_implement")]
     NotImplement,
+    #[fail(display = "secp256k1_error")]
+    Secp256k1,
+    #[fail(display = "unknown_version")]
+    UnknownVersion,
+    #[fail(display = "wrong_extended_key_length")]
+    WrongExtendedKeyLength,
+    #[fail(display = "base58_encoding_error")]
+    Base58,
+    #[fail(display = "hexadecimal_decoding_error")]
+    Hex,
 }
 
 pub trait PublicKey: Sized {

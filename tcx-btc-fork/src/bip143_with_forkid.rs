@@ -51,7 +51,7 @@ impl SighashComponentsWithForkId {
 
         SighashComponentsWithForkId {
             tx_version: tx.version,
-            tx_locktime: tx.lock_time,
+            tx_locktime: tx.lock_time.to_u32(),
             hash_prevouts,
             hash_sequence,
             hash_outputs,
@@ -66,7 +66,7 @@ impl SighashComponentsWithForkId {
         witness_script: &Script,
         value: u64,
         fork_id: u32,
-    ) -> bitcoin::hash_types::SigHash {
+    ) -> bitcoin::hash_types::Sighash {
         let mut enc = sha256d::Hash::engine();
         let mut encoder: Cursor<Vec<u8>> = Cursor::new(vec![]);
         self.tx_version.consensus_encode(&mut enc).unwrap();
@@ -90,6 +90,6 @@ impl SighashComponentsWithForkId {
         self.tx_locktime.consensus_encode(&mut encoder).unwrap();
         fork_id.consensus_encode(&mut enc).unwrap(); // hashtype
         fork_id.consensus_encode(&mut encoder).unwrap(); // hashtype
-        bitcoin::hash_types::SigHash::hash(&encoder.into_inner())
+        bitcoin::hash_types::Sighash::hash(&encoder.into_inner())
     }
 }

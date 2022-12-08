@@ -1,6 +1,8 @@
 use tcx_chain::{Keystore, TransactionSigner};
 
-use bitcoin::{OutPoint, Script, Transaction, TxIn, TxOut};
+use bitcoin::{
+    LockTime, OutPoint, PackedLockTime, Script, Sequence, Transaction, TxIn, TxOut, Witness,
+};
 use bitcoin_hashes::sha256d::Hash as Hash256;
 use bitcoin_hashes::{sha256d, Hash};
 
@@ -160,8 +162,8 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
                     vout: unspent.vout as u32,
                 },
                 script_sig: Script::new(),
-                sequence: 0xFFFF_FFFF,
-                witness: vec![],
+                sequence: Sequence::MAX,
+                witness: Witness::default(),
             });
         }
         tx_inputs
@@ -176,7 +178,7 @@ impl<S: ScriptPubKeyComponent + Address, T: BitcoinTransactionSignComponent>
         let tx_inputs = self.tx_inputs();
         let tx = Transaction {
             version: T::tx_version(),
-            lock_time: 0,
+            lock_time: PackedLockTime::ZERO,
             input: tx_inputs,
             output: tx_outs,
         };
@@ -263,7 +265,10 @@ impl BitcoinTransactionSignComponent for SegWitTransactionSignComponent {
 
                 TxIn {
                     script_sig: Script::from(hex::decode(hex).expect("script_sig")),
-                    witness: vec![witnesses[i].0.clone(), witnesses[i].1.clone()],
+                    witness: Witness::from_vec(vec![
+                        witnesses[i].0.clone(),
+                        witnesses[i].1.clone(),
+                    ]),
                     ..*txin
                 }
             })
@@ -290,7 +295,7 @@ pub trait SignHasher {
         tx: &Transaction,
         index: usize,
         unspent: &Utxo,
-    ) -> Result<(bitcoin::hash_types::SigHash, u32)>;
+    ) -> Result<(bitcoin::hash_types::Sighash, u32)>;
 }
 
 pub struct LegacySignHasher {}
@@ -300,7 +305,7 @@ impl SignHasher for LegacySignHasher {
         tx: &Transaction,
         index: usize,
         unspent: &Utxo,
-    ) -> Result<(bitcoin::hash_types::SigHash, u32)> {
+    ) -> Result<(bitcoin::hash_types::Sighash, u32)> {
         let addr = BtcForkAddress::from_str(&unspent.address)?;
         let script = addr.script_pubkey();
         let hash = tx.signature_hash(index, &script, u32::from(SIGHASH_ALL));
@@ -345,7 +350,7 @@ impl<H: SignHasher> BitcoinTransactionSignComponent for LegacyTransactionSignCom
             .enumerate()
             .map(|(i, txin)| TxIn {
                 script_sig: sign_scripts[i].clone(),
-                witness: vec![],
+                witness: Witness::default(),
                 ..*txin
             })
             .collect();

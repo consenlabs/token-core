@@ -14,7 +14,7 @@ tcx-crypto = { path = "../tcx-crypto" }
 
 blake2b_simd = "0.5.10"
 hex = "0.4.3"
-bitcoin = "0.25.1"
+bitcoin = "0.29.2"
 ring = "0.16.9"
 
 prost = "0.11.2"

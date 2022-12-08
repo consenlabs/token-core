@@ -18,7 +18,7 @@ impl SignHasher for BchSignHasher {
         tx: &Transaction,
         index: usize,
         unspent: &Utxo,
-    ) -> Result<(bitcoin::hash_types::SigHash, u32)> {
+    ) -> Result<(bitcoin::hash_types::Sighash, u32)> {
         let addr = BchAddress::from_str(&unspent.address)?;
         let tx_in = &tx.input[index];
         let script = addr.script_pub_key();

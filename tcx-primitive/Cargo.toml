@@ -8,10 +8,10 @@ edition = "2018"
 
 [dependencies]
 tcx-constants = { path = "../tcx-constants"}
-bitcoin = "0.25.1"
+bitcoin = "0.29.2"
 byteorder = "1.2"
-secp256k1 = {version ="0.19.0", features = ["rand", "recovery"] }
-bitcoin_hashes = "0.9.3"
+secp256k1 = {version ="0.24.1", features = ["rand", "recovery"] }
+bitcoin_hashes = "0.11.0"
 hex-literal = "0.2"
 hex = "0.4.3"
 lazy_static = "1.4.0"

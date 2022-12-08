@@ -1,5 +1,5 @@
 use crate::hash::blake2b_160;
-use bech32::{FromBase32, ToBase32};
+use bech32::{FromBase32, ToBase32, Variant};
 use tcx_chain::{Address, Result};
 use tcx_constants::CoinInfo;
 use tcx_primitive::TypedPublicKey;
@@ -24,13 +24,13 @@ impl Address for CkbAddress {
         buf.extend(vec![0x1, 0x00]); // append short version for locks with popular codehash and default code hash index
         buf.extend(pub_key_hash);
 
-        Ok(bech32::encode(prefix, buf.to_base32())?)
+        Ok(bech32::encode(prefix, buf.to_base32(), Variant::Bech32)?)
     }
 
     fn is_valid(address: &str, coin: &CoinInfo) -> bool {
         let ret = bech32::decode(address);
         if ret.is_ok() {
-            let (hrp, data) = ret.unwrap();
+            let (hrp, data, _) = ret.unwrap();
             let data = Vec::from_base32(&data).unwrap();
             let address_type = data[0];
 
