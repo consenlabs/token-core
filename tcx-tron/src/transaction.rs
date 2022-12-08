@@ -1,18 +1,15 @@
-/// This file only contains tron related messages.
-// ref: https://developers.tron.network/docs/transaction
-
 /// FUNCTION: sign_tx(SignParam{input: TronTxInput}): TronTxOutput
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TronTxInput {
     /// hex string
     #[prost(string, tag = "1")]
-    pub raw_data: std::string::String,
+    pub raw_data: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TronTxOutput {
     /// hex string
     #[prost(string, repeated, tag = "1")]
-    pub signatures: ::std::vec::Vec<std::string::String>,
+    pub signatures: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// FUNCTION: tron_sign_message(SignParam): TronMessageOutput
 ///
@@ -21,7 +18,7 @@ pub struct TronTxOutput {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TronMessageInput {
     #[prost(string, tag = "1")]
-    pub value: std::string::String,
+    pub value: ::prost::alloc::string::String,
     #[prost(bool, tag = "2")]
     pub is_hex: bool,
     #[prost(bool, tag = "3")]
@@ -30,5 +27,5 @@ pub struct TronMessageInput {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TronMessageOutput {
     #[prost(string, tag = "1")]
-    pub signature: std::string::String,
+    pub signature: ::prost::alloc::string::String,
 }

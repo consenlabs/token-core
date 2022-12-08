@@ -10,18 +10,18 @@ tcx-chain = { path = "../tcx-chain" }
 tcx-primitive = { path = "../tcx-primitive" }
 tcx-constants = { path = "../tcx-constants" }
 
-hex = "0.3.2"
-base64 = "0.10.1"
+hex = "0.4.3"
+base64 = "0.13.1"
 
 bitcoin = "0.25.1"
 secp256k1 = {version ="0.19.0", features = ["rand", "recovery"] }
 tiny-bip39 = "0.6.2"
 bitcoin_hashes = "0.9.3"
 #bitcoinconsensus = { version = "0.19.0-2", optional = true }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0.39"
+serde = { version = "1.0.147", features = ["derive"] }
+serde_json = "1.0.88"
 uuid = { version = "0.7", features = ["serde", "v4"] }
-failure = "0.1.5"
+failure = "0.1.8"
 num-bigint = "0.2"
 num-traits = "0.2"
 num-integer = "0.1"

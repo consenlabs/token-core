@@ -1,6 +1,7 @@
 use crate::ecc::{KeyError, PrivateKey as TraitPrivateKey, PublicKey as TraitPublicKey};
 use crate::{FromHex, Result, ToHex};
 use schnorrkel::SecretKey;
+use std::convert::TryFrom;
 
 use sp_core::sr25519::{Pair, Public};
 use sp_core::{Pair as TraitPair, Public as TraitPublic};
@@ -63,7 +64,9 @@ impl std::fmt::Display for Sr25519PublicKey {
 
 impl TraitPublicKey for Sr25519PublicKey {
     fn from_slice(data: &[u8]) -> Result<Self> {
-        Ok(Sr25519PublicKey(Public::from_slice(data)))
+        Ok(Sr25519PublicKey(
+            Public::try_from(data).expect("gen sr25519 public key error"),
+        ))
     }
 
     fn to_bytes(&self) -> Vec<u8> {
@@ -73,7 +76,7 @@ impl TraitPublicKey for Sr25519PublicKey {
 
 impl ToHex for Sr25519PublicKey {
     fn to_hex(&self) -> String {
-        hex::encode(self.0.to_raw_vec())
+        hex::encode(self.0 .0)
     }
 }
 

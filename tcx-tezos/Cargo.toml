@@ -13,7 +13,7 @@ tcx-primitive = { path = "../tcx-primitive" }
 tcx-crypto = { path = "../tcx-crypto" }
 
 blake2b_simd = "0.5.10"
-hex = "0.3.1"
+hex = "0.4.3"
 bitcoin = "0.25.1"
 ring = "0.16.9"
 

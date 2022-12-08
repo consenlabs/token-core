@@ -6,8 +6,8 @@ edition = "2018"
 
 [dependencies]
 tcx-constants = {path="../tcx-constants"}
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.88"
+serde = { version = "1.0.147", features = ["derive"] }
 rand = "0.6"
 tiny-keccak = "1.4"
 scrypt = { version = "0.2", default-features = false }
@@ -20,12 +20,12 @@ aes-soft = "0.6.0"
 pbkdf2 = "0.3.0"
 bitcoin_hashes = "0.9.3"
 crypto-mac = "0.7.0"
-failure = "0.1.5"
+failure = "0.1.8"
 secp256k1 = {version ="0.19.0", features = ["rand", "recovery"] }
-hex = "0.4.0"
+hex = "0.4.3"
 lazy_static = "1.4.0"
 
-parking_lot = "0.10"
+parking_lot = "0.12.1"
 
 [features]
 default = []
