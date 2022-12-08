@@ -225,7 +225,7 @@ checksum = "aefc9be9f17185f4ebccae6575d342063f775924d57df0000edb1880c0fb7095"
 dependencies = [
  "bech32 0.7.2",
  "bitcoin_hashes",
- "secp256k1",
+ "secp256k1 0.19.0",
 ]
 
 [[package]]
@@ -2790,8 +2790,17 @@ version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c6179428c22c73ac0fbb7b5579a56353ce78ba29759b3b8575183336ea74cdfb"
 dependencies = [
+ "secp256k1-sys 0.3.0",
+]
+
+[[package]]
+name = "secp256k1"
+version = "0.22.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "295642060261c80709ac034f52fca8e5a9fa2c7d341ded5cdb164b7c33768b2a"
+dependencies = [
  "rand 0.6.5",
- "secp256k1-sys",
+ "secp256k1-sys 0.5.2",
 ]
 
 [[package]]
@@ -2799,6 +2808,15 @@ name = "secp256k1-sys"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "11553d210db090930f4432bea123b31f70bbf693ace14504ea2a35e796c28dd2"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "secp256k1-sys"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "152e20a0fd0519390fc43ab404663af8a0b794273d2a91d60ad4a39f13ffe110"
 dependencies = [
  "cc",
 ]
@@ -3447,7 +3465,7 @@ dependencies = [
  "bitcoin_hashes",
  "failure",
  "hex 0.3.2",
- "secp256k1",
+ "secp256k1 0.22.2",
  "serde",
  "serde_json",
  "tcx-btc-fork",
@@ -3475,7 +3493,7 @@ dependencies = [
  "num-traits",
  "prost 0.6.1",
  "prost-types 0.6.1",
- "secp256k1",
+ "secp256k1 0.22.2",
  "serde",
  "serde_json",
  "tcx-chain",
@@ -3499,7 +3517,7 @@ dependencies = [
  "hex 0.4.2",
  "prost 0.6.1",
  "regex",
- "secp256k1",
+ "secp256k1 0.22.2",
  "serde",
  "serde_json",
  "tcx-constants",
@@ -3556,7 +3574,7 @@ dependencies = [
  "pbkdf2",
  "rand 0.6.5",
  "scrypt",
- "secp256k1",
+ "secp256k1 0.22.2",
  "serde",
  "serde_json",
  "sha2 0.8.2",
@@ -3614,7 +3632,7 @@ dependencies = [
  "num-traits",
  "regex",
  "schnorrkel",
- "secp256k1",
+ "secp256k1 0.22.2",
  "serde",
  "serde_json",
  "sha2 0.9.2",
@@ -3706,7 +3724,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "prost 0.6.1",
- "secp256k1",
+ "secp256k1 0.22.2",
  "serde",
  "serde_json",
  "sha3",
