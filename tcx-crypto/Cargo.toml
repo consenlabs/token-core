@@ -8,18 +8,18 @@ edition = "2018"
 tcx-constants = {path="../tcx-constants"}
 serde_json = "1.0.88"
 serde = { version = "1.0.147", features = ["derive"] }
-rand = "0.6"
-tiny-keccak = "1.4"
-scrypt = { version = "0.2", default-features = false }
-sha2 = "0.8.0"
-digest = "0.8"
-hmac = "0.7"
+rand = "0.8.5"
+tiny-keccak = { version = "2.0.2", features = ["keccak"] }
+scrypt = { version = "0.10.0", default-features = false }
+sha2 = "0.10.6"
+digest = "0.10.6"
+hmac = "0.12.1"
 block-modes = "0.7.0"
 aes-ctr = "0.6.0"
 aes-soft = "0.6.4"
-pbkdf2 = "0.3.0"
+pbkdf2 = "0.11.0"
 bitcoin_hashes = "0.11.0"
-crypto-mac = "0.7.0"
+crypto-mac = "0.11.1"
 failure = "0.1.8"
 secp256k1 = {version ="0.24.1", features = ["rand", "recovery"] }
 hex = "0.4.3"

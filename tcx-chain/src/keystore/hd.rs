@@ -167,7 +167,7 @@ impl HdKeystore {
             store: Store {
                 key_hash,
                 crypto,
-                id: Uuid::new_v4().to_hyphenated().to_string(),
+                id: Uuid::new_v4().as_hyphenated().to_string(),
                 version: Self::VERSION,
                 active_accounts: vec![],
                 meta,

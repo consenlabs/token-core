@@ -5,6 +5,7 @@ use crate::Result;
 use bitcoin_hashes::hex::{FromHex, ToHex};
 use serde::{Deserialize, Serialize};
 use std::env;
+use tiny_keccak::Hasher;
 
 const CREDENTIAL_LEN: usize = 64usize;
 
@@ -79,7 +80,7 @@ impl KdfParams for Pbkdf2Params {
 
     fn generate_derived_key(&self, password: &[u8], out: &mut [u8]) {
         let salt_bytes: Vec<u8> = FromHex::from_hex(&self.salt).unwrap();
-        pbkdf2::pbkdf2::<hmac::Hmac<sha2::Sha256>>(password, &salt_bytes, self.c as usize, out);
+        pbkdf2::pbkdf2::<hmac::Hmac<sha2::Sha256>>(password, &salt_bytes, self.c, out);
     }
 
     fn set_salt(&mut self, salt: &str) {
@@ -126,7 +127,7 @@ impl KdfParams for SCryptParams {
         let salt_bytes: Vec<u8> = FromHex::from_hex(&self.salt).unwrap();
         let log_n = (self.n as f64).log2().round();
         let inner_params =
-            scrypt::ScryptParams::new(log_n as u8, self.r, self.p).expect("init scrypt params");
+            scrypt::Params::new(log_n as u8, self.r, self.p).expect("init scrypt params");
 
         scrypt::scrypt(password, &salt_bytes, &inner_params, out).expect("can not execute scrypt");
     }
@@ -304,8 +305,11 @@ where
 
     fn generate_mac(derived_key: &[u8], ciphertext: &[u8]) -> Vec<u8> {
         let result = [&derived_key[16..32], ciphertext].concat();
-        let keccak256 = tiny_keccak::keccak256(&result);
-        keccak256.to_vec()
+        let mut keccak = tiny_keccak::Keccak::v256();
+        keccak.update(result.as_slice());
+        let mut output = [0u8; 32];
+        keccak.finalize(&mut output);
+        output.to_vec()
     }
 
     pub fn cache_derived_key(&mut self, key: &str, derived_key: &[u8]) {

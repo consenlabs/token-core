@@ -124,14 +124,14 @@ fn bytes_to_u32(bytes: &[u8]) -> u32 {
     rdr.read_u32::<LittleEndian>().unwrap()
 }
 
-fn scrypt_param_from_encoded(encoded: &[u8]) -> Result<(scrypt::ScryptParams, Vec<u8>)> {
+fn scrypt_param_from_encoded(encoded: &[u8]) -> Result<(scrypt::Params, Vec<u8>)> {
     let salt = &encoded[0..SALT_LENGTH];
     let n = bytes_to_u32(&encoded[SALT_LENGTH..SALT_LENGTH + 4]);
     let p = bytes_to_u32(&encoded[SALT_LENGTH + 4..SALT_LENGTH + 4 * 2]);
     let r = bytes_to_u32(&encoded[SALT_LENGTH + 4 * 2..SALT_LENGTH + 4 * 3]);
     let log_n = (n as f64).log2().round();
 
-    let inner_params = scrypt::ScryptParams::new(log_n as u8, r, p).expect("init scrypt params");
+    let inner_params = scrypt::Params::new(log_n as u8, r, p).expect("init scrypt params");
     if n != PJS_SCRYPT_N || p != PJS_SCRYPT_P || r != PJS_SCRYPT_R {
         Err(format_err!("Pjs keystore invalid params"))
     } else {
@@ -139,9 +139,9 @@ fn scrypt_param_from_encoded(encoded: &[u8]) -> Result<(scrypt::ScryptParams, Ve
     }
 }
 
-fn default_scrypt_param() -> (scrypt::ScryptParams, Vec<u8>) {
+fn default_scrypt_param() -> (scrypt::Params, Vec<u8>) {
     let log_n = ((1 << 15) as f64).log2().round();
-    let param = scrypt::ScryptParams::new(log_n as u8, 8, 1).expect("init scrypt params");
+    let param = scrypt::Params::new(log_n as u8, 8, 1).expect("init scrypt params");
     let salt = random_iv(32);
     (param, salt)
 }

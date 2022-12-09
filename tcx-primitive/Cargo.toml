@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 tcx-constants = { path = "../tcx-constants"}
 bitcoin = "0.29.2"
-byteorder = "1.2"
+byteorder = "1.4.3"
 secp256k1 = {version ="0.24.1", features = ["rand", "recovery"] }
 bitcoin_hashes = "0.11.0"
 hex-literal = "0.2"
@@ -18,17 +18,17 @@ lazy_static = "1.4.0"
 failure = "0.1.8"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_json = "1.0.88"
-tiny-bip39 = "0.6.0"
+tiny-bip39 = "0.7.3"
 ed25519-bip32 = "0.4.1"
 blake2b_simd = "0.5.10"
 iop-keyvault = "0.0.5"
 bls-signatures = "0.6.1"
 #rust-crypto = "0.2"
-num-bigint = "0.2.3"
-num-traits = "0.2.8"
-sha2 = "0.9.1"
-digest = "0.8"
-hkdf = "0.9.0"
+num-bigint = "0.4"
+num-traits = "0.2"
+sha2 = "0.10.6"
+digest = "0.10.6"
+hkdf = "0.12.3"
 
 sp-core = "7.0.0"
 regex = { version = "1.3.1"}
