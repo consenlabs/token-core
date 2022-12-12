@@ -1,4 +1,5 @@
 /// FUNCTION: sign_tx(SignParam{input: BtcForkTxInput}): BtcForkSignedTxOutput
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Utxo {
     #[prost(string, tag = "1")]
@@ -16,6 +17,7 @@ pub struct Utxo {
     #[prost(int64, tag = "7")]
     pub sequence: i64,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BtcForkTxInput {
     #[prost(string, tag = "1")]
@@ -35,6 +37,7 @@ pub struct BtcForkTxInput {
     #[prost(string, tag = "8")]
     pub seg_wit: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BtcForkSignedTxOutput {
     #[prost(string, tag = "1")]

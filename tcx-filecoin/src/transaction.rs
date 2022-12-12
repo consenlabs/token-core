@@ -1,3 +1,4 @@
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UnsignedMessage {
     #[prost(string, tag = "1")]
@@ -19,6 +20,7 @@ pub struct UnsignedMessage {
     #[prost(string, tag = "9")]
     pub params: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Signature {
     #[prost(uint32, tag = "1")]
@@ -26,6 +28,7 @@ pub struct Signature {
     #[prost(string, tag = "2")]
     pub data: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SignedMessage {
     #[prost(string, tag = "1")]

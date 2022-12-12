@@ -17,4 +17,4 @@ build = "build.rs"
 
 
 [build-dependencies]
-prost-build = "0.11.3"
+prost-build = "0.11.4"

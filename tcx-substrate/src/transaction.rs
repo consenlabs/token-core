@@ -1,3 +1,4 @@
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SubstrateKeystoreParam {
     #[prost(string, tag = "1")]
@@ -9,16 +10,19 @@ pub struct SubstrateKeystoreParam {
     #[prost(bool, tag = "4")]
     pub overwrite: bool,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExportSubstrateKeystoreResult {
     #[prost(string, tag = "1")]
     pub keystore: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SubstrateRawTxIn {
     #[prost(string, tag = "1")]
     pub raw_data: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SubstrateTxOut {
     #[prost(string, tag = "1")]

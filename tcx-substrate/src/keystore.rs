@@ -15,8 +15,8 @@ use tcx_crypto::numberic_util::random_iv;
 use tcx_primitive::{
     DeterministicPrivateKey, PrivateKey, PublicKey, Sr25519PrivateKey, TypedPublicKey,
 };
-use xsalsa20poly1305::aead::{generic_array::GenericArray, Aead, NewAead};
-use xsalsa20poly1305::XSalsa20Poly1305;
+use xsalsa20poly1305::aead::{generic_array::GenericArray, Aead};
+use xsalsa20poly1305::{KeyInit, XSalsa20Poly1305};
 
 #[derive(Fail, Debug, PartialOrd, PartialEq)]
 pub enum Error {

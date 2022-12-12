@@ -1,3 +1,4 @@
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct OutPoint {
     #[prost(string, tag = "1")]
@@ -5,6 +6,7 @@ pub struct OutPoint {
     #[prost(int32, tag = "2")]
     pub index: i32,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Witness {
     #[prost(string, tag = "1")]
@@ -14,6 +16,7 @@ pub struct Witness {
     #[prost(string, tag = "3")]
     pub output_type: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Script {
     #[prost(string, tag = "1")]
@@ -23,6 +26,7 @@ pub struct Script {
     #[prost(string, tag = "3")]
     pub hash_type: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CellInput {
     #[prost(message, optional, tag = "1")]
@@ -30,6 +34,7 @@ pub struct CellInput {
     #[prost(string, tag = "2")]
     pub since: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CachedCell {
     #[prost(int64, tag = "1")]
@@ -41,6 +46,7 @@ pub struct CachedCell {
     #[prost(string, tag = "4")]
     pub derived_path: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CkbTxInput {
     #[prost(message, repeated, tag = "1")]
@@ -52,6 +58,7 @@ pub struct CkbTxInput {
     #[prost(string, tag = "4")]
     pub tx_hash: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CkbTxOutput {
     #[prost(string, tag = "1")]
