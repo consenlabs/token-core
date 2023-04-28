@@ -119,7 +119,7 @@ impl Address for BtcForkAddress {
 ```
 
 #### Extra    
-因为对于每天链来说除了Account中定义的常见的address，cruve等必须属性，部分链还提供了额外信息，，例如bch还会包含enc_xpub和externalAddress等信息。有这部分需求的开发者可以实现Extra这个trait来扩展。例如Bch的实现如下:     
+因为对于每天链来说除了Account中定义的常见的address，curve等必须属性，部分链还提供了额外信息，，例如bch还会包含enc_xpub和externalAddress等信息。有这部分需求的开发者可以实现Extra这个trait来扩展。例如Bch的实现如下:     
 ```rust
 pub struct ExtendedPubKeyExtra {
     pub enc_xpub: String,
