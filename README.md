@@ -1,3 +1,5 @@
+# !!! Warning, this project is archied, please use [token-core-monorepo](https://github.com/consenlabs/token-core-monorepo). token-core-monorepo has rewrite all coins by rust and add more chains.
+
 # TokenCoreX
 
 [![Build status](https://travis-ci.org/consenlabs/token-core.svg?branch=dev)](https://travis-ci.org/consenlabs/token-core)
