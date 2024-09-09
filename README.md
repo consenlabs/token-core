@@ -1,7 +1,7 @@
 # TokenCoreX
 
-[![Build status](https://travis-ci.org/consenlabs/token-core.svg?branch=dev)](https://travis-ci.org/consenlabs/token-core)
-[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.svg)](https://gitter.im/imtoken-wallet/token-core)
+> [!IMPORTANT]
+> token-core moved to https://github.com/consenlabs/token-core-monorepo
 
 Next generation core inside imToken Wallet.
 
