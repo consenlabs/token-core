@@ -129,16 +129,7 @@ mod test {
     use crate::Derive;
     use bip39::{Language, Mnemonic, Seed};
     use hex;
-    use iop_keyvault::{ExtendedPrivateKey, PrivateKey};
-
-    fn default_seed() -> Seed {
-        let mn = Mnemonic::from_phrase(
-            "inject kidney empty canal shadow pact comfort wife crush horse wife sketch",
-            Language::English,
-        )
-        .unwrap();
-        Seed::new(&mn, "")
-    }
+    use iop_keyvault::ExtendedPrivateKey;
 
     #[test]
     fn from_seed_test() {

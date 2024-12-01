@@ -1,0 +1,15 @@
+[package]
+name = "tcx-eth2"
+version = "0.1.0"
+authors = ["xiaoguang <xiaoguang101010@163.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tcx-chain = { path = "../tcx-chain" }
+tcx-constants = { path = "../tcx-constants" }
+tcx-primitive = { path = "../tcx-primitive" }
+tcx-crypto = { path = "../tcx-crypto" }
+
+hex = "0.3.1"

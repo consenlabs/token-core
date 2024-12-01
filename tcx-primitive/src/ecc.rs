@@ -6,7 +6,7 @@ use crate::{
 
 use crate::bls::{BLSPrivateKey, BLSPublicKey};
 use crate::bls_derive::BLSDeterministicPrivateKey;
-use crate::ecc::TypedDeterministicPrivateKey::{Bip32Ed25519, Bip32Sepc256k1, SubSr25519};
+use crate::ecc::TypedDeterministicPrivateKey::{Bip32Ed25519, SubSr25519};
 use crate::ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
 use crate::ed25519_bip32::{Ed25519DeterministicPrivateKey, Ed25519DeterministicPublicKey};
 use crate::sr25519::{Sr25519PrivateKey, Sr25519PublicKey};

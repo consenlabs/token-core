@@ -1,0 +1,15 @@
+{
+	"name": "zksync-crypto",
+	"version": "0.4.5",
+	"browser": "dist/zksync-crypto-web.js",
+	"main": "dist/zksync-crypto-node.js",
+	"files": [
+		"dist/*.ts",
+		"dist/*.wasm",
+		"dist/*.js"
+	],
+	"scripts": {
+		"build": "./build.sh && node web-wasm.js",
+		"test": "f cargo test"
+	}
+}
